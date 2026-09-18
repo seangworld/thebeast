@@ -16,22 +16,10 @@ test("BO-311 gives BeastOS one complete Personal Hub information architecture", 
     personalInformationCanonicalRoute,
     "/dashboard/settings/profile"
   );
-  assert.deepEqual(
-    personalHubSections.map((section) => section.label),
-    [
-      "Personal Information",
-      "Household",
-      "Family",
-      "Emergency Contacts",
-      "Notification Preferences",
-      "Privacy",
-      "Connected Modules",
-      "AI Preferences",
-      "Communication Preferences",
-      "Future Memory Settings",
-      "Theme & Display",
-    ]
-  );
+  for (const id of ["personal-information", "household", "account-settings", "learning-preferences", "goals", "documents"]) {
+    assert.equal(personalHubSections.find(section => section.id === id)?.availability, "available");
+  }
+  assert.equal(personalHubSections.find(section => section.id === "emergency-contacts")?.availability, "planned");
   assert.equal(
     new Set(personalHubSections.map((section) => section.id)).size,
     personalHubSections.length
@@ -65,7 +53,7 @@ test("BO-311 has one canonical editable shared profile and a compatibility redir
   );
 
   assert.match(personalInformation, /\.from\("profiles"\)/);
-  assert.match(personalInformation, /\.update\(\{/);
+  assert.match(personalInformation, /\.update\(patch\)/);
   assert.match(personalInformation, /Personal Information/);
   assert.match(personalInformation, /id="household-context"/);
   assert.match(legacyProfile, /redirect\(personalInformationCanonicalRoute\)/);

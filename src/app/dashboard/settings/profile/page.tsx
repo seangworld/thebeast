@@ -1,610 +1,133 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
-import { useEntitlements } from "@/lib/hooks/useEntitlements";
 import { personalInformationCanonicalRoute } from "@/lib/platform/personalHub";
-import {
-  DashboardCard,
-  ModuleBadge,
-  SectionHeader,
-} from "@/app/components/design/DashboardPrimitives";
-import type { Profile } from "@/lib/types/database";
+import { profileAge, profileChangeError, profileChanges, profileEditColumns, profileFieldLabels, profileFieldLimit, profileToForm, type EditableProfile, type ProfileField } from "@/lib/platform/profileEditing";
+import { DashboardCard, ModuleBadge, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { AccountEmailWorkflowCard } from "./AccountEmailWorkflowCard";
 import { AccountPasswordCard } from "./AccountPasswordCard";
 
-type ProfileForm = {
-  preferred_name: string;
-  display_name: string;
-  full_name: string;
-  username: string;
-  birthday: string;
-  location: string;
-  timezone: string;
-  household_context: string;
-  bio: string;
-  current_academic_level: string;
-  career_interests: string;
-  learning_preferences: string;
-  learning_availability: string;
-  learning_strengths: string;
-  learning_help_areas: string;
-};
-
-const emptyForm: ProfileForm = {
-  preferred_name: "",
-  display_name: "",
-  full_name: "",
-  username: "",
-  birthday: "",
-  location: "",
-  timezone: "",
-  household_context: "",
-  bio: "",
-  current_academic_level: "",
-  career_interests: "",
-  learning_preferences: "",
-  learning_availability: "",
-  learning_strengths: "",
-  learning_help_areas: "",
-};
-
-function toForm(profile: Profile | null): ProfileForm {
-  return {
-    preferred_name: profile?.preferred_name || "",
-    display_name: profile?.display_name || "",
-    full_name: profile?.full_name || "",
-    username: profile?.username || "",
-    birthday: profile?.birthday || "",
-    location: profile?.location || "",
-    timezone: profile?.timezone || "",
-    household_context: profile?.household_context || "",
-    bio: profile?.bio || "",
-    current_academic_level: profile?.current_academic_level || "",
-    career_interests: profile?.career_interests || "",
-    learning_preferences: profile?.learning_preferences || "",
-    learning_availability: profile?.learning_availability || "",
-    learning_strengths: profile?.learning_strengths || "",
-    learning_help_areas: profile?.learning_help_areas || "",
-  };
-}
-
-function computeAge(birthday: string) {
-  if (!birthday) return null;
-
-  const birthDate = new Date(`${birthday}T00:00:00`);
-  if (Number.isNaN(birthDate.getTime())) return null;
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDelta = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDelta < 0 ||
-    (monthDelta === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age -= 1;
-  }
-
-  return age >= 0 ? age : null;
-}
-
-function formatLabel(value: string) {
-  return value
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function formatConfigured(value: string) {
-  return value.trim() ? "Configured" : "Not set";
-}
-
-function FoundationStatus({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-      <div className="text-sm font-black uppercase text-[#7f8da3]">
-        {label}
-      </div>
-      <div className="mt-2 text-lg font-black text-white">{value}</div>
-      <p className="mt-2 text-sm leading-6 text-[#aab6c7]">{detail}</p>
-    </div>
-  );
-}
-
-function TextField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  type?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-semibold text-[#c7cfdb]">{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="beast-input mt-2"
-      />
-    </label>
-  );
-}
-
-function TextAreaField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-semibold text-[#c7cfdb]">{label}</span>
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        rows={4}
-        className="beast-input mt-2 min-h-28 resize-y"
-      />
-    </label>
-  );
-}
+class ProfileNotice extends Error {}
 
 export default function ProfilePage() {
-  const entitlements = useEntitlements();
-  const [form, setForm] = useState<ProfileForm>(emptyForm);
+  const router = useRouter();
+  const [form, setForm] = useState(() => profileToForm());
+  const [original, setOriginal] = useState(() => profileToForm());
+  const [profile, setProfile] = useState<EditableProfile | null>(null);
   const [email, setEmail] = useState("");
-  const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-
-  const age = useMemo(() => computeAge(form.birthday), [form.birthday]);
-  const greetingName = useMemo(
-    () =>
-      getProfileDisplayName(
-        {
-          preferred_name: form.preferred_name,
-          display_name: form.display_name,
-          full_name: form.full_name,
-          username: form.username,
-        },
-        { email }
-      ),
-    [email, form.display_name, form.full_name, form.preferred_name, form.username]
-  );
-
-  const updateField = useCallback(
-    (field: keyof ProfileForm, value: string) => {
-      setForm((current) => ({ ...current, [field]: value }));
-    },
-    []
-  );
+  const [error, setError] = useState("");
+  const [confirmReload, setConfirmReload] = useState(false);
+  const busy = useRef(false);
+  const loadVersion = useRef(0);
+  const dirty = Object.keys(profileChanges(form, original)).length > 0;
+  const age = profileAge(form.birthday);
+  const greetingName = getProfileDisplayName(form, {email});
 
   const loadProfile = useCallback(async () => {
-    setLoading(true);
-    setMessage("");
-
-    let supabase: ReturnType<typeof createClient>;
-
+    const version = ++loadVersion.current;
+    setLoading(true); setError(""); setMessage(""); setConfirmReload(false);
     try {
-      supabase = createClient();
-    } catch (error) {
-      setLoading(false);
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to initialize profile services."
-      );
-      return;
-    }
-
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    const authUser = userData?.user;
-
-    if (userError || !authUser) {
-      setLoading(false);
-      setMessage("Sign in to manage your BeastOS profile.");
-      return;
-    }
-
-    setUserId(authUser.id);
-    setEmail(authUser.email || "");
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", authUser.id)
-      .maybeSingle();
-
-    if (error) {
-      setMessage(`Unable to load profile: ${error.message}`);
-      setLoading(false);
-      return;
-    }
-
-    setForm(toForm((data as Profile | null) || null));
-    setLoading(false);
+      const client = createClient();
+      const auth = await client.auth.getUser();
+      if (version !== loadVersion.current) return;
+      if (auth.error || !auth.data.user) throw new ProfileNotice("Sign in again to manage your profile.");
+      const result = await client.from("profiles").select(profileEditColumns).eq("id", auth.data.user.id).maybeSingle();
+      if (version !== loadVersion.current) return;
+      if (result.error) throw new ProfileNotice("We couldn’t load your profile. Your edits have been kept. Try again.");
+      if (!result.data) throw new ProfileNotice("Your profile isn’t available yet. Try reloading or contact support if this continues.");
+      const next = result.data as unknown as EditableProfile;
+      setProfile(next); setEmail(auth.data.user.email || ""); setForm(profileToForm(next)); setOriginal(profileToForm(next));
+    } catch (cause) {
+      if (version === loadVersion.current) setError(cause instanceof ProfileNotice ? cause.message : "We couldn’t load your profile. Please try again.");
+    } finally { if (version === loadVersion.current) setLoading(false); }
   }, []);
-
+  useEffect(() => { void loadProfile(); return () => { loadVersion.current += 1; }; }, [loadProfile]);
   useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   async function saveProfile() {
-    if (!userId) {
-      setMessage("Sign in to save your profile.");
-      return;
-    }
-
-    setSaving(true);
-    setMessage("");
-
-    let supabase: ReturnType<typeof createClient>;
-
+    if (busy.current || loading || !profile || !dirty) return;
+    const patch = profileChanges(form, original);
+    const validation = profileChangeError(patch);
+    if (validation) { setError(validation); setMessage(""); return; }
+    busy.current = true; setSaving(true); setMessage(""); setError("");
     try {
-      supabase = createClient();
-    } catch (error) {
-      setSaving(false);
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to initialize profile services."
-      );
-      return;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        preferred_name: form.preferred_name || null,
-        display_name: form.display_name || null,
-        full_name: form.full_name || null,
-        username: form.username || null,
-        birthday: form.birthday || null,
-        location: form.location || null,
-        timezone: form.timezone || null,
-        household_context: form.household_context || null,
-        bio: form.bio || null,
-        current_academic_level: form.current_academic_level || null,
-        career_interests: form.career_interests || null,
-        learning_preferences: form.learning_preferences || null,
-        learning_availability: form.learning_availability || null,
-        learning_strengths: form.learning_strengths || null,
-        learning_help_areas: form.learning_help_areas || null,
-      })
-      .eq("id", userId);
-
-    setSaving(false);
-
-    if (error) {
-      setMessage(`Unable to save profile: ${error.message}`);
-      return;
-    }
-
-    setMessage(
-      "Personal Hub saved. BeastOS will use your preferred name where it can."
-    );
-    await loadProfile();
+      const client = createClient();
+      const auth = await client.auth.getUser();
+      if (auth.error || auth.data.user?.id !== profile.id) throw new ProfileNotice("Your sign-in changed. Sign in to the same account and reload before saving.");
+      const result = await client.from("profiles").update(patch).eq("id", auth.data.user.id).eq("updated_at", profile.updated_at).select(profileEditColumns);
+      if (result.error) throw new ProfileNotice(result.error.code === "23505" ? "That username is already in use. Choose another one." : "We couldn’t confirm your save. Your edits are still here; reload to check the saved version before retrying.");
+      if (result.data?.length !== 1) throw new ProfileNotice("Your profile changed in another window or is no longer available. Your edits are kept here; reload the saved version before trying again.");
+      const next = result.data[0] as unknown as EditableProfile;
+      setProfile(next); setForm(profileToForm(next)); setOriginal(profileToForm(next)); setConfirmReload(false);
+      setMessage("Your personal information is saved.");
+      router.refresh();
+    } catch (cause) { setError(cause instanceof ProfileNotice ? cause.message : "We couldn’t confirm your save. Your edits are still here."); }
+    finally { busy.current = false; setSaving(false); }
+  }
+  function field(key: ProfileField, multiline = false, placeholder?: string) {
+    const props = { value: form[key], maxLength: profileFieldLimit(key), onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { setForm(current => ({...current, [key]: event.target.value})); setMessage(""); }, placeholder, className: "beast-input mt-2", disabled: saving || loading || !profile };
+    return <label className="block" key={key}><span className="text-sm font-semibold text-slate-300">{profileFieldLabels[key]}</span>{multiline ? <textarea {...props} rows={3} /> : <input {...props} type={key === "birthday" ? "date" : "text"} />}</label>;
   }
 
-  return (
-    <main className="beast-page">
-      <div className="beast-container space-y-8">
-        <section className="beast-page-header">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <ModuleBadge module="beastos" label="BeastOS Owned" />
-              <h1 className="beast-title">Personal Information</h1>
-              <p className="beast-subtitle">
-                This is the shared identity BeastOS makes available to every
-                authorized module.
-              </p>
-              <p className="text-sm font-semibold text-indigo-100">
-                Money, Education, Health, Home, Goals, and Documents reference
-                this information instead of maintaining separate identities.
-              </p>
+  return <main className="beast-page"><div className="beast-container space-y-6">
+    <section className="beast-page-header">
+      <ModuleBadge module="beastos" label="Personal Hub" />
+      <h1 className="beast-title mt-3">Personal Information</h1>
+      <p className="beast-subtitle">Your name, everyday details, and the people and interests that matter to you. Share as much or as little as you like.</p>
+      <Link href="/dashboard/settings" className="beast-button-secondary mt-4">Back to Personal Hub</Link>
+    </section>
+    <nav aria-label="Personal information sections" className="flex flex-wrap gap-3 text-sm text-sky-300">
+      <a href="#personal-information">About you</a><a href="#household-context">Family &amp; household</a><a href="#learning-preferences">Learning &amp; career</a><a href="#account-settings">Email &amp; password</a>
+    </nav>
+    <div className="grid gap-5 xl:grid-cols-[1fr_0.7fr]">
+      <form onSubmit={event => { event.preventDefault(); void saveProfile(); }} className="min-w-0 space-y-5" aria-label="Personal information">
+        {error && <p role="alert" className="rounded-xl border border-red-300/30 bg-red-300/10 p-4 text-sm text-red-100">{error}</p>}
+        {message && <p role="status" className="rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-4 text-sm text-emerald-100">{message}</p>}
+        {loading && <p role="status" className="text-slate-300">Loading your information…</p>}
+        <fieldset disabled={loading || saving || !profile} className="min-w-0 space-y-5">
+          <DashboardCard accent="beastos"><section id="personal-information" className="scroll-mt-24">
+            <SectionHeader title="About you" description="Your preferred name is used in your Beast greeting." />
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {field("preferred_name")}{field("display_name")}{field("full_name")}{field("username", false, "Your handle")}{field("birthday")}{field("location", false, "City, state or region")}
+              <div className="sm:col-span-2">{field("timezone", false, "America/New_York")}<button type="button" className="mt-2 text-sm text-sky-300 underline" onClick={() => { setForm(current => ({...current, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone})); setMessage(""); }}>Use my device timezone</button></div>
+              <div className="sm:col-span-2">{field("bio", true, "What would you like Beast to know about you?")}</div>
             </div>
-            <Link href="/dashboard/settings" className="beast-button-secondary">
-              Personal Hub
-            </Link>
-          </div>
-        </section>
-
-        {message ? (
-          <DashboardCard accent={message.startsWith("Unable") ? "red" : "green"}>
-            <p className="text-sm font-semibold text-[#dbe3ef]">{message}</p>
-          </DashboardCard>
-        ) : null}
-
-        <section
-          id="personal-information"
-          className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.8fr]"
-        >
-          <DashboardCard accent="beastos">
-            <SectionHeader
-              eyebrow="Identity"
-              title="How BeastOS should know you"
-              description="Preferred name drives the Today greeting. Identity and context fields prepare shared BeastOS services without adding later-phase features."
-            />
-
-            {loading ? (
-              <div className="mt-6 flex animate-pulse flex-col gap-3">
-                <div className="h-10 rounded bg-[#2a3242]" />
-                <div className="h-10 rounded bg-[#2a3242]" />
-                <div className="h-10 rounded bg-[#2a3242]" />
-              </div>
-            ) : (
-              <div className="mt-6 grid gap-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    Identity
-                  </div>
-                  <TextField
-                    label="Preferred name"
-                    value={form.preferred_name}
-                    onChange={(value) => updateField("preferred_name", value)}
-                    placeholder="Preferred name"
-                  />
-                  <TextField
-                    label="Display name"
-                    value={form.display_name}
-                    onChange={(value) => updateField("display_name", value)}
-                    placeholder="Display name"
-                  />
-                  <TextField
-                    label="Full name"
-                    value={form.full_name}
-                    onChange={(value) => updateField("full_name", value)}
-                    placeholder="Full name"
-                  />
-                  <TextField
-                    label="Username / handle"
-                    value={form.username}
-                    onChange={(value) => updateField("username", value)}
-                    placeholder="learning_handle"
-                  />
-                  <TextField
-                    label="Birthday"
-                    type="date"
-                    value={form.birthday}
-                    onChange={(value) => updateField("birthday", value)}
-                  />
-                  <TextField
-                    label="Location"
-                    value={form.location}
-                    onChange={(value) => updateField("location", value)}
-                    placeholder="City, region"
-                  />
-                  <TextField
-                    label="Timezone"
-                    value={form.timezone}
-                    onChange={(value) => updateField("timezone", value)}
-                    placeholder="America/New_York"
-                  />
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    Preferences
-                  </div>
-                  <TextField
-                    label="Current academic level"
-                    value={form.current_academic_level}
-                    onChange={(value) =>
-                      updateField("current_academic_level", value)
-                    }
-                    placeholder="High school, college, certification prep, professional"
-                  />
-                  <TextField
-                    label="Availability"
-                    value={form.learning_availability}
-                    onChange={(value) =>
-                      updateField("learning_availability", value)
-                    }
-                    placeholder="30 minutes most weekdays"
-                  />
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    AI Context
-                  </div>
-                  <TextAreaField
-                    label="Learning context"
-                    value={form.learning_preferences}
-                    onChange={(value) =>
-                      updateField("learning_preferences", value)
-                    }
-                    placeholder="Subjects, formats, or context Beast should keep close."
-                  />
-                  <TextAreaField
-                    label="Personal context"
-                    value={form.bio}
-                    onChange={(value) => updateField("bio", value)}
-                    placeholder="Add context BeastOS should remember when personalizing shared services."
-                  />
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    Family and Career
-                  </div>
-                  <TextAreaField
-                    label="Career interests"
-                    value={form.career_interests}
-                    onChange={(value) =>
-                      updateField("career_interests", value)
-                    }
-                    placeholder="Careers, certifications, trades, or skills you are curious about."
-                  />
-                  <div id="household-context" className="scroll-mt-24">
-                    <TextAreaField
-                      label="Family or household context"
-                      value={form.household_context}
-                      onChange={(value) =>
-                        updateField("household_context", value)
-                      }
-                      placeholder="Family, household, or support context BeastOS should account for."
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    Strengths and Areas I Need Help
-                  </div>
-                  <TextAreaField
-                    label="Strengths"
-                    value={form.learning_strengths}
-                    onChange={(value) =>
-                      updateField("learning_strengths", value)
-                    }
-                    placeholder="Topics or habits that already feel strong."
-                  />
-                  <TextAreaField
-                    label="Areas I need help"
-                    value={form.learning_help_areas}
-                    onChange={(value) =>
-                      updateField("learning_help_areas", value)
-                    }
-                    placeholder="Topics, habits, or study moments that feel hard."
-                  />
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                    <div className="text-sm font-semibold text-[#c7cfdb]">
-                      Computed age
-                    </div>
-                    <div className="mt-2 text-3xl font-black text-white">
-                      {age == null ? "Not set" : age}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                    <div className="text-sm font-semibold text-[#c7cfdb]">
-                      Notification preferences
-                    </div>
-                    <div className="mt-2 text-3xl font-black text-white">
-                      Account default
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div
-              data-personal-hub-route={personalInformationCanonicalRoute}
-              className="mt-6 flex flex-wrap gap-3"
-            >
-              <button
-                type="button"
-                onClick={saveProfile}
-                disabled={loading || saving}
-                className="beast-button disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saving ? "Saving..." : "Save Personal Hub"}
-              </button>
-              <button
-                type="button"
-                onClick={loadProfile}
-                disabled={loading || saving}
-                className="beast-button-secondary disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Reload
-              </button>
-            </div>
-          </DashboardCard>
-
-          <div className="space-y-4">
-            <DashboardCard accent="blue">
-              <SectionHeader
-                eyebrow="Greeting Preview"
-                title={`Welcome, ${greetingName}`}
-                description="BeastOS Today uses preferred name, then display name, full name, email prefix, and finally user."
-              />
-            </DashboardCard>
-
-            {entitlements.isAdmin ? (
-              <DashboardCard accent="purple">
-                <SectionHeader
-                  eyebrow="Admin"
-                  title="Membership context"
-                  description={
-                    entitlements.loading
-                      ? "Membership context is loading from BeastOS services."
-                      : `${formatLabel(
-                          entitlements.membership.status
-                        )} membership from ${entitlements.membership.source}.`
-                  }
-                />
-              </DashboardCard>
-            ) : null}
-
-            <AccountEmailWorkflowCard />
-
-            <AccountPasswordCard />
-
-            <DashboardCard accent="documents">
-              <SectionHeader
-                eyebrow="Protected Context"
-                title="You control this information"
-                description="Personal Hub separates editable account context from authentication records."
-              />
-            </DashboardCard>
-
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <FoundationStatus
-            label="Privacy"
-            value="Owner controlled"
-            detail="Personal context remains account-scoped and is not shared across modules without permission."
-          />
-          <FoundationStatus
-            label="Permissions"
-            value={formatLabel(entitlements.context.role)}
-            detail="Role context provides the first shared permission foundation."
-          />
-          <FoundationStatus
-            label="Connected Accounts"
-            value={email ? "Email connected" : "Not signed in"}
-            detail="Authentication identity stays linked to Personal Hub without becoming editable profile text."
-          />
-          <FoundationStatus
-            label="AI Context"
-            value={formatConfigured(
-              [
-                form.bio,
-                form.learning_preferences,
-                form.learning_strengths,
-                form.learning_help_areas,
-              ].join(" ")
-            )}
-            detail="Shared AI can read owner-provided context without moving AI ownership into a single module."
-          />
-        </section>
-      </div>
-    </main>
-  );
+            {age !== null && <p className="mt-3 text-sm text-slate-400">Age: {age} · calculated from your birthday</p>}
+          </section></DashboardCard>
+          <DashboardCard accent="beastos"><section id="household-context" className="scroll-mt-24">
+            <SectionHeader title="Family & household" description="Optional notes about your household, responsibilities, or support system. This does not invite anyone or give them access to your account." />
+            <div className="mt-4">{field("household_context", true, "Household details you want to keep with your profile")}</div>
+          </section></DashboardCard>
+          <DashboardCard accent="blue"><section id="learning-preferences" className="scroll-mt-24">
+            <SectionHeader title="Learning & career preferences" description="Your interests, available time, and how you like to learn." />
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">{field("current_academic_level")}{field("learning_availability", false, "30 minutes most weekdays")}{field("career_interests", true)}{field("learning_preferences", true)}{field("learning_strengths", true)}{field("learning_help_areas", true)}</div>
+            <p className="mt-4 text-sm text-slate-400">For your education history and planning, visit <Link href="/dashboard/education/about-you" className="text-sky-300 underline">Education About You</Link>.</p>
+          </section></DashboardCard>
+        </fieldset>
+        <div data-personal-hub-route={personalInformationCanonicalRoute} className="rounded-xl border border-slate-700 bg-[#111827] p-4">
+          <p className="mb-3 text-sm text-slate-300">{dirty ? "You have unsaved changes." : profile ? "Your saved information is shown above." : "Load your profile before editing."}</p>
+          <div className="flex flex-wrap gap-3"><button type="submit" disabled={loading || saving || !profile || !dirty} className="beast-button disabled:opacity-50">{saving ? "Saving…" : "Save changes"}</button>
+            <button type="button" disabled={loading || saving} className="beast-button-secondary" onClick={() => { if (dirty) setConfirmReload(true); else void loadProfile(); }}>Reload saved information</button></div>
+          {confirmReload && <div className="mt-4 space-y-3"><p className="text-sm text-amber-100">Reloading will replace your unsaved edits with the saved version.</p><div className="flex flex-wrap gap-3"><button type="button" disabled={saving || loading} className="beast-button-secondary" onClick={() => void loadProfile()}>Discard edits and reload</button><button type="button" className="beast-button-secondary" onClick={() => setConfirmReload(false)}>Keep editing</button></div></div>}
+        </div>
+      </form>
+      <aside className="min-w-0 space-y-5">
+        <DashboardCard accent="blue"><SectionHeader title={profile ? `Welcome, ${greetingName}` : "Your greeting"} description="A preview of how Beast greets you. Save changes to update it." /></DashboardCard>
+        <DashboardCard accent="goals"><SectionHeader title="Your plans and records" description="Keep your goals and documents within reach." /><div className="mt-4 flex flex-wrap gap-3"><Link href="/dashboard/goals" className="beast-button-secondary">Your goals</Link><Link href="/dashboard/uploads" className="beast-button-secondary">Your documents</Link></div></DashboardCard>
+        <section id="account-settings" aria-label="Email and password" className="scroll-mt-24 space-y-5"><AccountEmailWorkflowCard /><AccountPasswordCard /></section>
+      </aside>
+    </div>
+  </div></main>;
 }
