@@ -33,6 +33,9 @@ export function buildContextPrompt(context: LearningAIContext) {
     `Goals: ${context.goals.join(", ") || "None yet"}`,
     `Courses: ${context.courses.join(", ") || "None yet"}`,
     `Current lesson: ${context.currentLesson}`,
+    `Learning style and pace: ${context.learningStyle || "Not provided"}`,
+    `Career direction: ${context.career || "Not provided; do not assume one"}`,
+    `Mastery evidence: ${context.mastery.join(", ") || "Not assessed; do not infer ability or mastery"}`,
     `Weak areas: ${context.weakAreas.join(", ") || "None captured"}`,
     `Recent sessions: ${context.recentSessions.join(", ") || "None captured"}`,
   ].join("\n");

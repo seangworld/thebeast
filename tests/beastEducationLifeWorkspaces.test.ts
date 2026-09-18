@@ -6,6 +6,9 @@ import {
   educationRecordState,
   isEducationFundingRecord,
   lifeWorkspaceIntroductions,
+  educationFundingStates,
+  educationCertificationStates,
+  isCurrentEducationRecommendation,
 } from "../src/lib/education/lifeWorkspaces";
 
 const workspace = readFileSync("src/app/dashboard/learning/LearningWorkspaceView.tsx", "utf8");
@@ -75,4 +78,42 @@ test("workspace language explains purpose next action and empty profiles plainly
   assert.match(workspace, /min-w-0/);
   assert.doesNotMatch(workspace, /overflow-x-hidden/);
   assert.match(workspace, /focus-visible:outline/);
+});
+
+test("funding statuses do not convert negation, incomplete applications or pending approval into awards", () => {
+  const expected = {
+    "not awarded": "Not awarded", "pending approval": "Needs review", "not applied": "Saved",
+    "not submitted": "Saved", "application started": "Needs review", "approved": "Needs review",
+    "award pending": "Needs review", "denied": "Not awarded", "awarded": "Awarded",
+    "not_approved": "Needs review", "application submitted": "Applied",
+  };
+  for (const [status, result] of Object.entries(expected)) {
+    assert.equal(educationRecordState("scholarships", { value: JSON.stringify({ status }) }), result, status);
+  }
+});
+
+test("school and credential states preserve uncertainty and explicit status over broad phase", () => {
+  assert.equal(educationRecordState("schools", { phase: "present", value: '{"status":"not enrolled"}' }), "Needs review");
+  assert.equal(educationRecordState("schools", { phase: "goal" }), "Suggested");
+  assert.equal(educationRecordState("schools", {}), "Needs review");
+  for (const status of [undefined, "not expired", "inactive", "earned", "pending renewal"]) {
+    assert.equal(educationRecordState("certifications", { phase: "present", value: JSON.stringify({ status }) }), "Needs review");
+  }
+  for (const verification_status of ["proposed", "rejected"]) {
+    assert.equal(educationRecordState("scholarships", { verification_status, value: '{"status":"awarded"}' }), "Needs review");
+  }
+});
+
+test("every certification and funding status has a visible group; declined paths are not recommendations", () => {
+  assert.match(workspace, /educationFundingStates\.filter/);
+  assert.match(workspace, /educationCertificationStates\.map/);
+  assert.match(workspace, /filter\(isCurrentEducationRecommendation\)/);
+  for (const kind of ["certifications", "scholarships"] as const) {
+    for (const status of ["", "active", "awarded", "planned", "expired", "recommended", "declined", "unknown"]) {
+      const result = educationRecordState(kind, { value: JSON.stringify({ status }) });
+      assert.ok((kind === "certifications" ? [...educationCertificationStates] as string[] : [...educationFundingStates]).includes(result));
+    }
+  }
+  for (const status of ["candidate", "preferred"]) assert.ok(isCurrentEducationRecommendation({ status }));
+  for (const status of ["rejected", "archived", undefined]) assert.equal(isCurrentEducationRecommendation({ status }), false);
 });

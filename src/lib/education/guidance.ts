@@ -73,7 +73,7 @@ export function buildEducationGuidancePlan({
     profileId: profile.id,
     goalKind,
     goal: target,
-    summary: `Guidance-first plan for ${target}, shaped around ${profile.weeklyHours || "the available"} weekly hours and the user's stated constraints.`,
+    summary: `Guidance-first plan for ${target}, shaped around ${profile.weeklyHours ?? "the available"} weekly hours and the user's stated constraints.`,
     nextAction: unansweredQuestions[0] || roadmap.find((item) => item.status === "not-started")?.title || "Review progress with the Guidance Counselor.",
     discoveryComplete: unansweredQuestions.length === 0,
     unansweredQuestions,

@@ -5514,7 +5514,7 @@ test("learning AI context builder gathers reusable learner context", () => {
   assert.equal(context.profile, "Current learner");
   assert.equal(context.goals.includes("Security+"), true);
   assert.equal(context.recentSessions.includes("Authentication and access control"), true);
-  assert.equal(context.career, "Security Analyst");
+  assert.equal(context.career, "");
   assert.equal(context.currentLesson, "Access Control");
   assert.equal(context.mastery.some((item) => item.includes("role-based-access")), true);
 });

@@ -74,6 +74,7 @@ export function buildOpenAILearningMessages(
         buildMentorConversationPresentationPrompt({
           context: request.context,
           conversationType: request.conversationType,
+          outwardPersona: request.outwardPersona,
         }),
         buildHomeworkPrompt(request.homeworkPolicy),
         buildContextPrompt(request.context),

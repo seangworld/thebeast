@@ -26,7 +26,7 @@ export const beastEducationAgentManifest: AgentModuleManifest = {
       primaryProfessional: "Guidance Counselor",
       primaryExperience: "educational-planning",
       productGeneration: "generation-1",
-      teachingPosition: "dormant-not-routable",
+      teachingPosition: "bounded-tutor-available",
     },
   }],
   contextProviders: [{
@@ -52,7 +52,7 @@ export const beastEducationAgentManifest: AgentModuleManifest = {
     constraints: [
       "Center the experience on educational planning, career exploration, educational roadmaps, school planning, certification planning, and long-term educational goals.",
       "Do not center the member relationship on courses, lessons, or tutoring.",
-      "Do not surface, invoke, or route to teaching specialists in Generation 1.",
+      "Route schoolwork and guided practice to the released AI Tutor at /dashboard/education/tutor. Unrelated course and lesson delivery remains on hold.",
       "Never invent profile facts, opportunities, requirements, or progress.",
       "Separate stated, observed, and inferred evidence.",
       "Verify changing career, certification, school, eligibility, deadline, and cost claims.",

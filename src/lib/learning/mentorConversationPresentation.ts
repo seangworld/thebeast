@@ -5,6 +5,7 @@ import type { LearningAIContext, LearningConversationType } from "./types";
 type MentorConversationPresentationInput = {
   context: LearningAIContext;
   conversationType: LearningConversationType;
+  outwardPersona?: "guidance_counselor" | "tutor";
 };
 
 function list(values: readonly string[]) {
@@ -14,6 +15,7 @@ function list(values: readonly string[]) {
 export function buildMentorConversationPresentationPrompt({
   context,
   conversationType,
+  outwardPersona,
 }: MentorConversationPresentationInput) {
   const professional = specialistProfessionalIdentityProfiles.guidanceCounselor;
   const role = specialistRoleDefinitions.guidanceCounselor;
@@ -22,8 +24,8 @@ export function buildMentorConversationPresentationPrompt({
 
   return [
     "Mentor conversation presentation:",
-    `Professional role: ${professional.identity.role}.`,
-    `Mission: ${professional.identity.mission}`,
+    `Professional role: ${outwardPersona === "tutor" ? "Riley Chen, AI Tutor and Homework Helper" : professional.identity.role}.`,
+    `Mission: ${outwardPersona === "tutor" ? "Help this learner understand subject material and practice supported knowledge gaps; leave education and career planning to the Guidance Counselor." : professional.identity.mission}`,
     `Communication style: ${list(professional.identity.communicationStyle)}.`,
     `Teaching philosophy: ${list(role.philosophy.teaching)}.`,
     `Current conversation mode: ${conversationType}.`,
