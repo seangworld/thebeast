@@ -31,12 +31,13 @@ test("BA-NEWS-001 fails closed on unavailable or malformed News status", async (
   assert.equal(await fetchNewsOperationsStatus((async () => new Response(JSON.stringify({ product: "wrong" }), { status: 200 })) as typeof fetch), null);
 });
 
-test("BA-NEWS-001 integrates News into existing BeastAdmin analytics without a parallel analytics system", () => {
-  const page = readFileSync("src/app/dashboard/admin/analytics/page.tsx", "utf8");
+test("BA-NEWS-001 integrates News into SEANGWORLD HQ without a parallel analytics system", () => {
+  const page = readFileSync("src/app/dashboard/operations/news/page.tsx", "utf8");
   const workspace = readFileSync("src/app/dashboard/admin/news/BeastAdminNewsOperationsWorkspace.tsx", "utf8");
   assert.match(page, /fetchNewsOperationsStatus/);
   assert.match(page, /BeastAdminNewsOperationsWorkspace/);
   assert.match(page, /SeangworldIntelligenceWorkspace/);
+  assert.match(page, /OperationsWorkspaceShell/);
   assert.match(workspace, /Public AI publishing/);
   assert.doesNotMatch(workspace, /OPENAI_API_KEY|SERVICE_ROLE_KEY|ANON_KEY|feedUrl|evidenceAccessBasis/);
 });

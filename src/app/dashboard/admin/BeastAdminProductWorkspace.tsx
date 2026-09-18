@@ -19,7 +19,7 @@ export function BeastAdminProductWorkspace({ product }: { product: EmpireProduct
             </div>
           ) : (
             <p className="mt-5 rounded-xl border border-dashed border-[#344055] bg-[#111827]/70 p-4 text-sm leading-6 text-[#9aa7b8]">
-              No write controls are connected yet. This product remains visible here without pretending that BeastAdmin can change it.
+              No write controls are connected yet. This product remains visible here without pretending that this workspace can change it.
             </p>
           )}
         </DashboardCard>

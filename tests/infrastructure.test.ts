@@ -6075,7 +6075,6 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   "Member Messages",
   "Beta Feedback",
   "The Beast Analytics",
-  "BeastFusion Overview",
   "Development Console",
   "Platform Health",
   "Migration Status",

@@ -17,14 +17,15 @@ for desktop and responsive navigation.
 
 Workspaces are grouped by owner intent:
 
-- **Operations:** CEO Mode, Development Console, Platform Health.
-- **Delivery:** Migration Status, SQL Explorer, Release Center, Roadmap.
-- **Insights:** Executive Metrics, AI Analytics, Knowledge Inspector, Ecosystem Map.
-- **Members:** Members, Member Messages, Beta Feedback.
-- **Insights:** Executive Metrics, AI Analytics, SEANGWORLD Intelligence,
-  Knowledge Inspector, Ecosystem Map, Revenue.
-- **Governance:** Modules, Feature Flags, Prompt Library, Planned Workspaces,
-  Settings.
+- **The Beast:** product overview, members, member messages, beta feedback, and
+  member-product analytics.
+- **Platform & engineering:** development, health, migrations, releases,
+  execution history, roadmap, private AI capacity analytics, knowledge,
+  ecosystem, modules, feature flags, prompts, planned workspaces, and settings.
+
+Business operations are deliberately excluded. Publishing, revenue, company
+analytics, ventures, and BeastFusion belong to SEANGWORLD HQ under
+`/dashboard/operations`.
 
 Every BeastAdmin route appears exactly once in the left-rail registry. Grouping
 must not hide, rename, or remove a route.
@@ -70,6 +71,9 @@ introduce a separate information architecture or horizontal page navigation.
 
 ## Ownership boundaries
 
-This cleanup changes presentation and navigation organization only. Canonical
-route naming and compatibility redirects do not change authentication,
-authorization, business logic, persisted data, or database schema.
+SEANGWORLD HQ and BeastAdmin use separate route shells. HQ owns business
+decisions and cross-system coordination. BeastAdmin owns The Beast member
+administration and platform governance. BeastFusion is a shared service within
+HQ, not a BeastAdmin destination. Compatibility redirects do not change
+authentication, authorization, business logic, persisted data, or database
+schema.

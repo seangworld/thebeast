@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { BeastAdminShell } from "../admin/BeastAdminShell";
+import { OperationsWorkspaceShell } from "./OperationsWorkspaceShell";
 import { operationsVentures } from "@/lib/operationsNavigation";
 import { OperationsFinancialSummary } from "./OperationsFinancialSummary";
 
 export default function OperationsPage() {
-  return <BeastAdminShell title="SEANGWORLD HQ" purpose="Run the company across every venture: produce revenue, review performance, direct the team, and make the decisions only you can make." actions={<Link href="/dashboard/operations/production" className="min-h-11 rounded-xl bg-cyan-200 px-4 py-3 text-sm font-bold text-slate-950">Start production</Link>}>
+  return <OperationsWorkspaceShell title="SEANGWORLD HQ" purpose="Run the company across every venture: produce revenue, review performance, direct the team, and make the decisions only you can make." actions={<Link href="/dashboard/operations/production" className="min-h-11 rounded-xl bg-cyan-200 px-4 py-3 text-sm font-bold text-slate-950">Start production</Link>}>
     <OperationsFinancialSummary />
     <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]" aria-label="Owner priorities">
       <Link href="/dashboard/operations/production" className="group rounded-2xl border border-cyan-300/30 bg-gradient-to-br from-cyan-300/15 to-slate-900 p-6 transition hover:border-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-200">
@@ -33,5 +33,5 @@ export default function OperationsPage() {
       <div><h2 className="text-lg font-bold">Your shared team</h2><p className="mt-1 text-base text-slate-400">Review agent work, blockers, and decisions across the businesses.</p></div>
       <Link href="/dashboard/operations/staff" className="min-h-11 rounded-xl border border-cyan-200/30 px-4 py-3 text-sm font-bold text-cyan-200">Agents & approvals</Link>
     </section>
-  </BeastAdminShell>;
+  </OperationsWorkspaceShell>;
 }

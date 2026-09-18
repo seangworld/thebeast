@@ -6,6 +6,13 @@ import { CompanyCostsWorkspace } from "./CompanyCostsWorkspace";
 export default function EmpireControlPage() {
   return (
     <BeastAdminShell title="Empire Overview" purpose="Private cross-product operating costs, cost recovery, and product control boundaries.">
+      <EmpireOverviewContent />
+    </BeastAdminShell>
+  );
+}
+
+export function EmpireOverviewContent() {
+  return <>
       <DashboardCard accent="admin">
         <SectionHeader eyebrow="CEO only" title="Cost to run the empire" description="A verified monthly total will appear only after every required provider or owner-entered expense has evidence." />
         <CompanyCostsWorkspace />
@@ -19,6 +26,5 @@ export default function EmpireControlPage() {
       <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {empireProducts.map((product) => <article key={product.id} className="rounded-xl border border-white/10 bg-[#111827] p-4"><p className="text-xs font-black uppercase tracking-wide text-amber-200">Product</p><h2 className="mt-2 text-lg font-black text-white">{product.name}</h2><p className="mt-2 text-sm leading-6 text-slate-400">{product.purpose}</p></article>)}
       </section>
-    </BeastAdminShell>
-  );
+    </>;
 }
