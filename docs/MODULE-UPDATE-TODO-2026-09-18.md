@@ -164,3 +164,5 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Retailer links are searches only. Home Studio does not claim live price, inventory, exact fit, endorsement or an affiliate relationship, and it does not make purchases.
 - Home Studio is an AI planning concept, not a measured construction drawing, appraisal, inspection or substitute for qualified structural, electrical or plumbing help. It does not recommend bypassing exits or safety devices.
 - Future scope: saved projects, multiple-photo room context, dimensioned floor planning and any disclosed affiliate integration. None is claimed in this release.
+- Home Studio follow-up adds a self-contained printable HTML packet with the project brief, source and generated concept images when available, palette, layout, design moves, cautions and a printable shopping checklist. JSON project data remains separately downloadable.
+- Members can review and edit the exact concept-image instructions. Any edit clears the prior confirmation before another paid image request can be sent.

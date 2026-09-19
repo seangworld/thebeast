@@ -8,6 +8,7 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import {
+  buildHomeStudioDesignPacket,
   HOME_STUDIO_MAX_IMAGE_BYTES,
   homeStudioRetailerLinks,
   homeStudioRoomTypes,
@@ -59,6 +60,7 @@ export function HomeStudioWorkspace() {
   const [image, setImage] = useState("");
   const [imageName, setImageName] = useState("");
   const [plan, setPlan] = useState<HomeStudioPlan | null>(null);
+  const [conceptPrompt, setConceptPrompt] = useState("");
   const [conceptImage, setConceptImage] = useState("");
   const [message, setMessage] = useState("");
   const [planning, setPlanning] = useState(false);
@@ -72,6 +74,7 @@ export function HomeStudioWorkspace() {
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm(current => ({ ...current, [key]: value }));
     setPlan(null);
+    setConceptPrompt("");
     setConceptImage("");
     setConfirmed(false);
   }
@@ -89,6 +92,7 @@ export function HomeStudioWorkspace() {
       setImage(String(reader.result));
       setImageName(file.name);
       setPlan(null);
+      setConceptPrompt("");
       setConceptImage("");
       setConfirmed(false);
       setMessage("Photo ready. It remains in this browser until you request a plan or concept.");
@@ -106,6 +110,7 @@ export function HomeStudioWorkspace() {
     setPlanning(true);
     setMessage("Reviewing the room and preparing a design plan…");
     setPlan(null);
+    setConceptPrompt("");
     setConceptImage("");
     setConfirmed(false);
     try {
@@ -118,6 +123,7 @@ export function HomeStudioWorkspace() {
       if (!response.ok || !body.plan) setMessage(body.error || "The design plan could not be prepared.");
       else {
         setPlan(body.plan);
+        setConceptPrompt(body.plan.conceptPrompt);
         setMessage(body.notice || "Design plan ready for your review.");
       }
     } catch {
@@ -128,14 +134,14 @@ export function HomeStudioWorkspace() {
   }
 
   async function generateConcept() {
-    if (!plan || !confirmed || busy) return;
+    if (!plan || !confirmed || !conceptPrompt.trim() || busy) return;
     setRendering(true);
     setMessage("Generating one visual concept from the reviewed plan…");
     try {
       const response = await fetch("/api/home/studio/render", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image, prompt: plan.conceptPrompt, confirmed: true }),
+        body: JSON.stringify({ image, prompt: conceptPrompt, confirmed: true }),
       });
       const body = await response.json() as { image?: string; notice?: string; error?: string };
       if (!response.ok || !body.image) setMessage(body.error || "The concept image could not be generated.");
@@ -156,18 +162,34 @@ export function HomeStudioWorkspace() {
     setImage("");
     setImageName("");
     setPlan(null);
+    setConceptPrompt("");
     setConceptImage("");
     setConfirmed(false);
     setMessage("New room started. The previous photo and unsaved plan were cleared from this browser.");
     if (fileInput.current) fileInput.current.value = "";
   }
 
+  function projectWithoutImage() {
+    const { image: _image, ...project } = { ...form, image };
+    return project;
+  }
+
   function downloadPacket() {
     if (!plan) return;
-    const { image: _image, ...project } = { ...form, image };
+    const project = projectWithoutImage();
+    const reviewedPlan = { ...plan, conceptPrompt };
     downloadData(
-      `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-design-plan.json`,
-      JSON.stringify({ project, plan, createdAt: new Date().toISOString(), boundary: "AI planning concept; verify measurements, fit, safety, prices, and availability." }, null, 2),
+      `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-design-packet.html`,
+      buildHomeStudioDesignPacket({ project, plan: reviewedPlan, sourceImage: image, conceptImage, createdAt: new Date().toISOString() }),
+      "text/html",
+    );
+  }
+
+  function downloadProjectData() {
+    if (!plan) return;
+    downloadData(
+      `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-project-data.json`,
+      JSON.stringify({ project: projectWithoutImage(), plan: { ...plan, conceptPrompt }, createdAt: new Date().toISOString(), boundary: "AI planning concept; verify measurements, fit, safety, prices, and availability." }, null, 2),
       "application/json",
     );
   }
@@ -258,13 +280,25 @@ export function HomeStudioWorkspace() {
       <DashboardCard accent="beastos">
         <SectionHeader eyebrow="Reality check" title="Verify before acting" description="Home Studio organizes a concept; it does not inspect the property or replace qualified local help." />
         <TextList items={plan.cautions} />
-        <div className="mt-5 flex flex-wrap gap-3"><button type="button" className="beast-button-secondary" onClick={downloadPacket}>Download design plan</button><button type="button" className="beast-button-secondary" onClick={() => window.print()}>Print plan</button></div>
+        <div className="mt-5 flex flex-wrap gap-3"><button type="button" className="beast-button-secondary" onClick={downloadPacket}>Download printable packet</button><button type="button" className="beast-button-secondary" onClick={downloadProjectData}>Download project data</button></div>
       </DashboardCard>
 
       <DashboardCard accent="home">
         <SectionHeader eyebrow="Optional paid provider action" title="Generate one visual concept" description="This sends the room photo and reviewed concept prompt to the configured image provider and consumes one image-generation request. It does not purchase products or save the image to BeastHome." />
+        <details className="mt-5 rounded-xl border border-[#334155] bg-[#111827] p-4" open>
+          <summary className="cursor-pointer font-black text-white">Review the exact concept instructions</summary>
+          <p className="mt-2 text-sm leading-6 text-[#94a3b8]">Edit these instructions before confirming. Changing them clears your confirmation so the provider never receives an unreviewed revision.</p>
+          <textarea
+            className={`${inputClass} min-h-36`}
+            value={conceptPrompt}
+            maxLength={2400}
+            onChange={event => { setConceptPrompt(event.target.value); setConfirmed(false); setConceptImage(""); }}
+            aria-label="Concept image instructions"
+          />
+          <p className="mt-2 text-right text-xs text-[#94a3b8]">{conceptPrompt.length}/2400</p>
+        </details>
         <label className="mt-5 flex items-start gap-3 rounded-xl border border-[#334155] bg-[#111827] p-4 text-sm leading-6 text-[#dbe3ef]"><input type="checkbox" className="mt-1" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} /><span>I reviewed the plan and understand that the visual is an AI concept—not an exact measurement, construction drawing, appraisal, inspection, price quote, or product-availability guarantee.</span></label>
-        <button type="button" className="beast-button-primary mt-4" disabled={!confirmed || busy} onClick={() => void generateConcept()}>{rendering ? "Generating concept…" : conceptImage ? "Generate another concept" : "Generate visual concept"}</button>
+        <button type="button" className="beast-button-primary mt-4" disabled={!confirmed || !conceptPrompt.trim() || busy} onClick={() => void generateConcept()}>{rendering ? "Generating concept…" : conceptImage ? "Generate another concept" : "Generate visual concept"}</button>
         {conceptImage ? <div className="mt-6"><div className="overflow-hidden rounded-2xl border border-[#334155] bg-black"><Image src={conceptImage} alt={`AI Home Studio concept for ${form.roomName}`} width={1536} height={1024} unoptimized className="h-auto w-full object-contain" /></div><button type="button" className="beast-button-secondary mt-4" onClick={() => { const link = document.createElement("a"); link.href = conceptImage; link.download = `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "home-studio"}-concept.jpg`; link.click(); }}>Download concept image</button></div> : null}
       </DashboardCard>
     </section> : null}

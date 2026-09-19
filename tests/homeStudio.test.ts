@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
+  buildHomeStudioDesignPacket,
   isValidHomeStudioImage,
   homeStudioRetailerLinks,
   normalizeHomeStudioInput,
@@ -81,4 +82,25 @@ test("retailer searches encode user-controlled search terms", () => {
   assert.equal(links.length, 6);
   assert.ok(links.every(link => link.href.startsWith("https://")));
   assert.ok(links.every(link => !link.href.includes("lamp & desk")));
+});
+
+test("printable design packets preserve the plan without executable member or provider text", () => {
+  const plan = normalizeHomeStudioPlan({
+    title: "Focused <office>", summary: "A practical room concept.", observedRoom: ["Desk is visible"], assumptions: [],
+    palette: [{ name: "Walnut", hex: "#76543A" }], layoutPlan: ["Verify desk clearance"], designMoves: ["Layer task lighting"],
+    shoppingList: [{ item: "Task lamp", purpose: "Desk lighting", searchTerms: "black task lamp", targetPrice: "$30–$80 planning range", priority: "Essential" }],
+    cautions: ["Measure before purchasing"], conceptPrompt: "Preserve geometry. <script>alert(1)</script>",
+  });
+  assert.ok(plan);
+  const packet = buildHomeStudioDesignPacket({
+    project: { roomName: "Sean & Myra's office", roomType: "Home office", dimensions: "12 × 13", style: "Modern", colors: "Walnut", budget: "$1,000", mustKeep: "Desk", needs: "Work", openings: "Window", notes: "" },
+    plan,
+    sourceImage: image,
+    createdAt: "2026-09-19T01:00:00.000Z",
+  });
+  assert.match(packet, /Shopping checklist/);
+  assert.match(packet, /Sean &amp; Myra&#39;s office/);
+  assert.match(packet, /Focused &lt;office&gt;/);
+  assert.doesNotMatch(packet, /<script>alert/);
+  assert.match(packet, /data:image\/jpeg;base64/);
 });
