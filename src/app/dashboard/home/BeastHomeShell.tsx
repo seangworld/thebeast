@@ -24,6 +24,7 @@ import { resolveMemberModuleEntitlement } from "@/lib/memberAgeEntitlements";
 export const beastHomeSections = [
   { label: "Overview", href: "/dashboard/home" },
   { label: "Home Inventory", href: "/dashboard/home/inventory" },
+  { label: "Home Studio", href: "/dashboard/home/studio" },
 ];
 
 export type BeastHomePlaceholder = {
@@ -176,7 +177,7 @@ export function BeastHomePlaceholderPage({
           <SectionHeader
             eyebrow="Planned"
             title={`${page.title} workspace`}
-            description="BeastHome begins with a private, member-owned home inventory. Other home workspaces remain planned and inactive."
+            description="Home Inventory and Home Studio are available now. This separate home workspace remains planned and inactive."
           />
           <div className="mt-5 grid gap-3">
             {page.focus.map((item) => (
@@ -193,14 +194,14 @@ export function BeastHomePlaceholderPage({
         <DashboardCard accent="beastos">
           <SectionHeader
             eyebrow="Available now"
-            title="Start with your home inventory"
-            description="Inventory records are scoped to the signed-in member. Household sharing and home automation are not active."
+            title="Use the released BeastHome workspaces"
+            description="Build a private inventory or create a review-first room concept in Home Studio. Household sharing and home automation are not active."
           />
           <div className="mt-5 space-y-3 text-sm font-semibold leading-6 text-[#dbe3ef]">
-            <GuidedEmptyState title="Build the household story progressively" description="This workspace is planned. You can already save a home inventory and organize documents and goals." guidance="Begin with one verified property, vehicle, or maintenance document instead of filling an empty dashboard." nextAction={{ label: "Add a document", href: "/dashboard/uploads" }} secondaryAction={{ label: "Review goals", href: "/dashboard/goals" }} />
+            <GuidedEmptyState title="Build the household story progressively" description="This workspace is planned. You can already save a home inventory, design one room in Home Studio, and organize documents and goals." guidance="Begin with one verified record or one room project instead of filling an empty dashboard." nextAction={{ label: "Open Home Studio", href: "/dashboard/home/studio" }} secondaryAction={{ label: "Open Home Inventory", href: "/dashboard/home/inventory" }} />
             <ExpandableDetailPanel summary="What’s available today">
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              Photo-to-Home-Inventory is the only active member-facing BeastHome workflow in this release.
+              Home Inventory and Home Studio are the active member-facing BeastHome workflows in this release.
             </p>
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               No maintenance scheduling, security automation, vehicle workflow, or household sharing workflow is active.
