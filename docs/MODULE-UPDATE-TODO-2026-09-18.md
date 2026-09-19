@@ -163,6 +163,9 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Visual concept generation is optional and requires a separate explicit confirmation because it sends the photo and reviewed prompt to the configured image provider and consumes a paid image request. Planning and image requests retain existing signed-in BeastHome entitlement, concurrency and short-term request controls.
 - Retailer links are searches only. Home Studio does not claim live price, inventory, exact fit, endorsement or an affiliate relationship, and it does not make purchases.
 - Home Studio is an AI planning concept, not a measured construction drawing, appraisal, inspection or substitute for qualified structural, electrical or plumbing help. It does not recommend bypassing exits or safety devices.
-- Future scope: saved projects, multiple-photo room context, dimensioned floor planning and any disclosed affiliate integration. None is claimed in this release.
+- [x] Added owner-scoped saved projects for room briefs and reviewed plans. Source and generated images remain session-only and are deliberately excluded from saved records.
+- [x] Added bounded multiple-photo room context with up to four compressed working views. All views inform planning; the first view remains the explicit concept-image edit target.
+- [x] Added dimensioned floor planning with verified length, width, ceiling height, clockwise wall/opening notes, furniture measurements, and a printable top-down planning outline.
+- Future scope stops at any separately reviewed and disclosed affiliate integration. Current retailer links remain ordinary searches and cannot influence recommendations or make purchases.
 - Home Studio follow-up adds a self-contained printable HTML packet with the project brief, source and generated concept images when available, palette, layout, design moves, cautions and a printable shopping checklist. JSON project data remains separately downloadable.
 - Members can review and edit the exact concept-image instructions. Any edit clears the prior confirmation before another paid image request can be sent.

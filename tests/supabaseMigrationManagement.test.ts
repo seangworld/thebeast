@@ -119,6 +119,7 @@ const expectedCliMigrations = [
   "20260917162948_member_health_document_review.sql",
   "20260917163328_health_document_repeat_events.sql",
   "20260918190547_add_device_notifications.sql",
+  "20260919022229_add_home_studio_saved_projects.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

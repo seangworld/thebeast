@@ -39,8 +39,8 @@
     },
     "beasthome": {
       "name": "BeastHome",
-      "version": "1.1.1",
-      "buildId": "beasthome-1.1.1+20260919.01",
+      "version": "1.2.0",
+      "buildId": "beasthome-1.2.0+20260919.01",
       "channel": "Production",
       "releaseDate": "2026-09-19"
     },

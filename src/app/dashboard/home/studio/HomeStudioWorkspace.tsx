@@ -9,18 +9,32 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import {
   buildHomeStudioDesignPacket,
-  HOME_STUDIO_MAX_IMAGE_BYTES,
+  HOME_STUDIO_MAX_PHOTOS,
   homeStudioRetailerLinks,
   homeStudioRoomTypes,
   homeStudioStyles,
-  type HomeStudioInput,
+  type HomeStudioPhoto,
   type HomeStudioPlan,
+  type HomeStudioProject,
+  type HomeStudioSavedProject,
 } from "@/lib/homeStudio";
+import { prepareHomeStudioPhoto } from "@/lib/homeStudioClient";
+import { HomeStudioFloorPlan } from "./HomeStudioFloorPlan";
+import { HomeStudioProjectLibrary } from "./HomeStudioProjectLibrary";
 
-const initialForm: Omit<HomeStudioInput, "image"> = {
+const initialForm: HomeStudioProject = {
   roomName: "",
   roomType: "Living room",
   dimensions: "",
+  measurementUnit: "feet",
+  roomLength: "",
+  roomWidth: "",
+  ceilingHeight: "",
+  northWall: "",
+  eastWall: "",
+  southWall: "",
+  westWall: "",
+  furnitureMeasurements: "",
   style: "Modern",
   colors: "",
   budget: "",
@@ -57,19 +71,21 @@ function downloadData(name: string, content: string, type: string) {
 
 export function HomeStudioWorkspace() {
   const [form, setForm] = useState(initialForm);
-  const [image, setImage] = useState("");
-  const [imageName, setImageName] = useState("");
+  const [photos, setPhotos] = useState<HomeStudioPhoto[]>([]);
   const [plan, setPlan] = useState<HomeStudioPlan | null>(null);
   const [conceptPrompt, setConceptPrompt] = useState("");
   const [conceptImage, setConceptImage] = useState("");
   const [message, setMessage] = useState("");
   const [planning, setPlanning] = useState(false);
   const [rendering, setRendering] = useState(false);
+  const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [activeProjectId, setActiveProjectId] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
-  const busy = planning || rendering;
+  const busy = planning || rendering || preparingPhotos;
+  const primaryPhoto = photos[0]?.dataUrl || "";
 
-  const completedBasics = [image, form.roomName, form.roomType, form.style].filter(Boolean).length;
+  const completedBasics = [photos.length, form.roomName, form.roomType, form.style].filter(Boolean).length;
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm(current => ({ ...current, [key]: value }));
@@ -79,32 +95,65 @@ export function HomeStudioWorkspace() {
     setConfirmed(false);
   }
 
-  function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!(["image/jpeg", "image/png", "image/webp"].includes(file.type)) || file.size > HOME_STUDIO_MAX_IMAGE_BYTES) {
-      setMessage("Choose one JPG, PNG, or WebP room photo up to 3 MB.");
-      event.target.value = "";
+  async function selectPhotos(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!files.length) return;
+    if (photos.length + files.length > HOME_STUDIO_MAX_PHOTOS) {
+      setMessage(`Home Studio supports up to ${HOME_STUDIO_MAX_PHOTOS} room views. Remove one before adding another.`);
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImage(String(reader.result));
-      setImageName(file.name);
+    setPreparingPhotos(true);
+    try {
+      const prepared = await Promise.all(files.map(async (file, index) => ({
+        dataUrl: await prepareHomeStudioPhoto(file),
+        name: file.name.slice(0, 120),
+        label: photos.length + index === 0 ? "Primary concept view" : `Additional room view ${photos.length + index + 1}`,
+      })));
+      setPhotos((current) => [...current, ...prepared]);
       setPlan(null);
       setConceptPrompt("");
       setConceptImage("");
       setConfirmed(false);
-      setMessage("Photo ready. It remains in this browser until you request a plan or concept.");
-    };
-    reader.onerror = () => setMessage("That photo could not be read. Try another image.");
-    reader.readAsDataURL(file);
+      setMessage(`${prepared.length} room view${prepared.length === 1 ? "" : "s"} ready. Photos remain session-only and are not included when the project is saved.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Those room photos could not be prepared.");
+    } finally {
+      setPreparingPhotos(false);
+    }
+  }
+
+  function removePhoto(index: number) {
+    if (busy) return;
+    setPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index).map((photo, photoIndex) => ({
+      ...photo,
+      label: photoIndex === 0 ? "Primary concept view" : `Additional room view ${photoIndex + 1}`,
+    })));
+    setPlan(null);
+    setConceptPrompt("");
+    setConceptImage("");
+    setConfirmed(false);
+  }
+
+  function openSavedProject(saved: HomeStudioSavedProject & { sourcePhotoCount: number }) {
+    if (busy) return;
+    setForm(saved.project);
+    setPlan(saved.plan);
+    setConceptPrompt(saved.plan?.conceptPrompt || "");
+    setPhotos([]);
+    setConceptImage("");
+    setConfirmed(false);
+    setActiveProjectId(saved.id);
+    setMessage(saved.sourcePhotoCount
+      ? `Saved project opened. Re-add its ${saved.sourcePhotoCount} room view${saved.sourcePhotoCount === 1 ? "" : "s"} before rebuilding the plan or generating a concept.`
+      : "Saved project opened. Photos were not stored.");
+    if (fileInput.current) fileInput.current.value = "";
   }
 
   async function createPlan() {
     if (busy) return;
-    if (!image || !form.roomName.trim() || !form.roomType || !form.style) {
-      setMessage("Add a room photo, room name, room type, and preferred style first.");
+    if (!photos.length || !form.roomName.trim() || !form.roomType || !form.style) {
+      setMessage("Add at least one room photo, room name, room type, and preferred style first.");
       return;
     }
     setPlanning(true);
@@ -117,7 +166,7 @@ export function HomeStudioWorkspace() {
       const response = await fetch("/api/home/studio/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, image }),
+        body: JSON.stringify({ ...form, photos }),
       });
       const body = await response.json() as { plan?: HomeStudioPlan; notice?: string; error?: string };
       if (!response.ok || !body.plan) setMessage(body.error || "The design plan could not be prepared.");
@@ -127,21 +176,21 @@ export function HomeStudioWorkspace() {
         setMessage(body.notice || "Design plan ready for your review.");
       }
     } catch {
-      setMessage("The design plan could not be prepared. Your form and photo remain in this browser.");
+      setMessage("The design plan could not be prepared. Your form and photos remain in this browser.");
     } finally {
       setPlanning(false);
     }
   }
 
   async function generateConcept() {
-    if (!plan || !confirmed || !conceptPrompt.trim() || busy) return;
+    if (!plan || !primaryPhoto || !confirmed || !conceptPrompt.trim() || busy) return;
     setRendering(true);
     setMessage("Generating one visual concept from the reviewed plan…");
     try {
       const response = await fetch("/api/home/studio/render", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image, prompt: conceptPrompt, confirmed: true }),
+        body: JSON.stringify({ image: primaryPhoto, prompt: conceptPrompt, confirmed: true }),
       });
       const body = await response.json() as { image?: string; notice?: string; error?: string };
       if (!response.ok || !body.image) setMessage(body.error || "The concept image could not be generated.");
@@ -159,28 +208,22 @@ export function HomeStudioWorkspace() {
   function reset() {
     if (busy) return;
     setForm(initialForm);
-    setImage("");
-    setImageName("");
+    setPhotos([]);
     setPlan(null);
     setConceptPrompt("");
     setConceptImage("");
     setConfirmed(false);
-    setMessage("New room started. The previous photo and unsaved plan were cleared from this browser.");
+    setActiveProjectId("");
+    setMessage("New room started. The previous session photos and unsaved changes were cleared from this browser.");
     if (fileInput.current) fileInput.current.value = "";
-  }
-
-  function projectWithoutImage() {
-    const { image: _image, ...project } = { ...form, image };
-    return project;
   }
 
   function downloadPacket() {
     if (!plan) return;
-    const project = projectWithoutImage();
     const reviewedPlan = { ...plan, conceptPrompt };
     downloadData(
       `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-design-packet.html`,
-      buildHomeStudioDesignPacket({ project, plan: reviewedPlan, sourceImage: image, conceptImage, createdAt: new Date().toISOString() }),
+      buildHomeStudioDesignPacket({ project: form, plan: reviewedPlan, sourceImages: photos.map((photo) => photo.dataUrl), conceptImage, createdAt: new Date().toISOString() }),
       "text/html",
     );
   }
@@ -189,7 +232,7 @@ export function HomeStudioWorkspace() {
     if (!plan) return;
     downloadData(
       `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-project-data.json`,
-      JSON.stringify({ project: projectWithoutImage(), plan: { ...plan, conceptPrompt }, createdAt: new Date().toISOString(), boundary: "AI planning concept; verify measurements, fit, safety, prices, and availability." }, null, 2),
+      JSON.stringify({ project: form, plan: { ...plan, conceptPrompt }, sourcePhotoCount: photos.length, photosStored: false, createdAt: new Date().toISOString(), boundary: "AI planning concept; verify measurements, fit, safety, prices, and availability." }, null, 2),
       "application/json",
     );
   }
@@ -212,19 +255,35 @@ export function HomeStudioWorkspace() {
       </div>
     </DashboardCard>
 
+    <HomeStudioProjectLibrary
+      project={form}
+      plan={plan ? { ...plan, conceptPrompt } : null}
+      sourcePhotoCount={photos.length}
+      activeProjectId={activeProjectId}
+      busy={busy}
+      onLoad={openSavedProject}
+      onActiveProjectChange={setActiveProjectId}
+    />
+
     <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]" aria-label="Home Studio project setup">
       <DashboardCard accent="home">
-        <SectionHeader eyebrow="Room photo" title="Show the starting point" description="Use a clear photo without people, mail, screens, family pictures, or sensitive documents." />
+        <SectionHeader eyebrow="Room photos" title="Show the complete starting point" description="Add up to four angles without people, mail, screens, family pictures, or sensitive documents. The first image is the primary concept-rendering view." />
         <div className="mt-5">
-          {image ? <div className="overflow-hidden rounded-2xl border border-[#334155] bg-black">
-            <Image src={image} alt={`Selected photo for ${form.roomName || "the room"}`} width={1200} height={800} unoptimized className="h-auto max-h-[440px] w-full object-contain" />
-          </div> : <GuidedEmptyState title="No room photo selected" description="The photo is used only for the plan and optional concept request in this browser session." guidance="JPG, PNG, or WebP up to 3 MB. Home Studio does not add it to your inventory or Beast Documents." nextAction={{ label: "Choose a room photo", href: "#home-studio-photo" }} />}
+          {photos.length ? <div className="grid gap-3 sm:grid-cols-2">
+            {photos.map((photo, index) => <figure key={`${photo.name}-${index}`} className="overflow-hidden rounded-xl border border-[#334155] bg-black">
+              <Image src={photo.dataUrl} alt={`${photo.label} for ${form.roomName || "the room"}`} width={1200} height={800} unoptimized className="h-48 w-full object-contain" />
+              <figcaption className="flex items-center justify-between gap-2 bg-[#111827] p-3 text-xs text-[#cbd5e1]">
+                <span className="min-w-0 truncate"><strong className="text-white">{photo.label}</strong><br />{photo.name}</span>
+                <button type="button" className="text-rose-200 underline" disabled={busy} onClick={() => removePhoto(index)}>Remove</button>
+              </figcaption>
+            </figure>)}
+          </div> : <GuidedEmptyState title="No room photos selected" description="Photos are used only for the plan and optional concept request in this browser session." guidance="Up to four JPG, PNG, or WebP files, 3 MB each. Home Studio compresses working copies and does not add them to saved projects, inventory, or Beast Documents." nextAction={{ label: "Choose room photos", href: "#home-studio-photo" }} />}
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <label id="home-studio-photo" className="beast-button-secondary cursor-pointer">
-              {image ? "Replace photo" : "Choose room photo"}
-              <input ref={fileInput} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={selectPhoto} disabled={busy} />
+              {preparingPhotos ? "Preparing photos…" : photos.length ? "Add another view" : "Choose room photos"}
+              <input ref={fileInput} className="sr-only" type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={selectPhotos} disabled={busy || photos.length >= HOME_STUDIO_MAX_PHOTOS} />
             </label>
-            {imageName ? <span className="max-w-full truncate text-xs text-[#94a3b8]">{imageName}</span> : null}
+            <span className="text-xs text-[#94a3b8]">{photos.length}/{HOME_STUDIO_MAX_PHOTOS} views · first view drives the optional concept image</span>
           </div>
         </div>
       </DashboardCard>
@@ -234,7 +293,7 @@ export function HomeStudioWorkspace() {
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <Field label="Project or room name"><input className={inputClass} value={form.roomName} maxLength={80} placeholder="My office" onChange={event => update("roomName", event.target.value)} /></Field>
           <Field label="Room type"><select className={inputClass} value={form.roomType} onChange={event => update("roomType", event.target.value)}>{homeStudioRoomTypes.map(type => <option key={type}>{type}</option>)}</select></Field>
-          <Field label="Measurements" hint="optional"><input className={inputClass} value={form.dimensions} maxLength={200} placeholder="12 ft × 13 ft; 8 ft ceiling" onChange={event => update("dimensions", event.target.value)} /></Field>
+          <Field label="Additional measurement notes" hint="optional"><input className={inputClass} value={form.dimensions} maxLength={200} placeholder="Alcove is 4 ft deep; baseboard projects 1 in" onChange={event => update("dimensions", event.target.value)} /></Field>
           <Field label="Preferred style"><select className={inputClass} value={form.style} onChange={event => update("style", event.target.value)}>{homeStudioStyles.map(style => <option key={style}>{style}</option>)}</select></Field>
           <Field label="Colors or palette" hint="optional"><input className={inputClass} value={form.colors} maxLength={300} placeholder="Warm white, walnut, black accents" onChange={event => update("colors", event.target.value)} /></Field>
           <Field label="Working budget" hint="optional"><input className={inputClass} value={form.budget} maxLength={80} placeholder="$1,000 total or use what I own" onChange={event => update("budget", event.target.value)} /></Field>
@@ -243,6 +302,22 @@ export function HomeStudioWorkspace() {
           <Field label="Windows, doors, and fixed openings" hint="optional"><textarea className={`${inputClass} min-h-24`} value={form.openings} maxLength={500} placeholder="Door opens inward on right; window centered on back wall…" onChange={event => update("openings", event.target.value)} /></Field>
           <Field label="Other constraints or ideas" hint="optional"><textarea className={`${inputClass} min-h-24`} value={form.notes} maxLength={1200} placeholder="Pets, accessibility, lighting, storage, items to avoid…" onChange={event => update("notes", event.target.value)} /></Field>
         </div>
+        <details className="mt-6 rounded-xl border border-[#334155] bg-[#111827] p-4" open>
+          <summary className="cursor-pointer font-black text-white">Dimensioned floor-planning details</summary>
+          <p className="mt-2 text-sm leading-6 text-[#94a3b8]">Enter verified inside-wall dimensions and describe each wall clockwise. Home Studio will preserve these facts separately from visual assumptions.</p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Field label="Units"><select className={inputClass} value={form.measurementUnit} onChange={event => update("measurementUnit", event.target.value as HomeStudioProject["measurementUnit"])}><option value="feet">Feet</option><option value="meters">Meters</option></select></Field>
+            <Field label="Room length"><input inputMode="decimal" className={inputClass} value={form.roomLength} maxLength={12} placeholder="13" onChange={event => update("roomLength", event.target.value)} /></Field>
+            <Field label="Room width"><input inputMode="decimal" className={inputClass} value={form.roomWidth} maxLength={12} placeholder="12" onChange={event => update("roomWidth", event.target.value)} /></Field>
+            <Field label="Ceiling height"><input inputMode="decimal" className={inputClass} value={form.ceilingHeight} maxLength={12} placeholder="8" onChange={event => update("ceilingHeight", event.target.value)} /></Field>
+            <Field label="North wall" hint="openings + offsets"><textarea className={`${inputClass} min-h-24`} value={form.northWall} maxLength={400} placeholder="104 in wall; 36 in door begins 8 in from east corner" onChange={event => update("northWall", event.target.value)} /></Field>
+            <Field label="East wall" hint="openings + offsets"><textarea className={`${inputClass} min-h-24`} value={form.eastWall} maxLength={400} placeholder="Window centered; 48 in wide" onChange={event => update("eastWall", event.target.value)} /></Field>
+            <Field label="South wall" hint="openings + offsets"><textarea className={`${inputClass} min-h-24`} value={form.southWall} maxLength={400} placeholder="Solid wall" onChange={event => update("southWall", event.target.value)} /></Field>
+            <Field label="West wall" hint="openings + offsets"><textarea className={`${inputClass} min-h-24`} value={form.westWall} maxLength={400} placeholder="Closet doors span 60 in" onChange={event => update("westWall", event.target.value)} /></Field>
+          </div>
+          <Field label="Furniture measurements and desired placement" hint="optional"><textarea className={`${inputClass} min-h-28`} value={form.furnitureMeasurements} maxLength={1200} placeholder={"Desk 79 × 30 in — entry-door wall\nFuton 70 × 33 in — opposite wall"} onChange={event => update("furnitureMeasurements", event.target.value)} /></Field>
+          <HomeStudioFloorPlan project={form} />
+        </details>
         <div className="mt-5 flex flex-wrap gap-3">
           <button className="beast-button-primary" type="button" disabled={busy} onClick={() => void createPlan()}>{planning ? "Preparing design plan…" : plan ? "Rebuild design plan" : "Create design plan"}</button>
           <button className="beast-button-secondary" type="button" disabled={busy} onClick={reset}>Start a new room</button>
@@ -267,7 +342,7 @@ export function HomeStudioWorkspace() {
       </div>
 
       <DashboardCard accent="home">
-        <SectionHeader eyebrow="Shopping targets" title="Shop the plan without locking into one retailer" description="These are generic search starting points, not live inventory, exact-fit promises, endorsements, or affiliate links yet." />
+        <SectionHeader eyebrow="Shopping targets" title="Shop the plan without locking into one retailer" description="These are ordinary retailer searches—not live inventory, exact-fit promises, endorsements, affiliate links, or purchases." />
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {plan.shoppingList.map((item, index) => <article key={`${item.item}-${index}`} className="rounded-xl border border-[#334155] bg-[#111827] p-4">
             <div className="flex items-start justify-between gap-3"><div><h3 className="font-black text-white">{item.item}</h3><p className="mt-1 text-sm leading-6 text-[#cbd5e1]">{item.purpose}</p></div><span className="rounded-full border border-cyan-700 bg-cyan-950/30 px-2.5 py-1 text-xs font-bold text-cyan-100">{item.priority}</span></div>
@@ -284,7 +359,7 @@ export function HomeStudioWorkspace() {
       </DashboardCard>
 
       <DashboardCard accent="home">
-        <SectionHeader eyebrow="Optional paid provider action" title="Generate one visual concept" description="This sends the room photo and reviewed concept prompt to the configured image provider and consumes one image-generation request. It does not purchase products or save the image to BeastHome." />
+        <SectionHeader eyebrow="Optional paid provider action" title="Generate one visual concept" description="This sends the primary room view and reviewed concept prompt to the configured image provider and consumes one image-generation request. Additional views informed the plan but are not sent again for this image edit. It does not purchase products or save the image to BeastHome." />
         <details className="mt-5 rounded-xl border border-[#334155] bg-[#111827] p-4" open>
           <summary className="cursor-pointer font-black text-white">Review the exact concept instructions</summary>
           <p className="mt-2 text-sm leading-6 text-[#94a3b8]">Edit these instructions before confirming. Changing them clears your confirmation so the provider never receives an unreviewed revision.</p>
@@ -298,7 +373,8 @@ export function HomeStudioWorkspace() {
           <p className="mt-2 text-right text-xs text-[#94a3b8]">{conceptPrompt.length}/2400</p>
         </details>
         <label className="mt-5 flex items-start gap-3 rounded-xl border border-[#334155] bg-[#111827] p-4 text-sm leading-6 text-[#dbe3ef]"><input type="checkbox" className="mt-1" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} /><span>I reviewed the plan and understand that the visual is an AI concept—not an exact measurement, construction drawing, appraisal, inspection, price quote, or product-availability guarantee.</span></label>
-        <button type="button" className="beast-button-primary mt-4" disabled={!confirmed || !conceptPrompt.trim() || busy} onClick={() => void generateConcept()}>{rendering ? "Generating concept…" : conceptImage ? "Generate another concept" : "Generate visual concept"}</button>
+        {!primaryPhoto ? <p className="mt-4 rounded-xl border border-amber-700/60 bg-amber-950/10 p-3 text-sm text-amber-100">Re-add a primary room view before generating a concept from this saved project.</p> : null}
+        <button type="button" className="beast-button-primary mt-4" disabled={!primaryPhoto || !confirmed || !conceptPrompt.trim() || busy} onClick={() => void generateConcept()}>{rendering ? "Generating concept…" : conceptImage ? "Generate another concept" : "Generate visual concept"}</button>
         {conceptImage ? <div className="mt-6"><div className="overflow-hidden rounded-2xl border border-[#334155] bg-black"><Image src={conceptImage} alt={`AI Home Studio concept for ${form.roomName}`} width={1536} height={1024} unoptimized className="h-auto w-full object-contain" /></div><button type="button" className="beast-button-secondary mt-4" onClick={() => { const link = document.createElement("a"); link.href = conceptImage; link.download = `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "home-studio"}-concept.jpg`; link.click(); }}>Download concept image</button></div> : null}
       </DashboardCard>
     </section> : null}
