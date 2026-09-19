@@ -88,10 +88,10 @@
     },
     "cw": {
       "name": "Change the World",
-      "version": "0.7.0",
-      "buildId": "cw-0.7.0+20260822.01",
+      "version": "1.0.0",
+      "buildId": "cw-1.0.0+20260919.01",
       "channel": "Production",
-      "releaseDate": "2026-08-22"
+      "releaseDate": "2026-09-19"
     }
   }
 }
