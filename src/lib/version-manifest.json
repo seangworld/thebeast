@@ -1,6 +1,6 @@
 {
   "generatedFrom": "BeastFusion state/ecosystem-version-registry.json",
-  "generatedAt": "2026-08-30",
+  "generatedAt": "2026-09-19",
   "identities": {
     "beast": {
       "name": "The Beast",
@@ -81,15 +81,15 @@
     },
     "seangworld": {
       "name": "SEANGWORLD",
-      "version": "1.6.0",
-      "buildId": "sw-1.6.0+20260829.01",
+      "version": "1.7.0",
+      "buildId": "sw-1.7.0+20260919.01",
       "channel": "Production",
-      "releaseDate": "2026-08-29"
+      "releaseDate": "2026-09-19"
     },
     "cw": {
       "name": "Change the World",
-      "version": "6.0.0",
-      "buildId": "cw-6.0.0+20260919.01",
+      "version": "7.0.0",
+      "buildId": "cw-7.0.0+20260919.01",
       "channel": "Production",
       "releaseDate": "2026-09-19"
     }
