@@ -154,3 +154,13 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - HQ pages use an HQ-owned shell and no longer re-export BeastAdmin route pages. Existing workspace components remain shared where the underlying capability is genuinely the same; shared implementation does not imply shared route ownership.
 - BeastAdmin Capacity & AI Analytics is limited to private Digital Professional usage and capacity. Public website and SEANGWORLD News intelligence remain in HQ.
 - Authorization remains owner-only through the existing server enforcement. This reorganization changes information architecture and presentation, not persisted data or database schema.
+
+## BeastHome Home Studio
+
+- [x] Added Home Studio as an active BeastHome workspace for one-room interior styling and space-planning concepts.
+- Members provide one JPG, PNG or WebP room photo up to 3 MB plus room details, measurements, budget, must-keep items and practical constraints. The plan separates visible observations from assumptions and provides a palette, layout steps, design moves and prioritized generic shopping targets.
+- The source photo, plan and generated concept are not stored by Home Studio. Members can download the design packet or concept image before leaving the page.
+- Visual concept generation is optional and requires a separate explicit confirmation because it sends the photo and reviewed prompt to the configured image provider and consumes a paid image request. Planning and image requests retain existing signed-in BeastHome entitlement, concurrency and short-term request controls.
+- Retailer links are searches only. Home Studio does not claim live price, inventory, exact fit, endorsement or an affiliate relationship, and it does not make purchases.
+- Home Studio is an AI planning concept, not a measured construction drawing, appraisal, inspection or substitute for qualified structural, electrical or plumbing help. It does not recommend bypassing exits or safety devices.
+- Future scope: saved projects, multiple-photo room context, dimensioned floor planning and any disclosed affiliate integration. None is claimed in this release.

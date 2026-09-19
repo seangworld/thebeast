@@ -66,5 +66,5 @@ test("BF-MOB-007 exposes mobile future module surfaces without replacing desktop
   assert.match(mobileFutureModules, /isOwner: boolean/);
   assert.match(mobileFutureModules, /future-module-foundation-route/);
   assert.match(healthShell, /Health Advisor Active/);
-  assert.match(homeShell, /Photo-to-Home-Inventory is the only active member-facing BeastHome workflow/);
+  assert.match(homeShell, /Home Inventory and Home Studio are the active member-facing BeastHome workflows/);
 });

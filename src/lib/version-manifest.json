@@ -39,10 +39,10 @@
     },
     "beasthome": {
       "name": "BeastHome",
-      "version": "1.0.0",
-      "buildId": "beasthome-1.0.0+20260829.01",
+      "version": "1.1.0",
+      "buildId": "beasthome-1.1.0+20260919.01",
       "channel": "Production",
-      "releaseDate": "2026-08-29"
+      "releaseDate": "2026-09-19"
     },
     "beastsecurity": {
       "name": "BeastSecurity",

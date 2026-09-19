@@ -12,6 +12,12 @@ export default function BeastHomeOverviewPage() {
       <Link href="/dashboard/home/inventory" className="beast-button-primary mt-5 inline-flex">Start inventory</Link>
     </DashboardCard>
     </div>
+    <div data-tour-step="home-studio">
+    <DashboardCard accent="home"><SectionHeader eyebrow="Available now" title="Redesign a room in Home Studio" description="Turn one room photo, measurements, style choices, and must-keep items into a reviewable plan, shopping targets, and an optional visual concept." />
+      <div className="mt-5"><GuidedEmptyState title="Start with the room you want to improve" description="Home Studio separates visible observations from assumptions and keeps image generation behind an explicit confirmation." guidance="Your source photo and plan are not saved by the workspace. Download what you want to keep, and verify measurements, fit, safety, price, and availability before acting." nextAction={{ label: "Open Home Studio", href: "/dashboard/home/studio" }} secondaryAction={{ label: "Review Home Inventory", href: "/dashboard/home/inventory" }} /></div>
+      <Link href="/dashboard/home/studio" className="beast-button-primary mt-5 inline-flex">Design a room</Link>
+    </DashboardCard>
+    </div>
     <ProductRoadmapModulePreview product="BeastHome" />
     </div>
   </BeastHomeShell>;

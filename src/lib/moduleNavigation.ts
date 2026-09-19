@@ -320,6 +320,7 @@ const plannedModuleNavigation: Record<string, ModuleNavSection> = {
     children: [
       { label: "Overview", href: "/dashboard/home" },
       { label: "Home Inventory", href: "/dashboard/home/inventory" },
+      { label: "Home Studio", href: "/dashboard/home/studio" },
     ],
   },
   documents: { label: "BeastDocuments", module: "documents", comingSoon: true },

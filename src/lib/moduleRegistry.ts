@@ -134,7 +134,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     visibility: "released",
     enabled: true,
     beta: false,
-    ownerNotes: "Released private member home inventory; household sharing and automation remain inactive.",
+    ownerNotes: "Released private member home inventory and review-first Home Studio; household sharing and automation remain inactive.",
     href: "/dashboard/home",
     minimumAge: 18,
   },

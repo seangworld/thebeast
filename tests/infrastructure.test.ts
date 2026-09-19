@@ -6123,6 +6123,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     [
       "Overview",
       "Home Inventory",
+      "Home Studio",
     ]
   );
   assert.equal(
@@ -6408,6 +6409,7 @@ test("BHM-002 releases a bounded private member home inventory", () => {
   [
     "Overview",
     "Home Inventory",
+    "Home Studio",
   ].forEach((label) => assert.match(shell, new RegExp(label)));
   assert.doesNotMatch(shell, /isBeastAdminOwnerRole/);
   assert.match(shell, /Checking member access/);
