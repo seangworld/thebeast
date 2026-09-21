@@ -1,3 +1,4 @@
+import { inspectAtlasConnections, atlasConnectionSummary } from './connections';
 import { createHash } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createRouteClient } from '@/lib/supabase/server';
@@ -55,12 +56,15 @@ export async function runAtlasTurn(id:string, owner:string) {
    answer=`Saved ${action.kind==='task'?'to your ATLAS task list':'in ATLAS memory'}: ${action.body}`; evidence={recordId:r.data.id};
   } else if(/^(?:hey atlas[, ]*)?check (?:my |the )?sites[.!]?$/i.test(question.trim())) {
    const sites=await checkAtlasSites(); evidence={sites}; answer=sites.map(s=>`${new URL(s.url).hostname}: ${s.reachable?'reachable':s.status?`HTTP ${s.status}`:'could not be reached'}${s.status?` (${s.status})`:''}.`).join('\n')+'\nThese are homepage reachability checks, not full functional tests.';
+  } else if(/^(?:hey atlas[, ]*)?(?:check|inspect) (?:my |the )?(?:connections|github|vercel|deployments|supabase)[.!]?$/i.test(question.trim())) {
+   const connections=await inspectAtlasConnections();evidence={connections};answer=atlasConnectionSummary(connections);
   } else {
    if(!process.env.OPENAI_API_KEY) throw new Error('AI connection is not configured. Notes, tasks, and site checks still work.');
    const snapshot=await atlasSnapshot(owner);
+   const liveConnections=/rundown|github|vercel|supabase|deployment|project status|left off/i.test(question)?await inspectAtlasConnections():null;
    const history=snapshot.turns.filter(t=>t.id!==id&&t.status==='completed').slice(0,8).reverse().map(t=>({question:t.question,answer:t.answer,at:t.created_at}));
-   const payload=await requestOpenAIResponse<{output?:Array<{type?:string;content?:Array<{type?:string;text?:string}>}>}>({model:process.env.ATLAS_MODEL||'gpt-5.6-luna',store:false,max_output_tokens:1500,instructions:atlasInstructions,input:JSON.stringify({question,history,records:snapshot.records.slice(0,80).map(r=>({...r,body:r.body.slice(0,600)})),recordLimit:80,recordBodyLimit:600,observations:snapshot.observations,checkedAt:snapshot.checkedAt})},{signal:AbortSignal.timeout(55000)});
-   answer=atlasOutput(payload); if(!answer) throw new Error('ATLAS did not return an answer.'); evidence={contextAt:snapshot.checkedAt,recordCount:Math.min(snapshot.records.length,80),observations:snapshot.observations};
+   const payload=await requestOpenAIResponse<{usage?:{input_tokens?:number;output_tokens?:number;total_tokens?:number};output?:Array<{type?:string;content?:Array<{type?:string;text?:string}>}>}>({model:process.env.ATLAS_MODEL||'gpt-5.6-luna',store:false,max_output_tokens:1500,instructions:atlasInstructions,input:JSON.stringify({question,history,liveConnections,records:snapshot.records.slice(0,80).map(r=>({...r,body:r.body.slice(0,600)})),recordLimit:80,recordBodyLimit:600,observations:snapshot.observations,checkedAt:snapshot.checkedAt})},{signal:AbortSignal.timeout(55000)});
+   answer=atlasOutput(payload); if(!answer) throw new Error('ATLAS did not return an answer.'); evidence={model:process.env.ATLAS_MODEL||'gpt-5.6-luna',tokenUsage:payload.usage||null,liveConnections,contextAt:snapshot.checkedAt,recordCount:Math.min(snapshot.records.length,80),observations:snapshot.observations};
   }
   const receipt=await db.from('atlas_turns').update({status:'completed',answer,evidence,updated_at:new Date().toISOString()}).eq('id',id).eq('owner_id',owner).eq('status','processing');
   if(receipt.error) throw new Error('Result receipt unavailable. Check memory and tasks before repeating a save.');
