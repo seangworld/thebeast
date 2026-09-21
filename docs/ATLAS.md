@@ -6,6 +6,7 @@ ATLAS: Assistant for Tasks, Learning, Action, and Strategy. Working identity app
 
 - Owner-only workspace at `/dashboard/operations/atlas` with text and push-to-talk transcription review, AI audio playback and stop controls, conversation receipts, explicit memory, tasks, and paired-device controls.
 - Background queue stores requests before responding; `after()` begins processing and a minute cron rescues queued work. Atomic claim prevents two workers executing one turn. Five-minute stale processing is marked failed without replay.
+- Live read-only GitHub repository and Vercel deployment checks reuse existing BeastAdmin provider credentials; `Check my connections` works without an AI model call. Rundown and project-status questions can include fresh provider evidence and dated canonical BeastFusion context. Missing configuration is reported explicitly.
 - Deterministic `Remember …` and `Add task: …` writes; fixed-destination `Check my sites` HEAD checks. Saved monitoring summaries provide dated operational context. The model gets bounded saved context and no arbitrary action tools.
 - Mac companion: Vosk local wake/command recognition; commands alone are sent to BEAST. Ambient recordings are not uploaded/stored. Text reaches the existing AI provider for general answers. Generated voice comes from OpenAI. Mute, stop, keyboard controls, pairing and Keychain storage are included.
 
@@ -31,3 +32,5 @@ Run `npm test`, `npm run build`, and `python3 -m unittest discover -s desktop/at
 Download source bundle: `/downloads/atlas-desktop.zip`. Canonical source in `desktop/atlas`. Rebuild zip after changing those sources. Existing `CRON_SECRET` enables `/api/cron/atlas`. No new credential is needed for ordinary web AI if the existing OpenAI account supports configured models.
 
 Official references: https://developers.openai.com/api/docs/guides/text-to-speech ; https://developers.openai.com/api/docs/guides/speech-to-text ; https://alphacephei.com/vosk/install ; https://supabase.com/docs/guides/database/postgres/row-level-security
+
+Web speech includes native audio controls so iPhone users can press Play if automatic playback is blocked, without requesting another paid synthesis.
