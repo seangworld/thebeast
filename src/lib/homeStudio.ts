@@ -71,7 +71,16 @@ export type HomeStudioSavedProject = {
   updatedAt: string;
 };
 
+export const homeStudioShoppingStatuses = ["Needed", "Already owned", "Purchased", "Deferred"] as const;
+export type HomeStudioShoppingStatus = typeof homeStudioShoppingStatuses[number];
+
+export function homeStudioShoppingStatus(value: unknown): HomeStudioShoppingStatus {
+  return homeStudioShoppingStatuses.find(status => status === value) || "Needed";
+}
+
 export type HomeStudioShoppingItem = {
+  status?: HomeStudioShoppingStatus;
+  notes?: string;
   item: string;
   purpose: string;
   searchTerms: string;
@@ -252,6 +261,8 @@ export function normalizeHomeStudioPlan(value: unknown): HomeStudioPlan | null {
         searchTerms: boundedText(item.searchTerms, 120) || name,
         targetPrice: boundedText(item.targetPrice, 60) || "Price not estimated",
         priority,
+        ...(item.status !== undefined ? { status: homeStudioShoppingStatus(item.status) } : {}),
+        ...(item.notes !== undefined ? { notes: boundedText(item.notes, 400) } : {}),
       }];
     }),
     cautions: stringList(plan.cautions, 8),
@@ -370,7 +381,7 @@ export function buildHomeStudioDesignPacket(input: {
     ["Openings", project.openings || "Not supplied"],
     ["Other notes", project.notes || "None"],
   ];
-  const shoppingRows = plan.shoppingList.map((item) => `<tr><td><strong>${escapePacketText(item.item)}</strong><br><span>${escapePacketText(item.purpose)}</span></td><td>${escapePacketText(item.priority)}</td><td>${escapePacketText(item.targetPrice)}</td><td>${escapePacketText(item.searchTerms)}</td><td class="check">□</td></tr>`).join("");
+  const shoppingRows = plan.shoppingList.map((item) => `<tr><td><strong>${escapePacketText(item.item)}</strong><br><span>${escapePacketText(item.purpose)}</span></td><td>${escapePacketText(item.priority)}</td><td>${escapePacketText(item.targetPrice)}</td><td>${escapePacketText(item.searchTerms)}</td><td>${escapePacketText(homeStudioShoppingStatus(item.status))}${item.notes ? `<br>${escapePacketText(item.notes)}` : ""}</td></tr>`).join("");
   const imageCards = [
     ...sourceImages.map((sourceImage, index) => `<figure><img src="${sourceImage}" alt="Original room view ${index + 1}"><figcaption>${index === 0 ? "Primary room view" : `Additional room view ${index + 1}`}</figcaption></figure>`),
     conceptImage ? `<figure><img src="${conceptImage}" alt="AI visual concept"><figcaption>AI visual concept</figcaption></figure>` : "",
@@ -389,7 +400,7 @@ ${hasDimensionedHomeStudioFloorPlan(project) ? `<section><h2>Dimensioned floor-p
 <section><h2>Palette</h2><div class="palette">${plan.palette.map((color) => `<div class="swatch"><span class="color" style="background:${color.hex}"></span>${escapePacketText(color.name)} ${color.hex}</div>`).join("")}</div></section>
 <div class="two"><section class="section"><h2>Visible starting point</h2>${packetList(plan.observedRoom)}</section><section class="section"><h2>Assumptions to verify</h2>${packetList(plan.assumptions)}</section></div>
 <div class="two"><section class="section"><h2>Layout plan</h2>${packetList(plan.layoutPlan)}</section><section class="section"><h2>Design moves</h2>${packetList(plan.designMoves)}</section></div>
-<section class="page-break"><h2>Shopping checklist</h2><table><thead><tr><th>Item and purpose</th><th>Priority</th><th>Planning range</th><th>Search terms</th><th>Done</th></tr></thead><tbody>${shoppingRows}</tbody></table></section>
+<section class="page-break"><h2>Shopping checklist</h2><table><thead><tr><th>Item and purpose</th><th>Priority</th><th>Planning range</th><th>Search terms</th><th>Status and notes</th></tr></thead><tbody>${shoppingRows}</tbody></table></section>
 <section><h2>Safety and reality checks</h2>${packetList(plan.cautions)}</section>
 <section class="section"><h2>Reviewed concept direction</h2><p>${escapePacketText(plan.conceptPrompt)}</p></section>
 <p class="footer">Home Studio does not purchase products, verify live inventory or price, guarantee exact fit, or replace qualified structural, electrical or plumbing help. Retailer searches in the BeastHome workspace are not affiliate links unless explicitly disclosed.</p>
