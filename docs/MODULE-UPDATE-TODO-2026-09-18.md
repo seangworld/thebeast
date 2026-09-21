@@ -169,3 +169,12 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Future scope stops at any separately reviewed and disclosed affiliate integration. Current retailer links remain ordinary searches and cannot influence recommendations or make purchases.
 - Home Studio follow-up adds a self-contained printable HTML packet with the project brief, source and generated concept images when available, palette, layout, design moves, cautions and a printable shopping checklist. JSON project data remains separately downloadable.
 - Members can review and edit the exact concept-image instructions. Any edit clears the prior confirmation before another paid image request can be sent.
+
+## Home Studio continuation — September 21
+
+- [x] Preserve previous plans while revising the brief or retrying a failed request; restore the original brief and prevent mismatched save/export/render actions.
+- [x] Label room views and choose the primary concept photo without re-uploading; preserve saved plans when reattaching photos.
+- [x] Proportional room footprint and area in the workspace and printable packet, with input validation and replacement confirmations.
+- [ ] Affiliate links and tracking: explicitly on hold until Sean is ready. Ordinary retailer searches remain available.
+
+Current persistence clarification: members can explicitly save the room brief and plan. Source/concept images remain session-only. See `HOME-STUDIO-ROOM-REVIEW-2026-09-21.md` for scope and verification limits.

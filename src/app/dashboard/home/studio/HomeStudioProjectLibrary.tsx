@@ -12,6 +12,7 @@ export function HomeStudioProjectLibrary({
   sourcePhotoCount,
   activeProjectId,
   busy,
+  saveBlockedReason,
   onLoad,
   onActiveProjectChange,
 }: {
@@ -20,6 +21,7 @@ export function HomeStudioProjectLibrary({
   sourcePhotoCount: number;
   activeProjectId: string;
   busy: boolean;
+  saveBlockedReason?: string;
   onLoad: (saved: SavedProject) => void;
   onActiveProjectChange: (id: string) => void;
 }) {
@@ -47,7 +49,7 @@ export function HomeStudioProjectLibrary({
   }, [refresh]);
 
   async function save() {
-    if (!project.roomName.trim() || saving || busy) {
+    if (!project.roomName.trim() || saving || busy || saveBlockedReason) {
       if (!project.roomName.trim()) setMessage("Add a project or room name before saving.");
       return;
     }
@@ -102,7 +104,7 @@ export function HomeStudioProjectLibrary({
       description="Your room brief and reviewed plan can be reopened later. Source and concept images remain in this browser session and are never included in a saved project."
     />
     <div className="mt-5 flex flex-wrap gap-3">
-      <button type="button" className="beast-button-primary" disabled={saving || busy || !project.roomName.trim()} onClick={() => void save()}>
+      <button type="button" className="beast-button-primary" disabled={saving || busy || Boolean(saveBlockedReason) || !project.roomName.trim()} onClick={() => void save()}>
         {saving ? "Saving…" : activeProjectId ? "Update saved project" : "Save project"}
       </button>
       <button type="button" className="beast-button-secondary" disabled={loading || saving} onClick={() => void refresh()}>
@@ -110,6 +112,7 @@ export function HomeStudioProjectLibrary({
       </button>
       {activeProjectId ? <button type="button" className="beast-button-secondary" disabled={saving || busy} onClick={() => onActiveProjectChange("")}>Save as new</button> : null}
     </div>
+    {saveBlockedReason ? <p className="mt-3 text-sm text-amber-200" role="status">{saveBlockedReason}</p> : null}
     {message ? <p role="status" className="mt-3 text-sm text-cyan-100">{message}</p> : null}
     <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {loading ? <p className="text-sm text-[#94a3b8]">Loading saved projects…</p> : null}

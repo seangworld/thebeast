@@ -115,6 +115,31 @@ function boundedMeasurement(value: unknown) {
   return number > 0 && number <= 999 ? String(number) : "";
 }
 
+export function homeStudioMeasurementIssues(project: Pick<HomeStudioProject, 'roomLength' | 'roomWidth' | 'ceilingHeight'>) {
+  return ([['roomLength', 'Room length'], ['roomWidth', 'Room width'], ['ceilingHeight', 'Ceiling height']] as const)
+    .filter(([key]) => project[key].trim() && !boundedMeasurement(project[key]))
+    .map(([, label]) => `${label}: enter a number greater than 0 and up to 999, with at most two decimal places. Use the selected unit; put feet/inches or other details in measurement notes.`);
+}
+
+export function homeStudioRoomGeometry(project: Pick<HomeStudioProject, 'roomLength' | 'roomWidth'>) {
+  const length = Number(boundedMeasurement(project.roomLength));
+  const width = Number(boundedMeasurement(project.roomWidth));
+  if (!length || !width) return null;
+  const scale = Math.min(420 / length, 300 / width);
+  const drawingWidth = length * scale;
+  const drawingHeight = width * scale;
+  return { length, width, area: Math.round(length * width * 100) / 100, x: (720 - drawingWidth) / 2, y: (480 - drawingHeight) / 2, drawingWidth, drawingHeight };
+}
+
+export function homeStudioBriefMatches(a: HomeStudioProject | null, b: HomeStudioProject) {
+  return Boolean(a && (Object.keys(b) as (keyof HomeStudioProject)[]).every(key => a[key] === b[key]));
+}
+
+export function homeStudioPrimaryPhoto(photos: HomeStudioPhoto[], index: number) {
+  if (!Number.isInteger(index) || index < 0 || index >= photos.length) return photos;
+  return [photos[index], ...photos.filter((_, i) => i !== index)];
+}
+
 export function normalizeHomeStudioProject(value: unknown): HomeStudioProject | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const input = value as Record<string, unknown>;
@@ -288,11 +313,13 @@ function packetImage(value: string | undefined) {
 }
 
 export function hasDimensionedHomeStudioFloorPlan(project: HomeStudioProject) {
-  return Boolean(project.roomLength && project.roomWidth);
+  return homeStudioRoomGeometry(project) !== null;
 }
 
 export function buildHomeStudioFloorPlanSvg(project: HomeStudioProject) {
-  if (!hasDimensionedHomeStudioFloorPlan(project)) return "";
+  const geometry = homeStudioRoomGeometry(project);
+  if (!geometry) return "";
+  const { x, y, drawingWidth, drawingHeight } = geometry;
   const length = escapePacketText(project.roomLength);
   const width = escapePacketText(project.roomWidth);
   const unit = project.measurementUnit === "meters" ? "m" : "ft";
@@ -305,14 +332,14 @@ export function buildHomeStudioFloorPlanSvg(project: HomeStudioProject) {
   return [
     '<div class="floor-plan"><svg viewBox="0 0 720 500" role="img" aria-label="Dimensioned top-down room outline">',
     '<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="#0e7490"/></marker></defs>',
-    '<rect x="150" y="90" width="420" height="300" fill="#f8fafc" stroke="#172033" stroke-width="8"/>',
+    `<rect x="${x}" y="${y}" width="${drawingWidth}" height="${drawingHeight}" fill="#f8fafc" stroke="#172033" stroke-width="4"/>`,
     '<text x="360" y="70" text-anchor="middle">North wall</text><text x="360" y="420" text-anchor="middle">South wall</text>',
     '<text x="115" y="245" text-anchor="middle" transform="rotate(-90 115 245)">West wall</text><text x="605" y="245" text-anchor="middle" transform="rotate(90 605 245)">East wall</text>',
-    '<line x1="150" y1="455" x2="570" y2="455" stroke="#0e7490" marker-start="url(#arrow)" marker-end="url(#arrow)"/>',
+    `<line x1="${x}" y1="455" x2="${x + drawingWidth}" y2="455" stroke="#0e7490" marker-start="url(#arrow)" marker-end="url(#arrow)"/>`,
     `<text x="360" y="482" text-anchor="middle">${length} ${unit}</text>`,
-    '<line x1="75" y1="90" x2="75" y2="390" stroke="#0e7490" marker-start="url(#arrow)" marker-end="url(#arrow)"/>',
+    `<line x1="75" y1="${y}" x2="75" y2="${y + drawingHeight}" stroke="#0e7490" marker-start="url(#arrow)" marker-end="url(#arrow)"/>`,
     `<text x="45" y="245" text-anchor="middle" transform="rotate(-90 45 245)">${width} ${unit}</text>`,
-    '<text x="360" y="235" text-anchor="middle" font-size="18">Planning outline — verify on site</text></svg>',
+    `</svg><p>Proportional room outline · ${geometry.length} × ${geometry.width} ${unit} · ${geometry.area} square ${project.measurementUnit === 'meters' ? 'meters' : 'feet'}. Verify on site; openings and furniture are not positioned to scale.</p>`,
     wallNotes.length ? `<dl>${wallNotes.map(([label, value]) => `<div><dt>${escapePacketText(label)}</dt><dd>${escapePacketText(value)}</dd></div>`).join("")}</dl>` : "",
     "</div>",
   ].join("");
