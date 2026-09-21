@@ -39,7 +39,7 @@ test("DB-001 canonical migrations have unique ordered versions", () => {
     .sort();
   const versions = files.map((file) => file.slice(0, 14));
 
-  assert.equal(files.length, 109);
+  assert.equal(files.length, 111);
   assert.equal(new Set(versions).size, versions.length);
   assert.deepEqual(
     files,
@@ -65,7 +65,7 @@ test("DB-001 every canonical public table enables RLS", () => {
     )
   );
 
-  assert.equal(createdTables.size, 134);
+  assert.equal(createdTables.size, 139);
   assert.deepEqual(
     Array.from(createdTables).filter((table) => !rlsTables.has(table)),
     []
@@ -146,7 +146,7 @@ test("DB-001 application table and RPC literals exist in canonical migrations", 
   const rpcReferences = new Set(
     matches(source, /\.rpc\(\s*["'`]([^"'`]+)["'`]/g)
   );
-  const storageBuckets = new Set(["beast-documents", "beast-marketing-media"]);
+  const storageBuckets = new Set(["beast-documents", "beast-marketing-media", "beast-marketing-social"]);
 
   assert.deepEqual(
     Array.from(relationReferences).filter(

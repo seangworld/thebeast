@@ -53,10 +53,10 @@
     },
     "beastmarketing": {
       "name": "BeastMarketing",
-      "version": "0.6.0",
-      "buildId": "beastmarketing-0.6.0+20260831.01",
+      "version": "0.7.0",
+      "buildId": "beastmarketing-0.7.0+20260921.01",
       "channel": "Production",
-      "releaseDate": "2026-08-31"
+      "releaseDate": "2026-09-21"
     },
     "beastgoals": {
       "name": "BeastGoals",

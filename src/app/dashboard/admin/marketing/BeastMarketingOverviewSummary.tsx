@@ -66,6 +66,7 @@ export function BeastMarketingOverviewSummary() {
       </section> : null}
       {!loading && !error ? <section aria-label="Marketing provider and publishing state" className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] p-5">
         <h2 className="text-lg font-black text-white">Provider and publishing state</h2>
+        <p className="mt-2 text-sm text-slate-300">These statuses cover Advertising and Video Growth. <a className="text-amber-200 underline" href="/dashboard/operations/marketing/social">Open Social</a> for Facebook, X, and Instagram drafts, account connections, and the approved publishing queue.</p>
         <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {Object.entries(authorities).map(([key, value]) => <div key={key}><dt className="text-xs font-black uppercase tracking-wider text-slate-500">{label(key)}</dt><dd className="mt-1 text-sm font-black text-amber-100">{label(value)}</dd></div>)}
         </dl>

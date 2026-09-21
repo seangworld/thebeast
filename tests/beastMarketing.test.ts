@@ -54,8 +54,8 @@ function result(metric: MarketingOutcome["metric"], value: number): MarketingOut
   return { id: `${metric}-${value}`, campaignId: campaign.id, metric, value, measuredAt: "2026-08-23T00:00:00Z", sourceLabel: "First-party telemetry", sourceUrl: null, notes: "" };
 }
 
-test("BeastMarketing v0.6 preserves bounded campaign, asset, and outcome states", () => {
-  assert.equal(BEAST_MARKETING_VERSION, "0.6.0");
+test("BeastMarketing v0.7 preserves bounded campaign, asset, and outcome states", () => {
+  assert.equal(BEAST_MARKETING_VERSION, "0.7.0");
   assert.deepEqual(marketingCampaignStatuses, ["draft", "review", "approved", "scheduled", "active", "paused", "completed", "archived"]);
   assert.equal(isMarketingCampaignStatus("approved"), true);
   assert.equal(isMarketingCampaignStatus("published"), false);
@@ -462,7 +462,8 @@ test("BeastMarketing uses one owner-only six-workspace hierarchy without duplica
   assert.doesNotMatch(advertisingWorkspace, /VideoGrowthEnginePanel/);
   assert.match(video, /VideoGrowthEnginePanel/);
   assert.match(readFileSync("src/app/dashboard/admin/marketing/analytics/page.tsx", "utf8"), /GrowthCyclePanel/);
-  for (const route of ["social", "email"]) {
+  assert.match(readFileSync("src/app/dashboard/admin/marketing/social/page.tsx", "utf8"), /SocialWorkspace/);
+  for (const route of ["email"]) {
     const foundation = readFileSync(`src/app/dashboard/admin/marketing/${route}/page.tsx`, "utf8");
     assert.match(foundation, /MarketingFoundationPage/);
   }
