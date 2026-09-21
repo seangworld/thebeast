@@ -1,5 +1,6 @@
 "use client";
 
+import type { HomeStudioAffiliate } from "@/lib/homeStudioAffiliates";
 import Image from "next/image";
 import { useRef, useState, type ChangeEvent } from "react";
 import {
@@ -10,6 +11,11 @@ import {
 import {
   buildHomeStudioDesignPacket,
   homeStudioBriefMatches,
+  normalizeHomeStudioWorkspace,
+  normalizeHomeStudioMoney,
+  createHomeStudioVersion,
+  type HomeStudioWorkspaceData,
+  type HomeStudioVersion,
   homeStudioMeasurementIssues,
   homeStudioPrimaryPhoto,
   HOME_STUDIO_MAX_PHOTOS,
@@ -25,6 +31,7 @@ import {
   type HomeStudioSavedProject,
 } from "@/lib/homeStudio";
 import { prepareHomeStudioPhoto } from "@/lib/homeStudioClient";
+import { HomeStudioWorkbench } from "./HomeStudioWorkbench";
 import { HomeStudioFloorPlan } from "./HomeStudioFloorPlan";
 import { HomeStudioProjectLibrary } from "./HomeStudioProjectLibrary";
 
@@ -75,7 +82,8 @@ function downloadData(name: string, content: string, type: string) {
   URL.revokeObjectURL(url);
 }
 
-export function HomeStudioWorkspace() {
+export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStudioAffiliate[] } = {}) {
+  const [shoppingName, setShoppingName] = useState("");
   const [form, setForm] = useState(initialForm);
   const [photos, setPhotos] = useState<HomeStudioPhoto[]>([]);
   const [plan, setPlan] = useState<HomeStudioPlan | null>(null);
@@ -84,23 +92,31 @@ export function HomeStudioWorkspace() {
   const [conceptPrompt, setConceptPrompt] = useState("");
   const [conceptImage, setConceptImage] = useState("");
   const [message, setMessage] = useState("");
+  const [savingProject, setSavingProject] = useState(false);
   const [planning, setPlanning] = useState(false);
   const [rendering, setRendering] = useState(false);
   const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
-  const busy = planning || rendering || preparingPhotos;
+  const busy = planning || rendering || preparingPhotos || savingProject;
   const primaryPhoto = photos[0]?.dataUrl || "";
 
   const planOutdated = Boolean(plan && !homeStudioBriefMatches(planProject, form));
   const measurementIssues = homeStudioMeasurementIssues(form);
 
+  const moneyIssue = [form.workspace?.budgetLimit, form.workspace?.client.fee, ...(plan?.shoppingList.map(item => item.unitPrice) || [])].some(value => value && !normalizeHomeStudioMoney(value));
+  const layoutIssue = form.workspace?.layout.some(item => item.width <= 0 || item.depth <= 0 || [item.x, item.y, item.width, item.depth].some(n => !Number.isFinite(n) || n < 0 || n > 999));
   const completedBasics = [photos.length, form.roomName, form.roomType, form.style].filter(Boolean).length;
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     if (busy) return;
-    setForm(current => ({ ...current, [key]: value }));
+    if (key === "measurementUnit" && value !== form.measurementUnit && (form.roomLength || form.roomWidth || form.ceilingHeight || form.workspace?.layout.length)) {
+      if (!window.confirm("Convert numeric room and layout measurements to the selected unit? Free-text measurement notes must be updated separately.")) return;
+      const factor = value === "meters" ? 0.3048 : 1 / 0.3048;
+      const convert = (n: number) => Math.round(n * factor * 100) / 100;
+      setForm(current => ({ ...current, measurementUnit: value as HomeStudioProject["measurementUnit"], roomLength: current.roomLength ? String(convert(Number(current.roomLength))) : "", roomWidth: current.roomWidth ? String(convert(Number(current.roomWidth))) : "", ceilingHeight: current.ceilingHeight ? String(convert(Number(current.ceilingHeight))) : "", ...(current.workspace ? { workspace: { ...current.workspace, layout: current.workspace.layout.map(item => ({ ...item, x: convert(item.x), y: convert(item.y), width: convert(item.width), depth: convert(item.depth) })) } } : {}) }));
+    } else setForm(current => ({ ...current, [key]: value }));
     setConceptImage("");
     setConfirmed(false);
   }
@@ -150,7 +166,7 @@ export function HomeStudioWorkspace() {
 
   function openSavedProject(saved: HomeStudioSavedProject & { sourcePhotoCount: number }) {
     if (busy) return;
-    if ((!homeStudioBriefMatches(initialForm, form) || photos.length || plan) && !window.confirm("Open this saved project? Current unsaved edits and session photos will be replaced.")) return;
+    if ((!homeStudioBriefMatches(initialForm, form) || form.workspace || photos.length || plan) && !window.confirm("Open this saved project? Current unsaved edits and session photos will be replaced.")) return;
     setForm(saved.project);
     setPlanProject(saved.plan ? saved.project : null);
     setPhotosChanged(false);
@@ -166,7 +182,7 @@ export function HomeStudioWorkspace() {
     if (fileInput.current) fileInput.current.value = "";
   }
 
-  function updateShopping(index: number, changes: Pick<HomeStudioShoppingItem, "status" | "notes">) {
+  function updateShopping(index: number, changes: Pick<HomeStudioShoppingItem, "status" | "notes" | "quantity" | "unitPrice">) {
     if (busy || planOutdated) return;
     setPlan(current => current ? { ...current, shoppingList: current.shoppingList.map((item, i) => i === index ? { ...item, ...changes } : item) } : current);
   }
@@ -178,7 +194,8 @@ export function HomeStudioWorkspace() {
       return;
     }
     if (measurementIssues.length) { setMessage(measurementIssues.join(" ")); return; }
-    if (plan?.shoppingList.some(item => (item.status && item.status !== "Needed") || item.notes?.trim()) && !window.confirm("Rebuilding replaces this plan and its shopping checklist. Save or download your current project first if you want to keep its statuses and notes. Continue?")) return;
+    if (moneyIssue || layoutIssue) { setMessage("Correct incomplete prices or invalid layout dimensions before rebuilding."); return; }
+    if (plan && (form.workspace?.versions.length || 0) >= 5) { setMessage("Your five version slots are full. Download a backup and remove a snapshot before rebuilding, so your current design can be kept."); return; }
     setPlanning(true);
     setMessage("Reviewing the room and preparing a design plan… Your previous plan stays available if this request fails.");
     setConfirmed(false);
@@ -191,6 +208,11 @@ export function HomeStudioWorkspace() {
       const body = await response.json() as { plan?: HomeStudioPlan; notice?: string; error?: string };
       if (!response.ok || !body.plan) setMessage(body.error || "The design plan could not be prepared.");
       else {
+        if (plan && planProject) {
+          const workspace = form.workspace || normalizeHomeStudioWorkspace(null);
+          const version = createHomeStudioVersion({ ...planProject, workspace }, { ...plan, conceptPrompt }, `Before rebuild: ${plan.title}`, crypto.randomUUID(), new Date().toISOString());
+          setForm(current => ({ ...current, workspace: { ...workspace, versions: [...workspace.versions, version] } }));
+        }
         setPlan(body.plan);
         setPlanProject({ ...form });
         setPhotosChanged(false);
@@ -228,9 +250,27 @@ export function HomeStudioWorkspace() {
     }
   }
 
+  function updateWorkspace(workspace: HomeStudioWorkspaceData) {
+    if (!busy) setForm(current => ({ ...current, workspace }));
+  }
+  function restoreVersion(version: HomeStudioVersion) {
+    if (busy) return;
+    const workspace = form.workspace || normalizeHomeStudioWorkspace(null);
+    const next = { ...version.project, workspace: { ...workspace, layout: structuredClone(version.layout), budgetLimit: version.budgetLimit } };
+    setForm(next); setPlanProject(next); setPlan(structuredClone(version.plan));
+    setConceptPrompt(version.plan.conceptPrompt); setConceptImage(""); setConfirmed(false); setPhotosChanged(Boolean(photos.length));
+    setMessage("Design version restored. Save project to keep the restored design.");
+  }
+  function importProject(data: { project: HomeStudioProject; plan: HomeStudioPlan | null }) {
+    if (busy) return;
+    setForm(data.project); setPlanProject(data.plan ? data.project : null); setPlan(data.plan);
+    setConceptPrompt(data.plan?.conceptPrompt || ""); setPhotos([]); setConceptImage(""); setConfirmed(false);
+    setActiveProjectId(""); setPhotosChanged(false);
+  }
+
   function reset() {
     if (busy) return;
-    if ((!homeStudioBriefMatches(initialForm, form) || photos.length || plan) && !window.confirm("Start a new room? Current unsaved edits and session images will be cleared. Saved projects will remain available.")) return;
+    if ((!homeStudioBriefMatches(initialForm, form) || form.workspace || photos.length || plan) && !window.confirm("Start a new room? Current unsaved edits and session images will be cleared. Saved projects will remain available.")) return;
     setPlanProject(null);
     setPhotosChanged(false);
     setForm(initialForm);
@@ -258,7 +298,7 @@ export function HomeStudioWorkspace() {
     if (!plan || planOutdated || busy) return;
     downloadData(
       `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-project-data.json`,
-      JSON.stringify({ project: form, plan: { ...plan, conceptPrompt }, sourcePhotoCount: photos.length, photosStored: false, createdAt: new Date().toISOString(), boundary: "AI planning concept; verify measurements, fit, safety, prices, and availability." }, null, 2),
+      JSON.stringify({ schemaVersion: 2, project: form, plan: { ...plan, conceptPrompt }, sourcePhotoCount: photos.length, photosStored: false, createdAt: new Date().toISOString(), boundary: "AI planning concept; verify measurements, fit, safety, prices, and availability." }, null, 2),
       "application/json",
     );
   }
@@ -287,7 +327,8 @@ export function HomeStudioWorkspace() {
       sourcePhotoCount={photos.length}
       activeProjectId={activeProjectId}
       busy={busy}
-      saveBlockedReason={measurementIssues.length ? "Correct invalid measurements before saving. Unknown measurements can be left blank." : planOutdated ? "The brief has changed. Rebuild the plan or restore its brief before saving, so the saved plan and measurements stay together." : undefined}
+      saveBlockedReason={moneyIssue || layoutIssue ? "Correct incomplete prices or invalid layout dimensions before saving." : measurementIssues.length ? "Correct invalid measurements before saving. Unknown measurements can be left blank." : planOutdated ? "The brief has changed. Rebuild the plan or restore its brief before saving, so the saved plan and measurements stay together." : undefined}
+      onSavingChange={setSavingProject}
       onLoad={openSavedProject}
       onActiveProjectChange={setActiveProjectId}
     />
@@ -349,14 +390,17 @@ export function HomeStudioWorkspace() {
         </details>
         <div className="mt-5 flex flex-wrap gap-3">
           <button className="beast-button-primary" type="button" disabled={busy} onClick={() => void createPlan()}>{planning ? "Preparing design plan…" : plan ? "Rebuild design plan" : "Create design plan"}</button>
+          {!plan ? <button className="beast-button-secondary" type="button" disabled={busy || !form.roomName.trim() || measurementIssues.length > 0} onClick={() => { const manual: HomeStudioPlan = { title: `${form.roomName} — manual plan`, summary: "A project you can organize with your own shopping items, layout, and budget. No AI analysis has been performed.", observedRoom: [], assumptions: [], palette: [], layoutPlan: [], designMoves: [], shoppingList: [], cautions: ["Verify all measurements and fit on site."], conceptPrompt: "Create a room concept preserving the existing architecture and all must-keep items. Review and add your design instructions before generating an image." }; setPlan(manual); setPlanProject({ ...form }); setConceptPrompt(manual.conceptPrompt); setMessage("Manual plan started without an AI request."); }}>Start manual plan</button> : null}
           <button className="beast-button-secondary" type="button" disabled={busy} onClick={reset}>Start a new room</button>
         </div>
         {message ? <p className="mt-4 rounded-xl border border-[#334155] bg-[#0f172a] p-3 text-sm text-[#dbe3ef]" role="status" aria-live="polite">{message}</p> : null}
       </DashboardCard>
     </fieldset>
 
+    <HomeStudioWorkbench project={form} plan={plan ? { ...plan, conceptPrompt } : null} busy={busy} stale={planOutdated || measurementIssues.length > 0 || moneyIssue || Boolean(layoutIssue)} onWorkspace={updateWorkspace} onRestore={restoreVersion} onImport={importProject} />
+
     {plan ? <section className="space-y-6" aria-labelledby="home-studio-plan-title">
-      {planOutdated ? <div className="rounded-xl border border-amber-600 bg-amber-950/20 p-5" role="status"><h2 className="font-black text-amber-100">Your previous plan is preserved</h2><p className="mt-2 text-sm text-amber-100">The room brief has changed. The plan below still describes the previous brief. Rebuild it before saving, exporting, or generating a concept with the new measurements.</p><button className="beast-button-secondary mt-3" type="button" disabled={busy} onClick={() => { if (planProject && window.confirm("Restore the brief used for this plan? Current brief edits will be replaced; photos will stay as they are.")) { setForm({ ...planProject }); setConfirmed(false); } }}>Restore plan brief</button></div> : null}
+      {planOutdated ? <div className="rounded-xl border border-amber-600 bg-amber-950/20 p-5" role="status"><h2 className="font-black text-amber-100">Your previous plan is preserved</h2><p className="mt-2 text-sm text-amber-100">The room brief has changed. The plan below still describes the previous brief. Rebuild it before saving, exporting, or generating a concept with the new measurements.</p><button className="beast-button-secondary mt-3" type="button" disabled={busy} onClick={() => { if (planProject && window.confirm("Restore the brief used for this plan? Current brief edits will be replaced; photos will stay as they are.")) { setForm({ ...planProject, workspace: form.workspace }); setConfirmed(false); } }}>Restore plan brief</button></div> : null}
       {photosChanged ? <p className="rounded-xl border border-cyan-800 bg-cyan-950/20 p-4 text-sm text-cyan-100">Room photos or their labels changed. The existing plan has not re-analyzed them. Rebuild for fresh photo analysis, or review the existing instructions before using your selected primary view for a concept.</p> : null}
       <DashboardCard accent="home">
         <SectionHeader eyebrow="Review before generating" title={plan.title} description={plan.summary} />
@@ -373,9 +417,10 @@ export function HomeStudioWorkspace() {
       </div>
 
       <DashboardCard accent="home">
-        <SectionHeader eyebrow="Shopping targets" title="Shop the plan without locking into one retailer" description="These are ordinary retailer searches—not live inventory, exact-fit promises, endorsements, affiliate links, or purchases." />
-        <p className="mt-3 text-sm text-[#cbd5e1]">Track what you need, own, or have purchased. Use Save project to keep checklist changes; they are also included in downloads. Rebuilding starts a new checklist.</p>
+        <SectionHeader eyebrow="Shopping targets" title="Shop the plan without locking into one retailer" description={affiliates.length ? "Some retailer links are affiliate links. We may earn a commission if you buy through them. Verify fit, price, and availability with the retailer." : "Ordinary retailer searches. Affiliate links are not active. Verify fit, price, and availability with the retailer."} />
+        <p className="mt-3 text-sm text-[#cbd5e1]">Track what you need, own, or have purchased. Use Save project to keep checklist changes; they are also included in downloads. Rebuilding keeps a snapshot of your previous design and starts a new checklist.</p>
         <p className="mt-2 text-sm font-bold text-cyan-100">{plan.shoppingList.filter(item => item.status === "Purchased" || item.status === "Already owned").length} of {plan.shoppingList.length} items ready</p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row"><label className="flex-1 text-sm">Add your own shopping item<input className={inputClass} value={shoppingName} maxLength={100} disabled={busy || planOutdated} onChange={e => setShoppingName(e.target.value)} placeholder="Curtains, paint, shelf hardware…" /></label><button className="beast-button-secondary self-end" type="button" disabled={busy || planOutdated || !shoppingName.trim() || plan.shoppingList.length >= 32} onClick={() => { setPlan(current => current ? { ...current, shoppingList: [...current.shoppingList, { item: shoppingName.trim(), purpose: "Added by you", searchTerms: shoppingName.trim(), targetPrice: "Price not estimated", priority: "Optional", status: "Needed", quantity: 1 }] } : current); setShoppingName(""); }}>Add shopping item</button></div>
         {!plan.shoppingList.length ? <p className="mt-3 text-sm text-[#94a3b8]">This plan has no shopping items.</p> : null}
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {plan.shoppingList.map((item, index) => <article key={`${item.item}-${index}`} className="rounded-xl border border-[#334155] bg-[#111827] p-4">
@@ -389,7 +434,12 @@ export function HomeStudioWorkspace() {
             <label className="mt-3 block text-sm font-bold">Shopping notes
               <textarea className={inputClass} aria-label={`Shopping notes for ${item.item}`} value={item.notes || ""} maxLength={400} rows={2} placeholder="Measurements to check, store, or product details" disabled={busy || planOutdated} onChange={event => updateShopping(index, { notes: event.target.value })} />
             </label>
-            <details className="mt-3"><summary className="cursor-pointer text-sm font-bold text-cyan-300">Search retailers</summary><div className="mt-3 flex flex-wrap gap-2">{homeStudioRetailerLinks(item.searchTerms).map(retailer => <a key={retailer.label} href={retailer.href} target="_blank" rel="noopener noreferrer" className="beast-button-secondary text-xs">{retailer.label}</a>)}</div></details>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="text-sm">Quantity<input className={inputClass} aria-label={`Quantity for ${item.item}`} type="number" min={1} max={99} step={1} value={item.quantity || 1} disabled={busy || planOutdated} onChange={event => { const n = Number(event.target.value); if (Number.isInteger(n) && n >= 1 && n <= 99) updateShopping(index, { quantity: n }); }} /></label>
+              <label className="text-sm">Unit price (USD)<input className={inputClass} aria-label={`Unit price for ${item.item}`} inputMode="decimal" maxLength={9} placeholder="Unknown" value={item.unitPrice || ""} disabled={busy || planOutdated} onChange={event => { const value = event.target.value; if (/^\d{0,6}(\.\d{0,2})?$/.test(value)) updateShopping(index, { unitPrice: value }); }} /></label>
+            </div>
+            <details className="mt-3"><summary className="cursor-pointer text-sm font-bold text-cyan-300">Search retailers</summary><div className="mt-3 flex flex-wrap gap-2">{homeStudioRetailerLinks(item.searchTerms, affiliates).map(retailer => <a key={retailer.label} href={retailer.href} target="_blank" rel={retailer.affiliate ? "sponsored noopener noreferrer" : "noopener noreferrer"} className="beast-button-secondary text-xs">{retailer.label}{retailer.affiliate ? " (affiliate)" : ""}</a>)}</div></details>
+            <button type="button" className="mt-3 text-sm text-rose-200 underline" disabled={busy || planOutdated} onClick={() => { if (window.confirm(`Remove ${item.item} from the shopping list?`)) setPlan(current => current ? { ...current, shoppingList: current.shoppingList.filter((_, i) => i !== index) } : current); }}>Remove shopping item</button>
           </article>)}
         </div>
       </DashboardCard>
@@ -397,7 +447,7 @@ export function HomeStudioWorkspace() {
       <DashboardCard accent="beastos">
         <SectionHeader eyebrow="Reality check" title="Verify before acting" description="Home Studio organizes a concept; it does not inspect the property or replace qualified local help." />
         <TextList items={plan.cautions} />
-        <div className="mt-5 flex flex-wrap gap-3"><button type="button" className="beast-button-secondary" disabled={busy || planOutdated} onClick={downloadPacket}>Download printable packet</button><button type="button" className="beast-button-secondary" disabled={busy || planOutdated} onClick={downloadProjectData}>Download project data</button></div>
+        <div className="mt-5 flex flex-wrap gap-3"><button type="button" className="beast-button-secondary" disabled={busy || planOutdated || moneyIssue || Boolean(layoutIssue)} onClick={downloadPacket}>Download printable packet</button><button type="button" className="beast-button-secondary" disabled={busy || planOutdated || moneyIssue || Boolean(layoutIssue)} onClick={downloadProjectData}>Download project data</button></div>
       </DashboardCard>
 
       <DashboardCard accent="home">

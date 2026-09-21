@@ -61,13 +61,15 @@ export async function POST(request: Request) {
   const authorized = await access();
   if ("error" in authorized) return authorized.error;
   const text = await request.text();
-  if (text.length > 100_000) return reply({ error: "Project data is too large." }, 413);
+  if (text.length > 500_000) return reply({ error: "Project data is too large." }, 413);
   let body: Record<string, unknown>;
   try {
     body = JSON.parse(text) as Record<string, unknown>;
   } catch {
     return reply({ error: "Invalid project request." }, 400);
   }
+
+  if (!body || typeof body !== "object" || Array.isArray(body)) return reply({ error: "Invalid project request." }, 400);
 
   const id = typeof body.id === "string" && uuidPattern.test(body.id) ? body.id : "";
   if (body.action === "delete") {

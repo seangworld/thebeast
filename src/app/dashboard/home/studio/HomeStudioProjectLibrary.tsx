@@ -13,6 +13,7 @@ export function HomeStudioProjectLibrary({
   activeProjectId,
   busy,
   saveBlockedReason,
+  onSavingChange,
   onLoad,
   onActiveProjectChange,
 }: {
@@ -22,6 +23,7 @@ export function HomeStudioProjectLibrary({
   activeProjectId: string;
   busy: boolean;
   saveBlockedReason?: string;
+  onSavingChange?: (saving: boolean) => void;
   onLoad: (saved: SavedProject) => void;
   onActiveProjectChange: (id: string) => void;
 }) {
@@ -54,6 +56,7 @@ export function HomeStudioProjectLibrary({
       return;
     }
     setSaving(true);
+    onSavingChange?.(true);
     try {
       const response = await fetch("/api/home/studio/projects", {
         method: "POST",
@@ -71,12 +74,14 @@ export function HomeStudioProjectLibrary({
       setMessage("The project could not be saved.");
     } finally {
       setSaving(false);
+      onSavingChange?.(false);
     }
   }
 
   async function remove(saved: SavedProject) {
     if (saving || busy || !window.confirm(`Delete “${saved.project.roomName}”? This removes the saved brief and plan and cannot be undone.`)) return;
     setSaving(true);
+    onSavingChange?.(true);
     try {
       const response = await fetch("/api/home/studio/projects", {
         method: "POST",
@@ -94,6 +99,7 @@ export function HomeStudioProjectLibrary({
       setMessage("The project could not be deleted.");
     } finally {
       setSaving(false);
+      onSavingChange?.(false);
     }
   }
 

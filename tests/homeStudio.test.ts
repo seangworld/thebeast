@@ -99,7 +99,7 @@ test("Home Studio protects authorization privacy cost and action boundaries", ()
   assert.match(renderRoute, /quality[\s\S]*low/);
   assert.match(workspace, /consumes one image-generation request/);
   assert.match(workspace, /does not purchase products or save the image/);
-  assert.match(workspace, /not live inventory, exact-fit promises, endorsements, affiliate links, or purchases/);
+  assert.match(workspace, /Affiliate links are not active/);
   assert.match(workspace, /Photos remain session-only/);
 });
 

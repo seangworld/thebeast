@@ -109,3 +109,52 @@ test('reattaching photos and a failed rebuild preserve the saved plan without a 
   fireEvent.change(ui.getByLabelText('Room length'), { target: { value: '15' } });
   assert.equal((ui.getByRole('button', { name: 'Save project' }) as HTMLButtonElement).disabled, false);
 });
+
+test('manual plan, budget, version, save and reopen retain project data without AI requests', async () => {
+  window.confirm=()=>true;
+  let saved: (studio.HomeStudioSavedProject & {sourcePhotoCount:number}) | null=null;
+  globalThis.fetch=(async (url:string,options?:RequestInit)=>{
+    assert.ok(url.endsWith('/projects'));
+    if(options?.method==='POST') {
+      const body=JSON.parse(String(options.body));const normalized=studio.normalizeHomeStudioSavedProject(body)!;
+      saved={id:'test-project',...normalized,sourcePhotoCount:0,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+      return Response.json({project:saved});
+    }
+    return Response.json({projects:saved?[saved]:[]});
+  }) as typeof fetch;
+  const view=render(React.createElement(HomeStudioWorkspace)); const ui=within(view.container);
+  await waitFor(()=>assert.ok(ui.getByText('No saved Home Studio projects yet.')));
+  fireEvent.change(ui.getByLabelText('Project or room name'),{target:{value:'Manual office'}});
+  fireEvent.click(ui.getByRole('button',{name:'Start manual plan'}));
+  fireEvent.change(ui.getByLabelText('Add your own shopping item'),{target:{value:'Desk lamp'}});
+  fireEvent.click(ui.getByRole('button',{name:'Add shopping item'}));
+  fireEvent.change(ui.getByLabelText('Unit price for Desk lamp'),{target:{value:'25.50'}});
+  fireEvent.change(ui.getByLabelText('Quantity for Desk lamp'),{target:{value:'2'}});
+  fireEvent.change(ui.getByLabelText('Shopping budget limit (USD)'),{target:{value:'100'}});
+  assert.ok(ui.getByText(/Budget balance \$49.00/));
+  fireEvent.click(ui.getByText('Design versions and comparison'));
+  fireEvent.change(ui.getByLabelText('Version name'),{target:{value:'Original'}});
+  fireEvent.click(ui.getByRole('button',{name:'Keep design version'}));
+  fireEvent.change(ui.getByLabelText('Unit price for Desk lamp'),{target:{value:'40'}});
+  fireEvent.click(ui.getByRole('button',{name:'Restore version'}));
+  assert.equal((ui.getByLabelText('Unit price for Desk lamp') as HTMLInputElement).value,'25.50');
+  fireEvent.click(ui.getByRole('button',{name:'Save project'}));
+  await waitFor(()=>assert.ok(ui.getByText('Project saved. Photos remain session-only and were not stored.')));
+  assert.equal(saved!.project.workspace!.versions.length,1);
+  assert.equal(saved!.plan!.shoppingList[0].quantity,2);
+  fireEvent.click(ui.getByRole('button',{name:'Start a new room'}));
+  fireEvent.click(ui.getByRole('button',{name:'Open'}));
+  assert.equal((ui.getByLabelText('Shopping budget limit (USD)') as HTMLInputElement).value,'100');
+  assert.equal((ui.getByLabelText('Unit price for Desk lamp') as HTMLInputElement).value,'25.50');
+  assert.equal(planCalls,0);
+});
+
+test('project save locks edits until the request settles', async()=>{
+  const {ui}=await setup(); let release:()=>void=()=>{};
+  globalThis.fetch=(async()=>{await new Promise<void>(resolve=>{release=resolve});return Response.json({error:'Save unavailable'},{status:503});}) as typeof fetch;
+  fireEvent.click(ui.getByRole('button',{name:'Update saved project'}));
+  await waitFor(()=>assert.equal((ui.getByLabelText('Project or room name') as HTMLInputElement).matches(':disabled'),true));
+  release();
+  await waitFor(()=>assert.ok(ui.getByText('Save unavailable')));
+  assert.equal((ui.getByLabelText('Project or room name') as HTMLInputElement).matches(':disabled'),false);
+});
