@@ -97,6 +97,12 @@ test('reattaching photos and a failed rebuild preserve the saved plan without a 
   window.confirm = () => true;
   fireEvent.click(ui.getByRole('button', { name: 'Start a new room' }));
   assert.equal(ui.queryByText('Existing office plan'), null);
+  fireEvent.change(ui.getByLabelText(/Colors or palette/), { target: { value: 'Green' } });
+  window.confirm = () => false;
+  fireEvent.click(ui.getByRole('button', { name: 'Start a new room' }));
+  assert.equal((ui.getByLabelText(/Colors or palette/) as HTMLInputElement).value, 'Green');
+  window.confirm = () => true;
+  fireEvent.click(ui.getByRole('button', { name: 'Start a new room' }));
   fireEvent.change(ui.getByLabelText('Project or room name'), { target: { value: 'New room' } });
   fireEvent.change(ui.getByLabelText('Room length'), { target: { value: '-1' } });
   assert.equal((ui.getByRole('button', { name: 'Save project' }) as HTMLButtonElement).disabled, true);

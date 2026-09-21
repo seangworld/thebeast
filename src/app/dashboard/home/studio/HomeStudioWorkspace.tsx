@@ -147,7 +147,7 @@ export function HomeStudioWorkspace() {
 
   function openSavedProject(saved: HomeStudioSavedProject & { sourcePhotoCount: number }) {
     if (busy) return;
-    if ((form.roomName.trim() || photos.length || plan) && !window.confirm("Open this saved project? Current unsaved edits and session photos will be replaced.")) return;
+    if ((!homeStudioBriefMatches(initialForm, form) || photos.length || plan) && !window.confirm("Open this saved project? Current unsaved edits and session photos will be replaced.")) return;
     setForm(saved.project);
     setPlanProject(saved.plan ? saved.project : null);
     setPhotosChanged(false);
@@ -221,7 +221,7 @@ export function HomeStudioWorkspace() {
 
   function reset() {
     if (busy) return;
-    if ((form.roomName.trim() || photos.length || plan) && !window.confirm("Start a new room? Current unsaved edits and session images will be cleared. Saved projects will remain available.")) return;
+    if ((!homeStudioBriefMatches(initialForm, form) || photos.length || plan) && !window.confirm("Start a new room? Current unsaved edits and session images will be cleared. Saved projects will remain available.")) return;
     setPlanProject(null);
     setPhotosChanged(false);
     setForm(initialForm);
