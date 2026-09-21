@@ -8,6 +8,7 @@ export const operationsVentures = [
 ] as const;
 
 export const operationsLinks = [
+  { label: "ATLAS", href: "/dashboard/operations/atlas", group: "Owner" },
   { label: "Overview", href: "/dashboard/operations", group: "Owner" },
   { label: "Production", href: "/dashboard/operations/production", group: "Owner" },
   { label: "Executive briefing", href: "/dashboard/operations/briefing", group: "Owner" },
