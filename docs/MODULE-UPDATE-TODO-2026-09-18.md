@@ -178,3 +178,10 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - [ ] Affiliate links and tracking: explicitly on hold until Sean is ready. Ordinary retailer searches remain available.
 
 Current persistence clarification: members can explicitly save the room brief and plan. Source/concept images remain session-only. See `HOME-STUDIO-ROOM-REVIEW-2026-09-21.md` for scope and verification limits.
+
+### Home Studio workbench continuation — September 21
+
+- Added entered-price budgeting, custom shopping items/manual plans, measured placement editor, five design snapshots/comparison, backup restore, client intake/proposal/delivery tracking, and explicit affiliate configuration kept off.
+- Affiliate links remain pending Sean's approved destinations; no affiliate activation or purchases.
+- Client payments use a designer-supplied Stripe Payment Link/invoice and manual verification. No automated payment fulfillment.
+- Live signed-in account acceptance remains separate from fixture-backed route/UI testing. See `HOME-STUDIO-COMPLETE-WORKBENCH-2026-09-21.md`.

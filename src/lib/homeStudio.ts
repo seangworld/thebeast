@@ -1,3 +1,4 @@
+import type { HomeStudioAffiliate } from "./homeStudioAffiliates";
 export const HOME_STUDIO_MAX_IMAGE_BYTES = 3_000_000;
 export const HOME_STUDIO_MAX_DATA_URL_LENGTH = 4_200_000;
 export const HOME_STUDIO_MAX_PHOTOS = 4;
@@ -38,6 +39,7 @@ export type HomeStudioPhoto = {
 };
 
 export type HomeStudioProject = {
+  workspace?: HomeStudioWorkspaceData;
   roomName: string;
   roomType: string;
   dimensions: string;
@@ -81,6 +83,8 @@ export function homeStudioShoppingStatus(value: unknown): HomeStudioShoppingStat
 export type HomeStudioShoppingItem = {
   status?: HomeStudioShoppingStatus;
   notes?: string;
+  quantity?: number;
+  unitPrice?: string;
   item: string;
   purpose: string;
   searchTerms: string;
@@ -141,7 +145,7 @@ export function homeStudioRoomGeometry(project: Pick<HomeStudioProject, 'roomLen
 }
 
 export function homeStudioBriefMatches(a: HomeStudioProject | null, b: HomeStudioProject) {
-  return Boolean(a && (Object.keys(b) as (keyof HomeStudioProject)[]).every(key => a[key] === b[key]));
+  return Boolean(a && (Object.keys(b) as (keyof HomeStudioProject)[]).filter(key => key !== "workspace").every(key => a[key] === b[key]));
 }
 
 export function homeStudioPrimaryPhoto(photos: HomeStudioPhoto[], index: number) {
@@ -157,6 +161,7 @@ export function normalizeHomeStudioProject(value: unknown): HomeStudioProject | 
   const style = boundedText(input.style, 60);
   if (!roomName || !roomType || !style) return null;
   return {
+    ...(input.workspace ? { workspace: normalizeHomeStudioWorkspace(input.workspace) } : {}),
     roomName,
     roomType,
     dimensions: boundedText(input.dimensions, 200),
@@ -249,7 +254,7 @@ export function normalizeHomeStudioPlan(value: unknown): HomeStudioPlan | null {
     }),
     layoutPlan: stringList(plan.layoutPlan, 10),
     designMoves: stringList(plan.designMoves, 12),
-    shoppingList: shopping.slice(0, 16).flatMap((entry) => {
+    shoppingList: shopping.slice(0, 32).flatMap((entry) => {
       if (!entry || typeof entry !== "object" || Array.isArray(entry)) return [];
       const item = entry as Record<string, unknown>;
       const name = boundedText(item.item, 100);
@@ -261,6 +266,8 @@ export function normalizeHomeStudioPlan(value: unknown): HomeStudioPlan | null {
         searchTerms: boundedText(item.searchTerms, 120) || name,
         targetPrice: boundedText(item.targetPrice, 60) || "Price not estimated",
         priority,
+        ...(item.quantity !== undefined ? { quantity: normalizeHomeStudioQuantity(item.quantity) } : {}),
+        ...(item.unitPrice !== undefined ? { unitPrice: normalizeHomeStudioMoney(item.unitPrice) } : {}),
         ...(item.status !== undefined ? { status: homeStudioShoppingStatus(item.status) } : {}),
         ...(item.notes !== undefined ? { notes: boundedText(item.notes, 400) } : {}),
       }];
@@ -290,7 +297,7 @@ export const homeStudioPlanSchema = {
   },
 } as const;
 
-export function homeStudioRetailerLinks(searchTerms: string) {
+export function homeStudioRetailerLinks(searchTerms: string, affiliates: HomeStudioAffiliate[] = []) {
   const query = encodeURIComponent(searchTerms);
   return [
     { label: "Amazon", href: `https://www.amazon.com/s?k=${query}` },
@@ -299,10 +306,13 @@ export function homeStudioRetailerLinks(searchTerms: string) {
     { label: "Walmart", href: `https://www.walmart.com/search?q=${query}` },
     { label: "Home Depot", href: `https://www.homedepot.com/s/${query}` },
     { label: "Lowe's", href: `https://www.lowes.com/search?searchTerm=${query}` },
-  ];
+  ].map(link => {
+    const affiliate = affiliates.find(entry => entry.retailer === link.label);
+    return affiliate ? { ...link, href: affiliate.template.split("{query}").join(query), affiliate: true } : { ...link, affiliate: false };
+  });
 }
 
-function escapePacketText(value: string) {
+export function escapePacketText(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
     "<": "&lt;",
@@ -344,13 +354,15 @@ export function buildHomeStudioFloorPlanSvg(project: HomeStudioProject) {
     '<div class="floor-plan"><svg viewBox="0 0 720 500" role="img" aria-label="Dimensioned top-down room outline">',
     '<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="#0e7490"/></marker></defs>',
     `<rect x="${x}" y="${y}" width="${drawingWidth}" height="${drawingHeight}" fill="#f8fafc" stroke="#172033" stroke-width="4"/>`,
+    homeStudioLayoutSvg(project),
     '<text x="360" y="70" text-anchor="middle">North wall</text><text x="360" y="420" text-anchor="middle">South wall</text>',
     '<text x="115" y="245" text-anchor="middle" transform="rotate(-90 115 245)">West wall</text><text x="605" y="245" text-anchor="middle" transform="rotate(90 605 245)">East wall</text>',
     `<line x1="${x}" y1="455" x2="${x + drawingWidth}" y2="455" stroke="#0e7490" marker-start="url(#arrow)" marker-end="url(#arrow)"/>`,
     `<text x="360" y="482" text-anchor="middle">${length} ${unit}</text>`,
     `<line x1="75" y1="${y}" x2="75" y2="${y + drawingHeight}" stroke="#0e7490" marker-start="url(#arrow)" marker-end="url(#arrow)"/>`,
     `<text x="45" y="245" text-anchor="middle" transform="rotate(-90 45 245)">${width} ${unit}</text>`,
-    `</svg><p>Proportional room outline · ${geometry.length} × ${geometry.width} ${unit} · ${geometry.area} square ${project.measurementUnit === 'meters' ? 'meters' : 'feet'}. Verify on site; openings and furniture are not positioned to scale.</p>`,
+    `</svg><p>Proportional room outline · ${geometry.length} × ${geometry.width} ${unit} · ${geometry.area} square ${project.measurementUnit === 'meters' ? 'meters' : 'feet'}. Verify on site; entered furniture and opening markers use your dimensions; verify fit and door swing on site.</p>`,
+    (project.workspace?.layout || []).length ? `<h3>Entered placements (${unit})</h3><ul>${project.workspace!.layout.map(item => `<li>${escapePacketText(item.label)} (${item.kind}): X ${item.x}, Y ${item.y}; ${item.width} × ${item.depth} ${unit}</li>`).join("")}</ul>${packetList(homeStudioLayoutIssues(project))}` : "",
     wallNotes.length ? `<dl>${wallNotes.map(([label, value]) => `<div><dt>${escapePacketText(label)}</dt><dd>${escapePacketText(value)}</dd></div>`).join("")}</dl>` : "",
     "</div>",
   ].join("");
@@ -381,7 +393,7 @@ export function buildHomeStudioDesignPacket(input: {
     ["Openings", project.openings || "Not supplied"],
     ["Other notes", project.notes || "None"],
   ];
-  const shoppingRows = plan.shoppingList.map((item) => `<tr><td><strong>${escapePacketText(item.item)}</strong><br><span>${escapePacketText(item.purpose)}</span></td><td>${escapePacketText(item.priority)}</td><td>${escapePacketText(item.targetPrice)}</td><td>${escapePacketText(item.searchTerms)}</td><td>${escapePacketText(homeStudioShoppingStatus(item.status))}${item.notes ? `<br>${escapePacketText(item.notes)}` : ""}</td></tr>`).join("");
+  const shoppingRows = plan.shoppingList.map((item) => `<tr><td><strong>${escapePacketText(item.item)}</strong><br><span>${escapePacketText(item.purpose)}</span></td><td>${escapePacketText(item.priority)}</td><td>${escapePacketText(item.targetPrice)}<br>Qty: ${item.quantity || 1}${item.unitPrice ? `<br>Entered unit price: $${escapePacketText(item.unitPrice)}` : ""}</td><td>${escapePacketText(item.searchTerms)}</td><td>${escapePacketText(homeStudioShoppingStatus(item.status))}${item.notes ? `<br>${escapePacketText(item.notes)}` : ""}</td></tr>`).join("");
   const imageCards = [
     ...sourceImages.map((sourceImage, index) => `<figure><img src="${sourceImage}" alt="Original room view ${index + 1}"><figcaption>${index === 0 ? "Primary room view" : `Additional room view ${index + 1}`}</figcaption></figure>`),
     conceptImage ? `<figure><img src="${conceptImage}" alt="AI visual concept"><figcaption>AI visual concept</figcaption></figure>` : "",
@@ -400,9 +412,149 @@ ${hasDimensionedHomeStudioFloorPlan(project) ? `<section><h2>Dimensioned floor-p
 <section><h2>Palette</h2><div class="palette">${plan.palette.map((color) => `<div class="swatch"><span class="color" style="background:${color.hex}"></span>${escapePacketText(color.name)} ${color.hex}</div>`).join("")}</div></section>
 <div class="two"><section class="section"><h2>Visible starting point</h2>${packetList(plan.observedRoom)}</section><section class="section"><h2>Assumptions to verify</h2>${packetList(plan.assumptions)}</section></div>
 <div class="two"><section class="section"><h2>Layout plan</h2>${packetList(plan.layoutPlan)}</section><section class="section"><h2>Design moves</h2>${packetList(plan.designMoves)}</section></div>
-<section class="page-break"><h2>Shopping checklist</h2><table><thead><tr><th>Item and purpose</th><th>Priority</th><th>Planning range</th><th>Search terms</th><th>Status and notes</th></tr></thead><tbody>${shoppingRows}</tbody></table></section>
+<section class="page-break"><h2>Shopping checklist</h2><table><thead><tr><th>Item and purpose</th><th>Priority</th><th>Planning range</th><th>Search terms</th><th>Status and notes</th></tr></thead><tbody>${shoppingRows}</tbody></table><p>${escapePacketText(homeStudioBudgetSummary(project, plan))}</p></section>
 <section><h2>Safety and reality checks</h2>${packetList(plan.cautions)}</section>
 <section class="section"><h2>Reviewed concept direction</h2><p>${escapePacketText(plan.conceptPrompt)}</p></section>
 <p class="footer">Home Studio does not purchase products, verify live inventory or price, guarantee exact fit, or replace qualified structural, electrical or plumbing help. Retailer searches in the BeastHome workspace are not affiliate links unless explicitly disclosed.</p>
 </main></body></html>`;
+}
+
+
+// Project management stays outside the AI brief and does not trigger provider requests.
+export type HomeStudioPlacement = {
+  id: string; label: string; kind: "Furniture" | "Door" | "Window";
+  x: number; y: number; width: number; depth: number;
+};
+export type HomeStudioVersion = {
+  id: string; label: string; createdAt: string;
+  project: Omit<HomeStudioProject, "workspace">;
+  plan: HomeStudioPlan;
+  layout: HomeStudioPlacement[];
+  budgetLimit: string;
+};
+export type HomeStudioClient = {
+  name: string; email: string; scope: string; fee: string; dueDate: string;
+  stage: "Intake" | "Designing" | "Ready for review" | "Delivered";
+  payment: "Not recorded" | "Unpaid" | "Paid externally";
+  paymentLink: string;
+};
+export type HomeStudioWorkspaceData = {
+  budgetLimit: string;
+  layout: HomeStudioPlacement[];
+  versions: HomeStudioVersion[];
+  client: HomeStudioClient;
+};
+export const HOME_STUDIO_MAX_VERSIONS = 5;
+export const HOME_STUDIO_MAX_BACKUP_BYTES = 500_000;
+export function normalizeHomeStudioMoney(value: unknown) {
+  const text = typeof value === "number" ? String(value) : typeof value === "string" ? value.trim() : "";
+  return /^\d{1,6}(?:\.\d{1,2})?$/.test(text) && Number(text) <= 999999 ? text : "";
+}
+export function normalizeHomeStudioQuantity(value: unknown) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 99 ? value : 1;
+}
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+export function homeStudioPaymentLink(value: unknown) {
+  try {
+    const url = new URL(typeof value === "string" ? value : "");
+    return url.protocol === "https:" && ["buy.stripe.com", "invoice.stripe.com"].includes(url.hostname) && !url.username && !url.password && !url.port ? url.href.slice(0, 1500) : "";
+  } catch { return ""; }
+}
+export function normalizeHomeStudioLayout(value: unknown): HomeStudioPlacement[] {
+  const seen = new Set<string>();
+  return (Array.isArray(value) ? value : []).slice(0, 24).flatMap((raw, index) => {
+    const item = record(raw);
+    if (![item.x, item.y, item.width, item.depth].every(n => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 999) || Number(item.width) <= 0 || Number(item.depth) <= 0) return [];
+    let id = boundedText(item.id, 80) || `item-${index}`;
+    if (seen.has(id)) id = `item-${index}-${id}`;
+    seen.add(id);
+    return [{ id, label: boundedText(item.label, 60) || "Furniture", kind: item.kind === "Door" || item.kind === "Window" ? item.kind : "Furniture", x: Number(item.x), y: Number(item.y), width: Number(item.width), depth: Number(item.depth) } as HomeStudioPlacement];
+  });
+}
+export function normalizeHomeStudioWorkspace(value: unknown): HomeStudioWorkspaceData {
+  const data = record(value), client = record(data.client);
+  const seen = new Set<string>();
+  return {
+    budgetLimit: normalizeHomeStudioMoney(data.budgetLimit),
+    layout: normalizeHomeStudioLayout(data.layout),
+    versions: (Array.isArray(data.versions) ? data.versions : []).slice(0, HOME_STUDIO_MAX_VERSIONS).flatMap((raw, index) => {
+      const version = record(raw);
+      // Never recurse into an imported version's workspace or accept image payloads.
+      const project = normalizeHomeStudioProject({ ...record(version.project), workspace: undefined });
+      const plan = normalizeHomeStudioPlan(version.plan);
+      if (!project || !plan) return [];
+      let id = boundedText(version.id, 80) || `version-${index}`;
+      if (seen.has(id)) id = `version-${index}-${id}`;
+      seen.add(id);
+      const date = boundedText(version.createdAt, 40);
+      return [{ id, label: boundedText(version.label, 80) || `Design ${index + 1}`, createdAt: Number.isFinite(Date.parse(date)) ? new Date(date).toISOString() : "", project, plan, layout: normalizeHomeStudioLayout(version.layout), budgetLimit: normalizeHomeStudioMoney(version.budgetLimit) }];
+    }),
+    client: {
+      name: boundedText(client.name, 100), email: boundedText(client.email, 200), scope: boundedText(client.scope, 1600),
+      fee: normalizeHomeStudioMoney(client.fee), dueDate: /^\d{4}-\d{2}-\d{2}$/.test(String(client.dueDate)) ? String(client.dueDate) : "",
+      stage: ["Designing", "Ready for review", "Delivered"].includes(String(client.stage)) ? client.stage as HomeStudioClient["stage"] : "Intake",
+      payment: client.payment === "Unpaid" || client.payment === "Paid externally" ? client.payment : "Not recorded",
+      paymentLink: homeStudioPaymentLink(client.paymentLink),
+    },
+  };
+}
+export function homeStudioBudget(project: HomeStudioProject, plan: HomeStudioPlan | null) {
+  let spent = 0, remainingPurchases = 0, unpriced = 0;
+  for (const item of plan?.shoppingList || []) {
+    if (item.status === "Already owned" || item.status === "Deferred") continue;
+    const price = normalizeHomeStudioMoney(item.unitPrice);
+    if (!price) { unpriced++; continue; }
+    const cents = Math.round(Number(price) * 100) * normalizeHomeStudioQuantity(item.quantity ?? 1);
+    if (item.status === "Purchased") spent += cents; else remainingPurchases += cents;
+  }
+  const limit = normalizeHomeStudioMoney(project.workspace?.budgetLimit);
+  return { spent, remainingPurchases, total: spent + remainingPurchases, unpriced, remaining: limit ? Math.round(Number(limit) * 100) - spent - remainingPurchases : null };
+}
+export function homeStudioDollars(cents: number) { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100); }
+export function homeStudioBudgetSummary(project: HomeStudioProject, plan: HomeStudioPlan | null) {
+  const b = homeStudioBudget(project, plan);
+  return `Entered prices only (USD): purchased ${homeStudioDollars(b.spent)}; still to buy ${homeStudioDollars(b.remainingPurchases)}; total ${homeStudioDollars(b.total)}; ${b.unpriced} unpriced item(s). ${b.remaining === null ? "No numeric budget set." : `Budget balance ${homeStudioDollars(b.remaining)}.`} Owned and deferred items excluded. Include tax and shipping in your entered prices.`;
+}
+export function homeStudioLayoutIssues(project: HomeStudioProject) {
+  const geometry = homeStudioRoomGeometry(project);
+  const items = project.workspace?.layout || [];
+  if (!geometry) return items.length ? ["Add valid room length and width to check this layout."] : [];
+  const issues: string[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const a = items[i];
+    if (a.width <= 0 || a.depth <= 0) issues.push(`${a.label} needs a positive width and depth.`);
+    if (a.x + a.width > geometry.length + 0.0001 || a.y + a.depth > geometry.width + 0.0001) issues.push(`${a.label} extends outside the room.`);
+    for (const b of items.slice(i + 1)) {
+      if (a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.depth && a.y + a.depth > b.y) issues.push(`${a.label} overlaps ${b.label}.`);
+    }
+  }
+  return issues;
+}
+export function homeStudioLayoutSvg(project: HomeStudioProject) {
+  const g = homeStudioRoomGeometry(project);
+  if (!g) return "";
+  const scale = g.drawingWidth / g.length;
+  return (project.workspace?.layout || []).map(item => `<g><rect x="${g.x + item.x * scale}" y="${g.y + item.y * scale}" width="${item.width * scale}" height="${item.depth * scale}" fill="${item.kind === "Furniture" ? "#a5f3fc" : "#fde68a"}" fill-opacity="0.6" stroke="#0e7490"/><text x="${g.x + (item.x + item.width / 2) * scale}" y="${g.y + (item.y + item.depth / 2) * scale}" font-size="11" text-anchor="middle">${escapePacketText(item.label)}</text></g>`).join("");
+}
+export function createHomeStudioVersion(project: HomeStudioProject, plan: HomeStudioPlan, label: string, id: string, createdAt: string): HomeStudioVersion {
+  const { workspace, ...brief } = project;
+  return { id, label: label.trim().slice(0, 80) || plan.title, createdAt, project: brief, plan: structuredClone(plan), layout: structuredClone(workspace?.layout || []), budgetLimit: workspace?.budgetLimit || "" };
+}
+export function parseHomeStudioBackup(text: string) {
+  if (new TextEncoder().encode(text).length > HOME_STUDIO_MAX_BACKUP_BYTES) throw new Error("Choose a Home Studio JSON backup under 500 KB.");
+  let input: Record<string, unknown>;
+  try { input = record(JSON.parse(text)); } catch { throw new Error("This file is not valid JSON."); }
+  if (input.schemaVersion !== undefined && input.schemaVersion !== 1 && input.schemaVersion !== 2) throw new Error("This backup uses an unsupported version.");
+  const result = normalizeHomeStudioSavedProject(input);
+  if (!result) throw new Error("This file does not contain a valid Home Studio project.");
+  const raw = record(input.project);
+  if (homeStudioMeasurementIssues({roomLength: String(raw.roomLength || ""), roomWidth: String(raw.roomWidth || ""), ceilingHeight: String(raw.ceilingHeight || "")}).length) throw new Error("Correct invalid room measurements in this backup before importing it.");
+  return result;
+}
+export function buildHomeStudioClientQuote(project: HomeStudioProject) {
+  const c = normalizeHomeStudioWorkspace(project.workspace).client;
+  const link = homeStudioPaymentLink(c.paymentLink);
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home Studio proposal</title><style>body{font:16px/1.6 Arial;max-width:800px;margin:40px auto;padding:24px;color:#172033}h1{color:#0e7490}p{white-space:pre-wrap}@media print{body{margin:0}}</style><h1>Home Studio · Project proposal</h1><p>Prepared for: ${escapePacketText(c.name || "Client")}<br>Room: ${escapePacketText(project.roomName)}</p><h2>Scope</h2><p>${escapePacketText(c.scope || "Confirm the scope with your designer before paying.")}</p><p>Quoted service fee: ${c.fee ? homeStudioDollars(Math.round(Number(c.fee) * 100)) : "To be agreed"}<br>Target delivery: ${escapePacketText(c.dueDate || "To be agreed")}</p><p>Design concepts and shopping guidance only. Product purchases are separate. Verify measurements, clearances, prices, and availability. Confirm scope, revisions, and delivery with your designer before paying.</p>${link && c.fee && c.scope ? `<p><a href="${escapePacketText(link)}" rel="noopener noreferrer">Open secure Stripe payment page</a></p><p>Check the merchant, description, currency, and amount on Stripe before paying. This proposal does not verify payment or automatically deliver files.</p>` : ""}</html>`;
 }
