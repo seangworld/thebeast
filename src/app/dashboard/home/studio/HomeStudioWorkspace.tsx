@@ -14,6 +14,9 @@ import {
   homeStudioPrimaryPhoto,
   HOME_STUDIO_MAX_PHOTOS,
   homeStudioRetailerLinks,
+  homeStudioShoppingStatuses,
+  homeStudioShoppingStatus,
+  type HomeStudioShoppingItem,
   homeStudioRoomTypes,
   homeStudioStyles,
   type HomeStudioPhoto,
@@ -163,6 +166,11 @@ export function HomeStudioWorkspace() {
     if (fileInput.current) fileInput.current.value = "";
   }
 
+  function updateShopping(index: number, changes: Pick<HomeStudioShoppingItem, "status" | "notes">) {
+    if (busy || planOutdated) return;
+    setPlan(current => current ? { ...current, shoppingList: current.shoppingList.map((item, i) => i === index ? { ...item, ...changes } : item) } : current);
+  }
+
   async function createPlan() {
     if (busy) return;
     if (!photos.length || !form.roomName.trim() || !form.roomType || !form.style) {
@@ -170,6 +178,7 @@ export function HomeStudioWorkspace() {
       return;
     }
     if (measurementIssues.length) { setMessage(measurementIssues.join(" ")); return; }
+    if (plan?.shoppingList.some(item => (item.status && item.status !== "Needed") || item.notes?.trim()) && !window.confirm("Rebuilding replaces this plan and its shopping checklist. Save or download your current project first if you want to keep its statuses and notes. Continue?")) return;
     setPlanning(true);
     setMessage("Reviewing the room and preparing a design plan… Your previous plan stays available if this request fails.");
     setConfirmed(false);
@@ -365,10 +374,21 @@ export function HomeStudioWorkspace() {
 
       <DashboardCard accent="home">
         <SectionHeader eyebrow="Shopping targets" title="Shop the plan without locking into one retailer" description="These are ordinary retailer searches—not live inventory, exact-fit promises, endorsements, affiliate links, or purchases." />
+        <p className="mt-3 text-sm text-[#cbd5e1]">Track what you need, own, or have purchased. Use Save project to keep checklist changes; they are also included in downloads. Rebuilding starts a new checklist.</p>
+        <p className="mt-2 text-sm font-bold text-cyan-100">{plan.shoppingList.filter(item => item.status === "Purchased" || item.status === "Already owned").length} of {plan.shoppingList.length} items ready</p>
+        {!plan.shoppingList.length ? <p className="mt-3 text-sm text-[#94a3b8]">This plan has no shopping items.</p> : null}
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {plan.shoppingList.map((item, index) => <article key={`${item.item}-${index}`} className="rounded-xl border border-[#334155] bg-[#111827] p-4">
             <div className="flex items-start justify-between gap-3"><div><h3 className="font-black text-white">{item.item}</h3><p className="mt-1 text-sm leading-6 text-[#cbd5e1]">{item.purpose}</p></div><span className="rounded-full border border-cyan-700 bg-cyan-950/30 px-2.5 py-1 text-xs font-bold text-cyan-100">{item.priority}</span></div>
             <p className="mt-3 text-sm"><strong>Planning range:</strong> {item.targetPrice}</p>
+            <label className="mt-3 block text-sm font-bold">Status
+              <select className={inputClass} aria-label={`Shopping status for ${item.item}`} value={homeStudioShoppingStatus(item.status)} disabled={busy || planOutdated} onChange={event => updateShopping(index, { status: homeStudioShoppingStatus(event.target.value) })}>
+                {homeStudioShoppingStatuses.map(status => <option key={status} value={status}>{status}</option>)}
+              </select>
+            </label>
+            <label className="mt-3 block text-sm font-bold">Shopping notes
+              <textarea className={inputClass} aria-label={`Shopping notes for ${item.item}`} value={item.notes || ""} maxLength={400} rows={2} placeholder="Measurements to check, store, or product details" disabled={busy || planOutdated} onChange={event => updateShopping(index, { notes: event.target.value })} />
+            </label>
             <details className="mt-3"><summary className="cursor-pointer text-sm font-bold text-cyan-300">Search retailers</summary><div className="mt-3 flex flex-wrap gap-2">{homeStudioRetailerLinks(item.searchTerms).map(retailer => <a key={retailer.label} href={retailer.href} target="_blank" rel="noopener noreferrer" className="beast-button-secondary text-xs">{retailer.label}</a>)}</div></details>
           </article>)}
         </div>
