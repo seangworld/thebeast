@@ -82,6 +82,7 @@ export async function POST(request: Request) {
                   "Create a realistic palette, layout steps, design moves, and a prioritized generic shopping list. Do not invent live prices, availability, brands, affiliate relationships, or exact fit. targetPrice must be a clearly labeled planning range or 'Measure and price locally'.",
                   "The conceptPrompt will be used to edit the supplied photo. It must request a photorealistic redesign that preserves geometry and must-keep items, avoids people and text, and follows the member's budget and style.",
                   JSON.stringify({
+                    photoViews: input.photos.map((photo, index) => ({ view: index + 1, primary: index === 0, description: photo.label })),
                     roomName: input.roomName,
                     roomType: input.roomType,
                     dimensions: input.dimensions || "Not supplied",

@@ -9,6 +9,9 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import {
   buildHomeStudioDesignPacket,
+  homeStudioBriefMatches,
+  homeStudioMeasurementIssues,
+  homeStudioPrimaryPhoto,
   HOME_STUDIO_MAX_PHOTOS,
   homeStudioRetailerLinks,
   homeStudioRoomTypes,
@@ -73,6 +76,8 @@ export function HomeStudioWorkspace() {
   const [form, setForm] = useState(initialForm);
   const [photos, setPhotos] = useState<HomeStudioPhoto[]>([]);
   const [plan, setPlan] = useState<HomeStudioPlan | null>(null);
+  const [planProject, setPlanProject] = useState<HomeStudioProject | null>(null);
+  const [photosChanged, setPhotosChanged] = useState(false);
   const [conceptPrompt, setConceptPrompt] = useState("");
   const [conceptImage, setConceptImage] = useState("");
   const [message, setMessage] = useState("");
@@ -85,12 +90,14 @@ export function HomeStudioWorkspace() {
   const busy = planning || rendering || preparingPhotos;
   const primaryPhoto = photos[0]?.dataUrl || "";
 
+  const planOutdated = Boolean(plan && !homeStudioBriefMatches(planProject, form));
+  const measurementIssues = homeStudioMeasurementIssues(form);
+
   const completedBasics = [photos.length, form.roomName, form.roomType, form.style].filter(Boolean).length;
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+    if (busy) return;
     setForm(current => ({ ...current, [key]: value }));
-    setPlan(null);
-    setConceptPrompt("");
     setConceptImage("");
     setConfirmed(false);
   }
@@ -108,11 +115,10 @@ export function HomeStudioWorkspace() {
       const prepared = await Promise.all(files.map(async (file, index) => ({
         dataUrl: await prepareHomeStudioPhoto(file),
         name: file.name.slice(0, 120),
-        label: photos.length + index === 0 ? "Primary concept view" : `Additional room view ${photos.length + index + 1}`,
+        label: `Room view ${photos.length + index + 1}`,
       })));
       setPhotos((current) => [...current, ...prepared]);
-      setPlan(null);
-      setConceptPrompt("");
+      setPhotosChanged(Boolean(plan));
       setConceptImage("");
       setConfirmed(false);
       setMessage(`${prepared.length} room view${prepared.length === 1 ? "" : "s"} ready. Photos remain session-only and are not included when the project is saved.`);
@@ -125,19 +131,26 @@ export function HomeStudioWorkspace() {
 
   function removePhoto(index: number) {
     if (busy) return;
-    setPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index).map((photo, photoIndex) => ({
-      ...photo,
-      label: photoIndex === 0 ? "Primary concept view" : `Additional room view ${photoIndex + 1}`,
-    })));
-    setPlan(null);
-    setConceptPrompt("");
+    setPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index));
+    setPhotosChanged(Boolean(plan));
+    setConceptImage("");
+    setConfirmed(false);
+  }
+
+  function changePhoto(index: number, label?: string) {
+    if (busy) return;
+    setPhotos(current => label === undefined ? homeStudioPrimaryPhoto(current, index) : current.map((photo, i) => i === index ? { ...photo, label } : photo));
+    setPhotosChanged(Boolean(plan));
     setConceptImage("");
     setConfirmed(false);
   }
 
   function openSavedProject(saved: HomeStudioSavedProject & { sourcePhotoCount: number }) {
     if (busy) return;
+    if ((form.roomName.trim() || photos.length || plan) && !window.confirm("Open this saved project? Current unsaved edits and session photos will be replaced.")) return;
     setForm(saved.project);
+    setPlanProject(saved.plan ? saved.project : null);
+    setPhotosChanged(false);
     setPlan(saved.plan);
     setConceptPrompt(saved.plan?.conceptPrompt || "");
     setPhotos([]);
@@ -156,11 +169,9 @@ export function HomeStudioWorkspace() {
       setMessage("Add at least one room photo, room name, room type, and preferred style first.");
       return;
     }
+    if (measurementIssues.length) { setMessage(measurementIssues.join(" ")); return; }
     setPlanning(true);
-    setMessage("Reviewing the room and preparing a design plan…");
-    setPlan(null);
-    setConceptPrompt("");
-    setConceptImage("");
+    setMessage("Reviewing the room and preparing a design plan… Your previous plan stays available if this request fails.");
     setConfirmed(false);
     try {
       const response = await fetch("/api/home/studio/plan", {
@@ -172,6 +183,9 @@ export function HomeStudioWorkspace() {
       if (!response.ok || !body.plan) setMessage(body.error || "The design plan could not be prepared.");
       else {
         setPlan(body.plan);
+        setPlanProject({ ...form });
+        setPhotosChanged(false);
+        setConceptImage("");
         setConceptPrompt(body.plan.conceptPrompt);
         setMessage(body.notice || "Design plan ready for your review.");
       }
@@ -183,7 +197,7 @@ export function HomeStudioWorkspace() {
   }
 
   async function generateConcept() {
-    if (!plan || !primaryPhoto || !confirmed || !conceptPrompt.trim() || busy) return;
+    if (!plan || planOutdated || !primaryPhoto || !confirmed || !conceptPrompt.trim() || busy) return;
     setRendering(true);
     setMessage("Generating one visual concept from the reviewed plan…");
     try {
@@ -207,6 +221,9 @@ export function HomeStudioWorkspace() {
 
   function reset() {
     if (busy) return;
+    if ((form.roomName.trim() || photos.length || plan) && !window.confirm("Start a new room? Current unsaved edits and session images will be cleared. Saved projects will remain available.")) return;
+    setPlanProject(null);
+    setPhotosChanged(false);
     setForm(initialForm);
     setPhotos([]);
     setPlan(null);
@@ -219,7 +236,7 @@ export function HomeStudioWorkspace() {
   }
 
   function downloadPacket() {
-    if (!plan) return;
+    if (!plan || planOutdated || busy) return;
     const reviewedPlan = { ...plan, conceptPrompt };
     downloadData(
       `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-design-packet.html`,
@@ -229,7 +246,7 @@ export function HomeStudioWorkspace() {
   }
 
   function downloadProjectData() {
-    if (!plan) return;
+    if (!plan || planOutdated || busy) return;
     downloadData(
       `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-project-data.json`,
       JSON.stringify({ project: form, plan: { ...plan, conceptPrompt }, sourcePhotoCount: photos.length, photosStored: false, createdAt: new Date().toISOString(), boundary: "AI planning concept; verify measurements, fit, safety, prices, and availability." }, null, 2),
@@ -261,20 +278,22 @@ export function HomeStudioWorkspace() {
       sourcePhotoCount={photos.length}
       activeProjectId={activeProjectId}
       busy={busy}
+      saveBlockedReason={measurementIssues.length ? "Correct invalid measurements before saving. Unknown measurements can be left blank." : planOutdated ? "The brief has changed. Rebuild the plan or restore its brief before saving, so the saved plan and measurements stay together." : undefined}
       onLoad={openSavedProject}
       onActiveProjectChange={setActiveProjectId}
     />
 
-    <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]" aria-label="Home Studio project setup">
+    <fieldset disabled={busy} className="grid min-w-0 gap-6 xl:grid-cols-[0.9fr_1.1fr]" aria-label="Home Studio project setup">
       <DashboardCard accent="home">
         <SectionHeader eyebrow="Room photos" title="Show the complete starting point" description="Add up to four angles without people, mail, screens, family pictures, or sensitive documents. The first image is the primary concept-rendering view." />
         <div className="mt-5">
           {photos.length ? <div className="grid gap-3 sm:grid-cols-2">
             {photos.map((photo, index) => <figure key={`${photo.name}-${index}`} className="overflow-hidden rounded-xl border border-[#334155] bg-black">
               <Image src={photo.dataUrl} alt={`${photo.label} for ${form.roomName || "the room"}`} width={1200} height={800} unoptimized className="h-48 w-full object-contain" />
-              <figcaption className="flex items-center justify-between gap-2 bg-[#111827] p-3 text-xs text-[#cbd5e1]">
-                <span className="min-w-0 truncate"><strong className="text-white">{photo.label}</strong><br />{photo.name}</span>
-                <button type="button" className="text-rose-200 underline" disabled={busy} onClick={() => removePhoto(index)}>Remove</button>
+              <figcaption className="space-y-3 bg-[#111827] p-3 text-xs text-[#cbd5e1]">
+                <p className="truncate"><strong className="text-white">{index === 0 ? "Primary concept view" : `Room view ${index + 1}`}</strong><br />{photo.name}</p>
+                <label className="block">View description<input className={inputClass} aria-label={`Description for photo ${index + 1}`} value={photo.label} maxLength={80} onChange={event => changePhoto(index, event.target.value)} placeholder="Window wall, entrance, closet…" /></label>
+                <div className="flex flex-wrap gap-3">{index > 0 ? <button type="button" className="beast-button-secondary text-xs" onClick={() => changePhoto(index)}>Use as primary</button> : null}<button type="button" className="min-h-11 text-rose-200 underline" disabled={busy} onClick={() => removePhoto(index)}>Remove</button></div>
               </figcaption>
             </figure>)}
           </div> : <GuidedEmptyState title="No room photos selected" description="Photos are used only for the plan and optional concept request in this browser session." guidance="Up to four JPG, PNG, or WebP files, 3 MB each. Home Studio compresses working copies and does not add them to saved projects, inventory, or Beast Documents." nextAction={{ label: "Choose room photos", href: "#home-studio-photo" }} />}
@@ -316,6 +335,7 @@ export function HomeStudioWorkspace() {
             <Field label="West wall" hint="openings + offsets"><textarea className={`${inputClass} min-h-24`} value={form.westWall} maxLength={400} placeholder="Closet doors span 60 in" onChange={event => update("westWall", event.target.value)} /></Field>
           </div>
           <Field label="Furniture measurements and desired placement" hint="optional"><textarea className={`${inputClass} min-h-28`} value={form.furnitureMeasurements} maxLength={1200} placeholder={"Desk 79 × 30 in — entry-door wall\nFuton 70 × 33 in — opposite wall"} onChange={event => update("furnitureMeasurements", event.target.value)} /></Field>
+          {measurementIssues.length ? <ul className="mt-4 space-y-2 text-sm text-amber-200" role="status">{measurementIssues.map(issue => <li key={issue}>{issue}</li>)}</ul> : null}
           <HomeStudioFloorPlan project={form} />
         </details>
         <div className="mt-5 flex flex-wrap gap-3">
@@ -324,9 +344,11 @@ export function HomeStudioWorkspace() {
         </div>
         {message ? <p className="mt-4 rounded-xl border border-[#334155] bg-[#0f172a] p-3 text-sm text-[#dbe3ef]" role="status" aria-live="polite">{message}</p> : null}
       </DashboardCard>
-    </section>
+    </fieldset>
 
     {plan ? <section className="space-y-6" aria-labelledby="home-studio-plan-title">
+      {planOutdated ? <div className="rounded-xl border border-amber-600 bg-amber-950/20 p-5" role="status"><h2 className="font-black text-amber-100">Your previous plan is preserved</h2><p className="mt-2 text-sm text-amber-100">The room brief has changed. The plan below still describes the previous brief. Rebuild it before saving, exporting, or generating a concept with the new measurements.</p><button className="beast-button-secondary mt-3" type="button" disabled={busy} onClick={() => { if (planProject && window.confirm("Restore the brief used for this plan? Current brief edits will be replaced; photos will stay as they are.")) { setForm({ ...planProject }); setConfirmed(false); } }}>Restore plan brief</button></div> : null}
+      {photosChanged ? <p className="rounded-xl border border-cyan-800 bg-cyan-950/20 p-4 text-sm text-cyan-100">Room photos or their labels changed. The existing plan has not re-analyzed them. Rebuild for fresh photo analysis, or review the existing instructions before using your selected primary view for a concept.</p> : null}
       <DashboardCard accent="home">
         <SectionHeader eyebrow="Review before generating" title={plan.title} description={plan.summary} />
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
@@ -355,7 +377,7 @@ export function HomeStudioWorkspace() {
       <DashboardCard accent="beastos">
         <SectionHeader eyebrow="Reality check" title="Verify before acting" description="Home Studio organizes a concept; it does not inspect the property or replace qualified local help." />
         <TextList items={plan.cautions} />
-        <div className="mt-5 flex flex-wrap gap-3"><button type="button" className="beast-button-secondary" onClick={downloadPacket}>Download printable packet</button><button type="button" className="beast-button-secondary" onClick={downloadProjectData}>Download project data</button></div>
+        <div className="mt-5 flex flex-wrap gap-3"><button type="button" className="beast-button-secondary" disabled={busy || planOutdated} onClick={downloadPacket}>Download printable packet</button><button type="button" className="beast-button-secondary" disabled={busy || planOutdated} onClick={downloadProjectData}>Download project data</button></div>
       </DashboardCard>
 
       <DashboardCard accent="home">
@@ -367,14 +389,15 @@ export function HomeStudioWorkspace() {
             className={`${inputClass} min-h-36`}
             value={conceptPrompt}
             maxLength={2400}
+            disabled={busy || planOutdated}
             onChange={event => { setConceptPrompt(event.target.value); setConfirmed(false); setConceptImage(""); }}
             aria-label="Concept image instructions"
           />
           <p className="mt-2 text-right text-xs text-[#94a3b8]">{conceptPrompt.length}/2400</p>
         </details>
-        <label className="mt-5 flex items-start gap-3 rounded-xl border border-[#334155] bg-[#111827] p-4 text-sm leading-6 text-[#dbe3ef]"><input type="checkbox" className="mt-1" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} /><span>I reviewed the plan and understand that the visual is an AI concept—not an exact measurement, construction drawing, appraisal, inspection, price quote, or product-availability guarantee.</span></label>
+        <label className="mt-5 flex items-start gap-3 rounded-xl border border-[#334155] bg-[#111827] p-4 text-sm leading-6 text-[#dbe3ef]"><input type="checkbox" className="mt-1" disabled={busy || planOutdated} checked={confirmed} onChange={event => setConfirmed(event.target.checked)} /><span>I reviewed the plan and understand that the visual is an AI concept—not an exact measurement, construction drawing, appraisal, inspection, price quote, or product-availability guarantee.</span></label>
         {!primaryPhoto ? <p className="mt-4 rounded-xl border border-amber-700/60 bg-amber-950/10 p-3 text-sm text-amber-100">Re-add a primary room view before generating a concept from this saved project.</p> : null}
-        <button type="button" className="beast-button-primary mt-4" disabled={!primaryPhoto || !confirmed || !conceptPrompt.trim() || busy} onClick={() => void generateConcept()}>{rendering ? "Generating concept…" : conceptImage ? "Generate another concept" : "Generate visual concept"}</button>
+        <button type="button" className="beast-button-primary mt-4" disabled={planOutdated || !primaryPhoto || !confirmed || !conceptPrompt.trim() || busy} onClick={() => void generateConcept()}>{rendering ? "Generating concept…" : conceptImage ? "Generate another concept" : "Generate visual concept"}</button>
         {conceptImage ? <div className="mt-6"><div className="overflow-hidden rounded-2xl border border-[#334155] bg-black"><Image src={conceptImage} alt={`AI Home Studio concept for ${form.roomName}`} width={1536} height={1024} unoptimized className="h-auto w-full object-contain" /></div><button type="button" className="beast-button-secondary mt-4" onClick={() => { const link = document.createElement("a"); link.href = conceptImage; link.download = `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "home-studio"}-concept.jpg`; link.click(); }}>Download concept image</button></div> : null}
       </DashboardCard>
     </section> : null}
