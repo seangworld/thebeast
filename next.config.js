@@ -46,6 +46,10 @@ const nextConfig = {
         source: "/(.*)",
         headers: productionSecurityHeaders,
       },
+      {
+        source: "/dashboard/operations/atlas",
+        headers: [{ key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=()" }],
+      },
     ];
   },
   async redirects() {

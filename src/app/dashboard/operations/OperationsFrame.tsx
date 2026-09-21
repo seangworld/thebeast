@@ -12,7 +12,8 @@ function OperationsNavigation({ pathname, onNavigate }: { pathname: string; onNa
         <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-slate-500">{group}</p>
         <div className="space-y-1">{operationsLinks.filter((item) => item.group === group).map((item) => {
           const active = isOperationsLinkActive(pathname, item.href);
-          return <Link key={item.href} href={item.href} onClick={() => onNavigate()} aria-current={active ? "page" : undefined} className={`block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 ${active ? "bg-cyan-300/10 text-cyan-200" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}>{item.label}</Link>;
+          const NavigationLink = item.href === "/dashboard/operations/atlas" ? "a" : Link;
+          return <NavigationLink key={item.href} href={item.href} onClick={() => onNavigate()} aria-current={active ? "page" : undefined} className={`block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 ${active ? "bg-cyan-300/10 text-cyan-200" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}>{item.label}</NavigationLink>;
         })}</div>
       </div>)}
     </nav>;
