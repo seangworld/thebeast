@@ -219,3 +219,35 @@ test('failed image can be retried without another paid plan request', async () =
   await waitFor(() => assert.ok(ui.getByRole('region', { name: 'Your redesigned room' })));
   assert.equal(plans, 1); assert.equal(images, 2);
 });
+
+
+test('previous image survives edits and a failed replacement, then updates on image-only retry', async () => {
+  let plans = 0; let images = 0;
+  globalThis.fetch = (async (url: string) => {
+    if (url.endsWith('/projects')) return Response.json({ projects: [] });
+    if (url.endsWith('/plan')) { plans++; return Response.json({ plan: { ...plan, summary: `Design summary ${plans}` } }); }
+    images++;
+    return images === 2 ? Response.json({ error: 'Replacement unavailable' }, { status: 503 }) : Response.json({ image: `data:image/jpeg;base64,${images === 1 ? 'YQ==' : 'Yg=='}` });
+  }) as typeof fetch;
+  const view = render(React.createElement(HomeStudioWorkspace)); const ui = within(view.container);
+  fireEvent.change(ui.getByLabelText('Room photo files'), { target: { files: [new dom.window.File(['photo'], 'room.jpg', { type: 'image/jpeg' })] } });
+  await waitFor(() => assert.ok(ui.getByText('room.jpg')));
+  fireEvent.change(ui.getByLabelText('What would you like to change?'), { target: { value: 'Keep my furniture.' } });
+  fireEvent.click(ui.getByRole('button', { name: 'Redesign my room' }));
+  await waitFor(() => assert.ok(ui.getByText('Design summary 1')));
+  const image = () => ui.getByRole('img', { name: 'AI Home Studio concept for My room' });
+  fireEvent.change(ui.getByLabelText('What would you like to change next?'), { target: { value: 'Keep my furniture and use blue.' } });
+  assert.equal(image().getAttribute('src'), 'data:image/jpeg;base64,YQ==');
+  assert.ok(ui.getByText(/Previous design/));
+  fireEvent.click(ui.getByRole('button', { name: 'Redesign again' }));
+  assert.equal(image().getAttribute('src'), 'data:image/jpeg;base64,YQ==');
+  await waitFor(() => assert.ok(ui.getByText(/Replacement unavailable/)));
+  assert.ok(ui.getByText('Design summary 1'));
+  assert.equal(ui.queryByText('Design summary 2'), null);
+  assert.equal(image().getAttribute('src'), 'data:image/jpeg;base64,YQ==');
+  fireEvent.click(ui.getByRole('button', { name: 'Redesign again' }));
+  await waitFor(() => assert.equal(image().getAttribute('src'), 'data:image/jpeg;base64,Yg=='));
+  assert.ok(ui.getByText('Design summary 2'));
+  assert.equal(ui.queryByText(/Previous design/), null);
+  assert.equal(plans, 2); assert.equal(images, 3);
+});
