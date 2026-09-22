@@ -37,3 +37,11 @@ No real affiliate value is included in this release. Do not turn on until Sean s
 - Nine focused UI/flow tests passed, including one-click plan-to-image with no advanced inputs, photo-picker activation, image-only retry, saved-plan revision protections, and simulated save/reopen.
 - TypeScript compilation and focused lint passed. Provider responses were mocked; no live AI generation was purchased during verification.
 - Affiliate activation remains off. The real signed-in save/reopen acceptance gap remains unchanged.
+
+
+### Redesign continuity polish — September 22
+
+- Editing a brief, photo, or render prompt keeps the last generated image visible and labels it as the previous design. A failed replacement also keeps that image downloadable.
+- The image retains its own room name, summary, and shopping ideas until a replacement succeeds; exports omit an outdated concept instead of pairing it with a newer plan.
+- Room photo thumbnails use two compact columns on mobile.
+- Added a simulated success → edit → failed replacement → image-only retry regression. No paid AI calls or affiliate activation were used.

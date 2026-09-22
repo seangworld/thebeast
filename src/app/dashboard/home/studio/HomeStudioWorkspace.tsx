@@ -91,6 +91,8 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
   const [photosChanged, setPhotosChanged] = useState(false);
   const [conceptPrompt, setConceptPrompt] = useState("");
   const [conceptImage, setConceptImage] = useState("");
+  const [conceptOutdated, setConceptOutdated] = useState(false);
+  const [conceptDetails, setConceptDetails] = useState<{ roomName: string; plan: HomeStudioPlan | null } | null>(null);
   const [message, setMessage] = useState("");
   const [savingProject, setSavingProject] = useState(false);
   const [planning, setPlanning] = useState(false);
@@ -117,7 +119,7 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
       const convert = (n: number) => Math.round(n * factor * 100) / 100;
       setForm(current => ({ ...current, measurementUnit: value as HomeStudioProject["measurementUnit"], roomLength: current.roomLength ? String(convert(Number(current.roomLength))) : "", roomWidth: current.roomWidth ? String(convert(Number(current.roomWidth))) : "", ceilingHeight: current.ceilingHeight ? String(convert(Number(current.ceilingHeight))) : "", ...(current.workspace ? { workspace: { ...current.workspace, layout: current.workspace.layout.map(item => ({ ...item, x: convert(item.x), y: convert(item.y), width: convert(item.width), depth: convert(item.depth) })) } } : {}) }));
     } else setForm(current => ({ ...current, [key]: value }));
-    setConceptImage("");
+    setConceptOutdated(true);
     setConfirmed(false);
   }
 
@@ -142,7 +144,7 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
       })));
       setPhotos((current) => [...current, ...prepared]);
       setPhotosChanged(Boolean(plan));
-      setConceptImage("");
+      setConceptOutdated(true);
       setConfirmed(false);
       setMessage(`${prepared.length} room view${prepared.length === 1 ? "" : "s"} ready. Photos remain session-only and are not included when the project is saved.`);
     } catch (error) {
@@ -156,7 +158,7 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
     if (busy) return;
     setPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index));
     setPhotosChanged(Boolean(plan));
-    setConceptImage("");
+    setConceptOutdated(true);
     setConfirmed(false);
   }
 
@@ -164,7 +166,7 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
     if (busy) return;
     setPhotos(current => label === undefined ? homeStudioPrimaryPhoto(current, index) : current.map((photo, i) => i === index ? { ...photo, label } : photo));
     setPhotosChanged(Boolean(plan));
-    setConceptImage("");
+    setConceptOutdated(true);
     setConfirmed(false);
   }
 
@@ -223,10 +225,10 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
         setPlan(body.plan);
         setPlanProject({ ...project });
         setPhotosChanged(false);
-        setConceptImage("");
+        setConceptOutdated(true);
         setConceptPrompt(body.plan.conceptPrompt);
         setMessage(body.notice || "Design plan ready for your review.");
-        if (withImage) await renderImage(body.plan.conceptPrompt);
+        if (withImage) await renderImage(body.plan.conceptPrompt, body.plan, project);
       }
     } catch {
       setMessage("The design plan could not be prepared. Your form and photos remain in this browser.");
@@ -254,7 +256,7 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
     finally { requestInFlight.current = false; }
   }
 
-  async function renderImage(prompt: string) {
+  async function renderImage(prompt: string, imagePlan = plan, imageProject = form) {
     setRendering(true);
     setMessage("Creating your room image…");
     try {
@@ -267,6 +269,8 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
       if (!response.ok || !body.image) setMessage(`${body.error || "The image could not be generated."} Your plan is kept. Try again to retry just the image.`);
       else {
         setConceptImage(body.image);
+        setConceptOutdated(false);
+        setConceptDetails({ roomName: imageProject.roomName, plan: imagePlan });
         setMessage("Your room design is ready. Download the image to keep it.");
       }
     } catch {
@@ -315,7 +319,7 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
     const reviewedPlan = { ...plan, conceptPrompt };
     downloadData(
       `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "home-studio"}-design-packet.html`,
-      buildHomeStudioDesignPacket({ project: form, plan: reviewedPlan, sourceImages: photos.map((photo) => photo.dataUrl), conceptImage, createdAt: new Date().toISOString() }),
+      buildHomeStudioDesignPacket({ project: form, plan: reviewedPlan, sourceImages: photos.map((photo) => photo.dataUrl), conceptImage: conceptOutdated ? "" : conceptImage, createdAt: new Date().toISOString() }),
       "text/html",
     );
   }
@@ -341,9 +345,9 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
             <input ref={fileInput} hidden aria-label="Room photo files" type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={selectPhotos} disabled={busy || photos.length >= HOME_STUDIO_MAX_PHOTOS} />
             <p className="mt-3 text-sm text-[#cbd5e1]">Or drop photos here · up to 4 JPG, PNG or WebP files, 3 MB each</p>
           </div>
-          {photos.length ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {photos.length ? <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {photos.map((photo, index) => <figure key={`${photo.name}-${index}`} className="overflow-hidden rounded-xl border border-[#334155] bg-black">
-              <Image src={photo.dataUrl} alt={`${photo.label} for ${form.roomName || "the room"}`} width={1200} height={800} unoptimized className="h-48 w-full object-contain" />
+              <Image src={photo.dataUrl} alt={`${photo.label} for ${form.roomName || "the room"}`} width={1200} height={800} unoptimized className="h-32 w-full object-contain sm:h-48" />
               <figcaption className="space-y-3 bg-[#111827] p-3 text-xs text-[#cbd5e1]">
                 <p className="truncate"><strong className="text-white">{index === 0 ? "Primary concept view" : `Room view ${index + 1}`}</strong><br />{photo.name}</p>
                 <details><summary className="cursor-pointer">Label this view</summary><label className="block">View description<input className={inputClass} aria-label={`Description for photo ${index + 1}`} value={photo.label} maxLength={80} onChange={event => changePhoto(index, event.target.value)} placeholder="Window wall, entrance, closet…" /></label></details>
@@ -370,12 +374,13 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
 
     {conceptImage ? <section aria-label="Your redesigned room" className="space-y-3">
       <h2 className="text-2xl font-black text-white">Your redesigned room</h2>
-        {conceptImage ? <div className="mt-6"><div className="overflow-hidden rounded-2xl border border-[#334155] bg-black"><Image src={conceptImage} alt={`AI Home Studio concept for ${form.roomName}`} width={1536} height={1024} unoptimized className="h-auto w-full object-contain" /></div><button type="button" className="beast-button-secondary mt-4" onClick={() => { const link = document.createElement("a"); link.href = conceptImage; link.download = `${form.roomName.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "home-studio"}-concept.jpg`; link.click(); }}>Download concept image</button></div> : null}
-      {plan ? <p className="text-sm text-[#cbd5e1]">{plan.summary}</p> : null}
-      {plan?.shoppingList.length ? <details className="rounded-xl border border-[#334155] p-4">
-        <summary className="cursor-pointer font-bold text-white">Shopping ideas ({plan.shoppingList.length})</summary>
+      {conceptOutdated ? <p className="text-sm text-amber-200">Previous design — your latest changes are not shown yet.</p> : null}
+        {conceptImage ? <div className="mt-6"><div className="overflow-hidden rounded-2xl border border-[#334155] bg-black"><Image src={conceptImage} alt={`AI Home Studio concept for ${conceptDetails?.roomName || "the room"}`} width={1536} height={1024} unoptimized className="h-auto w-full object-contain" /></div><button type="button" className="beast-button-secondary mt-4" onClick={() => { const link = document.createElement("a"); link.href = conceptImage; link.download = `${(conceptDetails?.roomName || "home-studio").trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "home-studio"}-concept.jpg`; link.click(); }}>Download concept image</button></div> : null}
+      {conceptDetails?.plan ? <p className="text-sm text-[#cbd5e1]">{conceptDetails.plan.summary}</p> : null}
+      {conceptDetails?.plan?.shoppingList.length ? <details className="rounded-xl border border-[#334155] p-4">
+        <summary className="cursor-pointer font-bold text-white">Shopping ideas ({conceptDetails.plan.shoppingList.length})</summary>
         <p className="mt-2 text-xs text-[#94a3b8]">Estimated ranges; check current prices and fit.{affiliates.length ? " Some links earn us a commission." : ""}</p>
-        <ul className="mt-3 space-y-4">{plan.shoppingList.map((item, index) => <li key={index}>
+        <ul className="mt-3 space-y-4">{conceptDetails.plan.shoppingList.map((item, index) => <li key={index}>
           <p className="font-semibold">{item.item} <span className="text-sm font-normal text-[#94a3b8]">· {item.targetPrice}</span></p>
           <div className="mt-2 flex flex-wrap gap-2">{homeStudioRetailerLinks(item.searchTerms, affiliates).map(retailer => <a key={retailer.label} href={retailer.href} target="_blank" rel={retailer.affiliate ? "sponsored noopener noreferrer" : "noopener noreferrer"} className="beast-button-secondary text-xs">{retailer.label}</a>)}</div>
         </li>)}</ul>
@@ -497,7 +502,7 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
             value={conceptPrompt}
             maxLength={2400}
             disabled={busy || planOutdated}
-            onChange={event => { setConceptPrompt(event.target.value); setConfirmed(false); setConceptImage(""); }}
+            onChange={event => { setConceptPrompt(event.target.value); setConfirmed(false); setConceptOutdated(true); }}
             aria-label="Concept image instructions"
           />
           <p className="mt-2 text-right text-xs text-[#94a3b8]">{conceptPrompt.length}/2400</p>
