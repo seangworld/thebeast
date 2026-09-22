@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRef, useState, type ChangeEvent } from "react";
 import {
   DashboardCard,
-  GuidedEmptyState,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import {
@@ -346,12 +345,16 @@ export function HomeStudioWorkspace({ affiliates = [] }: { affiliates?: HomeStud
                 <div className="flex flex-wrap gap-3">{index > 0 ? <button type="button" className="beast-button-secondary text-xs" onClick={() => changePhoto(index)}>Use as primary</button> : null}<button type="button" className="min-h-11 text-rose-200 underline" disabled={busy} onClick={() => removePhoto(index)}>Remove</button></div>
               </figcaption>
             </figure>)}
-          </div> : <GuidedEmptyState title="No room photos selected" description="Photos are used only for the plan and optional concept request in this browser session." guidance="Up to four JPG, PNG, or WebP files, 3 MB each. Home Studio compresses working copies and does not add them to saved projects, inventory, or Beast Documents." nextAction={{ label: "Choose room photos", href: "#home-studio-photo" }} />}
+          </div> : <div className="rounded-xl border border-dashed border-[#43506a] bg-[#111827] p-5">
+            <h3 className="text-lg font-black text-white">No room photos selected</h3>
+            <p className="mt-2 text-sm text-[#c7cfdb]">Photos are used only for the plan and optional concept request in this browser session.</p>
+            <p id="home-studio-photo-help" className="mt-3 text-sm text-[#c7cfdb]">Up to four JPG, PNG, or WebP files, 3 MB each. Home Studio compresses working copies and does not add them to saved projects, inventory, or Beast Documents.</p>
+          </div>}
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <label id="home-studio-photo" className="beast-button-secondary cursor-pointer">
+            <button id="home-studio-photo" type="button" className="beast-button-secondary" disabled={busy || photos.length >= HOME_STUDIO_MAX_PHOTOS} onClick={() => fileInput.current?.click()}>
               {preparingPhotos ? "Preparing photos…" : photos.length ? "Add another view" : "Choose room photos"}
-              <input ref={fileInput} className="sr-only" type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={selectPhotos} disabled={busy || photos.length >= HOME_STUDIO_MAX_PHOTOS} />
-            </label>
+            </button>
+            <input ref={fileInput} hidden aria-label="Room photo files" type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={selectPhotos} disabled={busy || photos.length >= HOME_STUDIO_MAX_PHOTOS} />
             <span className="text-xs text-[#94a3b8]">{photos.length}/{HOME_STUDIO_MAX_PHOTOS} views · first view drives the optional concept image</span>
           </div>
         </div>
