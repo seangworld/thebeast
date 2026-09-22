@@ -7,7 +7,7 @@ export default function BeastHomeStudioPage() {
   return (
     <BeastHomeShell
       title="Home Studio"
-      description="Create a reviewable room plan, shopping targets, and an optional AI visual concept from your photo and preferences."
+      description="Upload photos, tell us what you want to change, and see your redesigned room."
     >
       <HomeStudioWorkspace affiliates={parseHomeStudioAffiliates(process.env.HOME_STUDIO_AFFILIATE_LINKS_JSON, process.env.HOME_STUDIO_AFFILIATES_ENABLED)} />
     </BeastHomeShell>
