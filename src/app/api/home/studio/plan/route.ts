@@ -75,6 +75,7 @@ export async function POST(request: Request) {
                 type: "text",
                 text: [
                   "Create a practical interior styling and space-planning concept for the supplied room photo and member constraints.",
+                  "The member notes contain their plain-language redesign request. Prioritize explicit style, budget, room use, and must-keep instructions there over default selections. For roomType Other, infer the room use from the photos and request, without inventing measurements.",
                   "The first image is the primary view. Use all supplied views to understand the same room, reconcile visible details, and avoid treating repeated objects as different objects.",
                   "Preserve the room architecture, windows, doors, ceiling, camera viewpoint, and requested must-keep items. Do not claim measurements or structural facts that are not visible or supplied.",
                   "Treat member-supplied dimensioned floor-plan facts as authoritative inputs but state any ambiguity. Wall directions are labels chosen by the member and do not imply geographic north.",

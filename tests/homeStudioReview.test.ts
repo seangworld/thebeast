@@ -65,6 +65,7 @@ async function setup() {
   }) as typeof fetch;
   const view = render(React.createElement(HomeStudioWorkspace));
   const ui = within(view.container);
+  fireEvent.click(ui.getByText('Advanced options'));
   await waitFor(() => assert.ok(ui.getByRole('button', { name: 'Open' })));
   fireEvent.click(ui.getByRole('button', { name: 'Open' }));
   return { ui, view };
@@ -123,6 +124,7 @@ test('manual plan, budget, version, save and reopen retain project data without 
     return Response.json({projects:saved?[saved]:[]});
   }) as typeof fetch;
   const view=render(React.createElement(HomeStudioWorkspace)); const ui=within(view.container);
+  fireEvent.click(ui.getByText('Advanced options'));
   await waitFor(()=>assert.ok(ui.getByText('No saved Home Studio projects yet.')));
   fireEvent.change(ui.getByLabelText('Project or room name'),{target:{value:'Manual office'}});
   fireEvent.click(ui.getByRole('button',{name:'Start manual plan'}));
@@ -172,4 +174,48 @@ test('choose room photos activates the file input and displays the selected phot
   await waitFor(() => assert.ok(ui.getByLabelText('Description for photo 1')));
   assert.ok(ui.getByRole('button', { name: 'Add another view' }));
   assert.ok(view.container.querySelector('img[alt="Room view 1 for Test office"]') || ui.getByText('room.jpg'));
+});
+
+
+test('simple redesign starts with photos and completes plan plus image without advanced input', async () => {
+  const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
+  globalThis.fetch = (async (url: string, options?: RequestInit) => {
+    if (url.endsWith('/projects')) return Response.json({ projects: [] });
+    calls.push({ url, body: JSON.parse(String(options?.body)) });
+    return Response.json(url.endsWith('/plan') ? { plan } : { image: 'data:image/jpeg;base64,YQ==' });
+  }) as typeof fetch;
+  const view = render(React.createElement(HomeStudioWorkspace)); const ui = within(view.container);
+  assert.equal(ui.getAllByRole('button')[0].textContent, 'Choose room photos');
+  assert.equal(ui.queryByRole('button', { name: 'Save project' }), null);
+  assert.equal(ui.queryByRole('textbox', { name: 'Project or room name' }), null);
+  fireEvent.change(ui.getByLabelText('Room photo files'), { target: { files: [new dom.window.File(['photo'], 'room.jpg', { type: 'image/jpeg' })] } });
+  await waitFor(() => assert.ok(ui.getByText('room.jpg')));
+  fireEvent.change(ui.getByLabelText('What would you like to change?'), { target: { value: 'Keep my desk and make it cozy for $500.' } });
+  fireEvent.click(ui.getByRole('button', { name: 'Redesign my room' }));
+  await waitFor(() => assert.ok(ui.getByRole('region', { name: 'Your redesigned room' })));
+  assert.equal(calls.length, 2);
+  assert.ok(calls[0].url.endsWith('/plan')); assert.ok(calls[1].url.endsWith('/render'));
+  assert.equal(calls[0].body.roomName, 'My room');
+  assert.equal(calls[0].body.notes, 'Keep my desk and make it cozy for $500.');
+  assert.equal(calls[1].body.prompt, plan.conceptPrompt); assert.equal(calls[1].body.confirmed, true);
+  assert.ok(ui.getByRole('button', { name: 'Download concept image' }));
+});
+
+test('failed image can be retried without another paid plan request', async () => {
+  let plans = 0; let images = 0;
+  globalThis.fetch = (async (url: string) => {
+    if (url.endsWith('/projects')) return Response.json({ projects: [] });
+    if (url.endsWith('/plan')) { plans++; return Response.json({ plan }); }
+    images++;
+    return images === 1 ? Response.json({ error: 'Image unavailable' }, { status: 503 }) : Response.json({ image: 'data:image/jpeg;base64,YQ==' });
+  }) as typeof fetch;
+  const view = render(React.createElement(HomeStudioWorkspace)); const ui = within(view.container);
+  fireEvent.change(ui.getByLabelText('Room photo files'), { target: { files: [new dom.window.File(['photo'], 'room.jpg', { type: 'image/jpeg' })] } });
+  await waitFor(() => assert.ok(ui.getByText('room.jpg')));
+  fireEvent.change(ui.getByLabelText('What would you like to change?'), { target: { value: 'Keep my furniture.' } });
+  fireEvent.click(ui.getByRole('button', { name: 'Redesign my room' }));
+  await waitFor(() => assert.ok(ui.getByText(/Image unavailable/)));
+  fireEvent.click(ui.getByRole('button', { name: 'Redesign my room' }));
+  await waitFor(() => assert.ok(ui.getByRole('region', { name: 'Your redesigned room' })));
+  assert.equal(plans, 1); assert.equal(images, 2);
 });

@@ -2,7 +2,10 @@
 
 ## Available workflows
 
-- AI room plan and optional image generation retain existing cost confirmations and entitlements.
+- The default workflow is photo upload first, one plain-language request, then Redesign my room. This explicit action is labeled as paid AI usage and sequentially creates a plan and one image. Existing entitlements and server request limits remain in place.
+- Advanced options are collapsed by default and load on first expansion: saved projects, measurements, manual plans, budgets, versions, client delivery, full reports and separate image-prompt review.
+- The result shows the image and short summary before optional shopping ideas. Photo selection supports click and drag/drop.
+- A failed image retains its completed plan; retry with unchanged inputs requests only the image. Explicit request wording takes precedence over default style/room selections.
 - Start a manual plan to organize shopping and measured layouts without any provider request.
 - Track USD unit prices, quantities, purchased/needed/owned/deferred status, budget balance and missing prices. AI price ranges never enter actual totals. Enter prices inclusive of shipping/tax. Up to 32 shopping items.
 - Up to 24 measured furniture, door, or window rectangles, with coordinates, dimensions and 90-degree rotation. Room outline and packet show entered placements. Overlap and room-boundary warnings are geometric aids, not safe-egress or building-code validation.
@@ -28,3 +31,9 @@ No real affiliate value is included in this release. Do not turn on until Sean s
 - Save project to persist workbench changes; no silent local storage of client data.
 - A Stripe Payment Link or invoice must be created for the agreed service offer before collecting payment. Existing BEAST membership billing remains unchanged.
 - Actual signed-in account acceptance requires a BEAST browser session; the available browser was at sign-in. Automated route and UI tests use fixtures, not live member records.
+
+## September 22 simplification verification
+
+- Nine focused UI/flow tests passed, including one-click plan-to-image with no advanced inputs, photo-picker activation, image-only retry, saved-plan revision protections, and simulated save/reopen.
+- TypeScript compilation and focused lint passed. Provider responses were mocked; no live AI generation was purchased during verification.
+- Affiliate activation remains off. The real signed-in save/reopen acceptance gap remains unchanged.
