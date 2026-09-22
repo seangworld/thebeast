@@ -11,6 +11,7 @@ import {
 } from "../src/lib/homeStudio";
 
 const workspace = readFileSync("src/app/dashboard/home/studio/HomeStudioWorkspace.tsx", "utf8");
+const page = readFileSync("src/app/dashboard/home/studio/page.tsx", "utf8");
 const planRoute = readFileSync("src/app/api/home/studio/plan/route.ts", "utf8");
 const renderRoute = readFileSync("src/app/api/home/studio/render/route.ts", "utf8");
 const projectsRoute = readFileSync("src/app/api/home/studio/projects/route.ts", "utf8");
@@ -23,7 +24,9 @@ const image = `data:image/jpeg;base64,${Buffer.from("room-photo").toString("base
 test("Home Studio is discoverable inside BeastHome", () => {
   assert.match(shell, /Home Studio[\s\S]*\/dashboard\/home\/studio/);
   assert.match(navigation, /Home Studio[\s\S]*\/dashboard\/home\/studio/);
-  assert.match(workspace, /BeastHome · Home Studio/);
+  assert.match(page, /title="Home Studio"/);
+  assert.match(workspace, /Start with your room photos/);
+  assert.match(workspace, /Choose room photos/);
 });
 
 test("Home Studio validates and bounds private project input", () => {
