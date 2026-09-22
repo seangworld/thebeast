@@ -158,3 +158,18 @@ test('project save locks edits until the request settles', async()=>{
   await waitFor(()=>assert.ok(ui.getByText('Save unavailable')));
   assert.equal((ui.getByLabelText('Project or room name') as HTMLInputElement).matches(':disabled'),false);
 });
+
+
+test('choose room photos activates the file input and displays the selected photo', async () => {
+  const { ui, view } = await setup();
+  const input = ui.getByLabelText('Room photo files') as HTMLInputElement;
+  let pickerRequests = 0;
+  input.addEventListener('click', () => { pickerRequests++; });
+  assert.equal(ui.queryByRole('link', { name: 'Choose room photos' }), null);
+  fireEvent.click(ui.getByRole('button', { name: 'Choose room photos' }));
+  assert.equal(pickerRequests, 1);
+  fireEvent.change(input, { target: { files: [new dom.window.File(['photo'], 'room.jpg', { type: 'image/jpeg' })] } });
+  await waitFor(() => assert.ok(ui.getByLabelText('Description for photo 1')));
+  assert.ok(ui.getByRole('button', { name: 'Add another view' }));
+  assert.ok(view.container.querySelector('img[alt="Room view 1 for Test office"]') || ui.getByText('room.jpg'));
+});
