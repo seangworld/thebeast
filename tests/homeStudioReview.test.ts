@@ -245,9 +245,31 @@ test('previous image survives edits and a failed replacement, then updates on im
   assert.ok(ui.getByText('Design summary 1'));
   assert.equal(ui.queryByText('Design summary 2'), null);
   assert.equal(image().getAttribute('src'), 'data:image/jpeg;base64,YQ==');
+  fireEvent.click(ui.getByText('Advanced options'));
+  await waitFor(() => assert.ok(ui.getByRole('button', { name: 'Download printable packet' })));
+  const originalCreate = URL.createObjectURL;
+  const originalRevoke = URL.revokeObjectURL;
+  const originalClick = dom.window.HTMLAnchorElement.prototype.click;
+  let packetBlob: Blob | undefined;
+  try {
+    URL.createObjectURL = (blob) => { packetBlob = blob as Blob; return 'blob:test-packet'; };
+    URL.revokeObjectURL = () => {};
+    dom.window.HTMLAnchorElement.prototype.click = () => {};
+    fireEvent.click(ui.getByRole('button', { name: 'Download printable packet' }));
+    assert.ok(packetBlob);
+    const packet = await packetBlob.text();
+    assert.match(packet, /Design summary 2/);
+    // The source photo has the same fixture URL as the old concept, so count
+    // occurrences: only the source image should remain in the new packet.
+    assert.equal(packet.split('data:image/jpeg;base64,YQ==').length - 1, 1);
+  } finally {
+    URL.createObjectURL = originalCreate;
+    URL.revokeObjectURL = originalRevoke;
+    dom.window.HTMLAnchorElement.prototype.click = originalClick;
+  }
   fireEvent.click(ui.getByRole('button', { name: 'Redesign again' }));
   await waitFor(() => assert.equal(image().getAttribute('src'), 'data:image/jpeg;base64,Yg=='));
-  assert.ok(ui.getByText('Design summary 2'));
+  assert.ok(within(ui.getByRole('region', { name: 'Your redesigned room' })).getByText('Design summary 2'));
   assert.equal(ui.queryByText(/Previous design/), null);
   assert.equal(plans, 2); assert.equal(images, 3);
 });

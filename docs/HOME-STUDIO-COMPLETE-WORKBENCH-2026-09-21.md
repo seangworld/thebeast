@@ -45,3 +45,10 @@ No real affiliate value is included in this release. Do not turn on until Sean s
 - The image retains its own room name, summary, and shopping ideas until a replacement succeeds; exports omit an outdated concept instead of pairing it with a newer plan.
 - Room photo thumbnails use two compact columns on mobile.
 - Added a simulated success → edit → failed replacement → image-only retry regression. No paid AI calls or affiliate activation were used.
+
+### Full Home Studio regression review — September 22
+
+- All five Home Studio test files passed (29 tests), covering input validation, request boundaries, owner-scoped project persistence with a mocked database, shopping, budgets, backups, layouts, exports, affiliate configuration, and the simplified redesign flow.
+- The retry regression now downloads and inspects the actual generated packet Blob, confirming that a newer plan excludes the old concept image while retaining the source photo.
+- Updated the discoverability assertion to verify the current page title and upload-first workspace instead of the removed duplicate heading.
+- Live signed-in photo selection, generation, and save/reopen remain unverified from the available browser session. No paid provider requests or affiliate activation were performed.
