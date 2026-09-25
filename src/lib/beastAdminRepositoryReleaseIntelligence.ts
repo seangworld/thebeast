@@ -708,7 +708,7 @@ export function normalizeBeastAdminRepositoryReleaseSnapshot(
       String(value.acceptance.status)
     ) &&
     Number.isInteger(value.acceptance.blockingGateCount) &&
-    value.acceptance.retirementAuthorized === false &&
+    typeof value.acceptance.retirementAuthorized === "boolean" &&
     value.acceptance.gates.every(
       (entry) =>
         isRecord(entry) &&
