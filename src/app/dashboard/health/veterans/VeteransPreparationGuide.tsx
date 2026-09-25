@@ -19,7 +19,7 @@ export function VeteransPreparationGuide({ stage }: { stage?: VeteranClaim["stag
       <p className="mt-3 text-sm text-slate-200"><strong>What to do:</strong> {step.action}</p>
       <p className="mt-2 text-sm text-slate-200"><strong>Documents to gather:</strong> {step.documents}</p>
       <p className="mt-2 text-sm text-slate-300">{step.help}</p>
-      <a className="mt-3 inline-block text-sm text-sky-300 underline" href={`https://www.seangworld.com/articles/${step.articleSlug}`} target="_blank" rel="noopener noreferrer">
+      <a className="mt-3 inline-block text-sm text-sky-300 underline" href={`https://seangworld.com/articles/${step.articleSlug}`} target="_blank" rel="noopener noreferrer">
         Read the guide on SEANGWORLD: {step.articleTitle}
       </a>
     </details>)}
