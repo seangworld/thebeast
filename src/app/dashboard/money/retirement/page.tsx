@@ -15,8 +15,8 @@ const initial: Assumption[] = [
   { label: "Post-retirement growth assumption", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Informational only; not investment advice." },
   { label: "Withdrawal assumption", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Used only as a displayed assumption, never a withdrawal recommendation." },
   { label: "Annual retirement expenses", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "An editable planning assumption, not a prediction." },
-  { label: "Other retirement account balance", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Enter a reviewed balance for retirement assets not listed separately below." },
-  { label: "Other annual retirement contribution", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Enter current annual contributions for retirement assets not listed separately below." },
+  { label: "Retirement account balance", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Enter a reviewed balance for retirement assets not listed separately below." },
+  { label: "Annual retirement contribution", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Enter current annual contributions for retirement assets not listed separately below." },
   { label: "TSP balance", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Enter the reviewed balance from your Thrift Savings Plan account." },
   { label: "Annual TSP contribution", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Enter your current annual TSP contribution assumption, including only amounts you intend to model." },
   { label: "401(k) balance", value: "", source: "User Entered", confidence: "Unknown", reviewed: "Not reviewed", limitation: "Enter the reviewed balance from your 401(k) account." },
@@ -30,11 +30,11 @@ function toScenario(assumptions: Assumption[]): RetirementScenario {
   const byLabel = new Map(assumptions.map((item) => [item.label, item]));
   const record = (label: string, key = modelKey[label] ?? label.toLowerCase().replaceAll(" ", "_")): RetirementValue => { const item = byLabel.get(label)!; const parsed = item?.value?.trim() ? Number(item.value) : NaN; return { key, value: Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined, source: sourceFor(item?.source ?? "User Entered"), asOf: item?.reviewed === "Not reviewed" ? "" : item?.reviewed ?? "", confidence: (item?.confidence?.toLowerCase() ?? "unknown") as RetirementValue["confidence"], assumptions: [item?.limitation ?? ""], limitations: [item?.limitation ?? ""] }; };
   return { currentAge:record("Current age"), targetAge:record("Target retirement age"), lifeExpectancy:record("Planning life expectancy"), inflationRate:record("Inflation assumption"), preRetirementGrowthRate:record("Pre-retirement growth assumption"), postRetirementGrowthRate:record("Post-retirement growth assumption"), safeWithdrawalRate:record("Withdrawal assumption"), annualExpenses:record("Annual retirement expenses"), retirementBalances:[
-    record("Other retirement account balance", "retirement_balance:other"),
+    record("Retirement account balance", "retirement_balance:account"),
     record("TSP balance", "retirement_balance:tsp"),
     record("401(k) balance", "retirement_balance:401k"),
   ], annualContributions:[
-    record("Other annual retirement contribution", "annual_contribution:other"),
+    record("Annual retirement contribution", "annual_contribution:account"),
     record("Annual TSP contribution", "annual_contribution:tsp"),
     record("Annual 401(k) contribution", "annual_contribution:401k"),
   ], retirementIncome:[record("Social Security estimate", "official_social_security")] };
