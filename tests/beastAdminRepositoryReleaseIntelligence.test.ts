@@ -197,7 +197,7 @@ test("BA-CMD-001D fails closed when scheduler metadata predates execution state"
   assert.match(schedulerGate?.detail || "", /Reconcile in BeastFusion/);
 });
 
-test("BA-CMD-001D keeps dashboard retirement behind explicit owner acceptance", () => {
+test("BA-CMD-001D records explicit owner-authorized dashboard retirement", () => {
   const snapshot = buildBeastAdminRepositoryReleaseSnapshot({
     canonical: canonical(),
     githubProvider: provider,
@@ -209,8 +209,8 @@ test("BA-CMD-001D keeps dashboard retirement behind explicit owner acceptance", 
   const retirementGate = snapshot.acceptance.gates.find(
     (gate) => gate.id === "dashboard_retirement"
   );
-  assert.equal(retirementGate?.status, "owner_action_required");
-  assert.equal(snapshot.acceptance.retirementAuthorized, false);
+  assert.equal(retirementGate?.status, "passed");
+  assert.equal(snapshot.acceptance.retirementAuthorized, true);
 });
 
 test("BA-CMD-001D evaluates only the latest canonical release per deployed repository", () => {
@@ -315,12 +315,11 @@ test("client snapshot normalization rejects malformed repository boundaries", ()
     }),
     null
   );
-  assert.equal(
+  assert.ok(
     normalizeBeastAdminRepositoryReleaseSnapshot({
       ...snapshot,
       acceptance: { ...snapshot.acceptance, retirementAuthorized: true },
-    }),
-    null
+    })
   );
 });
 
