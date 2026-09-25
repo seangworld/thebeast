@@ -1,7 +1,5 @@
-import { BeastAdminShell } from "../BeastAdminShell";
-import { BeastAdminProductWorkspace } from "../BeastAdminProductWorkspace";
-import { findEmpireProduct } from "@/lib/beastAdminEmpire";
+import { permanentRedirect } from "next/navigation";
 
 export default function BeastFusionControlPage() {
-  return <BeastAdminShell title="BeastFusion" purpose="Platform capacity, usage, digital staff, delivery, and governance."><BeastAdminProductWorkspace product={findEmpireProduct("beastfusion")} /></BeastAdminShell>;
+  permanentRedirect("/dashboard/operations/fusion");
 }

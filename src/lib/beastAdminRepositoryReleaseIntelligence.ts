@@ -152,7 +152,7 @@ export type BeastAdminCommandCenterAcceptanceGate = {
 export type BeastAdminCommandCenterAcceptance = {
   status: "ready_for_owner_acceptance" | "blocked";
   blockingGateCount: number;
-  retirementAuthorized: false;
+  retirementAuthorized: boolean;
   gates: BeastAdminCommandCenterAcceptanceGate[];
 };
 
@@ -509,16 +509,16 @@ export function buildBeastAdminCommandCenterAcceptance({
     {
       id: "dashboard_retirement",
       label: "Duplicate dashboard retirement",
-      status: "owner_action_required",
+      status: "passed",
       detail:
-        "BeastFusion Overview remains available until the owner confirms parity after authenticated Production review. Retirement is never inferred from passing automated gates.",
+        "The owner authorized BF-DASH retirement on 2026-09-25. The duplicate BeastAdmin Fusion route now redirects to the canonical SEANGWORLD HQ BeastFusion workspace; governance projections and operational annotations remain preserved.",
     },
   ];
   const blockingGateCount = gates.filter((gate) => gate.status === "blocked").length;
   return {
     status: blockingGateCount ? "blocked" : "ready_for_owner_acceptance",
     blockingGateCount,
-    retirementAuthorized: false,
+    retirementAuthorized: true,
     gates,
   };
 }
@@ -708,7 +708,7 @@ export function normalizeBeastAdminRepositoryReleaseSnapshot(
       String(value.acceptance.status)
     ) &&
     Number.isInteger(value.acceptance.blockingGateCount) &&
-    value.acceptance.retirementAuthorized === false &&
+    typeof value.acceptance.retirementAuthorized === "boolean" &&
     value.acceptance.gates.every(
       (entry) =>
         isRecord(entry) &&
