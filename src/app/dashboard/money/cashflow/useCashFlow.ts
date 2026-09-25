@@ -647,6 +647,72 @@ export function useCashFlow() {
     setEditDebtMinimumPaymentFloor("25");
   }
 
+  async function syncDebtFundingSource(
+    supabase: ReturnType<typeof createClient>,
+    userId: string,
+    debtId: string,
+    debtName: string,
+    balance: number
+  ) {
+    // A revolving account that appears in both Debts and Funding Accounts
+    // must use the debt row as its canonical balance. Existing links are
+    // refreshed first. For legacy/unlinked rows, conservatively auto-link
+    // only when exactly one same-name credit account exists.
+    const { data: linkedSources, error: linkedError } = await supabase
+      .from("funding_sources")
+      .select("id, credit_limit")
+      .eq("user_id", userId)
+      .eq("linked_debt_id", debtId)
+      .eq("is_active", true);
+
+    if (linkedError) throw linkedError;
+
+    if ((linkedSources || []).length > 0) {
+      for (const source of linkedSources || []) {
+        const creditLimit = Number(source.credit_limit || 0);
+        const availableCredit =
+          creditLimit > 0 ? Math.max(creditLimit - balance, 0) : null;
+        const { error } = await supabase
+          .from("funding_sources")
+          .update({ available_credit: availableCredit })
+          .eq("id", source.id)
+          .eq("user_id", userId);
+        if (error) throw error;
+      }
+      return;
+    }
+
+    const normalizedName = debtName.trim();
+    if (!normalizedName) return;
+
+    const { data: candidates, error: candidateError } = await supabase
+      .from("funding_sources")
+      .select("id, credit_limit")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .is("linked_debt_id", null)
+      .in("type", ["credit_card", "heloc", "ploc"])
+      .ilike("name", normalizedName);
+
+    if (candidateError) throw candidateError;
+    if ((candidates || []).length !== 1) return;
+
+    const source = candidates![0];
+    const creditLimit = Number(source.credit_limit || 0);
+    const availableCredit =
+      creditLimit > 0 ? Math.max(creditLimit - balance, 0) : null;
+    const { error: linkError } = await supabase
+      .from("funding_sources")
+      .update({
+        linked_debt_id: debtId,
+        available_credit: availableCredit,
+      })
+      .eq("id", source.id)
+      .eq("user_id", userId);
+
+    if (linkError) throw linkError;
+  }
+
   async function saveDebtEdit(id: string) {
     const supabase = createClient();
     const debt = debts.find((candidate) => candidate.id === id);
@@ -685,6 +751,24 @@ export function useCashFlow() {
 
     if (error) {
       setSaveError(memberSafeMessage(error, "update"));
+      return;
+    }
+
+    try {
+      await syncDebtFundingSource(
+        supabase,
+        userId,
+        debt.id,
+        editDebtName,
+        Number(editDebtBalance || 0)
+      );
+    } catch (syncError) {
+      setSaveError(memberSafeMessage(syncError, "update"));
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "debt_funding_source_sync",
+        error: syncError,
+      });
       return;
     }
 
