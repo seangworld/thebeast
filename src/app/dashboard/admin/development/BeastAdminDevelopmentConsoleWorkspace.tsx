@@ -255,7 +255,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
       <DashboardCard accent="admin">
         <SectionHeader
           eyebrow="Dependencies"
-          title="Work dependency view"
+          title="Package and roadmap dependency view"
           description="Dependencies and blockers are projected from BeastFusion; missing entries are not inferred."
           action={<Link href="/dashboard/admin/roadmap" className="beast-button">Open active work</Link>}
         />
