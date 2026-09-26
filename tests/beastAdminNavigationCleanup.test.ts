@@ -14,6 +14,7 @@ const expectedAdminDestinations = [
   ["Member Messages", "/dashboard/admin/messages"],
   ["Beta Feedback", "/dashboard/admin/feedback"],
   ["The Beast Analytics", "/dashboard/admin/metrics"],
+  ["Staff", "/dashboard/admin/staff"],
   ["Development Console", "/dashboard/admin/development"],
   ["Platform Health", "/dashboard/admin/platform-health"],
   ["Migration Status", "/dashboard/admin/migrations"],

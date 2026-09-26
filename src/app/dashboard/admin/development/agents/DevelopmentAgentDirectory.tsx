@@ -12,8 +12,8 @@ export function DevelopmentAgentDirectory({ canonical }: { canonical: BeastAdmin
     <DashboardCard accent="admin">
       <SectionHeader
         eyebrow="Development agents"
-        title="Governed agent roster"
-        description="Orchestrator coordinates, Observer detects, Proposal Agent researches and recommends, Developer builds, Reviewer independently checks, Outcome Agent measures, and the owner authorizes. Profiles report accepted BeastFusion state and never create authority."
+        title="Development staff roster"
+        description="Manager view of every BeastFusion development professional: current availability, assignment, capability level, authority, and known limitations. Open a profile for the full capability assessment and evidence."
       />
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-development-agent-roster="true">
         {developmentAgentProfiles.map((profile) => {
@@ -36,7 +36,11 @@ export function DevelopmentAgentDirectory({ canonical }: { canonical: BeastAdmin
                 </span>
               </div>
               <p className="mt-4 text-sm leading-6 text-slate-300">{profile.role}</p>
-              {assessment ? <p className="mt-3 text-xs font-bold text-cyan-200">Software {assessment.capabilityRelease} · Knight L{assessment.autonomy.level} self-assessed · {assessment.authority.classification}</p> : null}
+              {assessment ? <>
+                <p className="mt-3 text-xs font-bold text-cyan-200">Software {assessment.capabilityRelease} · Knight L{assessment.autonomy.level} self-assessed · {assessment.authority.classification}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-400"><span className="font-black text-slate-300">Capability:</span> {assessment.autonomy.conciseDefinition}</p>
+              </> : null}
+              <p className="mt-2 text-xs leading-5 text-slate-400"><span className="font-black text-slate-300">Known limitation:</span> {profile.limitations[0]}</p>
               <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-slate-400">
                 Most recent governed package: {state.assignmentLabel}
               </p>
