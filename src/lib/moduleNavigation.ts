@@ -236,29 +236,14 @@ export const beastAdminNavigation: ModuleNavSection = {
       group: "Platform & engineering",
     },
     {
-      label: "SQL Explorer",
-      href: "/dashboard/admin/migrations/explorer",
-      group: "Platform & engineering",
-    },
-    {
       label: "Release Center",
       href: "/dashboard/admin/releases",
-      group: "Platform & engineering",
-    },
-    {
-      label: "Digital Professional History",
-      href: "/dashboard/admin/execution-history",
       group: "Platform & engineering",
     },
     { label: "Active Work", href: "/dashboard/admin/roadmap", group: "Platform & engineering" },
     {
       label: "Capacity & AI Analytics",
       href: "/dashboard/admin/analytics",
-      group: "Platform & engineering",
-    },
-    {
-      label: "Knowledge Inspector",
-      href: "/dashboard/admin/knowledge",
       group: "Platform & engineering",
     },
     {
@@ -270,16 +255,6 @@ export const beastAdminNavigation: ModuleNavSection = {
     {
       label: "Feature Flags",
       href: "/dashboard/admin/flags",
-      group: "Platform & engineering",
-    },
-    {
-      label: "Prompt Library",
-      href: "/dashboard/admin/prompt-library",
-      group: "Platform & engineering",
-    },
-    {
-      label: "Planned Workspaces",
-      href: "/dashboard/admin/planned-workspaces",
       group: "Platform & engineering",
     },
     { label: "Settings", href: "/dashboard/admin/settings", group: "Platform & engineering" },
