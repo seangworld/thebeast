@@ -29,7 +29,8 @@ const payload = { state: "findings", runs: [run], schedule: { enabled: true, cad
 test("briefing exposes unavailable evidence and continuing attention with an accessible controls link", async () => {
   globalThis.fetch = async () => Response.json(payload);
   const view = render(React.createElement(StaffOperationsWorkspace, { compact: true }));
-  await waitFor(() => assert.match(view.container.textContent || "", /attention persists/));
+  await waitFor(() => assert.match(view.container.textContent || "", /Findings need owner review/));
+  assert.doesNotMatch(view.container.textContent || "", /attention persists/);
   assert.match(within(view.container).getByRole("status").textContent || "", /does not establish health/);
   assert.equal(within(view.container).getByRole("link", { name: "Review findings and staff controls" }).getAttribute("href"), "/dashboard/admin/development");
   assert.equal(view.container.querySelectorAll("button").length, 0);
@@ -77,7 +78,8 @@ test("owner can retry a failed briefing with a read-only request", async () => {
   };
   const view = render(React.createElement(StaffOperationsWorkspace, { compact: true }));
   fireEvent.click(await within(view.container).findByRole("button", { name: "Retry briefing" }));
-  await waitFor(() => assert.match(view.container.textContent || "", /attention persists/));
+  await waitFor(() => assert.match(view.container.textContent || "", /Findings need owner review/));
+  assert.doesNotMatch(view.container.textContent || "", /attention persists/);
   assert.equal(within(view.container).queryByRole("alert"), null);
   assert.deepEqual(methods, ["GET", "GET"]);
 });
