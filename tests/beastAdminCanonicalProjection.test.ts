@@ -134,7 +134,7 @@ test("canonical adapters expose roadmap execution releases attention and cursor 
   assert.equal(model.records?.length, sourcePaths.length);
 });
 
-test("BA-CMD-002 groups roadmap indexing diagnostics into one actionable owner signal", () => {
+test("legacy roadmap indexing diagnostics do not create active owner attention", () => {
   const payload = fixture();
   const mutable = payload as unknown as {
     roadmap: { warnings: string[] };
@@ -164,10 +164,7 @@ test("BA-CMD-002 groups roadmap indexing diagnostics into one actionable owner s
     lastConfirmedAt: "2026-08-21T20:01:00Z",
     payload: validation.projection,
   });
-  assert.equal(model.attention.length, 2);
-  const grouped = model.attention.find((item) => item.id === "roadmap-indexing-reconciliation");
-  assert.match(grouped?.detail || "", /2 approved roadmap records require indexing reconciliation/);
-  assert.match(grouped?.detail || "", /Impact: roadmap coverage may be incomplete/);
+  assert.equal(model.attention.some((item) => item.id === "roadmap-indexing-reconciliation"), false);
   assert.doesNotMatch(model.attention.map((item) => item.id).join(" "), /roadmap_unindexed_/);
 });
 
