@@ -192,7 +192,7 @@ test("BA-CMD-001E makes Product Roadmap canonical and separates owner intake", (
     /status in \('planned', 'in_progress', 'testing', 'released', 'archived'\)/
   );
   assert.match(workspace, /useBeastAdminCommandCenter/);
-  assert.match(workspace, /Read-only governed delivery truth/);
+  assert.match(workspace, /Governed work and delivery truth/);
   assert.match(workspace, /\/dashboard\/admin\/roadmap\/intake/);
   assert.doesNotMatch(workspace, /beast_admin_roadmap_items/);
   assert.doesNotMatch(workspace, /\.insert\(|\.update\(|\.delete\(/);
