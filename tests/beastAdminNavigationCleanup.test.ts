@@ -20,7 +20,7 @@ const expectedAdminDestinations = [
   ["SQL Explorer", "/dashboard/admin/migrations/explorer"],
   ["Release Center", "/dashboard/admin/releases"],
   ["Digital Professional History", "/dashboard/admin/execution-history"],
-  ["Roadmap", "/dashboard/admin/roadmap"],
+  ["Active Work", "/dashboard/admin/roadmap"],
   ["Capacity & AI Analytics", "/dashboard/admin/analytics"],
   ["Knowledge Inspector", "/dashboard/admin/knowledge"],
   ["Ecosystem Map", "/dashboard/admin/ecosystem"],
