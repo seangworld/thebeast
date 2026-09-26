@@ -648,7 +648,7 @@ export function useCashFlow() {
   }
 
   async function syncDebtFundingSource(
-    supabase: ReturnType<typeof createClient>,
+    supabase: any,
     userId: string,
     debtId: string,
     debtName: string,
@@ -697,7 +697,7 @@ export function useCashFlow() {
     if (candidateError) throw candidateError;
     if ((candidates || []).length !== 1) return;
 
-    const source = candidates![0];
+    const source = candidates[0];
     const creditLimit = Number(source.credit_limit || 0);
     const availableCredit =
       creditLimit > 0 ? Math.max(creditLimit - balance, 0) : null;
