@@ -858,11 +858,11 @@ export function BeastAdminCEOModeWorkspace() {
           </SummaryCard>
 
           <SummaryCard
-            eyebrow="Roadmap progress"
+            eyebrow="Work progress"
             title="Feature flow"
-            description="Roadmap items grouped by their current delivery state."
+            description="Governed work grouped by current delivery state."
             href="/dashboard/admin/roadmap"
-            actionLabel="Open Canonical Roadmap"
+            actionLabel="Open Active Work"
           >
             {snapshot.sources.canonicalGovernance !== "available" ? (
               <EmptyOperatingState>
