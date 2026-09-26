@@ -70,8 +70,8 @@ export function BeastAdminRoadmapWorkspace() {
     return (
       <DashboardCard accent="admin">
         <SectionHeader
-          eyebrow="Canonical Product Roadmap"
-          title="Loading governed roadmap"
+          eyebrow="Active Work"
+          title="Loading governed work"
           description="BeastAdmin is loading the accepted BeastFusion projection."
         />
         <div className="mt-5 h-28 animate-pulse rounded-xl border border-white/10 bg-white/[0.03]" aria-busy="true" />
@@ -83,12 +83,12 @@ export function BeastAdminRoadmapWorkspace() {
     return (
       <DashboardCard accent="admin">
         <SectionHeader
-          eyebrow="Canonical Product Roadmap"
-          title="Canonical roadmap unavailable"
+          eyebrow="Active Work"
+          title="Active work unavailable"
           description={error}
         />
         <p className="mt-4 text-sm leading-6 text-slate-300">
-          BeastAdmin did not substitute legacy owner roadmap rows.
+          BeastAdmin did not substitute legacy roadmap documents or local planning notes.
         </p>
         <button type="button" onClick={() => void reload()} className="beast-button mt-5">
           Retry canonical source
@@ -115,8 +115,8 @@ export function BeastAdminRoadmapWorkspace() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Canonical roadmap summary">
-        <MetricTile label="Canonical items" value={String(counts.total)} detail="Indexed from BeastFusion" icon="◫" tone="yellow" />
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Active work summary">
+        <MetricTile label="Governed work" value={String(counts.total)} detail="From BeastFusion active state" icon="◫" tone="yellow" />
         <MetricTile label="Complete / released" value={String(counts.complete)} detail="Governed terminal states" icon="✓" tone="yellow" />
         <MetricTile label="Blocked" value={String(counts.blocked)} detail="Explicit canonical blockers" icon="!" tone="yellow" />
         <MetricTile label="Executable now" value={String(counts.executable)} detail="All execution gates passed" icon="▶" tone="yellow" />
@@ -124,9 +124,9 @@ export function BeastAdminRoadmapWorkspace() {
 
       <DashboardCard accent="admin">
         <SectionHeader
-          eyebrow="Canonical Product Roadmap"
-          title="Read-only governed delivery truth"
-          description="Only the accepted BeastFusion projection can set roadmap status, dependencies, authorization, blockers, or executable state."
+          eyebrow="Active Work"
+          title="Governed work and delivery truth"
+          description="Only the accepted BeastFusion projection can set work status, dependencies, authorization, blockers, or executable state."
           action={
             <Link href="/dashboard/admin/roadmap/intake" className="beast-button">
               Candidate intake and annotations
@@ -163,11 +163,11 @@ export function BeastAdminRoadmapWorkspace() {
       <BeastAdminPagination
         page={currentPage}
         totalItems={visible.length}
-        itemLabel="roadmap items"
+        itemLabel="work items"
         onPageChange={setPage}
       />
 
-      <section className="space-y-3" aria-label="Canonical roadmap items">
+      <section className="space-y-3" aria-label="Governed work items">
         {visible.length ? (
           pagedVisible.map((item) => {
             const sourceHref = canonicalEvidenceHref(item.sourceReference, sourceCommit);
@@ -213,7 +213,7 @@ export function BeastAdminRoadmapWorkspace() {
           })
         ) : (
           <DashboardCard accent="admin">
-            <p className="text-sm text-slate-400">No canonical roadmap items match these filters.</p>
+            <p className="text-sm text-slate-400">No governed work items match these filters.</p>
           </DashboardCard>
         )}
       </section>
@@ -222,7 +222,7 @@ export function BeastAdminRoadmapWorkspace() {
         <BeastAdminPagination
           page={currentPage}
           totalItems={visible.length}
-          itemLabel="roadmap items"
+          itemLabel="work items"
           onPageChange={setPage}
         />
       ) : null}

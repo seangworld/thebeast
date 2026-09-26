@@ -4,8 +4,8 @@ import { BeastAdminRoadmapWorkspace } from "./BeastAdminRoadmapWorkspace";
 export default function BeastAdminRoadmapPage() {
   return (
     <BeastAdminShell
-      title="Canonical Product Roadmap"
-      purpose="Read-only governed delivery truth from the accepted BeastFusion projection, with candidate ideas kept in a separate non-canonical intake workspace."
+      title="Active Work"
+      purpose="Current governed work, blockers, authorization, and delivery state from BeastFusion. Historical roadmap documents stay out of routine operations."
     >
       <BeastAdminRoadmapWorkspace />
     </BeastAdminShell>
