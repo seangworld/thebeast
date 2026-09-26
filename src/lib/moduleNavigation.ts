@@ -245,7 +245,7 @@ export const beastAdminNavigation: ModuleNavSection = {
       href: "/dashboard/admin/execution-history",
       group: "Platform & engineering",
     },
-    { label: "Roadmap", href: "/dashboard/admin/roadmap", group: "Platform & engineering" },
+    { label: "Active Work", href: "/dashboard/admin/roadmap", group: "Platform & engineering" },
     {
       label: "Capacity & AI Analytics",
       href: "/dashboard/admin/analytics",
