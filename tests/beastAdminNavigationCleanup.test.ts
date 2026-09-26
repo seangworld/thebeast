@@ -18,17 +18,12 @@ const expectedAdminDestinations = [
   ["Development Console", "/dashboard/admin/development"],
   ["Platform Health", "/dashboard/admin/platform-health"],
   ["Migration Status", "/dashboard/admin/migrations"],
-  ["SQL Explorer", "/dashboard/admin/migrations/explorer"],
   ["Release Center", "/dashboard/admin/releases"],
-  ["Digital Professional History", "/dashboard/admin/execution-history"],
   ["Active Work", "/dashboard/admin/roadmap"],
   ["Capacity & AI Analytics", "/dashboard/admin/analytics"],
-  ["Knowledge Inspector", "/dashboard/admin/knowledge"],
   ["Ecosystem Map", "/dashboard/admin/ecosystem"],
   ["Modules", "/dashboard/admin/modules"],
   ["Feature Flags", "/dashboard/admin/flags"],
-  ["Prompt Library", "/dashboard/admin/prompt-library"],
-  ["Planned Workspaces", "/dashboard/admin/planned-workspaces"],
   ["Settings", "/dashboard/admin/settings"],
 ] as const;
 
@@ -48,7 +43,7 @@ test("BA-NAV-101 makes the left rail the single BeastAdmin page navigation", () 
   assert.match(shell, /canAccessBeastAdmin/);
 });
 
-test("BA-NAV-101 preserves every BeastAdmin destination in the left rail", () => {
+test("BA-NAV-101 keeps routine BeastAdmin destinations in the left rail", () => {
   assert.deepEqual(
     beastAdminNavigation.children?.map((item) => [item.label, item.href]),
     expectedAdminDestinations
