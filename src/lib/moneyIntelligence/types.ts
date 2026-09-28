@@ -33,6 +33,25 @@ export type ConnectedAccount = {
   cursor?: string;
 };
 
+export type ConnectedAccountBalance = {
+  accountExternalId: string;
+  current: number;
+  available?: number;
+  creditLimit?: number;
+  currency: string;
+  providerObservedAt?: string;
+  retrievedAt: string;
+};
+
+export type BalanceComparison = {
+  accountId: string;
+  canonicalBalance?: number;
+  reportedBalance: number;
+  difference?: number;
+  requiresReview: boolean;
+  reportedAt: string;
+};
+
 export type ProviderTransaction = {
   externalId: string;
   accountExternalId: string;
@@ -64,7 +83,8 @@ export type ConnectedAccountProvider = {
   displayName: string;
   capabilities: readonly ("accounts" | "balances" | "transactions" | "webhooks")[];
   connect(input: { ownerId: string; authorizationCode: string }): Promise<{ connectionId: string; accounts: readonly ConnectedAccount[] }>;
-  sync(input: { connectionId: string; cursor?: string }): Promise<{ transactions: readonly ProviderTransaction[]; nextCursor?: string }>;
+  refreshBalances(input: { connectionId: string }): Promise<{ balances: readonly ConnectedAccountBalance[] }>;
+  sync?(input: { connectionId: string; cursor?: string }): Promise<{ transactions: readonly ProviderTransaction[]; nextCursor?: string }>;
   disconnect(input: { connectionId: string }): Promise<void>;
 };
 
