@@ -35,6 +35,19 @@ export default function PayoffScenarioComparison({ debts, current, currentLabel,
     }
   }, [debts, current, extra, lump, customOrder, recoveredMinimums]);
   const chosen = selected === "current" ? { strategy: "current" as const, result: current } : comparison.rows.find(row => row.strategy === selected);
+  const paymentPlanRows = useMemo(() => {
+    if (!chosen) return [];
+    const rows = chosen.result.debt_payment_schedule.filter(row => row.month <= 1);
+    if (selected !== "custom") return rows;
+    const rank = new Map(customOrder.map((id, index) => [id, index]));
+    return [...rows].sort((a, b) => {
+      if (a.month !== b.month) return a.month - b.month;
+      const aRank = rank.get(a.debt_id) ?? Number.MAX_SAFE_INTEGER;
+      const bRank = rank.get(b.debt_id) ?? Number.MAX_SAFE_INTEGER;
+      return aRank - bRank || a.debt_name.localeCompare(b.debt_name);
+    });
+  }, [chosen, customOrder, selected]);
+
   const [startDate] = useState(() => new Date());
   function payoffDate(result: ScenarioProjection) {
     if (!result.payoff_complete || result.months_to_payoff === null) return "Not reached within 600 months";
@@ -120,7 +133,7 @@ export default function PayoffScenarioComparison({ debts, current, currentLabel,
     {chosen ? <div className="mt-5 rounded-xl border border-slate-700 p-4" aria-live="polite">
       <h3 className="font-bold">{labels[selected]} · payments to plan</h3>
       <p className="mt-2 text-sm text-slate-400">Upfront cash applied: {money("initial_lump_sum_applied" in chosen.result ? Number(chosen.result.initial_lump_sum_applied || 0) : 0)}.{selected !== "current" ? <> Unused lump sum: {money(Math.max(Number(lump) - ("initial_lump_sum_applied" in chosen.result ? Number(chosen.result.initial_lump_sum_applied || 0) : 0), 0))}.</> : null} Keep your cash buffer and upcoming bills covered before using extra funds.</p>
-      <ul className="mt-3 space-y-2 text-sm">{chosen.result.debt_payment_schedule.filter(row => row.month <= 1).map(row => <li key={`${row.month}-${row.debt_id}`} className="flex flex-wrap justify-between gap-2">
+      <ul className="mt-3 space-y-2 text-sm">{paymentPlanRows.map(row => <li key={`${row.month}-${row.debt_id}`} className="flex flex-wrap justify-between gap-2">
         <span>{row.debt_name} · {row.month === 0 ? "upfront cash" : "first month"}</span><span>{money(row.total_payment)}{row.month === 1 ? ` (${money(row.required_payment)} minimum + ${money(row.additional_payment)} extra)` : ""}</span>
       </li>)}</ul>
       <p className="mt-3 text-sm text-slate-400">Monthly amounts are not per-paycheck instructions. Split them across your income dates in Paycheck Strategy. Your existing assignments remain untouched.</p>
