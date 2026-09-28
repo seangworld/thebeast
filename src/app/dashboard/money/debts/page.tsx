@@ -158,7 +158,7 @@ function DebtActionsMenu({
   onDelete,
 }: {
   debt: Debt;
-  automation: ReactNode;
+  automation?: ReactNode;
   management?: DebtManagementActionsProps;
   onEdit: () => void;
   lifecycleLabel?: "Archive" | "Restore to Active" | null;
@@ -176,7 +176,7 @@ function DebtActionsMenu({
     >
       {(close) => (
         <div className="grid min-w-0 gap-2 text-sm" data-debt-actions-menu="true" data-debt-actions-layout="compact" data-action-menu-list="debt">
-          <div className="border-b border-[#2a3242] pb-2">{automation}</div>
+          {automation ? <div className="min-w-0 border-b border-[#2a3242] pb-2">{automation}</div> : null}
           {management ? <DebtManagementActions {...management} editAction={<button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">Edit</button>} /> : null}
           <div className="grid grid-cols-1 gap-2 border-t border-[#2a3242] pt-2">
             {!management ? <button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">Edit</button> : null}
@@ -1933,7 +1933,6 @@ export default function DebtsPage() {
                           ) : (
                             <DebtActionsMenu
                               debt={debt}
-                              automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                               onEdit={() => startEditDebt(debt)}
                               lifecycleLabel={getDebtLifecycleStatus(debt) === "archived" ? "Restore to Active" : null}
                               onLifecycle={() => Boolean(debt.is_archived) ? void unarchiveDebt(debt.id) : void archiveDebt(debt.id)}
