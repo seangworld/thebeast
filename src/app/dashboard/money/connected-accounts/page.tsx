@@ -20,7 +20,11 @@ type Account = {
   account_type: string;
   currency: string;
   status: string;
+  linked_record_type: "debt" | "funding_source" | "retirement" | "other" | null;
+  linked_record_id: string | null;
 };
+
+type CanonicalBalance = { balance: number; label: string };
 
 type Snapshot = {
   connected_account_id: string;
@@ -34,6 +38,7 @@ export default function ConnectedAccountsPage() {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, Snapshot>>({});
+  const [canonical, setCanonical] = useState<Record<string, CanonicalBalance>>({});
   const [status, setStatus] = useState("Loading connected accounts…");
 
   useEffect(() => {
@@ -44,7 +49,7 @@ export default function ConnectedAccountsPage() {
         if (!auth.user) { setStatus("Sign in to view connected accounts."); return; }
         const [connectionResult, accountResult] = await Promise.all([
           supabase.from("money_institution_connections").select("id,institution_name,provider_id,status,last_successful_refresh_at,last_refresh_error").eq("owner_id", auth.user.id).order("created_at"),
-          supabase.from("money_connected_accounts").select("id,connection_id,name,account_type,currency,status").eq("owner_id", auth.user.id).order("created_at"),
+          supabase.from("money_connected_accounts").select("id,connection_id,name,account_type,currency,status,linked_record_type,linked_record_id").eq("owner_id", auth.user.id).order("created_at"),
         ]);
         if (connectionResult.error) throw connectionResult.error;
         if (accountResult.error) throw accountResult.error;
@@ -60,6 +65,19 @@ export default function ConnectedAccountsPage() {
           const latest: Record<string, Snapshot> = {};
           for (const row of (data ?? []) as Snapshot[]) if (!latest[row.connected_account_id]) latest[row.connected_account_id] = row;
           setSnapshots(latest);
+
+          const debtIds = loadedAccounts.filter((item) => item.linked_record_type === "debt" && item.linked_record_id).map((item) => item.linked_record_id as string);
+          const fundingIds = loadedAccounts.filter((item) => item.linked_record_type === "funding_source" && item.linked_record_id).map((item) => item.linked_record_id as string);
+          const [debtResult, fundingResult] = await Promise.all([
+            debtIds.length ? supabase.from("debts").select("id,name,balance").eq("user_id", auth.user.id).in("id", debtIds) : Promise.resolve({ data: [], error: null }),
+            fundingIds.length ? supabase.from("funding_sources").select("id,name,current_balance").eq("user_id", auth.user.id).in("id", fundingIds) : Promise.resolve({ data: [], error: null }),
+          ]);
+          if (debtResult.error) throw debtResult.error;
+          if (fundingResult.error) throw fundingResult.error;
+          const values: Record<string, CanonicalBalance> = {};
+          for (const row of debtResult.data ?? []) values[row.id] = { balance: Number(row.balance) || 0, label: row.name };
+          for (const row of fundingResult.data ?? []) values[row.id] = { balance: Number(row.current_balance) || 0, label: row.name };
+          setCanonical(values);
         }
         setStatus(connectionResult.data?.length ? "" : "No institutions are connected yet.");
       } catch {
@@ -93,7 +111,7 @@ export default function ConnectedAccountsPage() {
                 return <article key={account.id} className="rounded-lg border border-[#2a3242] p-4">
                   <p className="text-xs font-black uppercase tracking-wide text-slate-400">{account.account_type}</p>
                   <h3 className="mt-1 font-black text-white">{account.name}</h3>
-                  {snapshot ? <div className="mt-3 text-sm text-slate-300"><p><strong>Institution-reported:</strong> {snapshot.current_balance.toLocaleString(undefined,{style:"currency",currency:account.currency})}</p>{snapshot.available_balance !== null ? <p><strong>Available:</strong> {snapshot.available_balance.toLocaleString(undefined,{style:"currency",currency:account.currency})}</p> : null}{snapshot.credit_limit !== null ? <p><strong>Credit limit:</strong> {snapshot.credit_limit.toLocaleString(undefined,{style:"currency",currency:account.currency})}</p> : null}<p className="mt-2 text-xs text-slate-400">Retrieved {new Date(snapshot.retrieved_at).toLocaleString()}</p></div> : <p className="mt-3 text-sm text-slate-400">No balance snapshot yet.</p>}
+                  {snapshot ? <div className="mt-3 text-sm text-slate-300"><p><strong>Institution-reported:</strong> {snapshot.current_balance.toLocaleString(undefined,{style:"currency",currency:account.currency})}</p>{snapshot.available_balance !== null ? <p><strong>Available:</strong> {snapshot.available_balance.toLocaleString(undefined,{style:"currency",currency:account.currency})}</p> : null}{snapshot.credit_limit !== null ? <p><strong>Credit limit:</strong> {snapshot.credit_limit.toLocaleString(undefined,{style:"currency",currency:account.currency})}</p> : null}{account.linked_record_id && canonical[account.linked_record_id] ? (() => { const saved = canonical[account.linked_record_id!]; const difference = snapshot.current_balance - saved.balance; return <div className="mt-3 rounded-md border border-[#2a3242] p-3"><p><strong>BeastMoney saved:</strong> {saved.balance.toLocaleString(undefined,{style:"currency",currency:account.currency})}</p><p><strong>Difference:</strong> {difference.toLocaleString(undefined,{style:"currency",currency:account.currency})}</p>{Math.abs(difference) > 0.004 ? <button className="beast-button mt-3" disabled title="Canonical update confirmation will be enabled with the provider adapter and audited update command.">Review update</button> : <p className="mt-2 text-emerald-300">Balances match.</p>}</div>; })() : <p className="mt-3 text-xs text-slate-400">Link this account to a BeastMoney debt or funding source to compare balances.</p>}<p className="mt-2 text-xs text-slate-400">Retrieved {new Date(snapshot.retrieved_at).toLocaleString()}</p></div> : <p className="mt-3 text-sm text-slate-400">No balance snapshot yet.</p>}
                 </article>;
               })}
             </div>
