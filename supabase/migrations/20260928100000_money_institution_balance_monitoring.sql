@@ -67,3 +67,62 @@ create policy "money connected accounts owner delete" on public.money_connected_
 create policy "money balance snapshots owner read" on public.money_balance_snapshots for select using (auth.uid() = owner_id);
 create policy "money balance snapshots owner insert" on public.money_balance_snapshots for insert with check (auth.uid() = owner_id);
 create policy "money balance snapshots owner delete" on public.money_balance_snapshots for delete using (auth.uid() = owner_id);
+
+
+-- Canonical balance updates are explicit, owner-authenticated and auditable.
+create table if not exists public.money_balance_reconciliation_events (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  connected_account_id uuid not null references public.money_connected_accounts(id) on delete cascade,
+  snapshot_id uuid not null references public.money_balance_snapshots(id) on delete restrict,
+  linked_record_type text not null check (linked_record_type in ('debt','funding_source')),
+  linked_record_id uuid not null,
+  previous_balance numeric not null,
+  accepted_balance numeric not null,
+  accepted_at timestamptz not null default now()
+);
+alter table public.money_balance_reconciliation_events enable row level security;
+create policy "money balance reconciliation owner read" on public.money_balance_reconciliation_events for select using (auth.uid() = owner_id);
+create policy "money balance reconciliation owner insert" on public.money_balance_reconciliation_events for insert with check (auth.uid() = owner_id);
+
+create or replace function public.accept_money_connected_balance(
+  p_connected_account_id uuid,
+  p_snapshot_id uuid
+) returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_owner uuid := auth.uid();
+  v_account public.money_connected_accounts%rowtype;
+  v_snapshot public.money_balance_snapshots%rowtype;
+  v_previous numeric;
+begin
+  if v_owner is null then raise exception 'Authentication required'; end if;
+  select * into v_account from public.money_connected_accounts where id = p_connected_account_id and owner_id = v_owner;
+  if not found or v_account.linked_record_id is null then raise exception 'Linked account not available'; end if;
+  select * into v_snapshot from public.money_balance_snapshots where id = p_snapshot_id and connected_account_id = v_account.id and owner_id = v_owner;
+  if not found then raise exception 'Balance snapshot not available'; end if;
+
+  if v_account.linked_record_type = 'debt' then
+    select balance into v_previous from public.debts where id = v_account.linked_record_id and user_id = v_owner for update;
+    if not found then raise exception 'Linked debt not available'; end if;
+    update public.debts set balance = v_snapshot.current_balance where id = v_account.linked_record_id and user_id = v_owner;
+  elsif v_account.linked_record_type = 'funding_source' then
+    select current_balance into v_previous from public.funding_sources where id = v_account.linked_record_id and user_id = v_owner for update;
+    if not found then raise exception 'Linked funding source not available'; end if;
+    update public.funding_sources
+      set current_balance = v_snapshot.current_balance,
+          available_credit = case when credit_limit is null then available_credit else greatest(credit_limit - v_snapshot.current_balance, 0) end
+      where id = v_account.linked_record_id and user_id = v_owner;
+  else
+    raise exception 'This linked record type is not supported for canonical balance updates';
+  end if;
+
+  insert into public.money_balance_reconciliation_events(owner_id, connected_account_id, snapshot_id, linked_record_type, linked_record_id, previous_balance, accepted_balance)
+  values(v_owner, v_account.id, v_snapshot.id, v_account.linked_record_type, v_account.linked_record_id, v_previous, v_snapshot.current_balance);
+
+  return jsonb_build_object('status','accepted','previous_balance',v_previous,'accepted_balance',v_snapshot.current_balance);
+end;
+$$;
