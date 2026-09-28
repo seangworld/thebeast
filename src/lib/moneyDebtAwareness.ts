@@ -41,6 +41,7 @@ export type DebtAwarenessItem = {
   due: DebtDueState;
   dueDetail: string;
   missedPayment: boolean;
+  paymentEvidenceStatus: "confirmed-skip" | "no-recorded-payment" | "recorded-payment" | "not-due";
   paymentCount: number;
   totalRecordedPayments: number;
   lastPayment: { amount: number; date: string; action: DebtPaymentAction } | null;
@@ -127,6 +128,11 @@ export function buildMoneyDebtAwareness({
       );
       const missedPayment =
         cycleWasSkipped || (due.isOverdue && !cycleWasPaid);
+      const paymentEvidenceStatus: DebtAwarenessItem["paymentEvidenceStatus"] =
+        cycleWasSkipped ? "confirmed-skip"
+          : cycleWasPaid ? "recorded-payment"
+          : due.isOverdue ? "no-recorded-payment"
+          : "not-due";
       const totalRecordedPayments = debtPayments.reduce(
         (sum, payment) => sum + amount(payment.amount),
         0
@@ -162,6 +168,7 @@ export function buildMoneyDebtAwareness({
         due,
         dueDetail: getDebtDueDetail(due),
         missedPayment,
+        paymentEvidenceStatus,
         paymentCount: debtPayments.length,
         totalRecordedPayments,
         lastPayment: debtPayments[0]
@@ -177,7 +184,9 @@ export function buildMoneyDebtAwareness({
         payoffProgressPercent,
         interestChange,
         whyItMatters: late
-          ? "A late required payment can disrupt cash timing and the modeled payoff sequence. Beast does not infer lender fees or credit reporting."
+          ? paymentEvidenceStatus === "no-recorded-payment"
+            ? "The due date passed without a payment recorded in BeastMoney. This does not prove an outside Auto Pay failed; check the biller or lender before recording the actual outcome."
+            : "A late required payment can disrupt cash timing and the modeled payoff sequence. Beast does not infer lender fees or credit reporting."
           : "The required payment and due date reserve part of the current cash plan.",
         options: [
           "Record the minimum, statement, full-balance, or custom payment if it is affordable.",
