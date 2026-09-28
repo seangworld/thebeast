@@ -161,7 +161,7 @@ function DebtActionsMenu({
   automation?: ReactNode;
   management?: DebtManagementActionsProps;
   onEdit: () => void;
-  lifecycleLabel?: "Archive" | "Restore to Active" | null;
+  lifecycleLabel?: "Archive" | "Restore" | null;
   onLifecycle: () => void;
   onDelete: () => void;
 }) {
@@ -1934,7 +1934,7 @@ export default function DebtsPage() {
                             <DebtActionsMenu
                               debt={debt}
                               onEdit={() => startEditDebt(debt)}
-                              lifecycleLabel={getDebtLifecycleStatus(debt) === "archived" ? "Restore to Active" : null}
+                              lifecycleLabel={getDebtLifecycleStatus(debt) === "archived" ? "Restore" : null}
                               onLifecycle={() => Boolean(debt.is_archived) ? void unarchiveDebt(debt.id) : void archiveDebt(debt.id)}
                               onDelete={() => void deleteDebt(debt.id)}
                             />
