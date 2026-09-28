@@ -161,3 +161,24 @@ test("BM-37 renders Dashboard Immediate Attention and durably tracks rate change
   assert.match(migration, /before update of interest_rate/);
   assert.match(migration, /new\.previous_interest_rate := old\.interest_rate/);
 });
+
+
+test("overdue debt without a recorded payment is not described as a confirmed provider failure", () => {
+  const result = buildMoneyDebtAwareness({
+    debts: [{ id: "d1", name: "Card", balance: 500, minimum_payment: 50, due_date: 1 }],
+    payments: [],
+    now: new Date("2026-09-28T12:00:00"),
+  });
+  const item = result.items[0];
+  assert.equal(item.paymentEvidenceStatus, "no-recorded-payment");
+  assert.match(item.whyItMatters, /does not prove an outside Auto Pay failed/i);
+});
+
+test("explicitly skipped debt cycle remains confirmed skip evidence", () => {
+  const result = buildMoneyDebtAwareness({
+    debts: [{ id: "d1", name: "Card", balance: 500, minimum_payment: 50, due_date: 1 }],
+    payments: [{ id: "p1", debt_id: "d1", amount: 0, payment_date: "2026-09-01", cycle_due_date: "2026-09-01", action_type: "skip" }],
+    now: new Date("2026-09-28T12:00:00"),
+  });
+  assert.equal(result.items[0].paymentEvidenceStatus, "confirmed-skip");
+});
