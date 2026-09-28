@@ -14,6 +14,8 @@ export type MoneyCoachContextRows = {
   cashSettings: MoneyRow | null;
   fundingSources: MoneyRow[];
   goals: MoneyRow[];
+  debtSettings?: MoneyRow | null;
+  retirementScenarios?: MoneyRow[];
 };
 
 function active(rows: MoneyRow[]) {
@@ -78,6 +80,10 @@ export function buildMoneyCoachStructuredRecords(
       activeIncomeCount: incomes.length,
       activeFundingSourceCount: fundingSources.length,
       moneyGoalCount: rows.goals.length,
+      activeDebtStrategy: typeof rows.debtSettings?.strategy === "string" ? rows.debtSettings.strategy : "minimum",
+      plannedExtraDebtPayment: numberValue(rows.debtSettings?.extra_payment),
+      retirementScenarioCount: rows.retirementScenarios?.length || 0,
+      retirementDataAvailable: Boolean(rows.retirementScenarios?.length),
       calculation: "canonical BeastMoney Cash Intelligence; saved records only",
     },
     updatedAt: asOfDate.toISOString(),
@@ -90,5 +96,6 @@ export function buildMoneyCoachStructuredRecords(
     ...structured("beastmoney.money-coach:income", incomes, 4),
     ...structured("beastmoney.money-coach:funding", fundingSources, 2),
     ...structured("beastmoney.money-coach:goal", rows.goals.map(goal => ({ ...goal, context_note: "Member aspiration for advice, not actual income, an achieved fact, or permission to change records." })), 3),
+    ...structured("beastmoney.money-coach:retirement-scenario", rows.retirementScenarios || [], 2),
   ].slice(0, 20);
 }

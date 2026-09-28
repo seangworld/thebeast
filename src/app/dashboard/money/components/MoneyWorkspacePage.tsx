@@ -184,6 +184,7 @@ type MoneyGoal = {
 
 type MoneyState = {
   debts: MoneyDebt[];
+  retirementScenarioCount: number;
   bills: MoneyBill[];
   incomes: MoneyIncome[];
   fundingSources: FundingSource[];
@@ -198,6 +199,7 @@ type CoachCorrections = Partial<Record<FinancialCoachScenarioInput, string>>;
 
 const initialMoneyState: MoneyState = {
   debts: [],
+  retirementScenarioCount: 0,
   bills: [],
   incomes: [],
   fundingSources: [],
@@ -389,6 +391,7 @@ export function MoneyWorkspacePage({
         billPaymentsResult,
         debtPaymentsResult,
         goalsResult,
+        retirementResult,
       ] = await Promise.all([
         supabase.from("debts").select("*").eq("user_id", userId),
         supabase
@@ -425,6 +428,11 @@ export function MoneyWorkspacePage({
           .select("id, title, status, target_date, updated_at")
           .eq("owner_id", userId)
           .eq("category", "Money"),
+        supabase
+          .from("retirement_scenarios")
+          .select("id")
+          .eq("owner_id", userId)
+          .limit(1),
       ]);
       const firstError =
         debtsResult.error ||
@@ -448,6 +456,7 @@ export function MoneyWorkspacePage({
         billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
         debtPayments: (debtPaymentsResult.data || []) as MoneyPayment[],
         goals: goalsResult.error ? [] : (goalsResult.data || []) as MoneyGoal[],
+        retirementScenarioCount: retirementResult.error ? 0 : (retirementResult.data || []).length,
       });
     } catch (error) {
       setLoadError(memberSafeMessage(error, "load"));
@@ -890,7 +899,7 @@ export function MoneyWorkspacePage({
     activeDebtStrategy: snapshot.payoffStrategy,
     strategyScenarios: snapshot.scenarioComparison.scenarios.filter((scenario) => ["minimum", "avalanche", "snowball", "velocity"].includes(scenario.id)).map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel, debtFreeDate: scenario.debtFreeDate })),
     forecast: snapshot.financialForecast.periods.map((period) => ({ label: period.label, cash: period.cash, debt: period.debt, cashShortages: period.cashShortages })),
-    retirementDataAvailable: false,
+    retirementDataAvailable: state.retirementScenarioCount > 0,
     financialHealth: snapshot.financialInsights.financialHealth,
     debtAwareness: snapshot.debtAwareness,
     lastVisitedAt,

@@ -29,15 +29,17 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
     return { result, durationMs: Date.now() - startedAt };
   };
   if (professionalId === "beastmoney.money-coach") {
-    const [debts, bills, incomes, cashSettings, fundingSources, goals] = await Promise.all([
+    const [debts, bills, incomes, cashSettings, fundingSources, goals, debtSettings, retirementScenarios] = await Promise.all([
       timed(supabase.from("debts").select("id, name, balance, minimum_payment, interest_rate, due_date, next_due_date_after_payment, payment_behavior, lifecycle_status, paid_off_at, is_archived, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(200)),
       timed(supabase.from("bill_events").select("id, name, amount, frequency, due_date, next_due_date_after_payment, assigned_income_date, is_archived, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(200)),
       timed(supabase.from("income_events").select("id, name, amount, frequency, next_date, is_active, is_archived, created_at").eq("user_id", ownerId).order("next_date", { ascending: true }).limit(200)),
       timed(supabase.from("cash_settings").select(moneyCoachCashSettingsColumns).eq("user_id", ownerId).maybeSingle()),
       timed(supabase.from("funding_sources").select(moneyCoachFundingSourceColumns).eq("user_id", ownerId).eq("is_active", true).order("created_at", { ascending: true }).limit(200)),
       timed(supabase.from("beast_goals").select(advisorGoalColumns).eq("owner_id", ownerId).or(advisorGoalFilters.money).is("deleted_at", null).neq("status", "Archived").order("updated_at", { ascending: false }).limit(100)),
+      timed(supabase.from("debt_settings").select("strategy, extra_payment, custom_debt_order").eq("user_id", ownerId).maybeSingle()),
+      timed(supabase.from("retirement_scenarios").select("id, name, assumptions, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(3)),
     ]);
-    const results = [debts, bills, incomes, cashSettings, fundingSources, goals];
+    const results = [debts, bills, incomes, cashSettings, fundingSources, goals, debtSettings, retirementScenarios];
     const error = results.find((item) => item.result.error)?.result.error || null;
     return {
       queryCount: results.length,
@@ -47,12 +49,13 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
         && (bills.result.data || []).length < 200
         && (incomes.result.data || []).length < 200
         && (fundingSources.result.data || []).length < 200
-        && (goals.result.data || []).length < 100,
+        && (goals.result.data || []).length < 100
+        && (retirementScenarios.result.data || []).length < 3,
       timings: {
         debtLoadMs: debts.durationMs,
         billLoadMs: bills.durationMs,
         incomeLoadMs: incomes.durationMs,
-        otherFinancialContextLoadMs: Math.max(cashSettings.durationMs, fundingSources.durationMs, goals.durationMs),
+        otherFinancialContextLoadMs: Math.max(cashSettings.durationMs, fundingSources.durationMs, goals.durationMs, debtSettings.durationMs, retirementScenarios.durationMs),
       },
       records: error ? [] : buildMoneyCoachStructuredRecords({
         debts: (debts.result.data || []) as Record<string, unknown>[],
@@ -61,6 +64,8 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
         cashSettings: cashSettings.result.data as Record<string, unknown> | null,
         fundingSources: (fundingSources.result.data || []) as Record<string, unknown>[],
         goals: (goals.result.data || []) as Record<string, unknown>[],
+        debtSettings: debtSettings.result.data as Record<string, unknown> | null,
+        retirementScenarios: (retirementScenarios.result.data || []) as Record<string, unknown>[],
       }),
     };
   }
