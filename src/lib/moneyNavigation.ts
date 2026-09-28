@@ -16,6 +16,7 @@ export const beastMoneyCoreNavigation: readonly BeastMoneyNavigationItem[] = [
   { label: "Strategies", href: "/dashboard/money/payoff-plan#strategy-comparison", parent: "Payoff Plan" },
   { label: "Timeline", href: "/dashboard/money/payoff-plan#payoff-plan", parent: "Payoff Plan" },
   { label: "Velocity Banking", href: "/dashboard/money/velocity" },
+  { label: "Connected Accounts", href: "/dashboard/money/connected-accounts" },
   { label: "Retirement", href: "/dashboard/money/retirement" },
   { label: "Financial Goals", href: "/dashboard/money/goals" },
   { label: "Financial Documents", href: "/dashboard/money/documents" },
