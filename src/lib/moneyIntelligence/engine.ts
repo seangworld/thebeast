@@ -51,6 +51,34 @@ export function buildLiveFinancialStory(ownerId: string, events: readonly Financ
   };
 }
 
+
+export function buildBalanceFinancialStory(input: {
+  ownerId: string;
+  asOf: string;
+  changes: readonly { accountName: string; previousBalance?: number; reportedBalance: number; difference?: number }[];
+}): FinancialStory {
+  const changed = input.changes.filter((item) => item.difference !== undefined && Math.abs(item.difference) > 0.004);
+  return {
+    ownerId: input.ownerId,
+    asOf: input.asOf,
+    headline: changed.length ? `${changed.length} connected balance${changed.length === 1 ? "" : "s"} changed since the saved BeastMoney record.` : "Connected balances match the reviewed BeastMoney records.",
+    whatChanged: changed.map((item) => `${item.accountName}: institution-reported balance differs by ${item.difference! < 0 ? "-" : "+"}$${Math.abs(item.difference!).toFixed(2)}.`),
+    whyItChanged: changed.length ? ["A member-requested read-only balance refresh returned newer institution-reported balances."] : ["No material balance difference was found in the latest member-requested refresh."],
+    whatItMeans: changed.length ? ["Cash-flow, debt-payoff, and other projections may be stale until the member reviews which connected balances should update canonical BeastMoney records."] : ["No canonical balance update is required from this refresh."],
+    nextActions: changed.map((item, index) => ({
+      id: `review-balance:${index}`,
+      priority: "normal" as const,
+      title: `Review ${item.accountName} balance`,
+      rationale: "Institution-reported data differs from the saved BeastMoney record.",
+      action: "Compare the balances and explicitly accept or leave the saved BeastMoney value unchanged.",
+      evidenceEventIds: [],
+      requiresConfirmation: true,
+    })),
+    evidenceEventIds: [],
+    limitations: ["Balance refresh is read-only until the member explicitly accepts a canonical update.", "A changed balance does not identify the transactions that caused the change.", "No payment, transfer, or other money movement is performed."],
+  };
+}
+
 export class FinancialIntelligencePipeline {
   private readonly seen = new Set<string>();
   private events: FinancialEvent[] = [];
