@@ -52,6 +52,25 @@ export type BalanceComparison = {
   reportedAt: string;
 };
 
+
+export function compareConnectedBalance(input: {
+  accountId: string;
+  canonicalBalance?: number;
+  reportedBalance: number;
+  reportedAt: string;
+}): BalanceComparison {
+  const canonical = input.canonicalBalance;
+  const difference = canonical === undefined ? undefined : input.reportedBalance - canonical;
+  return {
+    accountId: input.accountId,
+    canonicalBalance: canonical,
+    reportedBalance: input.reportedBalance,
+    difference,
+    requiresReview: difference !== undefined && Math.abs(difference) > 0.004,
+    reportedAt: input.reportedAt,
+  };
+}
+
 export type ProviderTransaction = {
   externalId: string;
   accountExternalId: string;
