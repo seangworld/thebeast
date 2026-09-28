@@ -41,24 +41,22 @@ export function MorningFinancialBriefingPanel({
 
       <div className="mt-3 border-t border-white/10 pt-3">
         {briefing.items.length ? (
-          <div className="grid gap-4 lg:grid-cols-3">
-            {([
-              { label: "What changed", items: briefing.whatChanged, empty: "No material change identified." },
-              { label: "Priorities", items: briefing.priorities, empty: "No high-priority item identified." },
-              { label: "Next actions", items: briefing.nextActions, empty: "No additional action identified." },
-            ]).map((section) => (
-              <section key={section.label} className="rounded-xl border border-white/10 bg-black/15 p-3">
-                <h3 className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">{section.label}</h3>
-                {section.items.length ? <ul className="mt-2 grid gap-1">
-                  {section.items.map((item) => <li key={item.id}>
-                    <Link className="block rounded-lg px-2 py-2 text-xs leading-5 text-slate-300 hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" href={conversationHref(item.conversationPrompt)}>
-                      <span className="font-bold text-white">{item.title}.</span> {item.detail}
-                    </Link>
-                  </li>)}
-                </ul> : <p className="mt-2 text-xs leading-5 text-slate-400">{section.empty}</p>}
-              </section>
+          <ul className="grid gap-1 sm:grid-cols-2">
+            {briefing.items.map((item) => (
+              <li key={item.id}>
+                <Link
+                  className="block min-h-11 rounded-lg px-2.5 py-2 text-xs leading-5 text-slate-300 transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                  href={conversationHref(item.conversationPrompt)}
+                >
+                  <span className="font-bold text-white">{item.title}.</span>{" "}
+                  {item.detail}
+                  <span className="ml-2 font-bold text-cyan-200">
+                    Discuss <span aria-hidden="true">→</span>
+                  </span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
           <p className="text-sm text-slate-400">
             Nothing material changed in the current review window.
