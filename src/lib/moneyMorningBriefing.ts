@@ -27,6 +27,9 @@ export type MorningFinancialBriefing = {
   since: string;
   firstReview: boolean;
   summary: string;
+  whatChanged: readonly MorningFinancialBriefingItem[];
+  priorities: readonly MorningFinancialBriefingItem[];
+  nextActions: readonly MorningFinancialBriefingItem[];
   items: readonly MorningFinancialBriefingItem[];
   completedMilestones: readonly {
     id: string;
@@ -281,6 +284,9 @@ export function buildMorningFinancialBriefing(
       : items.length
         ? `I found ${items.length} meaningful update${items.length === 1 ? "" : "s"} since your last review.`
         : "I did not find a material financial change since your last review.",
+    whatChanged: items.filter((item) => item.source === "observation" || item.id.startsWith("payment:")).slice(0, 3),
+    priorities: items.filter((item) => item.priority >= 70).slice(0, 3),
+    nextActions: items.filter((item) => Boolean(item.href)).slice(0, 3),
     items,
     completedMilestones,
     recommendedFocus: {
