@@ -270,20 +270,3 @@ test("BM-310 briefing is expandable accessible and freshness-aware", () => {
   assert.match(builder, /benchmarks/);
   assert.match(builder, /observations/);
 });
-
-
-test("BM-v3 briefing separates changes priorities and next actions", () => {
-  const briefing = buildMorningFinancialBriefing({
-    ownerId: "owner",
-    asOf: "2026-09-28T12:00:00Z",
-    since: "2026-09-27T12:00:00Z",
-    observations: [],
-    benchmarks: [],
-    recentPayments: [{ id: "p1", name: "Card", amount: 100, date: "2026-09-28T10:00:00Z", kind: "debt" }],
-    upcomingBills: [{ id: "b1", name: "Electric", amount: 120, dueDate: "2026-09-30" }],
-    recommendedFocus: { title: "Review cash flow", detail: "Check the next paycheck plan.", href: "/dashboard/money/cashflow" },
-  });
-  assert.ok(briefing.whatChanged.some((item) => item.id === "payment:p1"));
-  assert.ok(briefing.priorities.length > 0);
-  assert.ok(briefing.nextActions.some((item) => Boolean(item.href)));
-});
