@@ -60,10 +60,18 @@ export default function RetirementAssumptionsPage() {
   return <BeastMoneyShell title="Retirement Assumptions" description="Review the inputs behind an informational retirement scenario.">
     <div className="space-y-5">
       <div className="beast-panel p-5 text-sm text-[#dbe3ef]"><strong>Informational only.</strong> Projections are not guarantees. BeastMoney does not tell you when to retire, claim benefits, withdraw funds, or change investments.</div>
-      {assumptions.map((item, index) => <div key={item.label} className="beast-panel grid gap-3 p-5 md:grid-cols-2">
-        <label className="grid gap-1"><span>{item.label}</span><input disabled={!loaded || saving} className="beast-input" value={item.value} onChange={(event) => setAssumptions(assumptions.map((entry, i) => i === index ? { ...entry, value: event.target.value } : entry))} placeholder="Enter a reviewed value" /></label>
-        <div className="text-sm"><p><strong>Source:</strong> {item.source}</p><p><strong>Confidence:</strong> {item.confidence}</p><p><strong>Last reviewed:</strong> {item.reviewed}</p><p className="mt-2 text-[#aeb9c9]">{item.limitation}</p></div>
-      </div>)}
+      {[
+        { title: "Your timeline", labels: ["Current age", "Target retirement age", "Planning life expectancy"] },
+        { title: "Retirement accounts", labels: ["Retirement account balance", "Annual retirement contribution", "TSP balance", "Annual TSP contribution", "401(k) balance", "Annual 401(k) contribution"] },
+        { title: "Retirement income", labels: ["Social Security estimate"] },
+        { title: "Planning assumptions", labels: ["Inflation assumption", "Pre-retirement growth assumption", "Post-retirement growth assumption", "Withdrawal assumption", "Annual retirement expenses"] },
+      ].map((group) => <section key={group.title} className="space-y-3" aria-labelledby={`retirement-${group.title.toLowerCase().replaceAll(" ", "-")}`}>
+        <h2 id={`retirement-${group.title.toLowerCase().replaceAll(" ", "-")}`} className="text-xl font-black text-white">{group.title}</h2>
+        {assumptions.map((item, index) => group.labels.includes(item.label) ? <div key={item.label} className="beast-panel grid gap-3 p-5 md:grid-cols-2">
+          <label className="grid gap-1"><span>{item.label}</span><input disabled={!loaded || saving} className="beast-input" value={item.value} onChange={(event) => setAssumptions(assumptions.map((entry, i) => i === index ? { ...entry, value: event.target.value } : entry))} placeholder="Enter a reviewed value" /></label>
+          <div className="text-sm"><p><strong>Source:</strong> {item.source}</p><p><strong>Confidence:</strong> {item.confidence}</p><p><strong>Last reviewed:</strong> {item.reviewed}</p><p className="mt-2 text-[#aeb9c9]">{item.limitation}</p></div>
+        </div> : null)}
+      </section>)}
       <button className="beast-button" disabled={!loaded || saving} onClick={save}>{saving ? "Saving…" : "Save reviewed assumptions"}</button>{!loaded ? <button className="beast-button" onClick={() => setRetryKey(value => value + 1)}>Reload assumptions</button> : null}<p className="text-sm text-[#aeb9c9]">{status}</p>
       <section className="beast-panel space-y-4 p-5" aria-labelledby="retirement-timeline-heading">
         <div><h2 id="retirement-timeline-heading" className="text-xl font-bold text-white">Retirement income timeline</h2><p className="mt-1 text-sm text-[#aeb9c9]">Year-by-year informational income, expenses, and gap from your last successfully saved assumptions. Save edits to refresh this projection.</p></div>
