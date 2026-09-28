@@ -1,6 +1,36 @@
 import Link from "next/link";
 import type { MorningFinancialBriefing } from "@/lib/moneyMorningBriefing";
 
+
+function BriefingGroup({
+  title,
+  items,
+  empty,
+  conversationHref,
+}: {
+  title: string;
+  items: MorningFinancialBriefing["items"];
+  empty: string;
+  conversationHref: (prompt: string) => string;
+}) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-black/15 p-3">
+      <h3 className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">{title}</h3>
+      {items.length ? (
+        <ul className="mt-2 grid gap-1">
+          {items.slice(0, 3).map((item) => (
+            <li key={item.id}>
+              <Link className="block rounded-lg px-2 py-2 text-xs leading-5 text-slate-300 hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" href={conversationHref(item.conversationPrompt)}>
+                <span className="font-bold text-white">{item.title}.</span> {item.detail}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="mt-2 text-xs leading-5 text-slate-400">{empty}</p>}
+    </section>
+  );
+}
+
 export function MorningFinancialBriefingPanel({
   briefing,
   defaultOpen = false,
@@ -10,6 +40,10 @@ export function MorningFinancialBriefingPanel({
 }) {
   const conversationHref = (prompt: string) =>
     `/dashboard/money?starter=${encodeURIComponent(prompt)}`;
+  const changed = briefing.items.filter((item) => item.source === "observation" || item.id.startsWith("payment:"));
+  const priorities = briefing.items.filter((item) => item.priority >= 70);
+  const actions = briefing.items.filter((item) => Boolean(item.href));
+
 
   return (
     <details
@@ -41,22 +75,11 @@ export function MorningFinancialBriefingPanel({
 
       <div className="mt-3 border-t border-white/10 pt-3">
         {briefing.items.length ? (
-          <ul className="grid gap-1 sm:grid-cols-2">
-            {briefing.items.map((item) => (
-              <li key={item.id}>
-                <Link
-                  className="block min-h-11 rounded-lg px-2.5 py-2 text-xs leading-5 text-slate-300 transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
-                  href={conversationHref(item.conversationPrompt)}
-                >
-                  <span className="font-bold text-white">{item.title}.</span>{" "}
-                  {item.detail}
-                  <span className="ml-2 font-bold text-cyan-200">
-                    Discuss <span aria-hidden="true">→</span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <BriefingGroup title="What changed" items={changed} empty="No material change identified." conversationHref={conversationHref} />
+            <BriefingGroup title="Priorities" items={priorities} empty="No high-priority item identified." conversationHref={conversationHref} />
+            <BriefingGroup title="Next actions" items={actions} empty="No additional action identified." conversationHref={conversationHref} />
+          </div>
         ) : (
           <p className="text-sm text-slate-400">
             Nothing material changed in the current review window.
