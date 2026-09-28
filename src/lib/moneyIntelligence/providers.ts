@@ -20,3 +20,36 @@ export class ConnectedAccountProviderRegistry {
     return Array.from(this.providers.values());
   }
 }
+
+
+export type BalanceRefreshPolicy = {
+  mode: "manual";
+  minimumSecondsBetweenRequests: number;
+};
+
+export const BEASTMONEY_BALANCE_REFRESH_POLICY: BalanceRefreshPolicy = {
+  mode: "manual",
+  minimumSecondsBetweenRequests: 30,
+};
+
+export function assertManualBalanceRefreshAllowed(input: {
+  requestedByMember: boolean;
+  lastRequestedAt?: string;
+  now?: string;
+  policy?: BalanceRefreshPolicy;
+}) {
+  const policy = input.policy || BEASTMONEY_BALANCE_REFRESH_POLICY;
+  if (policy.mode !== "manual" || !input.requestedByMember) {
+    throw new Error("Balance refresh requires an explicit member request.");
+  }
+  if (!input.lastRequestedAt) return true;
+  const now = Date.parse(input.now || new Date().toISOString());
+  const previous = Date.parse(input.lastRequestedAt);
+  if (!Number.isFinite(now) || !Number.isFinite(previous)) {
+    throw new Error("Balance refresh timestamps are invalid.");
+  }
+  if (now - previous < policy.minimumSecondsBetweenRequests * 1000) {
+    throw new Error("Please wait before refreshing balances again.");
+  }
+  return true;
+}
