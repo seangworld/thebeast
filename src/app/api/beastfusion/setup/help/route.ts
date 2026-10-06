@@ -1,0 +1,9 @@
+import {NextResponse} from "next/server";
+const lessons:Record<string,{title:string;explanation:string;next:string[]}>={
+ github:{title:"GitHub",explanation:"GitHub stores your software project and its change history. BeastFusion uses only repositories you authorize.",next:["Create or sign in to a GitHub account.","Verify your email if asked.","Return to Setup and connect GitHub.","Let BeastFusion test repository access."]},
+ repositories:{title:"Repository",explanation:"A repository is the versioned home for one software project.",next:["If your project is on your computer, create a repository in GitHub.","Upload or push the project.","Return to Setup and let Fusion verify access."]},
+ ai_provider:{title:"AI provider / BYOK",explanation:"Your AI provider supplies the model intelligence used by BeastFusion agent roles. The provider bills you directly.",next:["Create an API-capable provider account.","Enable provider API billing if required.","Create a credential and enter it only in BeastFusion secure storage.","Test the connection."]},
+ budget:{title:"AI budget",explanation:"A budget is the ceiling BeastFusion uses to prevent uncontrolled AI usage.",next:["Choose a conservative starting limit.","Set a warning threshold.","Enable the hard stop at the limit."]}
+};
+function safe(v:unknown){return String(v??"").replace(/(key|token|secret|password|authorization)\s*[:=]\s*\S+/ig,"$1=[REDACTED]");}
+export async function POST(req:Request){const body=await req.json().catch(()=>({}));const step=String(body.step??"").toLowerCase().replaceAll(" ","_");const lesson=lessons[step]??{title:"Setup help",explanation:"BeastFusion will explain this setup requirement before you continue.",next:["Review the requirement.","Correct any failed check.","Run verification again."]};return NextResponse.json({ok:true,lesson,diagnostic:safe(body.diagnostic),ai_required:false,secrets_received:false});}
