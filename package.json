@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run audit:ci && next build",
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
     "test:responsive": "playwright test",
     "start": "next start",
@@ -25,7 +25,9 @@
     "supabase:bootstrap-dry-run:production": "node scripts/supabase-migration-guard.mjs bootstrap-dry-run production --confirm-env production",
     "supabase:bootstrap-push:production": "node scripts/supabase-migration-guard.mjs bootstrap-push production --confirm-env production",
     "supabase:verify:production": "node scripts/supabase-migration-guard.mjs verify production --confirm-env production",
-    "supabase:release-plan": "node scripts/supabase-migration-guard.mjs release-plan"
+    "supabase:release-plan": "node scripts/supabase-migration-guard.mjs release-plan",
+    "audit:ci": "npm audit",
+    "audit:prod": "npm audit --omit=dev"
   },
   "dependencies": {
     "@fontsource/source-serif-4": "5.2.8",
@@ -37,7 +39,7 @@
     "docx": "9.6.1",
     "google-auth-library": "^11.0.2",
     "jszip": "3.10.1",
-    "next": "15.5.21",
+    "next": "15.5.27",
     "pdf-lib": "1.17.1",
     "react": "^18",
     "react-dom": "^18",
@@ -55,7 +57,7 @@
     "@types/web-push": "3.6.4",
     "autoprefixer": "^10",
     "eslint": "^8",
-    "eslint-config-next": "15.5.21",
+    "eslint-config-next": "15.5.27",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.23",
     "supabase": "^2.109.1",
@@ -64,16 +66,18 @@
   },
   "overrides": {
     "@typescript-eslint/typescript-estree": {
-      "brace-expansion": "2.1.4",
+      "brace-expansion": "2.1.7",
       "minimatch": "9.0.7"
     },
-    "brace-expansion": "1.1.18",
-    "js-yaml": "4.3.1",
+    "brace-expansion": "1.1.21",
+    "js-yaml": "4.3.2",
     "nanoid": "3.3.18",
-    "next@15.5.21": {
+    "ws": "8.21.0",
+    "source-map-js": "1.2.2",
+    "baseline-browser-mapping": "2.11.0",
+    "next@15.5.27": {
       "postcss": "8.5.23",
-      "sharp": "0.35.0"
-    },
-    "ws": "8.21.0"
+      "sharp": "0.35.5"
+    }
   }
 }

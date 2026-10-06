@@ -34,7 +34,7 @@ export default function PayoffScenarioComparison({ debts, current, currentLabel,
       return { rows: [], error: error instanceof Error ? error.message : "Unable to calculate this scenario." };
     }
   }, [debts, current, extra, lump, customOrder, recoveredMinimums]);
-  const chosen = selected === "current" ? { strategy: "current" as const, result: current } : comparison.rows.find(row => row.strategy === selected);
+  const chosen = useMemo(() => selected === "current" ? { strategy: "current" as const, result: current } : comparison.rows.find(row => row.strategy === selected), [selected, current, comparison.rows]);
   const paymentPlanRows = useMemo(() => {
     if (!chosen) return [];
     const rows = chosen.result.debt_payment_schedule.filter(row => row.month <= 1);
