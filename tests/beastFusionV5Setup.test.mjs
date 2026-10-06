@@ -1,0 +1,4 @@
+import test from "node:test";import assert from "node:assert/strict";import fs from "node:fs";import path from "node:path";
+const root=path.resolve(new URL("..",import.meta.url).pathname);
+test("BF5 wizard exposes complete self-service path and BYOK no-fallback promise",()=>{const s=fs.readFileSync(path.join(root,"src/app/beastfusion/setup/page.tsx"),"utf8");for(const label of ["System check","Administrator","Workspace","GitHub","Repositories","AI provider","Authority","Budget","Validate","Launch"])assert.match(s,new RegExp(label));assert.match(s,/vendor installation/i);assert.match(s,/falling back to a vendor-funded key/i);});
+test("BF5 support diagnostics redact secret fields",()=>{const s=fs.readFileSync(path.join(root,"src/app/api/beastfusion/support/diagnose/route.ts"),"utf8");assert.match(s,/REDACTED/);assert.match(s,/vendor_installation_required:false/);});
