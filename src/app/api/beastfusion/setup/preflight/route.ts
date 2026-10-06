@@ -1,0 +1,3 @@
+import {NextResponse} from "next/server";
+const required=["license","administrator","workspace","github","repositories","byok","developer","reviewer","authority","budget","recovery"];
+export async function POST(req:Request){const body=await req.json().catch(()=>({}));const gates=Object.fromEntries(required.map(k=>[k,body[k]===true]));const failures=required.filter(k=>!gates[k]);return NextResponse.json({ready:failures.length===0,gates,failures,launch_allowed:failures.length===0,message:failures.length?"Finish the failed checks before launching BeastFusion.":"Everything required for launch is verified."});}
