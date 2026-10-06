@@ -1,0 +1,1 @@
+export const beastFusionCommercialOffer=Object.freeze({sku:"beastfusion-professional",name:"BeastFusion Professional",purchasePriceUsd:499,renewalPriceUsd:149,license:"perpetual",includedUpdatesMonths:12,renewal:"optional annual updates and support",installation:"self-install",aiUsage:"customer BYOK",vendorAiFallback:false});
