@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const subscriptionId = getId(session.subscription);
+        const subscriptionId = getId(session.subscription);\n        if (session.metadata?.product === "beastfusion-professional" && session.payment_status === "paid") {\n          const admin = createAdminClient();\n          const userId = session.metadata?.user_id ?? session.client_reference_id ?? null;\n          if (!admin || !userId) throw new Error("BeastFusion purchase did not include a resolvable customer.");\n          const licenseId = `bf_${session.id}`;\n          const updatesUntil = new Date(); updatesUntil.setFullYear(updatesUntil.getFullYear()+1);\n          const {error} = await admin.from("beastfusion_licenses").upsert({user_id:userId,license_id:licenseId,edition:"professional",status:"active",updates_until:updatesUntil.toISOString().slice(0,10)},{onConflict:"license_id"});\n          if (error) throw new Error("Unable to issue BeastFusion entitlement.");\n        }
 
         if (subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(
