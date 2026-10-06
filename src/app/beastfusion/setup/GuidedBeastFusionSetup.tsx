@@ -21,7 +21,8 @@ const steps:Step[]=[
 
 const key="beastfusion.setup.v5_1";
 export default function GuidedBeastFusionSetup(){
- const [index,setIndex]=useState(0),[done,setDone]=useState<number[]>([]),[choice,setChoice]=useState<Choice>(null),[showHelp,setShowHelp]=useState(false),[testing,setTesting]=useState(false),[message,setMessage]=useState("");\n const [workspace,setWorkspace]=useState(""),[repository,setRepository]=useState(""),[githubToken,setGithubToken]=useState(""),[provider,setProvider]=useState("openai"),[providerKey,setProviderKey]=useState(""),[budget,setBudget]=useState("25");
+ const [index,setIndex]=useState(0),[done,setDone]=useState<number[]>([]),[choice,setChoice]=useState<Choice>(null),[showHelp,setShowHelp]=useState(false),[testing,setTesting]=useState(false),[message,setMessage]=useState("");
+ const [workspace,setWorkspace]=useState(""),[repository,setRepository]=useState(""),[githubToken,setGithubToken]=useState(""),[provider,setProvider]=useState("openai"),[providerKey,setProviderKey]=useState(""),[budget,setBudget]=useState("25");
  useEffect(()=>{try{const v=JSON.parse(localStorage.getItem(key)||"null");if(v){setIndex(v.index||0);setDone(v.done||[]);}}catch{}},[]);
  useEffect(()=>{localStorage.setItem(key,JSON.stringify({index,done,updatedAt:new Date().toISOString()}));},[index,done]);
  const pct=useMemo(()=>Math.round((done.length/steps.length)*100),[done]),step=steps[index];
