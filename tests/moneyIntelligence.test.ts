@@ -8,7 +8,7 @@ function transaction(description: string, amount: number, externalId: string) {
 
 test("connected account providers plug into one provider-neutral registry", async () => {
   const registry = new ConnectedAccountProviderRegistry();
-  registry.register({ id: "test-provider", displayName: "Test Provider", capabilities: ["accounts", "transactions"], async connect() { return { connectionId: "connection-1", accounts: [] }; }, async sync() { return { transactions: [] }; }, async disconnect() {} });
+  registry.register({ id: "test-provider", displayName: "Test Provider", capabilities: ["accounts", "balances", "transactions"], async connect() { return { connectionId: "connection-1", accounts: [] }; }, async refreshBalances() { return { balances: [] }; }, async sync() { return { transactions: [] }; }, async disconnect() {} });
   assert.equal(registry.get("test-provider").displayName, "Test Provider");
   assert.throws(() => registry.register(registry.get("test-provider")), /already registered/);
 });
