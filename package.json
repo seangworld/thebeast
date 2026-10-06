@@ -26,7 +26,7 @@
     "supabase:bootstrap-push:production": "node scripts/supabase-migration-guard.mjs bootstrap-push production --confirm-env production",
     "supabase:verify:production": "node scripts/supabase-migration-guard.mjs verify production --confirm-env production",
     "supabase:release-plan": "node scripts/supabase-migration-guard.mjs release-plan",
-    "audit:ci": "npm audit --json || true",
+    "audit:ci": "npm audit",
     "audit:prod": "npm audit --omit=dev"
   },
   "dependencies": {
