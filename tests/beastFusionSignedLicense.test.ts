@@ -1,0 +1,3 @@
+import test from "node:test";import assert from "node:assert/strict";import {signBeastFusionLicense,verifyBeastFusionLicense} from "../src/lib/beastfusion/signedLicense";
+const secret="test-only-secret-with-at-least-thirty-two-characters";
+test("signed customer license verifies and rejects tampering",()=>{const p={license_id:"bf_cs_test_1",customer_id:"user_1",edition:"professional",updates_until:"2027-10-07",issued_at:"2026-10-07T00:00:00Z"};const key=signBeastFusionLicense(p,secret);assert.deepEqual(verifyBeastFusionLicense(key,secret),p);assert.equal(verifyBeastFusionLicense(key+"tampered",secret),null);assert.equal(verifyBeastFusionLicense(key,"different-secret"),null);});
