@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import {NextResponse} from "next/server";
 import {createAdminClient} from "@/lib/supabase/admin";
+import {validateBeastFusionPurchase} from "@/lib/beastfusion/validatePurchase";
 export const dynamic="force-dynamic";
 export async function POST(request:Request){
  const secret=process.env.STRIPE_BEASTFUSION_WEBHOOK_SECRET;
@@ -14,16 +15,11 @@ export async function POST(request:Request){
  if(event.type!=="checkout.session.completed")return NextResponse.json({received:true});
  const session=event.data.object as Stripe.Checkout.Session;
  if(session.metadata?.product!=="beastfusion-professional")return NextResponse.json({received:true});
- if(session.payment_status!=="paid")return NextResponse.json({received:true,issued:false});
- const customerId=session.metadata?.user_id;
- if(!customerId||customerId!==session.client_reference_id)return NextResponse.json({error:"customer_identity_mismatch"},{status:400});
- if(session.mode!=="payment"||session.amount_total!==49900||session.currency?.toLowerCase()!=="usd")return NextResponse.json({error:"purchase_mismatch"},{status:400});
+ const check=validateBeastFusionPurchase(session, key.startsWith("sk_live_"));
+ if(!check.ok){if(check.reason==="not_paid")return NextResponse.json({received:true,issued:false});return NextResponse.json({error:check.reason},{status:400});}
  const admin=createAdminClient();
  if(!admin)return NextResponse.json({error:"license_storage_unavailable"},{status:503});
- const purchasedAt=new Date(session.created*1000);
- const updatesUntil=new Date(purchasedAt);
- updatesUntil.setUTCFullYear(updatesUntil.getUTCFullYear()+1);
- const {error}=await admin.from("beastfusion_licenses").upsert({user_id:customerId,license_id:`bf_${session.id}`,edition:"professional",status:"active",updates_until:updatesUntil.toISOString().slice(0,10)},{onConflict:"license_id"});
+ const {error}=await admin.from("beastfusion_licenses").upsert({user_id:check.userId,license_id:check.licenseId,edition:"professional",status:"active",updates_until:check.updatesUntil},{onConflict:"license_id"});
  if(error)return NextResponse.json({error:"license_issue_failed"},{status:500});
  return NextResponse.json({received:true,issued:true});
 }
