@@ -1,0 +1,3 @@
+import test from "node:test";import assert from "node:assert/strict";import fs from "node:fs";
+test("independent webhook verifies Stripe signature and customer purchase",()=>{const x=fs.readFileSync("src/app/api/beastfusion/webhook/route.ts","utf8");for(const v of ["constructEvent","STRIPE_BEASTFUSION_WEBHOOK_SECRET","payment_status","customer_identity_mismatch","49900","onConflict:\"license_id\""])assert.ok(x.includes(v),v);});
+test("membership webhook no longer issues BeastFusion licenses",()=>{const x=fs.readFileSync("src/app/api/stripe/webhook/route.ts","utf8");assert.ok(x.includes('session.metadata?.product === "beastfusion-professional"'));assert.ok(!x.includes('licenseId = `bf_'));});
