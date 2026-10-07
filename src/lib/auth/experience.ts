@@ -24,6 +24,7 @@ type BeastAuthUserLike = {
 };
 
 const protectedDestinationPrefix = "/dashboard";
+const publicPurchaseReturnPaths = new Set(["/beastfusion", "/beastfusion/customer"]);
 
 export function getBeastAuthOrigin(
   runtimeOrigin: string,
@@ -56,7 +57,8 @@ export function getSafeAuthDestination(value?: string | null) {
     if (
       destination.origin !== "https://beast.local" ||
       (destination.pathname !== protectedDestinationPrefix &&
-        !destination.pathname.startsWith(`${protectedDestinationPrefix}/`))
+        !destination.pathname.startsWith(`${protectedDestinationPrefix}/`) &&
+        !publicPurchaseReturnPaths.has(destination.pathname))
     ) {
       return BEAST_OS_LANDING_PATH;
     }
