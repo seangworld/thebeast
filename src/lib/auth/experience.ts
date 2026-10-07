@@ -30,7 +30,9 @@ export function getBeastAuthOrigin(
   runtimeOrigin: string,
   configuredSiteUrl?: string | null
 ) {
-  for (const candidate of [configuredSiteUrl, runtimeOrigin]) {
+  // Authentication callbacks must return to the same origin that initiated login.
+  // A production site URL must not steal sessions from protected previews.
+  for (const candidate of [runtimeOrigin, configuredSiteUrl]) {
     if (!candidate) continue;
 
     try {
