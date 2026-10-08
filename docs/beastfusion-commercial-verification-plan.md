@@ -1,50 +1,47 @@
 # BeastFusion Commercial Edition verification handoff — 2026-10-08
 
 ## Roadmap Item
-Continue Commercial Edition: $499 perpetual, twelve months of updates, optional $149 yearly updates/support renewal, self-install, customer-funded BYOK.
+Continue Commercial Edition: $499 perpetual, twelve months of updates, optional $149 yearly updates/support renewal, self-install, customer-funded BYOK. Commercial release remains gated.
 
 ## Validation
-68 affected runtime/governance tests pass, including clean extraction, offline dependency installation, activation, controlled Developer → Reviewer first job, expired update coverage, authorization before adapter imports, scope, cost, candidate binding and product completeness. 11 payment/download tests pass using the installed Stripe SDK for signatures and mocked storage. Changed payment/download routes and their helpers pass strict TypeScript checks. BeastFusion CI validation passed at ff1c017e54b3c42948197f505dd4403fc9bd86dd. The application preview deployment passed at c38e7e826c2cb99a1a4201c7caad5ea193db9956. Full release validation, real payment/database integration, real BYOK execution and the guided customer application remain unverified.
+68 runtime/governance tests previously passed, including clean installation, activation and a controlled Developer → Reviewer first job. 15 payment/download/preview-isolation tests now pass; modified API routes and helpers pass strict TypeScript checks. BeastFusion implementation CI passed at ff1c017e54b3c42948197f505dd4403fc9bd86dd. Protected preview diagnostics at 7cfa71c6200b032a1243b5976661253c225e6103 returned HTTP 200 with all four gates true: development license storage, private bucket, $499 USD one-time Stripe test price and signing-key presence. Presence does not verify a real signing transaction.
+
+Development RLS is enabled with authenticated SELECT restricted by auth.uid() = user_id. Transactional own/other customer fixtures showed own_visible=1, other_visible=0. Insert/update/delete enforcement remains UNVERIFIED: its probe returned connector request-state errors. Table privileges alone do not prove RLS permits writes. Subsequent count found zero remaining probe license rows.
+
+Full release validation, real test Checkout/webhook/license/download integration, real BYOK execution and the complete guided application remain unverified. Synthetic signatures and controlled adapters are not substitutes.
 
 ## Execution Timeline
 Execution timing unavailable.
 
 ## Git Status
-Source snapshots: beastfusion main 22a95cc17e6fc2e1b660bf260a25bc9b68dd71f6; thebeast main 908cd9690689bf335a87d4ff98aafcbe4ddd857a. Implementation is saved in draft PRs beastfusion #165 (codex/commercial-runtime-boundaries-20261008, ff1c017e54b3c42948197f505dd4403fc9bd86dd) and thebeast #237 (codex/commercial-payment-boundaries-20261008, c38e7e826c2cb99a1a4201c7caad5ea193db9956). Both implementation refs were one commit ahead and zero behind main at inspection. Local workspaces are source snapshots, not authenticated Git worktrees.
+Draft PRs: beastfusion #165 on codex/commercial-runtime-boundaries-20261008; thebeast #237 on codex/commercial-payment-boundaries-20261008. Implementation, diagnostics, four diagnostics tests and the test public key are saved on review branches. No merge to main. Local workspaces are source snapshots, not authenticated Git worktrees.
 
 ## Deployment Status
-The application preview deployment completed successfully for implementation c38e7e826c2cb99a1a4201c7caad5ea193db9956. No production deployment, secret modification, database migration, storage creation, payment or paid AI call occurred.
+Development project zvzcojwjgnedrouilovc now has the license table and private beastfusion-customer-test bucket (10 MiB; gzip/octet-stream). Native migration ledger version 20261008011455 has name 20261006230000_beastfusion_commercial_license and corresponds to source supabase/migrations/20261006230000_beastfusion_commercial_license.sql. Do not replay or repair history merely because the ledger version differs from the filename.
+
+Vercel project prj_EWJx7hi5tqZxOX0PGLPUN3Qh3d2P has branch-scoped preview development Supabase configuration, explicit test Checkout enablement, private bucket/catalog/hash/version and a separate sensitive Ed25519 test signing key. Existing preview admin credential works against development. No production setting, live payment, paid AI call, owner release flag or owner terms flag changed. Private key was not committed or exposed.
+
+Verified preview: https://thebeast-qy3pa663g-seangworld-3898s-projects.vercel.app (7cfa71c6200b032a1243b5976661253c225e6103). Catalog variables were set after that deployment began; verify a newer preview before download testing.
 
 ## Manual Actions
-Exact development-environment approval is required by GOVERNANCE.md / GV-005. This is an integration blocker, not product completion.
+Original exact development setup approval received and implemented. Remaining integration access gap: connectors expose no storage upload or authenticated customer session operation; protected Vercel fetch is GET-only; existing privileged server credentials are write-only. Do not export credentials, weaken protection, add an unguarded administrative endpoint or fabricate a paid Checkout.
 
-## Implemented
-- License, owner/package, candidate-only, repository, required-test, existing-change and explicit-cost gates run before adapter imports.
-- Runtime trusts the vendor public key bundled with the package, never a job-selected key.
-- Separate Developer/Reviewer objects; completeness requirements preserved in review.
-- Public-key-only allowlisted standalone package; private keys and owner state excluded.
-- Checkout defaults closed; live sales require owner terms/release approval plus pinned private delivery.
-- Stripe asynchronous payment success supported; duplicate webhook insertions cannot reactivate revoked licenses.
-- Authenticated active-own-license downloads select a covered historical release and issue a sixty-second URL only after verifying bucket privacy.
+Next authorized integration test needs secure development artifact upload and an authenticated development test customer with protected-preview access. Browser-tool instructions require user approval before plugin fallback when plugin capabilities are insufficient. Native Stripe approval prompts, if encountered, must also be honored.
 
-## Verified environment facts
-Production thebeast (grpyzwvgqiwtxadfdtni): license table exists, RLS enabled, no BeastFusion download bucket.
-Development the-beast-dev (zvzcojwjgnedrouilovc): license table absent, no BeastFusion download bucket.
-Vercel thebeast (prj_EWJx7hi5tqZxOX0PGLPUN3Qh3d2P): preview Stripe settings exist; signing key and customer delivery settings do not. Secret values were not printed.
-
-## Concrete approval request: development and branch preview only
-1. Apply existing supabase/migrations/20261006230000_beastfusion_commercial_license.sql to development project zvzcojwjgnedrouilovc. Verify history, RLS and own-customer access.
-2. Create private development bucket beastfusion-customer-test without public-read policies.
-3. Generate a separate test-only Ed25519 signing key. Set its private key as sensitive preview variable BEASTFUSION_LICENSE_PRIVATE_KEY_PEM, scoped to the commercial verification branch. Package only the public key.
-4. Configure that branch to use development Supabase and existing Stripe test settings, BEASTFUSION_TEST_CHECKOUT_ENABLED=true, the private bucket and a controlled release catalog. Verify isolation before sending events.
-5. Run real test-mode purchase → signed webhook → license → signed key → entitled download → clean install → controlled first governed job.
-No live payment, paid AI call, production secret/database change or production deployment is included.
+## Controlled test archive
+CLI candidate version 5.3.0-rc; 13709 bytes.
+SHA-256: 8e2c9a6c68204522feeed2f28be5d468176508fd9a083ccd25531ad21f03dcd9.
+Bucket: beastfusion-customer-test.
+Object: test/beastfusion-customer-runtime-5.3.0-rc.tar.gz.
+Built locally, not uploaded. Public key saved as distribution/test-vendor-public-key.pem.
+Test catalog approval applies only to this controlled candidate. No private key, provider credential or owner governance state is included.
 
 ## Remaining public-release gates
-- Built-in customer GitHub/BYOK adapters and complete standalone guided application; controlled adapters only prove boundary mechanics.
-- Real integration verification above and actual provider execution under spending authorization.
+- Built-in customer GitHub/BYOK adapters and complete standalone guided application.
+- Real purchase → signed webhook → own license → signed key → entitled download → clean install → controlled first job.
+- Actual provider execution under spending authorization.
 - Owner-approved actual terms; LICENSE-BEASTFUSION.md remains a placeholder.
-- Production signing-key custody, private storage, approved artifacts and owner-authorized deployment.
+- Production signing-key custody, private storage, approved artifacts and authorized deployment.
 - Update/revocation/refund lifecycle and canonical version reconciliation.
 
-Keep sales closed while gates remain unresolved.
+Keep sales closed while these gates remain unresolved.
