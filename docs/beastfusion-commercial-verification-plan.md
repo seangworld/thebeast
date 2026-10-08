@@ -26,14 +26,14 @@ Fresh preview https://thebeast-36a9qkrix-seangworld-3898s-projects.vercel.app (9
 ## Manual Actions
 Original exact development setup approval received and implemented. Remaining integration access gap: connectors expose no storage upload or authenticated customer session operation; protected Vercel fetch is GET-only; existing privileged server credentials are write-only. Do not export credentials, weaken protection, add an unguarded administrative endpoint or fabricate a paid Checkout.
 
-Next authorized integration test needs secure development artifact upload and an authenticated development test customer with protected-preview access. Browser-tool instructions require user approval before plugin fallback when plugin capabilities are insufficient. Native Stripe approval prompts, if encountered, must also be honored.
+Browser fallback approval received. Supabase dashboard sign-in completed after Google phone approval, GitHub email device verification, and one fresh OAuth request to recover an expired state. Development artifact upload completed. Opening the protected customer preview redirected to Vercel sign-in; automatic approval review rejected access to vercel.com because it considered that separate origin outside the named approval. Do not bypass this rejection. Exact Vercel account sign-in approval is the current integration blocker; native Stripe prompts, if encountered, must also be honored.
 
 ## Controlled test archive
 CLI candidate version 5.3.0-rc; 13709 bytes.
 SHA-256: 8e2c9a6c68204522feeed2f28be5d468176508fd9a083ccd25531ad21f03dcd9.
 Bucket: beastfusion-customer-test.
 Object: test/beastfusion-customer-runtime-5.3.0-rc.tar.gz.
-Built locally, not uploaded. Public key saved as distribution/test-vendor-public-key.pem.
+Uploaded through the approved browser fallback to the exact development bucket/object above. Native database readback verified 13709 bytes, application/gzip and bucket public=false. Local archive checksum still matches the catalog; downloaded-object checksum remains unverified. Public key saved as distribution/test-vendor-public-key.pem.
 Test catalog approval applies only to this controlled candidate. No private key, provider credential or owner governance state is included.
 
 ## Remaining public-release gates
