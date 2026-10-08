@@ -21,7 +21,7 @@ Development project zvzcojwjgnedrouilovc now has the license table and private b
 
 Vercel project prj_EWJx7hi5tqZxOX0PGLPUN3Qh3d2P has branch-scoped preview development Supabase configuration, explicit test Checkout enablement, private bucket/catalog/hash/version and a separate sensitive Ed25519 test signing key. Existing preview admin credential works against development. No production setting, live payment, paid AI call, owner release flag or owner terms flag changed. Private key was not committed or exposed.
 
-Verified preview: https://thebeast-qy3pa663g-seangworld-3898s-projects.vercel.app (7cfa71c6200b032a1243b5976661253c225e6103). Catalog variables were set after that deployment began; verify a newer preview before download testing.
+Fresh preview https://thebeast-36a9qkrix-seangworld-3898s-projects.vercel.app (9940e96c122ba655f67384214ec5aa46f1ceddc2) built successfully after catalog configuration; protected diagnostics again returned HTTP 200 and all four gates true. Download GET verification returned a connector-classified deployment_authentication_required error; it cannot be counted as successful application authorization evidence. No Vercel CLI is installed for the documented native-tool fallback.
 
 ## Manual Actions
 Original exact development setup approval received and implemented. Remaining integration access gap: connectors expose no storage upload or authenticated customer session operation; protected Vercel fetch is GET-only; existing privileged server credentials are write-only. Do not export credentials, weaken protection, add an unguarded administrative endpoint or fabricate a paid Checkout.
