@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import {NextResponse} from "next/server";
 import {createAdminClient} from "@/lib/supabase/admin";
-import {validateBeastFusionPurchase} from "@/lib/beastfusion/validatePurchase";
+import {validateBeastFusionPurchase,validateBeastFusionLineItems} from "@/lib/beastfusion/validatePurchase";
 import {stripeKeyMode} from "@/lib/beastfusion/checkoutGate";
 export const dynamic="force-dynamic";
 export async function POST(request:Request){
@@ -22,6 +22,13 @@ export async function POST(request:Request){
  if(mode==="test"&&process.env.VERCEL_ENV==="production")return NextResponse.json({error:"test_payment_in_production"},{status:503});
  const check=validateBeastFusionPurchase(session, mode==="live");
  if(!check.ok){if(check.reason==="not_paid")return NextResponse.json({received:true,issued:false});return NextResponse.json({error:check.reason},{status:400});}
+ const expectedPrice=process.env.STRIPE_BEASTFUSION_PRO_PRICE_ID;
+ if(!expectedPrice)return NextResponse.json({error:"beastfusion_price_not_configured"},{status:503});
+ let lineItems:Stripe.ApiList<Stripe.LineItem>;
+ try{lineItems=await stripe.checkout.sessions.listLineItems(session.id,{limit:2});}
+ catch{return NextResponse.json({error:"beastfusion_purchase_verification_unavailable"},{status:503});}
+ if(!validateBeastFusionLineItems(lineItems.data,expectedPrice,lineItems.has_more))
+  return NextResponse.json({error:"beastfusion_price_mismatch"},{status:400});
  const admin=createAdminClient();
  if(!admin)return NextResponse.json({error:"license_storage_unavailable"},{status:503});
  // Retries must never reset a revoked license or extend update coverage.
