@@ -9,7 +9,7 @@ async function sourceModule(path){
  return import("data:text/javascript;base64,"+Buffer.from(source).toString("base64"));
 }
 const {beastFusionCheckoutGate,stripeKeyMode,customerReleaseCatalog,entitledCustomerRelease}=await sourceModule("src/lib/beastfusion/checkoutGate.ts");
-const {validateBeastFusionPurchase}=await sourceModule("src/lib/beastfusion/validatePurchase.ts");
+const {validateBeastFusionPurchase,validateBeastFusionLineItems}=await sourceModule("src/lib/beastfusion/validatePurchase.ts");
 const testEnv={STRIPE_SECRET_KEY:"rk_test_fixture",STRIPE_BEASTFUSION_PRO_PRICE_ID:"price_fixture",VERCEL_ENV:"preview",BEASTFUSION_TEST_CHECKOUT_ENABLED:"true"};
 test("checkout defaults closed, permits explicit isolated testing, rejects live keys in preview",()=>{
  assert.equal(beastFusionCheckoutGate({}).allowed,false);
@@ -75,7 +75,7 @@ test("paid purchase validation rejects wrong amount, unpaid, mismatched customer
  assert.equal(validateBeastFusionPurchase(session,false).ok,true);
  for(const patch of [{amount_total:1},{payment_status:"unpaid"},{client_reference_id:"other"},{livemode:true},{currency:"eur"}])assert.equal(validateBeastFusionPurchase({...session,...patch},false).ok,false);
 });
-async function handlerFixture({event,signature="verified",rows=new Map(),storageError=null}){
+async function handlerFixture({event,signature="verified",rows=new Map(),storageError=null,lineItems={data:[{quantity:1,price:{id:"price_fixture"}}],has_more:false},readError=false}){
  let writes=0;
  const createAdminClient=()=>({from:()=>({upsert:async(row,options)=>{
   writes++;assert.equal(options.onConflict,"license_id");assert.equal(options.ignoreDuplicates,true);
@@ -86,11 +86,12 @@ async function handlerFixture({event,signature="verified",rows=new Map(),storage
  const NextResponse={json:(body,options)=>({body,status:options?.status??200})};
  let source=readFileSync("src/app/api/beastfusion/webhook/route.ts","utf8").replace(/^import .*;\n/gm,"");
  source=stripTypeScriptTypes(source).replace("export const dynamic","const dynamic").replace("export async function POST","async function POST");
- const factory=new Function("Stripe","NextResponse","createAdminClient","validateBeastFusionPurchase","stripeKeyMode",source+";return POST;");
- const handler=factory(Stripe,NextResponse,createAdminClient,validateBeastFusionPurchase,stripeKeyMode);
- const names=["STRIPE_SECRET_KEY","STRIPE_BEASTFUSION_WEBHOOK_SECRET","VERCEL_ENV"];
+ class FixtureStripe extends Stripe {constructor(key){super(key);this.checkout.sessions.listLineItems=async()=>{if(readError)throw new Error("private provider diagnostic");return lineItems;};}}
+ const factory=new Function("Stripe","NextResponse","createAdminClient","validateBeastFusionPurchase","stripeKeyMode","validateBeastFusionLineItems",source+";return POST;");
+ const handler=factory(FixtureStripe,NextResponse,createAdminClient,validateBeastFusionPurchase,stripeKeyMode,validateBeastFusionLineItems);
+ const names=["STRIPE_SECRET_KEY","STRIPE_BEASTFUSION_WEBHOOK_SECRET","VERCEL_ENV","STRIPE_BEASTFUSION_PRO_PRICE_ID"];
  const previous=Object.fromEntries(names.map(key=>[key,process.env[key]]));
- Object.assign(process.env,{STRIPE_SECRET_KEY:"rk_test_fixture",STRIPE_BEASTFUSION_WEBHOOK_SECRET:"whsec_fixture",VERCEL_ENV:"preview"});
+ Object.assign(process.env,{STRIPE_SECRET_KEY:"rk_test_fixture",STRIPE_BEASTFUSION_WEBHOOK_SECRET:"whsec_fixture",VERCEL_ENV:"preview",STRIPE_BEASTFUSION_PRO_PRICE_ID:"price_fixture"});
  try{
   const payload=JSON.stringify(event);
   const signedHeader=signature==="verified"?Stripe.webhooks.generateTestHeaderString({payload,secret:"whsec_fixture"}):signature;
@@ -114,5 +115,10 @@ test("delayed payment succeeds only after async success; replay preserves revoke
 test("storage failure returns retriable failure rather than false fulfillment",async()=>{
  const x=await handlerFixture({event:{type:"checkout.session.completed",data:{object:session}},storageError:{message:"unavailable"}});
  assert.equal(x.result.status,500);assert.equal(x.result.body.error,"license_issue_failed");
+});
+test("webhook verifies actual configured Stripe price before license writes",async()=>{
+ const event={type:"checkout.session.completed",data:{object:session}};
+ for(const lineItems of [{data:[{quantity:1,price:{id:"price_other"}}],has_more:false},{data:[{quantity:2,price:{id:"price_fixture"}}],has_more:false},{data:[{quantity:1,price:{id:"price_fixture"}}],has_more:true}]){const x=await handlerFixture({event,lineItems});assert.equal(x.result.status,400);assert.equal(x.writes,0);}
+ const x=await handlerFixture({event,readError:true});assert.equal(x.result.status,503);assert.equal(x.writes,0);assert.deepEqual(x.result.body,{error:"beastfusion_purchase_verification_unavailable"});
 });
 
