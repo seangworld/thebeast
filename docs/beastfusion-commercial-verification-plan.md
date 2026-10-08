@@ -4,7 +4,7 @@
 Continue Commercial Edition: $499 perpetual, twelve months of updates, optional $149 yearly updates/support renewal, self-install, customer-funded BYOK. Commercial release remains gated.
 
 ## Validation
-68 runtime/governance tests previously passed, including clean installation, activation and a controlled Developer → Reviewer first job. 15 payment/download/preview-isolation tests now pass; modified API routes and helpers pass strict TypeScript checks. BeastFusion implementation CI passed at ff1c017e54b3c42948197f505dd4403fc9bd86dd. Protected preview diagnostics at 7cfa71c6200b032a1243b5976661253c225e6103 returned HTTP 200 with all four gates true: development license storage, private bucket, $499 USD one-time Stripe test price and signing-key presence. Presence does not verify a real signing transaction.
+68 runtime/governance tests previously passed, including clean installation, activation and a controlled Developer → Reviewer first job. 32 focused payment/download/preview-isolation/email-code/development-webhook tests now pass. The rendered email-code flow was tested with an eight-digit code. Modified login/helper/checkout sources pass strict TypeScript checks; the previous API checks remain recorded. Development webhook entry/handler pass JavaScript syntax checks; Deno bundling and live deployment remain pending. BeastFusion implementation CI passed at ff1c017e54b3c42948197f505dd4403fc9bd86dd. Protected preview diagnostics at 7cfa71c6200b032a1243b5976661253c225e6103 returned HTTP 200 with all four gates true: development license storage, private bucket, $499 USD one-time Stripe test price and signing-key presence. Presence does not verify a real signing transaction.
 
 Development RLS is enabled with authenticated SELECT restricted by auth.uid() = user_id. Transactional own/other customer fixtures showed own_visible=1, other_visible=0. Insert/update/delete enforcement remains UNVERIFIED: its probe returned connector request-state errors. Table privileges alone do not prove RLS permits writes. Subsequent count found zero remaining probe license rows.
 
@@ -30,6 +30,8 @@ Browser fallback approval received. Supabase dashboard sign-in completed after G
 
 Read-only Stripe test-account inspection on 2026-10-08 found the BeastFusion endpoint we_1UO3XlGl8yDG6HDcyqEvbsUX enabled at https://thebeast.seangworld.com/api/beastfusion/webhook, subscribing only to checkout.session.completed. No development-preview endpoint was registered in the complete endpoint list (has_more=false). The other endpoint targets SEANGWORLD. Preview diagnostics validate price and key presence, not webhook delivery. A genuine test purchase cannot currently be counted as development fulfillment evidence. Do not modify the existing production-domain endpoint, reveal its signing secret, disable Vercel protection, or create a fake paid event. An isolated development webhook configuration and a secure delivery mechanism through deployment protection must be prepared and explicitly approved for their exact environment targets under GV-005 before execution.
 
+Candidate recovery implemented on the existing review branch: optional normal Supabase email-code verification, a development-only signed Stripe Edge receiver, and development Checkout scope metadata. The receiver reuses current purchase/actual-line-item validators and requires a dedicated restricted test read key. Full Vercel preview build passed at 7f9d26d4c166a3c3db29024ab14a25091b31d818. Read-only provider inspection confirmed development email OTP length eight and expiry 3600 seconds; neither setting was altered. The code input accepts 6–10 digits and the backend retains its configured strength. The candidate code is disabled until the branch flag and development email template are explicitly configured. The receiver, new Stripe endpoint and restricted credential have not been created. Exact activation/rollback plan is in docs/beastfusion-development-integration-recovery.md; owner approval of those named targets is pending under GV-005. A later candidate revision records the eight-digit setting and updated tests; its build must be checked independently.
+
 ## Controlled test archive
 CLI candidate version 5.3.0-rc; 13709 bytes.
 SHA-256: 8e2c9a6c68204522feeed2f28be5d468176508fd9a083ccd25531ad21f03dcd9.
@@ -47,3 +49,4 @@ Test catalog approval applies only to this controlled candidate. No private key,
 - Update/revocation/refund lifecycle and canonical version reconciliation.
 
 Keep sales closed while these gates remain unresolved.
+

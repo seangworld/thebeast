@@ -7,8 +7,8 @@ type EmailCodeAuth = Pick<SupabaseClient["auth"], "verifyOtp" | "getUser" | "sig
 // token extraction, account creation, URL code or analytics code is involved.
 export async function verifyBeastEmailCode(auth: EmailCodeAuth, email: string, code: string) {
   const token = code.trim();
-  if (!email.trim() || !/^\d{6}$/.test(token)) {
-    return { ok: false as const, message: "Enter the six-digit code from your sign-in email." };
+  if (!email.trim() || !/^\d{6,10}$/.test(token)) {
+    return { ok: false as const, message: "Enter the code from your sign-in email." };
   }
   const { error } = await auth.verifyOtp({ email: email.trim(), token, type: "email" });
   if (error) return { ok: false as const, message: error.code === "otp_expired"

@@ -400,7 +400,7 @@ function LoginExperience() {
             {emailCodeEnabled && intent === "login" ? (
               <form onSubmit={authenticateEmailCode} className="mt-5">
                 <p className="mb-3 text-sm leading-6 text-[#c7cfdb]">
-                  You can also enter the six-digit code from that email here.
+                  You can also enter the sign-in code from that email here.
                 </p>
                 <label htmlFor="email-code" className="text-sm font-bold text-white">
                   Email sign-in code
@@ -410,8 +410,9 @@ function LoginExperience() {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
+                  pattern="[0-9]{6,10}"
+                  minLength={6}
+                  maxLength={10}
                   required
                   value={emailCode}
                   onChange={(event) => setEmailCode(event.target.value)}
