@@ -25,6 +25,9 @@ export default function SettingsPage() {
   const [extraPayment, setExtraPayment] = useState("");
 
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   const getUserId = useCallback(async () => {
     const supabase = createClient();
@@ -33,35 +36,39 @@ export default function SettingsPage() {
   }, []);
 
   const load = useCallback(async () => {
-    const supabase = createClient();
-    const userId = await getUserId();
+    setLoading(true);
+    setLoadError("");
+    try {
+      const supabase = createClient();
+      const userId = await getUserId();
+      if (!userId) {
+        setLoadError("Sign in to load and update your Money settings.");
+        return;
+      }
 
-    if (!userId) return;
+      const [cashResult, debtResult] = await Promise.all([
+        supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
+        supabase.from("debt_settings").select("*").eq("user_id", userId).maybeSingle(),
+      ]);
+      if (cashResult.error || debtResult.error) {
+        setLoadError("Money settings could not load. Please retry before making changes.");
+        return;
+      }
 
-    const { data: cashSettings } = await supabase
-      .from("cash_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: debtSettings } = await supabase
-      .from("debt_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    setStartingBalance(Number(cashSettings?.starting_balance ?? 500));
-    setBuffer(Number(cashSettings?.checking_buffer ?? 500));
-    setLookaheadDays(Number(cashSettings?.lookahead_days ?? 30));
-    setAssignmentHorizonMonths(Number(cashSettings?.assignment_horizon_months ?? 6));
-
-    setStrategy(normalizeDebtStrategy(debtSettings?.strategy));
-    setCustomDebtOrder(parseCustomDebtOrder(debtSettings?.custom_debt_order));
-    setExtraPayment(
-      debtSettings?.extra_payment != null
-        ? String(debtSettings.extra_payment)
-        : ""
-    );
+      const cashSettings = cashResult.data;
+      const debtSettings = debtResult.data;
+      setStartingBalance(Number(cashSettings?.starting_balance ?? 500));
+      setBuffer(Number(cashSettings?.checking_buffer ?? 500));
+      setLookaheadDays(Number(cashSettings?.lookahead_days ?? 30));
+      setAssignmentHorizonMonths(Number(cashSettings?.assignment_horizon_months ?? 6));
+      setStrategy(normalizeDebtStrategy(debtSettings?.strategy));
+      setCustomDebtOrder(parseCustomDebtOrder(debtSettings?.custom_debt_order));
+      setExtraPayment(debtSettings?.extra_payment != null ? String(debtSettings.extra_payment) : "");
+    } catch {
+      setLoadError("Money settings could not load. Please retry before making changes.");
+    } finally {
+      setLoading(false);
+    }
   }, [getUserId]);
 
   useEffect(() => {
@@ -69,45 +76,54 @@ export default function SettingsPage() {
   }, [load]);
 
   async function saveAll() {
-    const supabase = createClient();
-    const userId = await getUserId();
-
-    if (!userId) {
-      setMessage("Error: Unable to get user ID");
+    if (loading || saving || loadError) return;
+    if (![startingBalance, buffer].every((value) => Number.isFinite(value) && value >= 0)
+      || !Number.isFinite(Number(extraPayment || 0)) || Number(extraPayment || 0) < 0) {
+      setMessage("Enter valid nonnegative amounts before saving.");
       return;
     }
-
-    const { error: cashError } = await supabase.from("cash_settings").upsert(
-      {
-        user_id: userId,
-        starting_balance: Number(startingBalance),
-        checking_buffer: Number(buffer),
-        lookahead_days: Number(lookaheadDays),
-        assignment_horizon_months: Number(assignmentHorizonMonths),
-      },
-      { onConflict: "user_id" }
-    );
-
-    if (cashError) {
-      reportClientOperationFailure({
-        module: "beastmoney",
-        operation: "cash_settings_save",
-        error: cashError,
+    setSaving(true);
+    setMessage("");
+    try {
+      const supabase = createClient();
+      const userId = await getUserId();
+      if (!userId) {
+        setMessage("Sign in to save Money settings.");
+        return;
+      }
+      const { error: cashError } = await supabase.from("cash_settings").upsert(
+        {
+          user_id: userId,
+          starting_balance: Number(startingBalance),
+          checking_buffer: Number(buffer),
+          lookahead_days: Number(lookaheadDays),
+          assignment_horizon_months: Number(assignmentHorizonMonths),
+        },
+        { onConflict: "user_id" }
+      );
+      if (cashError) {
+        reportClientOperationFailure({
+          module: "beastmoney",
+          operation: "cash_settings_save",
+          error: cashError,
+        });
+        setMessage(memberSafeMessage(cashError, "save"));
+        return;
+      }
+      const debtResult = await saveDebtStrategySettings(supabase, {
+        strategy, extraPayment: Number(extraPayment || 0), customDebtOrder,
       });
-      setMessage(memberSafeMessage(cashError, "save"));
-      return;
+      if (!debtResult.ok) {
+        setMessage(`Cash settings saved. ${debtResult.message}`);
+        return;
+      }
+      setMessage("Settings saved successfully.");
+      await load();
+    } catch {
+      setMessage("Money settings could not be saved. Please try again.");
+    } finally {
+      setSaving(false);
     }
-
-    const debtResult = await saveDebtStrategySettings(supabase, {
-      strategy, extraPayment: Number(extraPayment || 0), customDebtOrder,
-    });
-    if (!debtResult.ok) {
-      setMessage(`Cash settings saved. ${debtResult.message}`);
-      return;
-    }
-
-    setMessage("✓ Settings saved successfully.");
-    await load();
   }
 
   async function resetTestDueDates() {
@@ -169,6 +185,14 @@ export default function SettingsPage() {
             <p className="text-sm text-cyan-200">{message}</p>
           </div>
         )}
+
+        {loadError ? (
+          <section className="money-section-card" role="alert">
+            <p className="text-sm text-amber-300">{loadError}</p>
+            <button type="button" onClick={() => void load()} className="beast-button mt-3">Retry loading</button>
+          </section>
+        ) : null}
+        {loading ? <p role="status" className="text-sm text-slate-400">Loading your Money settings…</p> : null}
 
         {/* CASH SETTINGS */}
         <section className="money-section-card">
