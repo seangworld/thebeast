@@ -39,10 +39,12 @@ test("BP-230 navigation follows the approved workspace hierarchy", () => {
     "Strategies",
     "Timeline",
     "Velocity Banking",
+    "Connected Accounts",
     "Retirement",
     "Financial Goals",
     "Financial Documents",
     "Reports",
+    "Settings",
   ]);
   assert.deepEqual(
     beastMoneyCoreNavigation
@@ -82,6 +84,7 @@ test("BM-303 active state follows direct links refresh and history location chan
     ["/dashboard/money/payoff-plan", "#payoff-plan", "Timeline"],
     ["/dashboard/money/velocity", "", "Velocity Banking"],
     ["/dashboard/money/reports", "", "Reports"],
+    ["/dashboard/money/settings", "", "Settings"],
   ] as const;
   history.forEach(([pathname, hash, expected]) => assert.equal(activeLabel(pathname, hash), expected));
   [...history].reverse().forEach(([pathname, hash, expected]) => assert.equal(activeLabel(pathname, hash), expected));
