@@ -21,6 +21,7 @@ export const beastMoneyCoreNavigation: readonly BeastMoneyNavigationItem[] = [
   { label: "Financial Goals", href: "/dashboard/money/goals" },
   { label: "Financial Documents", href: "/dashboard/money/documents" },
   { label: "Reports", href: "/dashboard/money/reports" },
+  { label: "Settings", href: "/dashboard/money/settings" },
 ] as const;
 
 export const moneyManagementWorkspaces = [

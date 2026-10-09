@@ -37,10 +37,12 @@ test("BP-230 exposes only the approved workspace hierarchy", () => {
       { label: "Strategies", parent: "Payoff Plan" },
       { label: "Timeline", parent: "Payoff Plan" },
       { label: "Velocity Banking", parent: null },
+      { label: "Connected Accounts", parent: null },
       { label: "Retirement", parent: null },
       { label: "Financial Goals", parent: null },
       { label: "Financial Documents", parent: null },
       { label: "Reports", parent: null },
+      { label: "Settings", parent: null },
     ]
   );
   assert.equal(
