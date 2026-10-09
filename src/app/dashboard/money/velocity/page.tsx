@@ -866,7 +866,7 @@ export default function VelocityPlannerPage() {
             </div>
           </div>
 
-          <div className="beast-card">
+          <div id="velocity-guardrails" className="beast-card scroll-mt-24">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="money-section-title">Velocity Guardrails</h2>
               <span className="w-fit rounded border border-[#2a3242] px-3 py-1 text-xs font-semibold text-[#c7cfdb]">
