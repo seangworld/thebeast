@@ -25,3 +25,15 @@ test("Settings links to existing funding accounts and Velocity emergency reserve
   assert.match(settings, /not a separate HELOC-specific buffer/);
   assert.match(settings, /checking_buffer: Number\(buffer\)/);
 });
+
+test("Velocity surfaces owner-scoped unlinked HELOC funding sources without treating them as debt", () => {
+  const source = readFileSync("src/app/dashboard/money/velocity/page.tsx", "utf8");
+  assert.match(source, /\.from\("funding_sources"\)/);
+  assert.match(source, /\.eq\("user_id", userId\)/);
+  assert.match(source, /\.in\("type", \["heloc", "ploc"\]\)/);
+  assert.match(source, /unlinkedCreditSources\.map/);
+  assert.match(source, /not used in Velocity calculations until the account records are reconciled/);
+  assert.match(source, /Do not add a duplicate HELOC/);
+  assert.match(source, /fundingSourceLoadError/);
+  assert.match(source, /href="\/dashboard\/money\/cashflow#funding-sources"/);
+});
