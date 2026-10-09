@@ -23,4 +23,11 @@ test("Money Settings retains saved cash and debt controls in standard Money surf
   ]) assert.ok(source.includes(expected), `Missing ${expected}`);
   assert.match(source, /separate from your HELOC reserve/);
   assert.match(source, /role="status" aria-live="polite"/);
+  assert.match(source, /if \(cashResult.error \|\| debtResult.error\)/);
+  assert.match(source, /disabled=\{loading \|\| saving \|\| Boolean\(loadError\)\}/);
+  assert.match(source, /Retry loading/);
+  assert.match(source, /setSaving\(true\)/);
+  for (const id of ["money-starting-balance", "money-checking-buffer", "money-lookahead", "money-assignment-horizon", "money-debt-strategy", "money-extra-attack"]) {
+    assert.ok(source.includes(`htmlFor="${id}"`), `Missing accessible label for ${id}`);
+  }
 });
