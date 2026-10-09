@@ -8,6 +8,7 @@ export const beastMoneyCoreNavigation: readonly BeastMoneyNavigationItem[] = [
   { label: "Dashboard", href: "/dashboard/money/dashboard" },
   { label: "Money Coach", href: "/dashboard/money/coach" },
   { label: "Cash Flow", href: "/dashboard/money/cashflow" },
+  { label: "Funding Sources", href: "/dashboard/money/cashflow#funding-sources", parent: "Cash Flow" },
   { label: "Income", href: "/dashboard/money/income", parent: "Cash Flow" },
   { label: "Expenses", href: "/dashboard/money/expenses", parent: "Cash Flow" },
   { label: "Bills", href: "/dashboard/money/bills", parent: "Expenses" },

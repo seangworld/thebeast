@@ -194,6 +194,27 @@ export default function SettingsPage() {
         ) : null}
         {loading ? <p role="status" className="text-sm text-slate-400">Loading your Money settings…</p> : null}
 
+        <section className="money-section-card" aria-labelledby="money-account-controls">
+          <div className="money-section-header">
+            <div>
+              <h2 id="money-account-controls" className="money-section-title">Accounts &amp; Reserves</h2>
+              <p className="mt-1 text-sm text-slate-400">Manage existing funding accounts and credit-protection rules in their original workspaces.</p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-lg border border-slate-700/70 p-4">
+              <h3 className="font-bold text-white">Funding Sources</h3>
+              <p className="mt-2 text-sm text-slate-300">View and edit checking, savings, credit cards, HELOCs, balances, and credit limits.</p>
+              <Link className="beast-button mt-4 inline-flex" href="/dashboard/money/cashflow#funding-sources">Manage Funding Sources</Link>
+            </div>
+            <div className="rounded-lg border border-slate-700/70 p-4">
+              <h3 className="font-bold text-white">HELOC &amp; Velocity Reserves</h3>
+              <p className="mt-2 text-sm text-slate-300">Review the selected HELOC, emergency reserve, utilization limit, and recovery guardrails. The Velocity emergency reserve is not a separate HELOC-specific buffer.</p>
+              <Link className="beast-button mt-4 inline-flex" href="/dashboard/money/velocity#velocity-guardrails">Manage Velocity Reserves</Link>
+            </div>
+          </div>
+        </section>
+
         {/* CASH SETTINGS */}
         <section className="money-section-card">
           <div className="money-section-header">

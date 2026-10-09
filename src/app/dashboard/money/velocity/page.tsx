@@ -123,6 +123,8 @@ function formatConfirmedDate(value?: string | null) {
 
 export default function VelocityPlannerPage() {
   const [debts, setDebts] = useState<any[]>([]);
+  const [creditFundingSources, setCreditFundingSources] = useState<Array<{id:string;name:string;type:string;linked_debt_id:string|null;is_active:boolean;credit_limit:number|null}>>([]);
+  const [fundingSourceLoadError, setFundingSourceLoadError] = useState(false);
   const [incomes, setIncomes] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
   const [strategy, setStrategy] = useState("—");
@@ -160,6 +162,15 @@ export default function VelocityPlannerPage() {
       .from("debts")
       .select("*")
       .eq("user_id", userId);
+
+    const { data: fundingRows, error: fundingRowsError } = await supabase
+      .from("funding_sources")
+      .select("id,name,type,linked_debt_id,is_active,credit_limit")
+      .eq("user_id", userId)
+      .in("type", ["heloc", "ploc"]);
+
+    setFundingSourceLoadError(Boolean(fundingRowsError));
+    setCreditFundingSources(fundingRowsError ? [] : (fundingRows || []));
 
     const { data: incomeRows, error: incomeRowsError } = await supabase
       .from("income_events")
@@ -249,6 +260,12 @@ export default function VelocityPlannerPage() {
     () => debts.filter(isEligibleVelocityDebt),
     [debts]
   );
+  const unlinkedCreditSources = useMemo(() =>
+    creditFundingSources.filter(source =>
+      source.is_active && !debts.some(debt =>
+        debt.id === source.linked_debt_id && isEligibleVelocityDebt(debt)
+      )
+    ), [creditFundingSources, debts]);
   const selectedSourceResolution = useMemo(
     () => resolveCanonicalVelocitySource(velocitySettings.selected_debt_id, ownerId, debts),
     [debts, ownerId, velocitySettings.selected_debt_id]
@@ -835,6 +852,26 @@ export default function VelocityPlannerPage() {
               </span>
             </div>
 
+            {fundingSourceLoadError ? (
+              <p className="mt-4 text-sm text-amber-300" role="status">Funding accounts could not be checked. Retry before assuming a HELOC is missing.</p>
+            ) : null}
+            {unlinkedCreditSources.length > 0 ? (
+              <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-950/20 p-4" role="status">
+                <h3 className="font-bold text-amber-200">Funding accounts needing a Velocity link</h3>
+                <p className="mt-2 text-sm text-slate-300">These active credit accounts are saved under Funding Sources but are not linked to an eligible BeastMoney debt. They are shown here for visibility, not used in Velocity calculations until the account records are reconciled.</p>
+                <ul className="mt-3 space-y-2 text-sm">
+                  {unlinkedCreditSources.map(source => (
+                    <li key={source.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-700/70 p-2">
+                      <span className="font-semibold text-white">{source.name} <span className="text-slate-400">({source.type.toUpperCase()})</span></span>
+                      <span className="text-slate-300">{source.credit_limit != null ? `Limit: ${formatMoney(Number(source.credit_limit))}` : "Credit limit not recorded"}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-slate-300">Review the existing funding account and debt records before linking. Do not add a duplicate HELOC just to make it appear here.</p>
+                <Link href="/dashboard/money/cashflow#funding-sources" className="beast-button mt-3 inline-flex">Review funding accounts</Link>
+              </div>
+            ) : null}
+
             <label className="mt-4 block text-sm text-[#c7cfdb]" htmlFor="velocity-selected-debt">Change selected HELOC</label>
             <select disabled={saving} id="velocity-selected-debt" className="beast-input mt-2" value={velocitySettings.selected_debt_id} onChange={(event) => updateVelocitySetting("selected_debt_id", event.target.value)}>
               <option value="">Select an eligible debt</option>
@@ -866,7 +903,7 @@ export default function VelocityPlannerPage() {
             </div>
           </div>
 
-          <div className="beast-card">
+          <div id="velocity-guardrails" className="beast-card scroll-mt-24">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="money-section-title">Velocity Guardrails</h2>
               <span className="w-fit rounded border border-[#2a3242] px-3 py-1 text-xs font-semibold text-[#c7cfdb]">

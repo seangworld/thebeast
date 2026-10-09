@@ -64,7 +64,7 @@ export default function FundingSourcesSection({
   deleteFundingSource,
 }: FundingSourcesSectionProps) {
   return (
-    <section className="beast-panel overflow-hidden">
+    <section id="funding-sources" className="beast-panel scroll-mt-24 overflow-hidden">
       <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <h2 className="money-section-title">Payment &amp; Funding Accounts</h2>
