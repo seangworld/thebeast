@@ -25,6 +25,9 @@ export default function SettingsPage() {
   const [extraPayment, setExtraPayment] = useState("");
 
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   const getUserId = useCallback(async () => {
     const supabase = createClient();
@@ -33,35 +36,39 @@ export default function SettingsPage() {
   }, []);
 
   const load = useCallback(async () => {
-    const supabase = createClient();
-    const userId = await getUserId();
+    setLoading(true);
+    setLoadError("");
+    try {
+      const supabase = createClient();
+      const userId = await getUserId();
+      if (!userId) {
+        setLoadError("Sign in to load and update your Money settings.");
+        return;
+      }
 
-    if (!userId) return;
+      const [cashResult, debtResult] = await Promise.all([
+        supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
+        supabase.from("debt_settings").select("*").eq("user_id", userId).maybeSingle(),
+      ]);
+      if (cashResult.error || debtResult.error) {
+        setLoadError("Money settings could not load. Please retry before making changes.");
+        return;
+      }
 
-    const { data: cashSettings } = await supabase
-      .from("cash_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: debtSettings } = await supabase
-      .from("debt_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    setStartingBalance(Number(cashSettings?.starting_balance ?? 500));
-    setBuffer(Number(cashSettings?.checking_buffer ?? 500));
-    setLookaheadDays(Number(cashSettings?.lookahead_days ?? 30));
-    setAssignmentHorizonMonths(Number(cashSettings?.assignment_horizon_months ?? 6));
-
-    setStrategy(normalizeDebtStrategy(debtSettings?.strategy));
-    setCustomDebtOrder(parseCustomDebtOrder(debtSettings?.custom_debt_order));
-    setExtraPayment(
-      debtSettings?.extra_payment != null
-        ? String(debtSettings.extra_payment)
-        : ""
-    );
+      const cashSettings = cashResult.data;
+      const debtSettings = debtResult.data;
+      setStartingBalance(Number(cashSettings?.starting_balance ?? 500));
+      setBuffer(Number(cashSettings?.checking_buffer ?? 500));
+      setLookaheadDays(Number(cashSettings?.lookahead_days ?? 30));
+      setAssignmentHorizonMonths(Number(cashSettings?.assignment_horizon_months ?? 6));
+      setStrategy(normalizeDebtStrategy(debtSettings?.strategy));
+      setCustomDebtOrder(parseCustomDebtOrder(debtSettings?.custom_debt_order));
+      setExtraPayment(debtSettings?.extra_payment != null ? String(debtSettings.extra_payment) : "");
+    } catch {
+      setLoadError("Money settings could not load. Please retry before making changes.");
+    } finally {
+      setLoading(false);
+    }
   }, [getUserId]);
 
   useEffect(() => {
@@ -69,45 +76,54 @@ export default function SettingsPage() {
   }, [load]);
 
   async function saveAll() {
-    const supabase = createClient();
-    const userId = await getUserId();
-
-    if (!userId) {
-      setMessage("Error: Unable to get user ID");
+    if (loading || saving || loadError) return;
+    if (![startingBalance, buffer].every((value) => Number.isFinite(value) && value >= 0)
+      || !Number.isFinite(Number(extraPayment || 0)) || Number(extraPayment || 0) < 0) {
+      setMessage("Enter valid nonnegative amounts before saving.");
       return;
     }
-
-    const { error: cashError } = await supabase.from("cash_settings").upsert(
-      {
-        user_id: userId,
-        starting_balance: Number(startingBalance),
-        checking_buffer: Number(buffer),
-        lookahead_days: Number(lookaheadDays),
-        assignment_horizon_months: Number(assignmentHorizonMonths),
-      },
-      { onConflict: "user_id" }
-    );
-
-    if (cashError) {
-      reportClientOperationFailure({
-        module: "beastmoney",
-        operation: "cash_settings_save",
-        error: cashError,
+    setSaving(true);
+    setMessage("");
+    try {
+      const supabase = createClient();
+      const userId = await getUserId();
+      if (!userId) {
+        setMessage("Sign in to save Money settings.");
+        return;
+      }
+      const { error: cashError } = await supabase.from("cash_settings").upsert(
+        {
+          user_id: userId,
+          starting_balance: Number(startingBalance),
+          checking_buffer: Number(buffer),
+          lookahead_days: Number(lookaheadDays),
+          assignment_horizon_months: Number(assignmentHorizonMonths),
+        },
+        { onConflict: "user_id" }
+      );
+      if (cashError) {
+        reportClientOperationFailure({
+          module: "beastmoney",
+          operation: "cash_settings_save",
+          error: cashError,
+        });
+        setMessage(memberSafeMessage(cashError, "save"));
+        return;
+      }
+      const debtResult = await saveDebtStrategySettings(supabase, {
+        strategy, extraPayment: Number(extraPayment || 0), customDebtOrder,
       });
-      setMessage(memberSafeMessage(cashError, "save"));
-      return;
+      if (!debtResult.ok) {
+        setMessage(`Cash settings saved. ${debtResult.message}`);
+        return;
+      }
+      setMessage("Settings saved successfully.");
+      await load();
+    } catch {
+      setMessage("Money settings could not be saved. Please try again.");
+    } finally {
+      setSaving(false);
     }
-
-    const debtResult = await saveDebtStrategySettings(supabase, {
-      strategy, extraPayment: Number(extraPayment || 0), customDebtOrder,
-    });
-    if (!debtResult.ok) {
-      setMessage(`Cash settings saved. ${debtResult.message}`);
-      return;
-    }
-
-    setMessage("✓ Settings saved successfully.");
-    await load();
   }
 
   async function resetTestDueDates() {
@@ -151,27 +167,52 @@ export default function SettingsPage() {
   return (
     <BeastMoneyShell
       title="Money Settings"
-      description="Configure system-wide cashflow and debt behavior."
+      description="Set your protected cash reserve, planning horizon, and debt strategy."
     >
       <div className="money-page-stack">
+        <section className="money-section-card">
+          <div className="money-section-header">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider text-cyan-300">Planning controls</p>
+              <h2 className="money-section-title mt-1">Your Money Preferences</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">These settings guide your cash flow forecasts and debt recommendations. Your saved balances and transactions will not be changed by editing them.</p>
+            </div>
+          </div>
+        </section>
 
         {message && (
-          <div className="money-section-card">
-            <p className="text-sm text-green-300">{message}</p>
+          <div className="money-section-card" role="status" aria-live="polite">
+            <p className="text-sm text-cyan-200">{message}</p>
           </div>
         )}
 
+        {loadError ? (
+          <section className="money-section-card" role="alert">
+            <p className="text-sm text-amber-300">{loadError}</p>
+            <button type="button" onClick={() => void load()} className="beast-button mt-3">Retry loading</button>
+          </section>
+        ) : null}
+        {loading ? <p role="status" className="text-sm text-slate-400">Loading your Money settings…</p> : null}
+
         {/* CASH SETTINGS */}
         <section className="money-section-card">
-          <h2 className="money-section-title">Cash Settings</h2>
+          <div className="money-section-header">
+            <div>
+              <h2 className="money-section-title">Cash Settings</h2>
+              <p className="mt-1 text-sm text-slate-400">Control your cash cushion and how far ahead BeastMoney plans.</p>
+            </div>
+          </div>
 
-          <div className="money-field-grid md:grid-cols-2 xl:grid-cols-4">
+          <div className="money-field-grid mt-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
               <label className="money-field-label">
                 Starting Balance
               </label>
               <input
+                id="money-starting-balance"
                 type="number"
+                min={0}
+                step="0.01"
                 value={startingBalance}
                 onChange={(e) => setStartingBalance(Number(e.target.value))}
                 className="beast-input mt-2"
@@ -179,13 +220,18 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="money-field-label">Buffer</label>
+              <label htmlFor="money-checking-buffer" className="money-field-label">Checking Buffer</label>
               <input
+                id="money-checking-buffer"
                 type="number"
+                min={0}
+                step="0.01"
+                aria-describedby="money-buffer-help"
                 value={buffer}
                 onChange={(e) => setBuffer(Number(e.target.value))}
                 className="beast-input mt-2"
               />
+              <p id="money-buffer-help" className="mt-2 text-xs leading-5 text-slate-400">Minimum checking balance to protect in your cash flow plan. This is separate from your HELOC reserve.</p>
             </div>
 
             <div>
@@ -193,6 +239,7 @@ export default function SettingsPage() {
                 Lookahead Days (Dashboard)
               </label>
               <select
+                id="money-lookahead"
                 value={lookaheadDays}
                 onChange={(e) => setLookaheadDays(Number(e.target.value))}
                 className="beast-input mt-2"
@@ -211,6 +258,7 @@ export default function SettingsPage() {
                 Assignment Horizon
               </label>
               <select
+                id="money-assignment-horizon"
                 value={assignmentHorizonMonths}
                 onChange={(e) => setAssignmentHorizonMonths(Number(e.target.value))}
                 className="beast-input mt-2"
@@ -225,12 +273,18 @@ export default function SettingsPage() {
 
         {/* DEBT SETTINGS */}
         <section className="money-section-card">
-          <h2 className="money-section-title">Debt Settings</h2>
-
-          <div className="money-field-grid md:grid-cols-2">
+          <div className="money-section-header">
             <div>
-              <label className="money-field-label">Strategy</label>
+              <h2 className="money-section-title">Debt Settings</h2>
+              <p className="mt-1 text-sm text-slate-400">Choose how BeastMoney prioritizes debt payoff and extra payments.</p>
+            </div>
+          </div>
+
+          <div className="money-field-grid mt-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="money-debt-strategy" className="money-field-label">Strategy</label>
               <select
+                id="money-debt-strategy"
                 value={strategy}
                 onChange={(e) => setStrategy(normalizeDebtStrategy(e.target.value))}
                 className="beast-input mt-2"
@@ -260,7 +314,10 @@ export default function SettingsPage() {
                 Monthly Extra Attack
               </label>
               <input
+                id="money-extra-attack"
                 type="number"
+                min={0}
+                step="0.01"
                 value={extraPayment}
                 onChange={(e) => setExtraPayment(e.target.value)}
                 className="beast-input mt-2"
@@ -276,8 +333,9 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        <section className="grid gap-3">
-          <button onClick={saveAll} className="beast-button w-full">
+        <section className="money-section-card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-slate-400">Changes take effect when you save. Existing money records remain intact.</p>
+          <button onClick={saveAll} className="beast-button w-full sm:w-auto">
             Save All Settings
           </button>
         </section>
