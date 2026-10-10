@@ -1,5 +1,6 @@
 import {createRouteClient} from "@/lib/supabase/server";
 import Link from "next/link";
+import CustomerActions from "./CustomerActions";
 export default async function Customer(){
  const s=createRouteClient();
  const {data:{user}}=await s.auth.getUser();
@@ -16,8 +17,9 @@ export default async function Customer(){
  <p className="text-sm text-slate-400">Status: {license.status}</p>
  <p className="text-sm text-slate-400">Installation: {license.installation_id?"Activated":"Not yet activated"}</p>
  <p className="text-sm text-slate-400">Updates included through: {license.updates_until}</p>
+ <CustomerActions active={license.status==="active"} licenseId={license.license_id}/>
  <div className="mt-5 flex flex-wrap gap-3">
- <Link className="beast-button" href={`/api/beastfusion/customer/license?license_id=${encodeURIComponent(license.license_id)}`}>View activation key</Link>
+ 
  <Link className="beast-button" href="/beastfusion/setup">Start guided setup</Link>
  <Link className="beast-button" href="/beastfusion/support">Support or license transfer</Link>
  </div></div>):<p className="mt-5 text-slate-400">No BeastFusion license is associated with this account yet.</p>}
