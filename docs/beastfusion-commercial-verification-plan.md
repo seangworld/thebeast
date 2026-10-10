@@ -81,3 +81,11 @@ Native Stripe readback confirmed fresh Checkout cs_test_a162Ru6aNiLR7U3iBxY5lYM1
 Customer download attempt returned 404 because the entered URL was /beastfusion/customer/download, while the implementation exists at /api/beastfusion/customer/download. The account page had no Download control. Candidate b2f5121bcbf71a2ac4403911c18a97a13c8a8515 adds Download software, Save license, Copy key and Print license details using existing authenticated endpoints. Key data is requested only on action, saved as a private text file, excluded from page content except during explicit printing, and never sent to analytics. Software access still requires a server-validated active license and update entitlement. Busy, timeout, retry, sign-in and unavailable-download messages are implemented; inactive licenses disable the controls. Server page uses explicit customer ownership and reports lookup failures.
 
 Validation: 27 focused rendered-UI/download/payment/development-webhook tests passed; the new client component passed strict TypeScript checks. Full application build and real customer button/download remain pending. No production release. Execution timing unavailable.
+
+## Customer controls preview result — 2026-10-09
+Roadmap Item: Customer software and license delivery controls.
+Validation: 27 focused tests passed. Both customer components passed strict TypeScript and local Next core-web-vitals/TypeScript lint checks. First candidate build failed react/no-unescaped-entities in an account error message; corrected at 14634e25ae25231a8f479908625344869131a6e0. Full Vercel application build then passed.
+Execution Timeline: Execution timing unavailable.
+Git Status: Review branch only; draft thebeast PR #237. No main merge.
+Deployment Status: dpl_2XpmhYCVhy6VJWK8dAywR9Mvd9Kg READY, preview https://thebeast-aucgp4hw8-seangworld-3898s-projects.vercel.app. Production unchanged.
+Manual Actions: Owner should open /beastfusion/customer on this new preview, sign in with the same development account if prompted, and verify Download software and Save license. Existing test purchase must not be repeated. Actual authenticated archive checksum and exact delivered-key signature/clean installation remain pending; cloud browser secure-auth path was unresponsive.
