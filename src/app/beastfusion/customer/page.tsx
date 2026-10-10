@@ -13,7 +13,7 @@ export default async function Customer() {
   return <main className="min-h-screen bg-[#07090d] px-5 py-12 text-slate-100 print:min-h-0 print:bg-white print:text-black">
     <div className="mx-auto max-w-3xl">
       <h1 className="text-3xl font-black">Your BeastFusion</h1>
-      {error ? <p role="alert" className="mt-5">We couldn't load your license. Refresh this page or <Link href="/beastfusion/support">contact support</Link>.</p>
+      {error ? <p role="alert" className="mt-5">We couldn&apos;t load your license. Refresh this page or <Link href="/beastfusion/support">contact support</Link>.</p>
       : data ? <div className="mt-6 rounded-2xl border border-white/10 p-6 print:border-black">
         <p className="font-bold">BeastFusion Professional</p>
         <p className="mt-2 break-all text-sm text-slate-400 print:text-black">License: {data.license_id}</p>
