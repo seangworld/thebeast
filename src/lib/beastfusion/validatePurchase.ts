@@ -8,7 +8,7 @@ export function validateBeastFusionPurchase(session:BeastFusionCheckoutLike, exp
  if(session.metadata?.product!=="beastfusion-professional")return {ok:false as const,reason:"wrong_product"};
  if(session.livemode!==expectedLivemode)return {ok:false as const,reason:"mode_mismatch"};
  if(session.payment_status!=="paid")return {ok:false as const,reason:"not_paid"};
- if(session.mode!=="payment"||session.amount_total!==49900||session.currency?.toLowerCase()!=="usd")return {ok:false as const,reason:"purchase_mismatch"};
+ if(session.mode!=="payment"||session.amount_total!==50000||session.currency?.toLowerCase()!=="usd")return {ok:false as const,reason:"purchase_mismatch"};
  const userId=session.metadata?.user_id;
  if(!userId||userId!==session.client_reference_id)return {ok:false as const,reason:"customer_identity_mismatch"};
  if(!Number.isFinite(session.created)||session.created<=0)return {ok:false as const,reason:"invalid_purchase_time"};
