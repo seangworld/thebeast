@@ -89,3 +89,11 @@ Execution Timeline: Execution timing unavailable.
 Git Status: Review branch only; draft thebeast PR #237. No main merge.
 Deployment Status: dpl_2XpmhYCVhy6VJWK8dAywR9Mvd9Kg READY, preview https://thebeast-aucgp4hw8-seangworld-3898s-projects.vercel.app. Production unchanged.
 Manual Actions: Owner should open /beastfusion/customer on this new preview, sign in with the same development account if prompted, and verify Download software and Save license. Existing test purchase must not be repeated. Actual authenticated archive checksum and exact delivered-key signature/clean installation remain pending; cloud browser secure-auth path was unresponsive.
+
+## Owner customer-flow verification and guide text correction — 2026-10-09
+Roadmap Item: Customer controls verification and guided setup text.
+Validation: Owner reported Download software, Save license, Copy key and Print license details all worked on the ready customer-controls preview. This establishes owner-observed actions, not independently measured archive checksum or exact key-signature validation. The setup screenshot exposed literal &apos; in string-rendered welcome/first-project summaries and the unsure button. Corrected the three string values while preserving valid JSX entity escapes. Rendered Welcome and First project text verifies actual apostrophes and no literal HTML entity; focused Next lint passed.
+Execution Timeline: Execution timing unavailable.
+Git Status: Saved on the existing thebeast review branch/PR #237.
+Deployment Status: Guide correction awaiting fresh preview build. Production unchanged.
+Manual Actions: Downloaded archive upload/checksum and clean install remain pending. No need to repeat checkout or secret entry. Complete guided setup and actual BYOK execution are still unverified; this correction only addresses rendered text.
