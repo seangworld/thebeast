@@ -65,3 +65,12 @@ Test catalog approval applies only to this controlled candidate. No private key,
 
 Keep sales closed while these gates remain unresolved.
 
+
+## Development credential verification — 2026-10-09
+Owner reported saving the dedicated test restricted key and new development endpoint signing secret directly in Supabase. Real POST probes to the development receiver returned HTTP400 missing_signature and HTTP400 invalid_signature respectively. The receiver checks all required settings before signature validation; these results supersede the earlier missing-configuration blocker without revealing secret values. They do not establish that the signing secret matches Stripe or that the restricted key can read real Checkout line items.
+
+Native Stripe readback found the earlier sandbox Checkout expired/unpaid (has_more=false; no replacement session). Native development database readback counted zero license rows. Latest branch preview dpl_BC8iHag1q9YinuqpmY9ArABnKR7A is READY at https://thebeast-m82k8bvsg-seangworld-3898s-projects.vercel.app, commit 5d3b3e9fbacc585e1f5d880200ef8c4ab84a1eaa. Browser reached the protected preview, but clicking Buy redirected to customer sign-in. No authenticated customer session was verified today.
+
+The email secure-prompt call timed out after approximately 305 seconds; a subsequent state check and documentation-only recovery call also timed out after 300 seconds each. Their results do not prove whether email submission occurred. Stop repeating this browser path while unresponsive. No payment was submitted, paid event fabricated, license issued, secret exported, protection weakened, or production setting changed by this verification. The genuine remaining integration blocker is the unavailable browser/secure-prompt path. An owner-operated test checkout can provide real Stripe delivery evidence through connector/database readback; it does not transfer the owner's customer session to the cloud browser or independently verify authenticated archive downloads.
+
+Payment completion, real signature and restricted-read permissions, customer license/key/download, and clean install remain unverified. Public sales and production release remain gated. Execution timing unavailable.
