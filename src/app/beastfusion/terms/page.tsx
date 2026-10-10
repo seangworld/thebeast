@@ -1,0 +1,21 @@
+import {beastFusionTermsVersion} from "@/lib/beastfusion/terms";
+export default function BeastFusionTerms(){return <main className="mx-auto max-w-3xl px-5 py-12 text-slate-200">
+<h1 className="text-3xl font-black">BeastFusion Software License and Purchase Terms</h1>
+<p className="mt-2 text-sm text-slate-400">Version {beastFusionTermsVersion} · Proposed commercial terms, subject to final legal review.</p>
+<h2 className="mt-8 text-xl font-bold">1. License and permitted installation</h2>
+<p className="mt-2">For a one-time $500 purchase, SEANGWORLD grants the purchaser a nonexclusive, nontransferable except as authorized, perpetual license to use the purchased BeastFusion version on one active computer or server. Each installation requires a unique key. Additional computers or servers require additional $500 licenses. No ownership of BeastFusion intellectual property is transferred. Redistribution, resale, sublicensing, sharing keys, and circumventing license protections are prohibited.</p>
+<h2 className="mt-8 text-xl font-bold">2. Updates and support</h2>
+<p className="mt-2">The purchase includes 12 months of software updates from purchase. Updates thereafter are optional and may be offered for a separate fee, with no automatic renewal. The purchased version may continue to be used after the update period. Self-install documentation and AI-first troubleshooting are included. Human escalation is available for issues that cannot be resolved through self-service, without a guaranteed response time.</p>
+<h2 className="mt-8 text-xl font-bold">3. Customer responsibilities</h2>
+<p className="mt-2">The purchaser installs the software and provides their own compatible computer, Git repository, AI provider account, API credentials and billing. AI-provider usage and third-party charges are not included in the purchase price. The customer is responsible for checking AI-generated changes and approving production operations, and retains rights in their own existing code and project materials.</p>
+<h2 className="mt-8 text-xl font-bold">4. Refunds</h2>
+<p className="mt-2">A purchaser who has not activated the license may request a change-of-mind refund within 14 days of purchase. If a valid key fails to activate or BeastFusion has a confirmed material defect, support will attempt remediation; if the issue cannot be corrected, a refund may be available within 30 days of purchase. Activated licenses are not otherwise refundable solely due to a change of mind. Statutory refund and consumer-protection rights are not limited by this policy. Third-party AI provider charges are not refundable by SEANGWORLD.</p>
+<h2 className="mt-8 text-xl font-bold">5. Replacement devices and termination</h2>
+<p className="mt-2">A legitimate replacement device may receive an owner-authorized license reset through support, which deactivates the prior installation. A license may be terminated for material agreement violations, subject to applicable notice or cure requirements and law.</p>
+<h2 className="mt-8 text-xl font-bold">6. AI outputs, warranties and liability</h2>
+<p className="mt-2">Automated software suggestions and generated code may contain mistakes and require customer validation. No outcome, revenue, or uninterrupted third-party service is guaranteed. Any warranty disclaimers and limits of liability operate only to the extent allowed by applicable law and cannot exclude nonwaivable legal protections.</p>
+<h2 className="mt-8 text-xl font-bold">7. Privacy and credentials</h2>
+<p className="mt-2">Account, purchase, license, installation-binding, support, and agreement acceptance records are used to deliver and administer the software. The local runtime stores configuration and job records on the customer&apos;s device. AI API keys are intended to remain in process memory for the active session. Selected source files and objectives may be sent to the customer&apos;s chosen AI provider with explicit customer consent. The provider&apos;s own privacy and billing terms also apply. Do not send passwords or API keys to support.</p>
+<h2 className="mt-8 text-xl font-bold">8. Contact</h2>
+<p className="mt-2">Customers can request setup assistance, license transfers or refund review using the BeastFusion Support section of their signed-in customer account.</p>
+</main>}
