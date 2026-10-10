@@ -1,0 +1,122 @@
+# BeastFusion Commercial Edition verification handoff — 2026-10-08
+
+## Roadmap Item
+Continue Commercial Edition: $499 perpetual, twelve months of updates, optional $149 yearly updates/support renewal, self-install, customer-funded BYOK. Commercial release remains gated.
+
+## Validation
+68 runtime/governance tests previously passed, including clean installation, activation and a controlled Developer → Reviewer first job. 32 focused payment/download/preview-isolation/email-code/development-webhook tests now pass. The rendered email-code flow was tested with an eight-digit code. Modified login/helper/checkout sources pass strict TypeScript checks; the previous API checks remain recorded. Development webhook entry/handler pass JavaScript syntax checks; Deno bundling and live deployment remain pending. BeastFusion implementation CI passed at ff1c017e54b3c42948197f505dd4403fc9bd86dd. Protected preview diagnostics at 7cfa71c6200b032a1243b5976661253c225e6103 returned HTTP 200 with all four gates true: development license storage, private bucket, $499 USD one-time Stripe test price and signing-key presence. Presence does not verify a real signing transaction.
+
+Development RLS is enabled with authenticated SELECT restricted by auth.uid() = user_id. Transactional own/other customer fixtures showed own_visible=1, other_visible=0. Insert/update/delete enforcement remains UNVERIFIED: its probe returned connector request-state errors. Table privileges alone do not prove RLS permits writes. Subsequent count found zero remaining probe license rows.
+
+Full release validation, real test Checkout/webhook/license/download integration, real BYOK execution and the complete guided application remain unverified. Synthetic signatures and controlled adapters are not substitutes.
+
+## Execution Timeline
+Execution timing unavailable.
+
+## Git Status
+Draft PRs: beastfusion #165 on codex/commercial-runtime-boundaries-20261008; thebeast #237 on codex/commercial-payment-boundaries-20261008. Implementation, diagnostics, four diagnostics tests and the test public key are saved on review branches. No merge to main. Local workspaces are source snapshots, not authenticated Git worktrees.
+
+## Deployment Status
+Development project zvzcojwjgnedrouilovc now has the license table and private beastfusion-customer-test bucket (10 MiB; gzip/octet-stream). Native migration ledger version 20261008011455 has name 20261006230000_beastfusion_commercial_license and corresponds to source supabase/migrations/20261006230000_beastfusion_commercial_license.sql. Do not replay or repair history merely because the ledger version differs from the filename.
+
+Vercel project prj_EWJx7hi5tqZxOX0PGLPUN3Qh3d2P has branch-scoped preview development Supabase configuration, explicit test Checkout enablement, private bucket/catalog/hash/version and a separate sensitive Ed25519 test signing key. Existing preview admin credential works against development. No production setting, live payment, paid AI call, owner release flag or owner terms flag changed. Private key was not committed or exposed.
+
+Fresh preview https://thebeast-36a9qkrix-seangworld-3898s-projects.vercel.app (9940e96c122ba655f67384214ec5aa46f1ceddc2) built successfully after catalog configuration; protected diagnostics again returned HTTP 200 and all four gates true. Download GET verification returned a connector-classified deployment_authentication_required error; it cannot be counted as successful application authorization evidence. No Vercel CLI is installed for the documented native-tool fallback.
+
+## Manual Actions
+Original exact development setup approval received and implemented. Remaining integration access gap: connectors expose no storage upload or authenticated customer session operation; protected Vercel fetch is GET-only; existing privileged server credentials are write-only. Do not export credentials, weaken protection, add an unguarded administrative endpoint or fabricate a paid Checkout.
+
+Browser fallback approval received. Supabase dashboard sign-in completed after Google phone approval, GitHub email device verification, and one fresh OAuth request to recover an expired state. Development artifact upload completed. Opening the protected customer preview redirected to Vercel sign-in; automatic approval review rejected access to vercel.com because it considered that separate origin outside the named approval. Do not bypass this rejection. Exact Vercel sign-in approval subsequently received. GitHub-based Vercel sign-in succeeded, and the protected application preview is accessible. Development customer email/password sign-in was attempted three times through secure browserAuth and all three attempts returned the application's incorrect email/password message. No credentials were exposed or altered. Native readback confirms three development auth accounts exist; it does not identify which account was attempted. Native development-account diagnostics confirmed sean_gizzle@yahoo.com exists and has a confirmed email. The owner-selected magic-link request was accepted, and the application displayed its check-email confirmation; email delivery and session completion are unverified. Development redirect configuration includes the current preview callback wildcard. The user reported the cloud-browser handoff would not connect after two attempts of approximately ten minutes each. Agent-side observation on 2026-10-08 still reached the preview, which remained on MAGIC LINK REQUESTED without an authenticated customer session. Do not repeat password attempts or handoff requests for this same blocker, collect sign-in secrets in chat, or treat a personal-browser session as transferred to the cloud browser. No test Checkout, webhook fulfillment or entitled download has occurred; native Stripe prompts, if encountered, must also be honored.
+
+Read-only Stripe test-account inspection on 2026-10-08 found the BeastFusion endpoint we_1UO3XlGl8yDG6HDcyqEvbsUX enabled at https://thebeast.seangworld.com/api/beastfusion/webhook, subscribing only to checkout.session.completed. No development-preview endpoint was registered in the complete endpoint list (has_more=false). The other endpoint targets SEANGWORLD. Preview diagnostics validate price and key presence, not webhook delivery. A genuine test purchase cannot currently be counted as development fulfillment evidence. Do not modify the existing production-domain endpoint, reveal its signing secret, disable Vercel protection, or create a fake paid event. An isolated development webhook configuration and a secure delivery mechanism through deployment protection must be prepared and explicitly approved for their exact environment targets under GV-005 before execution.
+
+Candidate recovery implemented on the existing review branch: optional normal Supabase email-code verification, a development-only signed Stripe Edge receiver, and development Checkout scope metadata. The receiver reuses current purchase/actual-line-item validators and requires a dedicated restricted test read key. Full Vercel preview build passed at 7f9d26d4c166a3c3db29024ab14a25091b31d818. Read-only provider inspection confirmed development email OTP length eight and expiry 3600 seconds; neither setting was altered. The code input accepts 6–10 digits and the backend retains its configured strength. The candidate code is disabled until the branch flag and development email template are explicitly configured. The receiver, new Stripe endpoint and restricted credential have not been created. Exact activation/rollback plan is in docs/beastfusion-development-integration-recovery.md; owner approval of those named targets is pending under GV-005. Final candidate 1fc3e6a9e6610c913a6befcf6f8d6ba3d2dcb8fa also built successfully: deployment dpl_CLJEa46Y7ew1jtCNLRbk1JDcmjbJ, https://thebeast-a6vgbkiiv-seangworld-3898s-projects.vercel.app. Protected native diagnostics returned HTTP 200 with all four existing setup gates true. Email-code configuration and the development receiver remain inactive; this is not customer authentication or purchase fulfillment evidence.
+
+## Approved activation evidence — 2026-10-08
+Owner approved the exact recovery plan frozen at thebeast commit 1fc3e6a9e6610c913a6befcf6f8d6ba3d2dcb8fa. Approval is no longer pending for the named development targets.
+
+Installed the tracked development Magic Link/OTP email body in project zvzcojwjgnedrouilovc, retained its existing subject and eight-digit/3600-second OTP configuration, and verified persistence by reloading. Original body is preserved at supabase/auth/templates/development-magic-link-before-code.html for rollback. Enabled NEXT_PUBLIC_BEAST_EMAIL_CODE_ENABLED=true only for Preview branch codex/commercial-payment-boundaries-20261008. Fresh deployment dpl_HY8A4p3tqmFuWWoHRGetMAdP7qEo is READY at https://thebeast-hh4r851ks-seangworld-3898s-projects.vercel.app, runtime source 9e1a7333714f497d568493a3d4e2f54f018f89d3. Protected diagnostics returned HTTP 200 with all four existing setup gates true.
+
+Real email-code entry through secure browserAuth completed successfully for the existing sean_gizzle@yahoo.com development account. The app returned to /beastfusion. A fresh navigation to /beastfusion/customer retained the customer session and displayed no associated license. This supersedes the earlier authentication blocker; no password reset, account creation or cloud-browser manual takeover occurred. Credentials were not exposed.
+
+The authenticated Buy button created a real Stripe sandbox Checkout session: cs_test_a1tRBEgALxsV4PWtQOWqHKw2HInVGO40jd6eeOalEPpRq8pgzYWgt0cjlS. Native readback confirmed livemode=false, mode=payment, USD49900, one unit of price_1UO2EeGl8yDG6HDclpaXnC1q, product=beastfusion-professional, verification_scope=beastfusion-dev-commercial-20261008, and the authenticated customer reference. Status remains open/unpaid. No payment was submitted, license granted, archive downloaded, or signing transaction verified.
+
+Development Edge function beastfusion-dev-webhook deployed ACTIVE version1, id d7924e5c-3228-4cb0-9206-51c3866ad29a, bundle SHA256 5be2c77faec07a742879dc1b391c1d2bc4ce340c54a6c65f6cfdf0d5667dcce0. verify_jwt=false applies only to this Stripe-signature-authenticated receiver. Deployment bundled the handler/shared validator successfully. A real POST returned HTTP503 development_webhook_not_configured, proving missing configuration fails closed. No secret values were read from existing deployments. Saved only BEASTFUSION_DEV_WEBHOOK_ENABLED=true and the verified test price ID in development function settings.
+
+Created separate Stripe test endpoint we_1UOKb7Gl8yDG6HDc68FnjdPF for https://zvzcojwjgnedrouilovc.supabase.co/functions/v1/beastfusion-dev-webhook, API2026-06-24.dahlia, events checkout.session.completed and checkout.session.async_payment_succeeded. The native tool completed without a separate confirmation prompt. Existing endpoints are untouched. The newly returned signing secret was suppressed from output and is not committed.
+
+Genuine blocker: the available Supabase integration has no function-secret setter, and the Stripe integration has no restricted-key creation operation. Browser policy requires owner entry of new authentication credentials. Do not substitute privileged Vercel credential export, secret-bearing source, SQL credential extraction, fake paid events, or weaker protection. Owner must create a dedicated Stripe TEST restricted key with Checkout Sessions READ only and enter it directly in development Edge Function Secrets as BEASTFUSION_DEV_STRIPE_READ_KEY; enter this new endpoint's signing secret as BEASTFUSION_DEV_STRIPE_WEBHOOK_SECRET. Never send either in chat. Approval of these named targets already exists; the remaining need is credential entry. Payment completion, signed delivery, own-license issuance, signed key/download checksum and clean install/first job remain unverified. Production sales, owner release and terms gates remain closed.
+
+## Controlled test archive
+CLI candidate version 5.3.0-rc; 13709 bytes.
+SHA-256: 8e2c9a6c68204522feeed2f28be5d468176508fd9a083ccd25531ad21f03dcd9.
+Bucket: beastfusion-customer-test.
+Object: test/beastfusion-customer-runtime-5.3.0-rc.tar.gz.
+Uploaded through the approved browser fallback to the exact development bucket/object above. Native database readback verified 13709 bytes, application/gzip and bucket public=false. Local archive checksum still matches the catalog; downloaded-object checksum remains unverified. Public key saved as distribution/test-vendor-public-key.pem.
+Test catalog approval applies only to this controlled candidate. No private key, provider credential or owner governance state is included.
+
+## Remaining public-release gates
+- Built-in customer GitHub/BYOK adapters and complete standalone guided application.
+- Real purchase → signed webhook → own license → signed key → entitled download → clean install → controlled first job.
+- Actual provider execution under spending authorization.
+- Owner-approved actual terms; LICENSE-BEASTFUSION.md remains a placeholder.
+- Production signing-key custody, private storage, approved artifacts and authorized deployment.
+- Update/revocation/refund lifecycle and canonical version reconciliation.
+
+Keep sales closed while these gates remain unresolved.
+
+
+## Development credential verification — 2026-10-09
+Owner reported saving the dedicated test restricted key and new development endpoint signing secret directly in Supabase. Real POST probes to the development receiver returned HTTP400 missing_signature and HTTP400 invalid_signature respectively. The receiver checks all required settings before signature validation; these results supersede the earlier missing-configuration blocker without revealing secret values. They do not establish that the signing secret matches Stripe or that the restricted key can read real Checkout line items.
+
+Native Stripe readback found the earlier sandbox Checkout expired/unpaid (has_more=false; no replacement session). Native development database readback counted zero license rows. Latest branch preview dpl_BC8iHag1q9YinuqpmY9ArABnKR7A is READY at https://thebeast-m82k8bvsg-seangworld-3898s-projects.vercel.app, commit 5d3b3e9fbacc585e1f5d880200ef8c4ab84a1eaa. Browser reached the protected preview, but clicking Buy redirected to customer sign-in. No authenticated customer session was verified today.
+
+The email secure-prompt call timed out after approximately 305 seconds; a subsequent state check and documentation-only recovery call also timed out after 300 seconds each. Their results do not prove whether email submission occurred. Stop repeating this browser path while unresponsive. No payment was submitted, paid event fabricated, license issued, secret exported, protection weakened, or production setting changed by this verification. The genuine remaining integration blocker is the unavailable browser/secure-prompt path. An owner-operated test checkout can provide real Stripe delivery evidence through connector/database readback; it does not transfer the owner's customer session to the cloud browser or independently verify authenticated archive downloads.
+
+Payment completion, real signature and restricted-read permissions, customer license/key/download, and clean install remain unverified. Public sales and production release remain gated. Execution timing unavailable.
+
+## Real development fulfillment and customer controls — 2026-10-09
+Native Stripe readback confirmed fresh Checkout cs_test_a162Ru6aNiLR7U3iBxY5lYM18V1OMyGYFJ7b3hZ52DaUbWg7WhmKC0nYEI complete/paid, livemode=false, USD49900, and development verification scope. Native development database readback found its matching bf_ prefixed Professional license active with updates_until=2027-10-10. Owner-operated sandbox checkout followed the normal app flow; no fabricated paid event or privileged test grant was used. The owner reported that the activation endpoint displays the key; cryptographic verification of that exact delivered key and authenticated download remain pending.
+
+Customer download attempt returned 404 because the entered URL was /beastfusion/customer/download, while the implementation exists at /api/beastfusion/customer/download. The account page had no Download control. Candidate b2f5121bcbf71a2ac4403911c18a97a13c8a8515 adds Download software, Save license, Copy key and Print license details using existing authenticated endpoints. Key data is requested only on action, saved as a private text file, excluded from page content except during explicit printing, and never sent to analytics. Software access still requires a server-validated active license and update entitlement. Busy, timeout, retry, sign-in and unavailable-download messages are implemented; inactive licenses disable the controls. Server page uses explicit customer ownership and reports lookup failures.
+
+Validation: 27 focused rendered-UI/download/payment/development-webhook tests passed; the new client component passed strict TypeScript checks. Full application build and real customer button/download remain pending. No production release. Execution timing unavailable.
+
+## Customer controls preview result — 2026-10-09
+Roadmap Item: Customer software and license delivery controls.
+Validation: 27 focused tests passed. Both customer components passed strict TypeScript and local Next core-web-vitals/TypeScript lint checks. First candidate build failed react/no-unescaped-entities in an account error message; corrected at 14634e25ae25231a8f479908625344869131a6e0. Full Vercel application build then passed.
+Execution Timeline: Execution timing unavailable.
+Git Status: Review branch only; draft thebeast PR #237. No main merge.
+Deployment Status: dpl_2XpmhYCVhy6VJWK8dAywR9Mvd9Kg READY, preview https://thebeast-aucgp4hw8-seangworld-3898s-projects.vercel.app. Production unchanged.
+Manual Actions: Owner should open /beastfusion/customer on this new preview, sign in with the same development account if prompted, and verify Download software and Save license. Existing test purchase must not be repeated. Actual authenticated archive checksum and exact delivered-key signature/clean installation remain pending; cloud browser secure-auth path was unresponsive.
+
+## Owner customer-flow verification and guide text correction — 2026-10-09
+Roadmap Item: Customer controls verification and guided setup text.
+Validation: Owner reported Download software, Save license, Copy key and Print license details all worked on the ready customer-controls preview. This establishes owner-observed actions, not independently measured archive checksum or exact key-signature validation. The setup screenshot exposed literal &apos; in string-rendered welcome/first-project summaries and the unsure button. Corrected the three string values while preserving valid JSX entity escapes. Rendered Welcome and First project text verifies actual apostrophes and no literal HTML entity; focused Next lint passed.
+Execution Timeline: Execution timing unavailable.
+Git Status: Saved on the existing thebeast review branch/PR #237.
+Deployment Status: Guide correction awaiting fresh preview build. Production unchanged.
+Manual Actions: Downloaded archive upload/checksum and clean install remain pending. No need to repeat checkout or secret entry. Complete guided setup and actual BYOK execution are still unverified; this correction only addresses rendered text.
+
+## Authenticated downloaded archive verification — 2026-10-09
+Roadmap Item: Customer purchase-to-install verification.
+Validation: Owner uploaded the software archive downloaded through the authenticated customer button. Its SHA-256 is 8e2c9a6c68204522feeed2f28be5d468176508fd9a083ccd25531ad21f03dcd9, exactly matching the approved catalog. Archive entry validation rejected absolute/traversal paths and links before extraction; all entries were ordinary directories/files. Clean extraction in an independent scratch directory followed by npm ci --ignore-scripts --offline --no-audit --no-fund succeeded. npm run preflight returned ready with no environment failures, license_verified=false and production_authorized=false. Bundled vendor public key byte-matches distribution/test-vendor-public-key.pem. Invalid activation preflight and CLI job both exited 1; the job returned license_invalid without importing its sentinel adapter. This validates the actual downloaded bytes, clean dependency install and pre-activation safety. It does not prove activation using the customer's exact delivered key, an authorized first job or real BYOK/GitHub execution.
+Execution Timeline: Execution timing unavailable.
+Git Status: Evidence saved on the existing draft review branches; no main merge.
+Deployment Status: Guide text correction preview dpl_2UzEAG3YJphPGk8zu8Uu9TxX7Ec8 READY at https://thebeast-1fgg8cas8-seangworld-3898s-projects.vercel.app, c0da3674eebbfdc7383d90c35f340256d8af51e1. Production unchanged.
+Manual Actions: Customer's exact activation file remains private on the owner's computer; activation against the bundled key must be verified there or through a separately approved secure test mechanism. The archive is an explicitly documented CLI runtime candidate, not the complete guided commercial application. Built-in customer adapters, actual provider spend authorization/testing, legal terms and production release gates remain unresolved.
+
+
+## Guided setup verification correction — 2026-10-10
+
+Roadmap Item: Commercial customer setup truthfulness and launch boundaries.
+
+Validation: Eight rendered guide behavior tests pass; combined commercial safeguard, development webhook, customer action and guide suite passes 35 tests. Scoped strict TypeScript and Next/TypeScript ESLint checks pass. Unimplemented system/admin/first-project actions cannot claim verification. Successful checks count only after server progress persistence succeeds. Edited settings invalidate their completion. Stored browser completion is ignored; only an in-range screen number resumes. Preflight sends no invented gate attestations, handles absent failure arrays, and cannot enable the unfinished customer runtime. Removed the owner-dashboard launch link. Credentials clear after verification or navigation and never enter progress persistence. Requests time out at 15 seconds. Preview banner discloses missing installed runtime checks, administrator setup, budget enforcement and first-job integration. Existing server preflight remains closed.
+
+Execution Timeline: Execution timing unavailable.
+
+Git Status: Source commit e1b3326466b5eb28d88f046a93826c060d73bb9c and rendered test commit 63dec34a2ced63535f9c926c15a5126cccac37b2 on the existing review branch; PR #237 remains draft, unmerged.
+
+Deployment Status: Review preview auto-build pending verification. No production release or environment changes.
+
+Manual Actions: None needed for these fixes. Full runtime activation and first governed job remain unverified and require implementation; the setup guide is explicitly a preview.

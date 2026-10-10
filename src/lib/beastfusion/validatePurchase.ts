@@ -16,3 +16,9 @@ export function validateBeastFusionPurchase(session:BeastFusionCheckoutLike, exp
  updatesUntil.setUTCFullYear(updatesUntil.getUTCFullYear()+1);
  return {ok:true as const,userId,licenseId:`bf_${session.id}`,updatesUntil:updatesUntil.toISOString().slice(0,10)};
 }
+export type BeastFusionLineItemLike = { quantity?:number|null; price?:{id?:string|null}|null };
+/** Verify the purchased Stripe price, not only checkout metadata and amount. */
+export function validateBeastFusionLineItems(items:readonly BeastFusionLineItemLike[], expectedPriceId:string|undefined, hasMore=false){
+ if(!expectedPriceId||hasMore||items.length!==1)return false;
+ return items[0]?.quantity===1&&items[0]?.price?.id===expectedPriceId;
+}

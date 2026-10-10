@@ -25,6 +25,7 @@ import {
   validateBeastPassword,
   type BeastAuthViewState,
 } from "@/lib/auth/experience";
+import { verifyBeastEmailCode } from "@/lib/auth/emailCode";
 import { createClient } from "@/lib/supabase/client";
 import { trackBeastFunnelEvent } from "@/lib/analytics/client";
 
@@ -37,6 +38,7 @@ const publicRegistrationEnabled = isPublicRegistrationEnabled(
 const passwordSignInEnabled = isPasswordSignInEnabled(
   process.env.NEXT_PUBLIC_BEAST_PASSWORD_SIGN_IN_ENABLED
 );
+const emailCodeEnabled = process.env.NEXT_PUBLIC_BEAST_EMAIL_CODE_ENABLED === "true";
 const googleSignInEnabled = isGoogleSignInEnabled(
   process.env.NEXT_PUBLIC_BEAST_GOOGLE_AUTH_ENABLED
 );
@@ -94,6 +96,7 @@ function LoginExperience() {
   const queryState = normalizeAuthViewState(searchParams.get("state"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailCode, setEmailCode] = useState("");
   const [intent, setIntent] = useState<AuthIntent>(() =>
     publicRegistrationEnabled && searchParams.get("intent") === "create-account"
       ? "create-account"
@@ -145,6 +148,7 @@ function LoginExperience() {
     setIntent("login");
     setMethod(passwordSignInEnabled ? "password" : "magic-link");
     setPassword("");
+    setEmailCode("");
     router.replace(buildAuthLoginPath(destination));
   }
 
@@ -181,6 +185,29 @@ function LoginExperience() {
       setLocalState("authentication_error");
       setMessage("BeastOS could not reach Google sign-in. Please try again.");
     } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function authenticateEmailCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (submitting || !emailCodeEnabled || intent !== "login") return;
+    setMessage("");
+    setSubmitting(true);
+    try {
+      const result = await verifyBeastEmailCode(createClient().auth, email, emailCode);
+      if (!result.ok) {
+        setMessage(result.message);
+        if (result.disabled) setLocalState("account_disabled");
+        return;
+      }
+      trackBeastFunnelEvent("login_completed", { result: "success", category: "email_code" });
+      router.replace(destination);
+      router.refresh();
+    } catch {
+      setMessage("BeastOS could not reach authentication. Please try again.");
+    } finally {
+      setEmailCode("");
       setSubmitting(false);
     }
   }
@@ -363,15 +390,48 @@ function LoginExperience() {
             </h2>
             <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
               We sent a secure {intent === "create-account" ? "account setup" : "sign-in"} link to{" "}
-              <strong className="text-white">{email}</strong>. You can close this
-              page after opening the link.
+              <strong className="text-white">{email}</strong>. Open the link in the
+              browser where you requested it.
             </p>
             <p className="mt-3 text-xs leading-5 text-[#8d99aa]">
               The link expires for your protection. If it does not arrive, check
               spam or request another one.
             </p>
+            {emailCodeEnabled && intent === "login" ? (
+              <form onSubmit={authenticateEmailCode} className="mt-5">
+                <p className="mb-3 text-sm leading-6 text-[#c7cfdb]">
+                  You can also enter the sign-in code from that email here.
+                </p>
+                <label htmlFor="email-code" className="text-sm font-bold text-white">
+                  Email sign-in code
+                </label>
+                <input
+                  id="email-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]{6,10}"
+                  minLength={6}
+                  maxLength={10}
+                  required
+                  value={emailCode}
+                  onChange={(event) => setEmailCode(event.target.value)}
+                  className="beast-input mt-2 min-h-[48px]"
+                  aria-describedby="email-code-help"
+                />
+                <p id="email-code-help" className="mt-2 text-xs text-[#8d99aa]">
+                  Enter the code only in this sign-in form. Never send it to support.
+                </p>
+                {message ? <p role="alert" className="mt-3 text-sm text-[#efc4cd]">{message}</p> : null}
+                <button type="submit" disabled={submitting}
+                  className="beast-button mt-4 min-h-[48px] w-full disabled:opacity-60">
+                  {submitting ? "Verifying code…" : "Verify Email Code"}
+                </button>
+              </form>
+            ) : null}
             <button
               type="button"
+              disabled={submitting}
               className="beast-button-secondary mt-5 min-h-[48px] w-full"
               onClick={showSignIn}
             >
@@ -631,3 +691,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
