@@ -31,7 +31,7 @@ export default function TransferForm(){
     className="mt-2 w-full rounded bg-slate-900 p-3 text-white" rows={4} placeholder="Verified customer requested a replacement computer transfer"/></label>
   <label className="flex gap-3 text-sm"><input type="checkbox" checked={confirmed}
    onChange={e=>setConfirmed(e.target.checked)}/>
-   <span>I verified the customer's request and authorize deactivating the previous installation identity.</span></label>
+   <span>I verified the customer&apos;s request and authorize deactivating the previous installation identity.</span></label>
   <button type="submit" disabled={!confirmed||busy} className="beast-button disabled:opacity-50">
    {busy?"Processing…":"Reset installation binding"}</button>
   {status?<p role="status" className="text-emerald-300">{status}</p>:null}
