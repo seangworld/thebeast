@@ -1,3 +1,4 @@
+import {internalTestLicensePermitted} from "@/lib/beastfusion/internalTestLicense";
 import {NextResponse} from "next/server";
 import {createRouteClient} from "@/lib/supabase/server";
 import {createAdminClient} from "@/lib/supabase/admin";
@@ -9,7 +10,7 @@ export async function GET(request:Request){
  const client=createRouteClient();
  const {data:{user}}=await client.auth.getUser();
  if(!user)return NextResponse.json({error:"unauthorized"},{status:401});
- let query=client.from("beastfusion_licenses").select("license_id,updates_until")
+ let query=client.from("beastfusion_licenses").select("license_id,updates_until,edition")
  .eq("user_id",user.id).eq("status","active").order("updates_until",{ascending:false});
  if(id)query=query.eq("license_id",id);
  const {data:licenses,error}=await query.limit(id?1:2);
@@ -17,6 +18,8 @@ export async function GET(request:Request){
  if(!id&&licenses?.length===2)return NextResponse.json({error:"select_license_id"},{status:409});
  if(error)return NextResponse.json({error:"license_lookup_failed"},{status:503});
  if(!license)return NextResponse.json({error:"active_license_required"},{status:403});
+ if(!(await internalTestLicensePermitted(license.license_id,license.edition)))
+  return NextResponse.json({error:"internal_test_license_expired"},{status:403});
  const release=entitledCustomerRelease(process.env.BEASTFUSION_CUSTOMER_RELEASES_JSON,license.updates_until);
  const bucket=process.env.BEASTFUSION_CUSTOMER_DOWNLOAD_BUCKET;
  if(!release||!bucket)return NextResponse.json({error:"entitled_download_not_available"},{status:503});
