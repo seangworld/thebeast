@@ -105,3 +105,18 @@ Execution Timeline: Execution timing unavailable.
 Git Status: Evidence saved on the existing draft review branches; no main merge.
 Deployment Status: Guide text correction preview dpl_2UzEAG3YJphPGk8zu8Uu9TxX7Ec8 READY at https://thebeast-1fgg8cas8-seangworld-3898s-projects.vercel.app, c0da3674eebbfdc7383d90c35f340256d8af51e1. Production unchanged.
 Manual Actions: Customer's exact activation file remains private on the owner's computer; activation against the bundled key must be verified there or through a separately approved secure test mechanism. The archive is an explicitly documented CLI runtime candidate, not the complete guided commercial application. Built-in customer adapters, actual provider spend authorization/testing, legal terms and production release gates remain unresolved.
+
+
+## Guided setup verification correction — 2026-10-10
+
+Roadmap Item: Commercial customer setup truthfulness and launch boundaries.
+
+Validation: Eight rendered guide behavior tests pass; combined commercial safeguard, development webhook, customer action and guide suite passes 35 tests. Scoped strict TypeScript and Next/TypeScript ESLint checks pass. Unimplemented system/admin/first-project actions cannot claim verification. Successful checks count only after server progress persistence succeeds. Edited settings invalidate their completion. Stored browser completion is ignored; only an in-range screen number resumes. Preflight sends no invented gate attestations, handles absent failure arrays, and cannot enable the unfinished customer runtime. Removed the owner-dashboard launch link. Credentials clear after verification or navigation and never enter progress persistence. Requests time out at 15 seconds. Preview banner discloses missing installed runtime checks, administrator setup, budget enforcement and first-job integration. Existing server preflight remains closed.
+
+Execution Timeline: Execution timing unavailable.
+
+Git Status: Source commit e1b3326466b5eb28d88f046a93826c060d73bb9c and rendered test commit 63dec34a2ced63535f9c926c15a5126cccac37b2 on the existing review branch; PR #237 remains draft, unmerged.
+
+Deployment Status: Review preview auto-build pending verification. No production release or environment changes.
+
+Manual Actions: None needed for these fixes. Full runtime activation and first governed job remain unverified and require implementation; the setup guide is explicitly a preview.
