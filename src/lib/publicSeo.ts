@@ -11,6 +11,7 @@ export const beastOSFooterLinks = {
 
 export const beastOSPublicRoutes = [
   "/",
+  "/beastfusion",
   "/release-notes",
   "/ai-development-staff",
   "/ai-development-staff/methodology",
