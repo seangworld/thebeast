@@ -25,7 +25,7 @@ export async function GET(request:Request){
  const secret=process.env.BEASTFUSION_LICENSE_PRIVATE_KEY_PEM;
  if(!secret)return NextResponse.json({error:"license_delivery_not_configured"},{status:503,headers});
  const key=signBeastFusionLicense({license_id:license.license_id,customer_id:user.id,
- edition:license.edition,updates_until:license.updates_until,issued_at:license.issued_at},secret);
+ edition:license.edition==="professional-internal-test"?"professional":license.edition,updates_until:license.updates_until,issued_at:license.issued_at},secret);
  return NextResponse.json({license_key:key,edition:license.edition,
  updates_until:license.updates_until},{headers});
 }
