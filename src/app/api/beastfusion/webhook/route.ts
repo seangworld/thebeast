@@ -26,7 +26,19 @@ export async function POST(request:Request){
  .eq("terms_version",acceptedVersion).maybeSingle();
  if(acceptanceError)return NextResponse.json({error:"agreement_lookup_failed"},{status:503});
  if(!acceptance)return NextResponse.json({error:"purchase_agreement_missing"},{status:409});
- const {error}=await admin.from("beastfusion_licenses").upsert({user_id:check.userId,license_id:check.licenseId,edition:"professional",status:"active",updates_until:check.updatesUntil},{onConflict:"license_id"});
- if(error)return NextResponse.json({error:"license_issue_failed"},{status:500});
+ // Stripe retries can arrive after an owner has revoked or transferred a license.
+ // Issuance is insert-only: never reactivate or reset an existing entitlement.
+ const {error}=await admin.from("beastfusion_licenses").insert({
+  user_id:check.userId,license_id:check.licenseId,edition:"professional",
+  status:"active",updates_until:check.updatesUntil
+ });
+ if(error){
+  if(error.code!=="23505")return NextResponse.json({error:"license_issue_failed"},{status:500});
+  const {data:existing,error:lookupError}=await admin.from("beastfusion_licenses")
+   .select("user_id").eq("license_id",check.licenseId).maybeSingle();
+  if(lookupError||!existing)return NextResponse.json({error:"license_issue_failed"},{status:500});
+  if(existing.user_id!==check.userId)return NextResponse.json({error:"license_identity_conflict"},{status:409});
+  return NextResponse.json({received:true,issued:false,already_processed:true});
+ }
  return NextResponse.json({received:true,issued:true});
 }
