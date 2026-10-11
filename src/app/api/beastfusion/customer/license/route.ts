@@ -1,3 +1,4 @@
+import {internalTestLicensePermitted} from "@/lib/beastfusion/internalTestLicense";
 import {NextResponse} from "next/server";
 import {createRouteClient} from "@/lib/supabase/server";
 import {signBeastFusionLicense} from "@/lib/beastfusion/signedLicense";
@@ -19,6 +20,8 @@ export async function GET(request:Request){
  if(!data?.length)return NextResponse.json({error:"license_not_found"},{status:404,headers});
  if(!id&&data.length>1)return NextResponse.json({error:"select_license_id"},{status:409,headers});
  const license=data[0];
+ if(!(await internalTestLicensePermitted(license.license_id,license.edition)))
+  return NextResponse.json({error:"internal_test_license_expired"},{status:403,headers});
  const secret=process.env.BEASTFUSION_LICENSE_PRIVATE_KEY_PEM;
  if(!secret)return NextResponse.json({error:"license_delivery_not_configured"},{status:503,headers});
  const key=signBeastFusionLicense({license_id:license.license_id,customer_id:user.id,
