@@ -498,6 +498,7 @@ export function HomeRedirect() {
             aria-label="Member authentication"
             className="flex items-center gap-2 sm:gap-3"
           >
+            <Link href="/beastfusion" className="rounded-xl border border-amber-300/40 px-3 py-2 text-sm font-bold text-amber-200 hover:bg-amber-300/10">BeastFusion $499</Link>
             {user ? (
               <>
                 <Link
@@ -625,6 +626,22 @@ export function HomeRedirect() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="beastfusion-launch" className="border-y border-amber-300/20 bg-[#101b2b] px-4 py-12 sm:px-6 lg:px-10">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1fr_auto]">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">Commercial software · Available now</p>
+            <h2 id="beastfusion-launch" className="mt-3 text-3xl font-black text-white">BeastFusion Professional</h2>
+            <p className="mt-3 max-w-3xl text-base leading-7 text-slate-300">Your governed AI development team: coordinate development, independent review and validation with approval controls you own. Guided self-installation, your own AI provider keys, and no required subscription.</p>
+            <p className="mt-3 text-sm text-slate-400">One installation per license · 12 months of software updates included · AI provider usage billed separately</p>
+          </div>
+          <div className="flex flex-col gap-3 lg:min-w-[245px]">
+            <p className="text-3xl font-black text-white">$499 <span className="text-sm font-medium text-slate-400">one-time</span></p>
+            <Link href="/beastfusion" className="beast-button min-h-[48px] text-center">Explore &amp; Buy BeastFusion</Link>
+            <Link href="/beastfusion/support" className="text-center text-sm font-semibold text-amber-200 hover:underline">Questions? Contact support</Link>
           </div>
         </div>
       </section>
