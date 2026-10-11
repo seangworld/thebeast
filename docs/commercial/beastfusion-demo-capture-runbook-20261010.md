@@ -32,3 +32,6 @@ Use the existing `docs/commercial/beastfusion-first-customers-20261010.md` outre
 
 ## Completion boundary
 Engineering preparation is complete when a real, redacted tour or owner-approved executed demo is captured and checked against the released runtime. Marketing publication and prospect contact remain separate owner approval gates. Do not reopen licensing or installer acceptance tests.
+
+## Compatible isolated Node test fixture
+A second fixture pair, `shipping.mjs` and `shipping.test.mjs`, is included in this branch for the older UI's exact `.test.mjs` test-file requirement. It intentionally reproduces the same $50 boundary bug. When preparing the clean demo Git repository, include **only** this `.mjs` pair (do not mix with the original `.js` pair). Configure editable scope `shipping.mjs`, read-only context `shipping.test.mjs`, and Node test file `shipping.test.mjs`. This is a compatibility option, not proof that the released runtime accepts it. The baseline must fail the exact $50 test before the real AI run. Do not pre-fix the source in the recorded baseline.
