@@ -12,7 +12,8 @@ export default async function Customer(){
  <p className="mt-2 text-sm text-slate-300">Each purchased key activates one installation. Keep activation keys private.</p>
  {error?<p role="alert" className="mt-5 text-red-300">We could not load your licenses. Please try again or contact support.</p>:(data??[]).length?(data??[]).map(license=><div key={license.license_id}
  className="mt-6 rounded-2xl border border-white/10 p-6">
- <p className="font-bold">BeastFusion Professional</p>
+ <p className="font-bold">BeastFusion Professional {license.edition==="professional-internal-test"?"— INTERNAL TEST":""}</p>
+ {license.edition==="professional-internal-test"?<p className="mt-2 text-sm text-amber-200">Temporary acceptance-test license. No Stripe purchase or commercial entitlement was issued. This key expires and will be revoked after testing.</p>:null}
  <p className="mt-2 break-all text-sm text-slate-400">License: {license.license_id}</p>
  <p className="text-sm text-slate-400">Status: {license.status}</p>
  <p className="text-sm text-slate-400">Installation: {license.installation_id?"Activated":"Not yet activated"}</p>
