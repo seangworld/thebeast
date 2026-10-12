@@ -113,6 +113,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260919150000_add_change_the_world_member_saves.sql",
   "20260921140008_beast_marketing_social.sql",
   "20260921150801_atlas_assistant.sql",
+  "20261012040132_agency_social_bindings.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

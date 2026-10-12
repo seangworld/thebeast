@@ -17,5 +17,10 @@
       "path": "/api/cron/atlas",
       "schedule": "* * * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "feature/agency-metrics-cards": false
+    }
+  }
 }

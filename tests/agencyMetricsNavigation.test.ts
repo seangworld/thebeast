@@ -22,8 +22,11 @@ test("Agency Metrics uses owner access shell and transparent empty states", () =
   assert.equal(existsSync(path), true);
   const source = readFileSync(path, "utf8");
   assert.match(source, /<BeastAdminShell/);
-  assert.match(source, /Cole Mercer/);
-  assert.match(source, /Leila Bautista/);
-  assert.match(source, /Not connected/);
-  assert.match(source, /No data yet/);
+  assert.match(source, /AgencyMetricsContent/);
+  const component = readFileSync("src/app/dashboard/admin/agency/metrics/AgencyMetricsContent.tsx", "utf8");
+  assert.match(component, /Not connected/);
+  assert.match(component, /No data yet/);
+  assert.match(component, /api\/admin\/agency/);
+  assert.doesNotMatch(source + component, /const creators\s*=/);
+  assert.match(component, /creator\.name/);
 });
