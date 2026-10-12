@@ -125,6 +125,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20261010213000_beastfusion_private_release_bucket.sql",
   "20261010234500_beastfusion_internal_test_license.sql",
   "20261012040132_agency_social_bindings.sql",
+  "20261012120000_agency_review_only_planning.sql",
 ] as const;
 
 export type BeastAdminMigrationState =
