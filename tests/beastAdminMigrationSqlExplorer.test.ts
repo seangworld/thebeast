@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -16,7 +16,7 @@ test("BA-132 inspects every repository migration without inventing source metada
     })
   );
 
-  assert.equal(migrations.length, 113);
+  assert.deepEqual(migrations.map((migration) => migration.filename), readdirSync("supabase/migrations").filter((file) => file.endsWith(".sql")).sort());
   for (const migration of migrations) {
     assert.match(migration.version, /^\d{14}$/);
     assert.equal(migration.filename.endsWith(".sql"), true);

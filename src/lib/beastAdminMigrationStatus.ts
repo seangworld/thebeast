@@ -113,6 +113,17 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260919150000_add_change_the_world_member_saves.sql",
   "20260921140008_beast_marketing_social.sql",
   "20260921150801_atlas_assistant.sql",
+  "20260928100000_money_institution_balance_monitoring.sql",
+  "20261006220000_beastfusion_customer_setup_state.sql",
+  "20261006230000_beastfusion_commercial_license.sql",
+  "20261006230100_beastfusion_support_tickets.sql",
+  "20261007230000_beastfusion_server_attestations.sql",
+  "20261010190000_beastfusion_single_install_binding.sql",
+  "20261010193000_beastfusion_license_transfer.sql",
+  "20261010200000_beastfusion_purchase_acceptance.sql",
+  "20261010203000_beastfusion_block_revoked_installation_reuse.sql",
+  "20261010213000_beastfusion_private_release_bucket.sql",
+  "20261010234500_beastfusion_internal_test_license.sql",
   "20261012040132_agency_social_bindings.sql",
 ] as const;
 

@@ -58,7 +58,7 @@ test("SEANGWORLD HQ owns its route shell and BeastFusion placement", () => {
 test("SEANGWORLD HQ access follows the owner persona and matches path boundaries", () => {
   for (const role of ["member", "beta", null, undefined]) assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: canAccessBeastAdmin({ role }) }), []);
   assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "member" }) }), []);
-  assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label), ["SEANGWORLD HQ", "BeastAdmin"]);
+  assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label), ["SEANGWORLD HQ", "Agency", "BeastAdmin"]);
   for (const path of ["/dashboard/operations", "/dashboard/operations/publishing", "/dashboard/admin/members"]) assert.equal(isOwnerWorkspacePath(path), true);
   for (const path of ["/dashboard/money", "/dashboard/operations-extra", "/dashboard/administrator"]) assert.equal(isOwnerWorkspacePath(path), false);
   assert.equal(isOperationsLinkActive("/dashboard/operations/publishing", "/dashboard/operations"), false);
