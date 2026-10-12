@@ -5,7 +5,7 @@ import type { buildAgencySnapshot, AgencyChannel } from "@/lib/agencyPreparation
 type Snapshot = ReturnType<typeof buildAgencySnapshot>;
 const labels = { instagram: "Instagram", facebook_page: "Facebook", x: "X" };
 const states = { not_connected: "Not connected", connected_unverified: "Connected · reporting not verified", expired: "Authorization expired", unavailable: "Connection unavailable", binding_conflict: "Account binding needs review" };
-const metrics = ["Followers", "30-day growth", "Reach", "Engagement", "Posts", "Revenue", "Operating cost"];
+const metrics = ["Followers", "30-day growth", "Reach", "Engagement", "Posts", "Revenue", "Actual operating cost", "Estimated operating cost"];
 
 export function AgencyMetricsContent() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -44,7 +44,7 @@ export function AgencyMetricsContent() {
       <h2 className="text-lg font-bold text-white">Agency preparation</h2>
       <p className="mt-2 text-sm text-slate-300">This Agency preparation feature cannot publish automatically or respond to DMs. Its additional spending authorization is $0. Existing Social Accounts publishing controls are managed separately.</p>
       <p className="mt-2 text-sm text-slate-300">Save character drafts in <Link href="/dashboard/admin/marketing/video-growth" className="underline">Video Growth</Link> and review existing connections in <Link href="/dashboard/operations/marketing/social" className="underline">Social Accounts</Link>. Connecting accounts grants persistent provider access and requires your approval.</p>
-      <p className="mt-2 text-xs text-slate-400">Account binding below records which character owns an existing connection. It does not authorize publishing. X media upload is not implemented; paid API access remains separately gated.</p>
+      <p className="mt-2 text-xs text-slate-400">Account binding below records which character owns an existing connection. It does not authorize publishing. Version 1 supports Instagram only. Facebook and X are future channels and are not enabled.</p>
     </section>
     {error && <p role="alert" className="text-amber-200">{error}</p>}
     <button type="button" disabled={busy} onClick={() => void refresh()} className="min-h-11 rounded-lg border border-white/20 px-4 text-sm text-white">Refresh setup</button>
@@ -55,7 +55,7 @@ export function AgencyMetricsContent() {
         <h2 className="text-xl font-bold text-white">{creator.name}</h2>
         <p className="mt-1 text-sm text-slate-300">{creator.focus}</p>
         <p className="mt-2 text-xs text-amber-100">No data yet · identity {creator.identityApproved ? "approved" : "awaiting approval"} · assets {creator.assetsBound ? "bound" : "not bound"}</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">{creator.platforms.map(platform => {
+        <div className="mt-5 grid gap-3 sm:grid-cols-1">{creator.platforms.filter(platform => platform.channel === "instagram").map(platform => {
           const key = `${creator.id}:${platform.channel}`;
           const available = snapshot.availableConnections.filter(c => c.channel === platform.channel);
           return <div key={platform.channel} className="min-w-0 rounded-xl border border-white/10 p-3">
@@ -71,8 +71,9 @@ export function AgencyMetricsContent() {
             </div>}
           </div>;
         })}</div>
+        <p className="mt-4 text-xs text-slate-400">Genuine follower milestones: 500, then 1,000. Progress is unavailable until verified Instagram reporting is connected.</p>
         <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{metrics.map(label => <div key={label} className="rounded-xl bg-white/[0.03] p-3"><dt className="text-xs text-slate-400">{label}</dt><dd aria-label={`${label} unavailable`} className="mt-2 text-sm text-slate-200">—</dd></div>)}</dl>
-        <p className="mt-4 text-xs text-slate-400">Monetization eligibility: Not verified. No analytics, cost, or revenue import is implemented.</p>
+        <p className="mt-4 text-xs text-slate-400">Monetization eligibility: Not verified. No Instagram analytics, actual cost, estimate, or revenue import is implemented.</p>
       </article>)}
     </section>
     <section aria-label="Agency comparison" className="rounded-2xl border border-white/10 p-5">

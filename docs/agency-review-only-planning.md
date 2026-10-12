@@ -19,7 +19,7 @@ Link first; create draft ad variants in the existing campaign flow afterward. Ne
 - `action: link`, `presenterProfileId`, `campaignId`, and optional `videoSeriesId`.
 - `action: plan`, `presenterProfileId`, `workstreamId`, `variantId`, exact positive `revision`, `revisionHash`, `channel`, `plannedFor` (timestamp with explicit offset), `timezone` (named zone), optional `ownerNotes`, and optional `connectionId`.
 
-The authenticated owner RPC checks all relationships transactionally. A plan supports Instagram story/reel, Facebook Page feed, or X placements and currently accepts media-less creative only. An optional connection must already be available and bound to that exact owner, talent, and channel. Omitting it permits preparation before account setup; neither choice creates posting permission.
+The authenticated owner RPC checks all relationships transactionally. Version 1 plans support Instagram story/reel placements and currently accept media-less creative only. Multi-platform schema support is retained for future work, but Facebook and X requests are rejected. An optional connection must already be available and bound to that exact owner, talent, and channel. Omitting it permits preparation before account setup; neither choice creates posting permission.
 
 The unique slot identity is workstream + variant + revision/hash + channel + planned instant. An identical retry returns the same row. Different notes, timezone, or account on the same slot are rejected rather than silently replacing the plan. Cancelled or invalidated rows are never reactivated by retry. Creative edits and approval revocation invalidate ready plans. Stale approvals are rejected under a creative row lock.
 

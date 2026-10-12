@@ -195,7 +195,8 @@ test("BA-107 presents central management, release history, and future rollback",
   assert.match(workspace, /No managed prompts exist yet/);
   assert.match(workspace, /live AI behavior remains unchanged/i);
   assert.doesNotMatch(workspace, /localStorage/);
-  assert.match(navigation, /Prompt Library/);
+  assert.doesNotMatch(navigation, /label: "Prompt Library"/);
+  assert.match(page, /BeastAdminShell/);
 });
 
 test("BA-125 explains prompt structure governance and explicit runtime adoption", () => {

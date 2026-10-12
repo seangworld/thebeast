@@ -1,4 +1,4 @@
-import { agencyChannels, type AgencyChannel } from "./agencyPreparation";
+import { agencyEnabledChannels, type AgencyChannel } from "./agencyPreparation";
 import { isUuid } from "./marketingSocial";
 
 /** Internal planning only. A ready item is never an executable publishing job. */
@@ -40,7 +40,7 @@ export function normalizeAgencyPlanningRequest(value: unknown): AgencyWorkstream
   if (input.action !== "plan" || !isUuid(input.workstreamId) || !isUuid(input.variantId)
     || !Number.isSafeInteger(input.revision) || Number(input.revision) < 1 || Number(input.revision) > 2_147_483_647
     || typeof input.revisionHash !== "string" || !/^fnv1a32:[0-9a-f]{8}$/.test(input.revisionHash)
-    || !agencyChannels.includes(input.channel as AgencyChannel)
+    || !(agencyEnabledChannels as readonly string[]).includes(String(input.channel))
     || (input.connectionId != null && !isUuid(input.connectionId))
     || typeof input.plannedFor !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(input.plannedFor)
     || !Number.isFinite(Date.parse(input.plannedFor))

@@ -128,7 +128,7 @@ begin
     where id = new.variant_id and owner_id = stream.owner_id and campaign_id = stream.campaign_id for update;
   if not found then raise exception 'Creative does not belong to the private workstream'; end if;
   expected_placement := case new.agency_channel when 'instagram' then 'instagram_story_reel' when 'facebook_page' then 'meta_feed' when 'x' then 'x_post' else null end;
-  if expected_placement is null then raise exception 'Supported private planning channel required'; end if;
+  if expected_placement is null or new.agency_channel <> 'instagram' then raise exception 'Version 1 private planning supports Instagram only'; end if;
   if new.status = 'ready' and (creative.status <> 'approved' or creative.revision <> new.variant_revision
     or creative.revision_hash <> new.variant_revision_hash or creative.approved_revision is distinct from creative.revision
     or creative.approved_revision_hash is distinct from creative.revision_hash) then
@@ -167,7 +167,7 @@ begin
     raise exception 'Owner access required' using errcode = '42501';
   end if;
   if selected_revision is null or selected_revision < 1 or selected_revision_hash is null or selected_revision_hash !~ '^fnv1a32:[0-9a-f]{8}$'
-    or selected_channel is null or selected_channel not in ('instagram', 'facebook_page', 'x')
+    or selected_channel is null or selected_channel <> 'instagram'
     or selected_planned_for is null or not isfinite(selected_planned_for)
     or selected_timezone is null or length(selected_timezone) not between 1 and 100
     or not exists (select 1 from pg_catalog.pg_timezone_names where name = selected_timezone)

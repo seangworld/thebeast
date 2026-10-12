@@ -109,7 +109,7 @@ test("debt management keeps open zero-balance revolving accounts active and expo
   const page = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
   assert.match(page, /debtsWithNextDueDate\.filter\(isDebtOpen\)/);
   assert.match(page, /debtsWithNextDueDate\.filter\(isDebtArchivedOrClosed\)/);
-  assert.match(page, /Restore to Active/);
+  assert.match(page, /lifecycleLabel=\{getDebtLifecycleStatus\(debt\) === "archived" \? "Restore" : null\}/);
   assert.match(page, /Open — Zero Balance/);
   assert.doesNotMatch(page, /Boolean\(debt\.is_archived\) \|\| Number\(debt\.balance \|\| 0\) <= 0/);
 

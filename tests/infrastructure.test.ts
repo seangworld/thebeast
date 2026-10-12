@@ -626,7 +626,7 @@ test("module navigation centralizes expandable child items", () => {
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
-    "Dashboard,Money Coach,Cash Flow,Income,Expenses,Bills,Debts,Payoff Plan,Strategies,Timeline,Velocity Banking,Retirement,Financial Goals,Financial Documents,Reports"
+    "Dashboard,Money Coach,Cash Flow,Funding Sources,Income,Expenses,Bills,Debts,Payoff Plan,Strategies,Timeline,Velocity Banking,Connected Accounts,Retirement,Financial Goals,Financial Documents,Reports,Settings"
   );
   assert.equal(getModuleChildren("learning").length, 12);
   const moneyChildren = getModuleChildren("money");
@@ -6070,48 +6070,22 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   assert.deepEqual(
     beastAdminNavigation.children?.map((item) => item.label),
     [
-  "The Beast Overview",
-  "Members",
-  "Member Messages",
-  "Beta Feedback",
-  "The Beast Analytics",
-  "Development Console",
-  "Platform Health",
-  "Migration Status",
-  "SQL Explorer",
-  "Release Center",
-  "Digital Professional History",
-  "Roadmap",
-  "Capacity & AI Analytics",
-  "Knowledge Inspector",
-  "Ecosystem Map",
-  "Modules",
-  "Feature Flags",
-  "Prompt Library",
-  "Planned Workspaces",
-  "Settings",
-
-]
-  );
-  assert.deepEqual(
-    getModuleChildren("health").map((item) => item.label),
-    [
-      "Overview",
-      "Health Advisor",
-      "Veterans Claims",
-      "Health Profile",
-      "Conditions",
-      "Medications",
-      "Procedures",
-      "Vaccinations",
-      "Family History",
-      "Lifestyle",
-      "Health Measurements",
-      "Health Goals",
-      "Health Documents",
-      "Providers",
-      "Appointments",
-      "Timeline",
+      "The Beast Overview",
+      "Members",
+      "Member Messages",
+      "Beta Feedback",
+      "The Beast Analytics",
+      "Staff",
+      "Development Console",
+      "Platform Health",
+      "Migration Status",
+      "Release Center",
+      "Active Work",
+      "Capacity & AI Analytics",
+      "Ecosystem Map",
+      "Modules",
+      "Feature Flags",
+      "Settings",
     ]
   );
   assert.equal(

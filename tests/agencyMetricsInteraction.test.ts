@@ -120,3 +120,20 @@ test("agency pre-save refresh cannot erase a newer binding failure", async () =>
   await act(async () => { olderRead.resolve(Response.json(snapshot())); });
   assert.equal(ui.getByRole("alert").textContent, "Binding was not created. Refresh before retrying.");
 });
+
+test("agency v1 shows independent private cards with Instagram-only controls and separate unavailable costs", async () => {
+  const data = snapshot("Character Alpha");
+  data.creators.push({ ...data.creators[0], id: "second", name: "Character Beta", focus: "Independent content" });
+  globalThis.fetch = (async () => Response.json(data)) as typeof fetch;
+  const ui = render(React.createElement(AgencyMetricsContent));
+  await ui.findByRole("heading", { name: "Character Beta" });
+  assert.ok(ui.getByRole("heading", { name: "Character Alpha" }));
+  assert.equal(ui.getAllByRole("heading", { name: "Instagram" }).length, 2);
+  assert.equal(ui.queryByRole("heading", { name: "Facebook" }), null);
+  assert.equal(ui.queryByRole("heading", { name: "X" }), null);
+  for (const metric of ["Followers", "Actual operating cost", "Estimated operating cost", "Revenue"]) {
+    const values = ui.getAllByLabelText(`${metric} unavailable`);
+    assert.equal(values.length, 2);
+    assert.ok(values.every(value => value.textContent === "—"));
+  }
+});

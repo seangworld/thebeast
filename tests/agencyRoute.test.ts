@@ -95,7 +95,7 @@ test("agency GET fails closed when any setup table is unavailable", async () => 
   }
 });
 test("agency POST rejects invalid inputs before creating a service client", async () => {
-  for (const body of [null, {}, { ...payload, presenterProfileId: "invalid" }, { ...payload, connectionId: "invalid" }, { ...payload, channel: "facebook_personal" }, { ...payload, action: "publish" }]) {
+  for (const body of [null, {}, { ...payload, presenterProfileId: "invalid" }, { ...payload, connectionId: "invalid" }, { ...payload, channel: "facebook_personal" }, { ...payload, channel: "facebook_page" }, { ...payload, channel: "x" }, { ...payload, action: "publish" }]) {
     const f = fixture();
     assert.equal((await f.POST(post(body))).status, 400);
     assert.equal(f.serviceClients(), 0);

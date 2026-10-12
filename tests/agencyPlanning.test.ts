@@ -11,7 +11,7 @@ const request = (overrides: Record<string, unknown> = {}) => ({ action: "plan", 
 test("planning accepts only explicit exact revisions and valid calendar metadata", () => {
   const plan = normalizeAgencyPlanningRequest(request());
   assert.equal(plan?.action, "plan");
-  for (const overrides of [{ action: "publish" }, { action: "render" }, { action: "schedule" }, { presenterProfileId: "other" }, { workstreamId: null }, { variantId: "bad" }, { revision: "1" }, { revision: 0 }, { revision: 1.5 }, { revisionHash: "old" }, { channel: "youtube" }, { connectionId: "bad" }, { plannedFor: "2026-10-15" }, { plannedFor: "invalid" }, { plannedFor: "2026-02-30T12:00:00Z" }, { plannedFor: "2026-10-15T24:00:00Z" }, { timezone: "+02:00" }, { timezone: "invalid" }, { ownerNotes: "x".repeat(2001) }]) {
+  for (const overrides of [{ action: "publish" }, { action: "render" }, { action: "schedule" }, { presenterProfileId: "other" }, { workstreamId: null }, { variantId: "bad" }, { revision: "1" }, { revision: 0 }, { revision: 1.5 }, { revisionHash: "old" }, { channel: "youtube" }, { channel: "facebook_page" }, { channel: "x" }, { connectionId: "bad" }, { plannedFor: "2026-10-15" }, { plannedFor: "invalid" }, { plannedFor: "2026-02-30T12:00:00Z" }, { plannedFor: "2026-10-15T24:00:00Z" }, { timezone: "+02:00" }, { timezone: "invalid" }, { ownerNotes: "x".repeat(2001) }]) {
     assert.equal(normalizeAgencyPlanningRequest(request(overrides)), null, JSON.stringify(overrides));
   }
 });

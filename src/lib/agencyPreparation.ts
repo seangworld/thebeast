@@ -1,5 +1,6 @@
 /** Private read model. No publishing, provider calls, credentials, or invented metrics. */
 export const agencyChannels = ["instagram", "facebook_page", "x"] as const;
+export const agencyEnabledChannels = ["instagram"] as const;
 export type AgencyChannel = typeof agencyChannels[number];
 export type AgencyProfile = { id: string; owner_id: string; name: string; presenter_type: string; active: boolean; allowed_topics: string[]; provenance: Record<string, unknown> };
 export type AgencyConnection = { id: string; owner_id: string; channel: string; account_id: string; label: string; connected_at: string; expires_at: string | null; disconnected_at: string | null };
@@ -53,7 +54,7 @@ export function buildAgencySnapshot(input: { ownerId: string; profiles: AgencyPr
         return { channel, state, label, reportingVerified: false as const, monetizationEligibility: "not_verified" as const };
       }),
       // An account connection is not a metrics integration. Missing values never become zero.
-      metrics: { followers: null, growth30Days: null, reach: null, engagementRate: null, posts: null, revenueUsd: null, operatingCostUsd: null },
+      metrics: { followers: null, growth30Days: null, reach: null, engagementRate: null, posts: null, revenueUsd: null, operatingCostUsd: null, estimatedOperatingCostUsd: null },
     })),
   };
 }

@@ -13,7 +13,7 @@ test("retired BF-Dash is absent from owner desktop and mobile navigation", () =>
 
   assert.deepEqual(
     ownerNavigation.map((item) => item.label),
-    ["SEANGWORLD HQ", "BeastAdmin"]
+    ["SEANGWORLD HQ", "Agency", "BeastAdmin"]
   );
   assert.equal(ownerNavigation[0]?.href, "/dashboard/operations");
   assert.equal(

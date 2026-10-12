@@ -1,7 +1,7 @@
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { socialOwner, socialJson } from "@/lib/server/social/auth";
 import { isUuid } from "@/lib/marketingSocial";
-import { agencyChannels, buildAgencySnapshot, isAvailableAgencyConnection, type AgencyProfile, type AgencyConnection, type AgencyBinding } from "@/lib/agencyPreparation";
+import { agencyEnabledChannels, buildAgencySnapshot, isAvailableAgencyConnection, type AgencyProfile, type AgencyConnection, type AgencyBinding } from "@/lib/agencyPreparation";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const owner = await socialOwner(request);
   if (!owner) return socialJson({ error: "Owner access required." }, 403);
   const body = await request.json().catch(() => null);
-  if (body?.action !== "bind" || !isUuid(body.presenterProfileId) || !isUuid(body.connectionId) || !agencyChannels.includes(body.channel)) return socialJson({ error: "Choose a saved character, channel, and connected account." }, 400);
+  if (body?.action !== "bind" || !isUuid(body.presenterProfileId) || !isUuid(body.connectionId) || !agencyEnabledChannels.includes(body.channel)) return socialJson({ error: "Choose a saved character and connected Instagram account. Other channels are not enabled in Version 1." }, 400);
   try {
     const db = createBeastFusionPublicationClient();
     const [profile, connection] = await Promise.all([
