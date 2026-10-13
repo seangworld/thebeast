@@ -1,6 +1,8 @@
 import {createRouteClient} from "@/lib/supabase/server";
 import {notFound,redirect} from "next/navigation";
 import TransferForm from "./TransferForm";
+// Owner authentication is evaluated per request, never at static build time.
+export const dynamic = "force-dynamic";
 export default async function BeastFusionLicenseTransfers(){
  const client=createRouteClient();
  const {data:{user}}=await client.auth.getUser();

@@ -1,7 +1,75 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
+/* Preserve the established wrapping utility for unchanged legacy components. */
+@utility break-words {
+  overflow-wrap: break-word;
+}
+
+/* Legacy class names remain on existing templates; aliases preserve v3 values. */
+@utility flex-shrink-0 { flex-shrink: 0; }
+@utility backdrop-blur {
+  --tw-backdrop-blur: blur(8px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+}
+
+@theme inline {
+  --radius-sm: 0.125rem;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --color-beast-background: var(--beast-background);
+  --color-beast-deep: var(--beast-background-deep);
+  --color-beast-surface: var(--beast-surface);
+  --color-beast-raised: var(--beast-surface-raised);
+  --color-beast-inset: var(--beast-surface-inset);
+  --color-beast-overlay: var(--beast-surface-overlay);
+  --color-beast-border: var(--beast-border);
+  --color-beast-text: var(--beast-text);
+  --color-beast-secondary: var(--beast-text-secondary);
+  --color-beast-muted: var(--beast-text-muted);
+  --color-beast-subtle: var(--beast-text-subtle);
+  --color-beast-primary: var(--beast-primary);
+  --color-beast-accent: var(--beast-accent);
+  --color-beast-success: var(--beast-success);
+  --color-beast-warning: var(--beast-warning);
+  --color-beast-danger: var(--beast-danger);
+
+  --radius-beast-sm: var(--beast-radius-sm);
+  --radius-beast-md: var(--beast-radius-md);
+  --radius-beast-lg: var(--beast-radius-lg);
+  --radius-beast-xl: var(--beast-radius-xl);
+
+  --shadow-beast-sm: var(--beast-shadow-sm);
+  --shadow-beast-md: var(--beast-shadow-md);
+  --shadow-beast-overlay: var(--beast-shadow-overlay);
+
+  --transition-duration-beast: 200ms;
+
+  --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
+  --background-image-gradient-conic: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--tw-gradient-stops)
+  );
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer components {
 :root {
   color-scheme: dark;
   --beast-background: #11151c;
@@ -886,5 +954,20 @@ details > summary::-webkit-details-marker {
   .money-page-stack .money-table-cell {
     padding-left: 11px;
     padding-right: 11px;
+  }
+}
+
+}
+
+/* Preserve v3 focus outlines on unchanged legacy templates, after generated utilities. */
+@layer utilities {
+  .bg-gradient-to-r { @apply bg-linear-to-r/srgb; }
+  .bg-gradient-to-b { @apply bg-linear-to-b/srgb; }
+  .bg-gradient-to-t { @apply bg-linear-to-t/srgb; }
+  .bg-gradient-to-br { @apply bg-linear-to-br/srgb; }
+  .outline, .focus-visible\:outline:focus-visible { outline-style: solid; }
+  .outline-none, .focus\:outline-none:focus, .focus-visible\:outline-none:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
   }
 }

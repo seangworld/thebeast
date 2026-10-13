@@ -1,0 +1,231 @@
+{
+  "engine": "PGlite",
+  "engineVersion": "0.5.9",
+  "postgresVersion": "PostgreSQL 18.6 (PGlite 0.5.9) on wasm32-unknown-emscripten, compiled by emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 3.1.74 (1092ec30a3fb1d46b1782ff1b4db5094d3d06ae5), 32-bit",
+  "scope": "Ephemeral in-memory database; synthetic identities only; actual migration SQL unchanged; auth and storage minimal fixture stubs; no live database.",
+  "migrationSha256": {
+    "20260823161535_add_beast_marketing_foundation.sql": "c1d6c4c28b458789fac232f4ffae4a8d4597c90d77c10d5c1411331c42f765ea",
+    "20260823185623_add_beast_marketing_preview_distribution.sql": "c6d08cbae42f0b433239bc509c5cedfcacb04bd4dce3451d5d6ba6cdfecc8fbc",
+    "20260831150054_add_beast_marketing_video_control_plane.sql": "91bc6c303efe710f707465313dc47ac4391b54f5ba9c64d8d9b704d2feb5956d",
+    "20260909214424_add_marketing_growth_cycles.sql": "bfd8ae08cceeabc846489cd09ffb7a75eeec986d3f15c80e60c7d0f845f70e01",
+    "20260921140008_beast_marketing_social.sql": "61ab549f0bfe22c710841d070bfbf6dac38465bd5e80138f73e6c0c8fd231ef3",
+    "20261012040132_agency_social_bindings.sql": "5643c91b841ccd2b08210ab14f7a520f1c7c0b93ed1878ea2a253079c66c6c4b",
+    "20261012120000_agency_review_only_planning.sql": "da36cc3c30f814a88b27129be99dbe88814718269ebcc708ffd00761ec543a66"
+  },
+  "passed": 53,
+  "failed": 0,
+  "results": [
+    {
+      "name": "Both candidate migrations apply unchanged to actual predecessor schema",
+      "status": "pass"
+    },
+    {
+      "name": "Anonymous cannot execute link RPC",
+      "status": "pass"
+    },
+    {
+      "name": "Non-admin cannot execute an authorized link",
+      "status": "pass"
+    },
+    {
+      "name": "Admin cannot link another owner character",
+      "status": "pass"
+    },
+    {
+      "name": "Owner links fresh inactive character and disabled series",
+      "status": "pass"
+    },
+    {
+      "name": "Identical link retry has stable identity",
+      "status": "pass"
+    },
+    {
+      "name": "Conflicting character retry is rejected",
+      "status": "pass"
+    },
+    {
+      "name": "Other admin RLS cannot see owner workstream",
+      "status": "pass"
+    },
+    {
+      "name": "Owner RLS can see own workstream",
+      "status": "pass"
+    },
+    {
+      "name": "Owner cannot insert workstream directly",
+      "status": "pass"
+    },
+    {
+      "name": "Service role cannot execute owner RPC or write workstreams",
+      "status": "pass"
+    },
+    {
+      "name": "Authenticated clients cannot read private social bindings",
+      "status": "pass"
+    },
+    {
+      "name": "Private creative cannot be inserted preapproved",
+      "status": "pass"
+    },
+    {
+      "name": "Unapproved creative cannot be planned",
+      "status": "pass"
+    },
+    {
+      "name": "Other admin cannot plan owner creative",
+      "status": "pass"
+    },
+    {
+      "name": "Exact approved revision creates review-only ready plan",
+      "status": "pass"
+    },
+    {
+      "name": "Exact slot retry is idempotent and offset-equivalent instant",
+      "status": "pass"
+    },
+    {
+      "name": "Queue rejects notes",
+      "status": "pass"
+    },
+    {
+      "name": "Queue rejects timezone",
+      "status": "pass"
+    },
+    {
+      "name": "Queue rejects stale revision",
+      "status": "pass"
+    },
+    {
+      "name": "Queue rejects stale hash",
+      "status": "pass"
+    },
+    {
+      "name": "Queue rejects Facebook",
+      "status": "pass"
+    },
+    {
+      "name": "Queue rejects invalid timezone",
+      "status": "pass"
+    },
+    {
+      "name": "Queue rejects infinite date",
+      "status": "pass"
+    },
+    {
+      "name": "Export/handoff is rejected even through direct plan update",
+      "status": "pass"
+    },
+    {
+      "name": "Plan identity cannot be changed or detached",
+      "status": "pass"
+    },
+    {
+      "name": "Cancelled slot retry never reactivates it",
+      "status": "pass"
+    },
+    {
+      "name": "Revoking approval invalidates a ready plan",
+      "status": "pass"
+    },
+    {
+      "name": "Reapproval and retry do not reactivate invalidated slot",
+      "status": "pass"
+    },
+    {
+      "name": "Creative edit increments revision and invalidates plan",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks character activation",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks series activation",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks series publishing",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks campaign activation",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks variant reassignment",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks video job",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks social post",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks workstream reassignment",
+      "status": "pass"
+    },
+    {
+      "name": "Database blocks legacy asset",
+      "status": "pass"
+    },
+    {
+      "name": "Running growth cycle prevents new linkage",
+      "status": "pass"
+    },
+    {
+      "name": "Available exact character binding is accepted",
+      "status": "pass"
+    },
+    {
+      "name": "Disconnected bound account is rejected",
+      "status": "pass"
+    },
+    {
+      "name": "Binding foreign keys reject cross-owner profile",
+      "status": "pass"
+    },
+    {
+      "name": "Non-Agency campaign remains editable",
+      "status": "pass"
+    },
+    {
+      "name": "Other admin cannot read owner plans",
+      "status": "pass"
+    },
+    {
+      "name": "Anonymous cannot execute queue RPC",
+      "status": "pass"
+    },
+    {
+      "name": "Service role cannot execute queue RPC",
+      "status": "pass"
+    },
+    {
+      "name": "Legacy outcome write is blocked",
+      "status": "pass"
+    },
+    {
+      "name": "Legacy assessment write is blocked",
+      "status": "pass"
+    },
+    {
+      "name": "Expired bound account is rejected",
+      "status": "pass"
+    },
+    {
+      "name": "Future-connected bound account is rejected",
+      "status": "pass"
+    },
+    {
+      "name": "No synthetic post or video job was created",
+      "status": "pass"
+    },
+    {
+      "name": "Trigger functions have no public/client/service execute grants",
+      "status": "pass"
+    }
+  ]
+}

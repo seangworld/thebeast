@@ -1,0 +1,54 @@
+PASS Both candidate migrations apply unchanged to actual predecessor schema
+PASS Anonymous cannot execute link RPC
+PASS Non-admin cannot execute an authorized link
+PASS Admin cannot link another owner character
+PASS Owner links fresh inactive character and disabled series
+PASS Identical link retry has stable identity
+PASS Conflicting character retry is rejected
+PASS Other admin RLS cannot see owner workstream
+PASS Owner RLS can see own workstream
+PASS Owner cannot insert workstream directly
+PASS Service role cannot execute owner RPC or write workstreams
+PASS Authenticated clients cannot read private social bindings
+PASS Private creative cannot be inserted preapproved
+PASS Unapproved creative cannot be planned
+PASS Other admin cannot plan owner creative
+PASS Exact approved revision creates review-only ready plan
+PASS Exact slot retry is idempotent and offset-equivalent instant
+PASS Queue rejects notes
+PASS Queue rejects timezone
+PASS Queue rejects stale revision
+PASS Queue rejects stale hash
+PASS Queue rejects Facebook
+PASS Queue rejects invalid timezone
+PASS Queue rejects infinite date
+PASS Export/handoff is rejected even through direct plan update
+PASS Plan identity cannot be changed or detached
+PASS Cancelled slot retry never reactivates it
+PASS Revoking approval invalidates a ready plan
+PASS Reapproval and retry do not reactivate invalidated slot
+PASS Creative edit increments revision and invalidates plan
+PASS Database blocks character activation
+PASS Database blocks series activation
+PASS Database blocks series publishing
+PASS Database blocks campaign activation
+PASS Database blocks variant reassignment
+PASS Database blocks video job
+PASS Database blocks social post
+PASS Database blocks workstream reassignment
+PASS Database blocks legacy asset
+PASS Running growth cycle prevents new linkage
+PASS Available exact character binding is accepted
+PASS Disconnected bound account is rejected
+PASS Binding foreign keys reject cross-owner profile
+PASS Non-Agency campaign remains editable
+PASS Other admin cannot read owner plans
+PASS Anonymous cannot execute queue RPC
+PASS Service role cannot execute queue RPC
+PASS Legacy outcome write is blocked
+PASS Legacy assessment write is blocked
+PASS Expired bound account is rejected
+PASS Future-connected bound account is rejected
+PASS No synthetic post or video job was created
+PASS Trigger functions have no public/client/service execute grants
+{"passed":53,"failed":0}
