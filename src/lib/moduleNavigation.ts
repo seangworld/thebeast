@@ -204,6 +204,15 @@ export const operationsNavigation: ModuleNavSection = {
   module: "admin",
 };
 
+export const agencyNavigation: ModuleNavSection = {
+  label: "Agency",
+  href: "/dashboard/admin/agency/metrics",
+  module: "agency",
+  children: [
+    { label: "Metrics", href: "/dashboard/admin/agency/metrics" },
+  ],
+};
+
 export const beastAdminNavigation: ModuleNavSection = {
   label: "BeastAdmin",
   href: "/dashboard/admin",
@@ -364,7 +373,7 @@ export function buildOwnerNavigationForPersona({
     (item) => item.module === "admin"
   );
 
-  return [operationsNavigation, ...ownerModules].filter(
+  return [operationsNavigation, agencyNavigation, ...ownerModules].filter(
     (item, index, items) =>
       items.findIndex((candidate) => candidate.label === item.label) === index
   );

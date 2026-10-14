@@ -8,15 +8,16 @@ import {
   normalizeBeastAdminKnowledgeSourceSnapshot,
 } from "../src/lib/beastAdminKnowledgeInspector";
 
+// Entirely synthetic normalization/filtering data; no member records are loaded.
 const source = {
   member: {
-    id: "member-1",
-    displayName: "Sean",
-    email: "sean@example.com",
+    id: "fixture-member",
+    displayName: "Fixture Member",
+    email: "fixture@example.invalid",
     role: "user",
   },
   educationProfile: {
-    goal: "IT professional",
+    goal: "Sample training objective",
     currentSituation: "",
     strengths: "",
     growthAreas: "",
@@ -24,9 +25,9 @@ const source = {
     weeklyHours: 0,
     availableStudyTimeKnown: false,
     selectedProviders: [],
-    careerInterests: ["IT professional"],
+    careerInterests: ["Sample training objective"],
     educationalGoals: [],
-    learningPreferences: ["hands-on"],
+    learningPreferences: ["Sample learning preference"],
     certifications: [],
     collegeInterest: null,
     tradeInterest: null,
@@ -59,17 +60,17 @@ const source = {
   },
   memories: [
     {
-      id: "money-memory-1",
-      professionalId: "beastmoney.money-coach",
+      id: "fixture-memory-1",
+      professionalId: "fixture.professional-alpha",
       scope: "user",
-      key: "financial-goal",
+      key: "fixture-preference",
       value: {
-        content: "My goal is to eliminate debt.",
+        content: "Synthetic planning preference.",
         confidence: "high",
       },
-      purpose: "Remember an explicit member financial goal.",
-      evidence: [{ source: "money-conversation-1" }],
-      sourceConversationId: "money-conversation-1",
+      purpose: "Exercise an explicitly confirmed synthetic preference.",
+      evidence: [{ source: "fixture-conversation-1" }],
+      sourceConversationId: "fixture-conversation-1",
       sourceMessageId: "message-1",
       expiresAt: null,
       createdAt: "2026-07-26T10:00:00.000Z",
@@ -77,11 +78,11 @@ const source = {
     },
     {
       id: "unclassified-memory",
-      professionalId: "beasthealth.health-advisor",
+      professionalId: "fixture.professional-beta",
       scope: "agent",
-      key: "health-context",
-      value: { content: "A stored observation without confidence." },
-      purpose: "Retain professional context.",
+      key: "fixture-unclassified-context",
+      value: { content: "Synthetic observation without confidence." },
+      purpose: "Exercise an unclassified synthetic observation.",
       evidence: [],
       sourceConversationId: null,
       sourceMessageId: null,
@@ -93,9 +94,9 @@ const source = {
   conversationFollowUps: [
     {
       id: "conversation-1-follow-up-1",
-      professionalId: "beastmoney.money-coach",
-      question: "Confirm the preferred payoff date.",
-      conversationTitle: "Payoff planning",
+      professionalId: "fixture.professional-alpha",
+      question: "Confirm the sample preference.",
+      conversationTitle: "Synthetic follow-up",
       updatedAt: "2026-07-26T11:00:00.000Z",
     },
   ],
@@ -129,7 +130,7 @@ test("BA-112 separates confirmed facts, hypotheses, and unknowns", () => {
 
   assert.equal(
     inspector.knownFacts.some(
-      (item) => item.label === "Career goals" && item.value === "IT professional"
+      (item) => item.label === "Career goals" && item.value === "Sample training objective"
     ),
     true
   );
@@ -164,25 +165,25 @@ test("BA-112 inventories user-scope context and supports professional filtering"
   const normalized = normalizeBeastAdminKnowledgeSourceSnapshot(source);
   assert.ok(normalized);
   const inspector = buildBeastAdminKnowledgeInspector(normalized);
-  const money = filterBeastAdminKnowledgeInspector(
+  const selectedProfessional = filterBeastAdminKnowledgeInspector(
     inspector,
-    "beastmoney.money-coach"
+    "fixture.professional-alpha"
   );
 
   assert.deepEqual(
     inspector.crossModuleContext.map((item) => item.id),
-    ["context-money-memory-1"]
+    ["context-fixture-memory-1"]
   );
-  assert.equal(money.knownFacts.length, 1);
+  assert.equal(selectedProfessional.knownFacts.length, 1);
   assert.equal(
-    money.knownFacts[0].value,
-    "My goal is to eliminate debt."
+    selectedProfessional.knownFacts[0].value,
+    "Synthetic planning preference."
   );
-  assert.equal(money.outstandingQuestions.length, 1);
-  assert.equal(money.memoryHistory.length, 1);
+  assert.equal(selectedProfessional.outstandingQuestions.length, 1);
+  assert.equal(selectedProfessional.memoryHistory.length, 1);
   assert.equal(
-    money.memoryHistory[0].professionalId,
-    "beastmoney.money-coach"
+    selectedProfessional.memoryHistory[0].professionalId,
+    "fixture.professional-alpha"
   );
 });
 
@@ -236,7 +237,8 @@ test("BA-112 presents every requested owner inspection area without mutation con
   assert.match(workspace, /All professionals/);
   assert.match(workspace, /Read-only inspection/);
   assert.match(workspace, /raw conversation messages/);
-  assert.match(navigation, /Knowledge Inspector/);
+  assert.doesNotMatch(navigation, /label: "Knowledge Inspector"/);
+  assert.match(page, /BeastAdminShell/);
   assert.doesNotMatch(workspace, /\.(insert|update|delete|upsert)\(/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);
 });

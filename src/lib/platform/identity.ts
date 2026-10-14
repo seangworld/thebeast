@@ -79,6 +79,7 @@ export const beastOSPlatformIdentityRules = [
 ] as const;
 
 const workspaceContext: Record<PlatformModule, string> = {
+  agency: "Private owner agency workspace for character setup and verified performance.",
   beastos: "The Beast platform",
   money: "Money application",
   learning: "Education application",

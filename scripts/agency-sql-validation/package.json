@@ -1,0 +1,16 @@
+{
+  "name": "agency-sql-validation",
+  "version": "1.0.0",
+  "description": "Isolated synthetic PostgreSQL verification for Agency candidate migrations",
+  "scripts": {
+    "test": "node verify-agency.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.9"
+  },
+  "private": true
+}

@@ -60,7 +60,7 @@ test("BA-106 recovery paths preserve only safe BeastOS destinations", () => {
       "https://preview.vercel.app",
       "https://thebeast.seangworld.com/path"
     ),
-    "https://thebeast.seangworld.com"
+    "https://preview.vercel.app"
   );
   assert.equal(
     getBeastAuthOrigin("https://preview.vercel.app", "javascript:alert(1)"),
@@ -167,8 +167,9 @@ test("BA-106 local Supabase configuration matches the recovery contract", () => 
   assert.match(template, /expires soon/i);
 
   assert.match(deployment, /Verified environment inventory/);
-  assert.match(deployment, /zvzcojwjgnedrouilovc/);
-  assert.match(deployment, /grpyzwvgqiwtxadfdtni/);
+  // Validate the documented rollout boundaries without embedding project identifiers.
+  assert.match(deployment, /Development project/);
+  assert.match(deployment, /Production project/);
   assert.match(deployment, /Confirmed mismatches and release blockers/);
   assert.match(deployment, /No database migration is required/);
 });

@@ -1,6 +1,8 @@
 import {createRouteClient} from "@/lib/supabase/server";
 import Link from "next/link";
 import CustomerActions from "./CustomerActions";
+// Owner-specific account data must never be evaluated as a static build artifact.
+export const dynamic = "force-dynamic";
 export default async function Customer(){
  const s=createRouteClient();
  const {data:{user}}=await s.auth.getUser();

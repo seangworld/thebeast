@@ -13,7 +13,8 @@ export type PlatformModule =
   | "notifications"
   | "timeline"
   | "search"
-  | "admin";
+  | "admin"
+  | "agency";
 
 export type RecommendationPriority = "Critical" | "High" | "Medium" | "Low";
 export type PlatformSeverity = "critical" | "warning" | "info";

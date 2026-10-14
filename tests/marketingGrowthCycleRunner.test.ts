@@ -6,7 +6,7 @@ import * as growth from "../src/lib/marketingGrowthCycle";
 import * as attribution from "../src/lib/marketingGrowthAttribution";
 
 type Campaign = { id: string; status: string; source_facts: unknown[] };
-function fixture(options: { enabled?: boolean; admin?: boolean; duplicate?: boolean; campaigns?: Campaign[]; historyCount?: number; providersMissing?: boolean; pauseAfterProvider?: boolean; completionError?: boolean; currentStatus?: string; timeBudget?: boolean } = {}) {
+function fixture(options: { agencyCampaignIds?: string[]; agencyError?: boolean; linkedDuringRun?: boolean; enabled?: boolean; admin?: boolean; duplicate?: boolean; campaigns?: Campaign[]; historyCount?: number; providersMissing?: boolean; pauseAfterProvider?: boolean; completionError?: boolean; currentStatus?: string; timeBudget?: boolean } = {}) {
   const operations: Array<{ table: string; action: string; value?: Record<string, unknown>; filters: Array<[string, unknown]> }> = [];
   let providerReads = 0;
   const campaigns = options.campaigns || [];
@@ -22,6 +22,11 @@ function fixture(options: { enabled?: boolean; admin?: boolean; duplicate?: bool
         else if (table === "profiles") data = { role: options.admin === false ? "member" : "admin" };
         else if (table === "beast_marketing_growth_runs" && op.action === "insert") { data = { id: "run-one" }; if (options.duplicate) error = { code: "23505" }; }
         else if (table === "beast_marketing_growth_runs" && op.action === "update" && options.completionError) error = { code: "unavailable" };
+        else if (table === "beast_marketing_agency_workstreams") {
+          if (fields === "id") data = options.linkedDuringRun ? { id: "private-workstream" } : null;
+          else { data = (options.agencyCampaignIds || []).map((campaign_id) => ({ campaign_id })); count = options.agencyCampaignIds?.length || 0; }
+          if (options.agencyError) error = { code: "unavailable" };
+        }
         else if (table === "beast_marketing_campaigns") { data = fields === "status" ? { status: options.currentStatus || campaigns.find((campaign) => op.filters.some(([key, value]) => key === "id" && value === campaign.id))?.status || "active" } : [...campaigns]; count = options.historyCount ?? campaigns.length; }
         return Promise.resolve({ data, error, count }).then(resolve);
       },
@@ -92,4 +97,31 @@ test("growth runner caps assessment writes even with a full eligible campaign ba
   const result = await f.run(); assert.equal(result.status, "completed");
   assert.equal(f.operations.filter((o) => o.table === "beast_marketing_recommendations" && o.action === "insert").length, growth.GROWTH_ASSESSMENT_LIMIT);
   assert.ok(result.report?.blockers.some((item) => item.includes("90 campaigns deferred")));
+});
+
+
+test("growth excludes private agency campaigns while continuing ordinary work", async () => {
+  const f = fixture({ agencyCampaignIds: ["private"], campaigns: ["private", "ordinary"].map((id) => ({ id, status: "draft", source_facts: [] })) });
+  const result = await f.run();
+  assert.equal(result.status, "completed");
+  assert.deepEqual(result.report?.assessed, ["ordinary"]);
+  assert.ok(!f.operations.some((operation) => ["beast_marketing_assets", "beast_marketing_recommendations"].includes(operation.table) && operation.value?.campaign_id === "private"));
+  assert.ok(f.operations.some((operation) => operation.table === "beast_marketing_agency_workstreams" && operation.filters.some(([key, value]) => key === "owner_id" && value === "owner-one")));
+});
+
+test("growth fails closed when private campaign scope cannot be checked", async () => {
+  const f = fixture({ agencyError: true, campaigns: [{ id: "draft", status: "draft", source_facts: [] }] });
+  const result = await f.run();
+  assert.equal(result.status, "failed");
+  assert.ok(result.report?.unavailable.includes("agency_scope_unavailable"));
+  assert.equal(f.providerReads(), 0);
+  assert.ok(!f.operations.some((operation) => ["beast_marketing_assets", "beast_marketing_recommendations"].includes(operation.table)));
+});
+
+test("growth rechecks private linkage before writing derived campaign work", async () => {
+  const f = fixture({ linkedDuringRun: true, campaigns: [{ id: "newly-private", status: "draft", source_facts: [] }] });
+  const result = await f.run();
+  assert.equal(result.status, "completed");
+  assert.deepEqual(result.report?.assessed, []);
+  assert.ok(!f.operations.some((operation) => ["beast_marketing_assets", "beast_marketing_recommendations"].includes(operation.table)));
 });

@@ -145,6 +145,8 @@ test("sitemap includes public routes and excludes private application routes", (
   const urls = sitemap().map((entry) => entry.url);
   assert.deepEqual(urls, [
     "https://thebeast.seangworld.com",
+    "https://thebeast.seangworld.com/beastfusion",
+    "https://thebeast.seangworld.com/beastfusion/how-it-works",
     "https://thebeast.seangworld.com/release-notes",
     "https://thebeast.seangworld.com/ai-development-staff",
     "https://thebeast.seangworld.com/ai-development-staff/methodology",

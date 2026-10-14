@@ -39,6 +39,9 @@ export async function runMarketingGrowthCycle(ownerId: string, now = new Date())
   try {
     const history = await client.from("beast_marketing_campaigns").select("id,status,source_facts", { count: "exact" }).eq("owner_id", ownerId).order("created_at", { ascending: true }).limit(GROWTH_HISTORY_LIMIT);
     if (history.error || history.count === null || history.count > GROWTH_HISTORY_LIMIT || history.data?.length !== history.count) throw new Error("campaign_history_incomplete");
+    const agency = await client.from("beast_marketing_agency_workstreams").select("campaign_id", { count: "exact" }).eq("owner_id", ownerId).limit(GROWTH_HISTORY_LIMIT);
+    if (agency.error || agency.count == null || !agency.data || agency.count > GROWTH_HISTORY_LIMIT || agency.data.length !== agency.count) throw new Error("agency_scope_unavailable");
+    const privateCampaignIds = new Set(agency.data.map((workstream) => workstream.campaign_id));
     const campaigns = history.data!;
     for (const product of ["thebeast", "seangworldnews"] as const) {
       if (!await enabled()) throw new Error("cycle_paused");
@@ -64,7 +67,7 @@ export async function runMarketingGrowthCycle(ownerId: string, now = new Date())
         report.prepared.push(id);
         productPrepared++;
       }
-      const eligible = campaigns.filter((campaign) => !["paused", "completed", "archived"].includes(campaign.status) && searchGrowthAssessmentTarget(ownerId, campaign.id, campaign.source_facts)?.product === product);
+      const eligible = campaigns.filter((campaign) => !privateCampaignIds.has(campaign.id) && !["paused", "completed", "archived"].includes(campaign.status) && searchGrowthAssessmentTarget(ownerId, campaign.id, campaign.source_facts)?.product === product);
       const batch = growthAssessmentBatch(eligible, now);
       if (eligible.length > batch.length) report.blockers.push(`${product}: ${eligible.length - batch.length} campaigns deferred by the rotating assessment budget.`);
       for (const campaign of batch) {
@@ -77,6 +80,11 @@ export async function runMarketingGrowthCycle(ownerId: string, now = new Date())
         const current = await client.from("beast_marketing_campaigns").select("status").eq("owner_id", ownerId).eq("id", campaign.id).maybeSingle();
         if (current.error) throw new Error("campaign_state_unavailable");
         if (!current.data || ["paused", "completed", "archived"].includes(current.data.status)) continue;
+        // A workstream can be linked after the initial snapshot. Never treat global
+        // growth opt-in as authorization for an Agency talent's private campaign.
+        const privateWorkstream = await client.from("beast_marketing_agency_workstreams").select("id").eq("owner_id", ownerId).eq("campaign_id", campaign.id).maybeSingle();
+        if (privateWorkstream.error) throw new Error("agency_scope_unavailable");
+        if (privateWorkstream.data) continue;
         // Insert-only, including recovery after a previous interrupted asset write.
         if (current.data.status === "draft") {
           const asset = growthDraftAsset(ownerId, campaign.id, target.page);
