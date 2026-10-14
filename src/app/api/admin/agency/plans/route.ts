@@ -1,3 +1,5 @@
+import { agencyWriteOwner } from "@/lib/server/agency/auth";
+import { requireSupabasePublicConfiguration } from "@/lib/supabase/config";
 import { socialOwner, socialJson } from "@/lib/server/social/auth";
 import { agencyPlanningAuthority, normalizeAgencyPlanningRequest } from "@/lib/agencyPlanning";
 
@@ -18,7 +20,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const owner = await socialOwner(request);
+  const owner = await agencyWriteOwner(request, {
+    env: process.env,
+    getEffectiveSupabaseUrl: () => requireSupabasePublicConfiguration().url,
+    socialOwner,
+  });
   if (!owner) return socialJson({ error: "Owner access required." }, 403);
   const input = normalizeAgencyPlanningRequest(await request.json().catch(() => null));
   if (!input) return socialJson({ error: "Choose a saved character and valid private workstream or exact ad revision, channel, planned time, and timezone." }, 400);

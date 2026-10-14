@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import * as agencyAuth from "../src/lib/server/agency/auth";
 import { agencyPlanningAuthority, normalizeAgencyPlanningRequest } from "../src/lib/agencyPlanning";
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -30,7 +31,7 @@ test("link requests require owned reference-shaped identifiers and never accept 
   assert.equal(normalizeAgencyPlanningRequest({ ...input, presenterProfileId: "Character name" }), null);
 });
 
-function route(options: { authorized?: boolean; rpcError?: string; data?: unknown; readError?: boolean } = {}) {
+function route(options: { authorized?: boolean; rpcError?: string; data?: unknown; readError?: boolean; env?: agencyAuth.AgencyWriteEnvironment; effectiveSupabaseUrl?: string } = {}) {
   const calls: Array<{ name: string; args?: Record<string, unknown> }> = [];
   const client = {
     rpc: async (name: string, args: Record<string, unknown>) => { calls.push({ name, args }); return { data: options.data === undefined ? { id: id(9), status: "ready" } : options.data, error: options.rpcError ? { code: options.rpcError, message: "private failure details" } : null }; },
@@ -43,15 +44,17 @@ function route(options: { authorized?: boolean; rpcError?: string; data?: unknow
   };
   const exports: { GET?: () => Promise<Response>; POST?: (request: Request) => Promise<Response> } = {};
   const source = ts.transpileModule(readFileSync("src/app/api/admin/agency/plans/route.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  runInNewContext(source, { exports, require(name: string) {
+  runInNewContext(source, { exports, process: { env: options.env ?? { VERCEL_ENV: "production", VERCEL_TARGET_ENV: "production" } }, require(name: string) {
+    if (name.endsWith("/agency/auth")) return agencyAuth;
+    if (name.endsWith("/supabase/config")) return { requireSupabasePublicConfiguration: () => ({ url: options.effectiveSupabaseUrl ?? "https://abcdefghijklmnopqrst.supabase.co" }) };
     if (name.endsWith("/social/auth")) return {
-      socialOwner: async () => options.authorized === false ? null : { id: id(50), client },
+      socialOwner: async (request?: Request) => options.authorized === false || request && request.headers.get("origin") !== "https://thebeast.seangworld.com" ? null : { id: id(50), client },
       socialJson: (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Cache-Control": "private, no-store" } }),
     };
     if (name.endsWith("/agencyPlanning")) return { agencyPlanningAuthority, normalizeAgencyPlanningRequest };
     throw new Error(`Unexpected planning dependency: ${name}`);
   } });
-  return { get: exports.GET!, post: (body: unknown) => exports.POST!(new Request("https://thebeast.seangworld.com/api/admin/agency/plans", { method: "POST", body: JSON.stringify(body) })), calls };
+  return { get: exports.GET!, post: (body: unknown, origin = "https://thebeast.seangworld.com", url = "https://thebeast.seangworld.com/api/admin/agency/plans") => exports.POST!(new Request(url, { method: "POST", headers: { origin }, body: JSON.stringify(body) })), calls };
 }
 
 test("planning route denies unauthorized callers before reading or writing", async () => {
@@ -119,4 +122,31 @@ test("migration uses revisioned internal plans and denies all executable or expo
   assert.match(sql, /Video generation and scheduling are outside private planning/);
   assert.doesNotMatch(sql, /insert into public\.beast_marketing_(social_posts|video_jobs)|insert into storage\./);
   assert.match(sql, /revoke all on public\.beast_marketing_agency_workstreams from public, anon, authenticated, service_role/);
+});
+
+// Integration proposal: handler + real policy, with database and social auth mocked.
+const planningPreviewOrigin = "https://agency-review-deployment-fixture.vercel.app";
+const planningPreviewEnv: agencyAuth.AgencyWriteEnvironment = { VERCEL: "1", VERCEL_ENV: "preview", VERCEL_TARGET_ENV: "agency-review", VERCEL_URL: "agency-review-deployment-fixture.vercel.app", AGENCY_PREVIEW_WRITES_ENABLED: "true", AGENCY_PREVIEW_TARGET_ENV: "agency-review", AGENCY_PREVIEW_SUPABASE_URL: "https://abcdefghijklmnopqrst.supabase.co" };
+test("planning integration proposal denies shared Preview and production DB before any RPC", async () => {
+  for (const options of [
+    { env: { ...planningPreviewEnv, VERCEL_TARGET_ENV: "preview" } },
+    { env: planningPreviewEnv, effectiveSupabaseUrl: `https://${agencyAuth.AGENCY_PRODUCTION_SUPABASE_REF}.supabase.co` },
+    { env: { ...planningPreviewEnv, AGENCY_PREVIEW_WRITES_ENABLED: undefined } },
+  ]) {
+    const f = route(options);
+    assert.equal((await f.post(request(), planningPreviewOrigin, `${planningPreviewOrigin}/api/admin/agency/plans`)).status, 403);
+    assert.deepEqual(f.calls, []);
+    assert.equal((await f.post(request(), "https://thebeast.seangworld.com", `${planningPreviewOrigin}/api/admin/agency/plans`)).status, 403);
+    assert.deepEqual(f.calls, []);
+  }
+});
+test("planning integration proposal keeps authenticated private planning only", async () => {
+  const f = route({ env: planningPreviewEnv });
+  const response = await f.post(request(), planningPreviewOrigin, `${planningPreviewOrigin}/api/admin/agency/plans`);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).publishingAuthorized, false);
+  assert.equal(f.calls.filter(call => call.name === "queue_beast_marketing_agency_plan").length, 1);
+  const denied = route({ env: planningPreviewEnv, authorized: false });
+  assert.equal((await denied.post(request(), planningPreviewOrigin, `${planningPreviewOrigin}/api/admin/agency/plans`)).status, 403);
+  assert.deepEqual(denied.calls, []);
 });

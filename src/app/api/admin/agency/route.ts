@@ -1,3 +1,5 @@
+import { agencyWriteOwner } from "@/lib/server/agency/auth";
+import { requireSupabasePublicConfiguration } from "@/lib/supabase/config";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { socialOwner, socialJson } from "@/lib/server/social/auth";
 import { isUuid } from "@/lib/marketingSocial";
@@ -22,7 +24,11 @@ export async function GET() {
 
 // Binds already connected accounts. Does not initiate OAuth, grant access, or authorize posting.
 export async function POST(request: Request) {
-  const owner = await socialOwner(request);
+  const owner = await agencyWriteOwner(request, {
+    env: process.env,
+    getEffectiveSupabaseUrl: () => requireSupabasePublicConfiguration().url,
+    socialOwner,
+  });
   if (!owner) return socialJson({ error: "Owner access required." }, 403);
   const body = await request.json().catch(() => null);
   if (body?.action !== "bind" || !isUuid(body.presenterProfileId) || !isUuid(body.connectionId) || !agencyEnabledChannels.includes(body.channel)) return socialJson({ error: "Choose a saved character and connected Instagram account. Other channels are not enabled in Version 1." }, 400);

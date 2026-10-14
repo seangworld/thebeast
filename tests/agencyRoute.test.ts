@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import * as agencyAuth from "../src/lib/server/agency/auth";
 import * as preparation from "../src/lib/agencyPreparation";
 import { isUuid } from "../src/lib/marketingSocial";
 
@@ -11,12 +12,12 @@ const profileId = "22222222-2222-4222-8222-222222222222";
 const connectionId = "33333333-3333-4333-8333-333333333333";
 const payload = { action: "bind", presenterProfileId: profileId, connectionId, channel: "instagram" };
 const origin = "https://thebeast.seangworld.com";
-const post = (body: unknown = payload, requestOrigin = origin) => new Request(`${origin}/api/admin/agency`, {
+const post = (body: unknown = payload, requestOrigin = origin, requestUrl = `${origin}/api/admin/agency`) => new Request(requestUrl, {
   method: "POST", headers: { origin: requestOrigin, "Content-Type": "application/json" }, body: JSON.stringify(body),
 });
 
 type Row = Record<string, unknown>;
-function fixture(options: { authorized?: boolean; unavailable?: string; profile?: Row | null; connection?: Row | null } = {}) {
+function fixture(options: { authorized?: boolean; unavailable?: string; profile?: Row | null; connection?: Row | null; env?: agencyAuth.AgencyWriteEnvironment; effectiveSupabaseUrl?: string } = {}) {
   const calls: Array<{ table: string; operation: string; filters: Array<[string, unknown]>; fields: string; values?: Row }> = [];
   const rows: Record<string, Row[]> = {
     beast_marketing_presenter_profiles: [{ id: profileId, owner_id: ownerId, presenter_type: "future_character", name: "Private character", active: false, allowed_topics: ["Lifestyle"], provenance: {}, ...options.profile }],
@@ -53,7 +54,9 @@ function fixture(options: { authorized?: boolean; unavailable?: string; profile?
   } };
   const exports: Record<string, (...args: unknown[]) => Promise<Response>> = {};
   const source = ts.transpileModule(readFileSync("src/app/api/admin/agency/route.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  runInNewContext(source, { exports, Date, Error, require: (name: string) => {
+  runInNewContext(source, { exports, Date, Error, process: { env: options.env ?? { VERCEL_ENV: "production", VERCEL_TARGET_ENV: "production" } }, require: (name: string) => {
+    if (name === "@/lib/server/agency/auth") return agencyAuth;
+    if (name === "@/lib/supabase/config") return { requireSupabasePublicConfiguration: () => ({ url: options.effectiveSupabaseUrl ?? "https://abcdefghijklmnopqrst.supabase.co" }) };
     if (name === "@/lib/supabase/service") return { createBeastFusionPublicationClient: () => { serviceClients++; return client; } };
     if (name === "@/lib/server/social/auth") return {
       socialOwner: async (request?: Request) => options.authorized === false || request && request.headers.get("origin") !== origin ? null : { id: ownerId, client },
@@ -129,4 +132,32 @@ test("agency binding derives the owner and never changes an existing mapping on 
   assert.equal((await f.POST(post())).status, 409);
   assert.equal(f.rows.beast_marketing_agency_bindings.length, 1);
   assert.ok(f.calls.filter(call => call.operation === "insert").every(call => call.table === "beast_marketing_agency_bindings"));
+});
+
+// Integration proposal: handler + real policy, with database and social auth mocked.
+const agencyPreviewOrigin = "https://agency-review-deployment-fixture.vercel.app";
+const agencyPreviewEnv: agencyAuth.AgencyWriteEnvironment = { VERCEL: "1", VERCEL_ENV: "preview", VERCEL_TARGET_ENV: "agency-review", VERCEL_URL: "agency-review-deployment-fixture.vercel.app", AGENCY_PREVIEW_WRITES_ENABLED: "true", AGENCY_PREVIEW_TARGET_ENV: "agency-review", AGENCY_PREVIEW_SUPABASE_URL: "https://abcdefghijklmnopqrst.supabase.co" };
+test("agency binding integration proposal denies shared Preview and production DB before mutations", async () => {
+  for (const options of [
+    { env: { ...agencyPreviewEnv, VERCEL_TARGET_ENV: "preview" } },
+    { env: agencyPreviewEnv, effectiveSupabaseUrl: `https://${agencyAuth.AGENCY_PRODUCTION_SUPABASE_REF}.supabase.co` },
+    { env: { ...agencyPreviewEnv, AGENCY_PREVIEW_WRITES_ENABLED: undefined } },
+  ]) {
+    const f = fixture(options);
+    assert.equal((await f.POST(post(payload, agencyPreviewOrigin, `${agencyPreviewOrigin}/api/admin/agency`))).status, 403);
+    assert.equal(f.serviceClients(), 0);
+    assert.deepEqual(f.calls, []);
+    const forged = fixture(options);
+    assert.equal((await forged.POST(post(payload, origin, `${agencyPreviewOrigin}/api/admin/agency`))).status, 403);
+    assert.equal(forged.serviceClients(), 0);
+    assert.deepEqual(forged.calls, []);
+  }
+});
+test("agency binding integration proposal accepts isolated deployment only with owner authorization", async () => {
+  const req = () => post(payload, agencyPreviewOrigin, `${agencyPreviewOrigin}/api/admin/agency`);
+  assert.equal((await fixture({ env: agencyPreviewEnv }).POST(req())).status, 201);
+  const denied = fixture({ env: agencyPreviewEnv, authorized: false });
+  assert.equal((await denied.POST(req())).status, 403);
+  assert.equal(denied.serviceClients(), 0);
+  assert.deepEqual(denied.calls, []);
 });
