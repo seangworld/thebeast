@@ -15,6 +15,7 @@ export type DirectorSignal = {
 };
 
 export type DirectorContext = {
+  assignmentCheckpoints?: readonly { id: string; goalId: string; capability: string; savedStatus: string; updatedAt: string; verification: "Saved history only; refresh supervised objectives to verify current evidence" }[];
   signals: readonly DirectorSignal[];
   specialistSummaries: readonly {
     professionalId: string;

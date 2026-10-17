@@ -116,7 +116,7 @@ test("BO-503 reuses owner-scoped conversation and RLS architecture", () => {
     "supabase/migrations/20260722000100_add_agent_conversations_and_memory.sql",
     "utf8"
   );
-  assert.match(route, /createRouteClient/);
+  assert.match(route, /createAsyncRouteClient/);
   assert.match(route, /supabase\.auth\.getUser/);
   assert.match(route, /\.eq\("owner_id", user\.id\)/);
   assert.match(route, /\.eq\("agent_id", directorProfessionalId\)/);

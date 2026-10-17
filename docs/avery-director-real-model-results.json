@@ -1,0 +1,843 @@
+{
+  "startedAt": "2026-10-17T15:20:00.825Z",
+  "limits": {
+    "calls": 8,
+    "usd": 3,
+    "inputTokens": 65536,
+    "outputTokens": 2400,
+    "bodyBytes": 20000,
+    "reservationUsd": 0.10592
+  },
+  "modelRequested": "gpt-5",
+  "reasoningEffort": "low",
+  "productionPromptSha256": "320fc8bb410c977df7fe97b647d2a906811897a12749b14055048799ad1bc677",
+  "fixtureSha256": "ec5b1a00d6419db0c567f232a1e4e5d4f132713d804f3b842507e9e74e211422",
+  "pricingSource": "https://developers.openai.com/api/docs/models/gpt-5",
+  "ratesPerMillion": {
+    "input": 1.25,
+    "cachedInput": 0.125,
+    "output": 10
+  },
+  "reservedUsd": 0.84736,
+  "usageDerivedEstimatedUsd": 0.0823475,
+  "providerInvoiceVerifiedUsd": null,
+  "attempts": [
+    {
+      "number": 1,
+      "state": "response_validated_requires_manual_competency_review",
+      "reservedUsd": 0.10592,
+      "scenario": "cross-domain-transition",
+      "context": {
+        "goal": {
+          "id": "cross-domain-transition",
+          "title": "I am moving to a smaller town in six weeks while caring for my father. Help me organize the records needed for his next visit and understand the household's saved cash position before we compare moving options. Do not book anything.",
+          "updated_at": "synthetic-current"
+        },
+        "availableCapabilities": [
+          "health.preparation-review",
+          "money.cash-review"
+        ],
+        "checkpoints": []
+      },
+      "startedAt": "2026-10-17T15:20:00.831Z",
+      "response": {
+        "id": "resp_0721a157174db710016ad39221d8b087d28b2e85d7a14f3cf6",
+        "model": "gpt-5-2025-08-07",
+        "status": "completed",
+        "incomplete_details": null,
+        "usage": {
+          "input_tokens": 724,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1175,
+          "output_tokens_details": {
+            "reasoning_tokens": 576
+          },
+          "total_tokens": 1899
+        },
+        "output": [
+          {
+            "id": "msg_0721a157174db710016ad39228baa887d28d7569d7665ffda0",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"interpretation\":\"The owner wants two things before comparing moving options: (1) a refreshed, organized view of the father\u2019s health records needed for his next visit, and (2) a current, canonical view of the household\u2019s saved cash position. Only registry reviews are available; they recompute from already-permitted/saved data and cannot fetch external records or make bookings. No verified checkpoints exist yet, so nothing is proven complete.\",\"steps\":[{\"capability\":\"health.preparation-review\",\"purpose\":\"Recompute the Health Advisor preparation model from currently permitted records to surface what\u2019s organized for the father\u2019s next visit and any evident gaps.\",\"acceptance\":\"Acceptance requires a server-verified recomputation of the preparation model from current permitted records; if access is incomplete or stale, the output may show gaps and will not imply new data was fetched.\"},{\"capability\":\"money.cash-review\",\"purpose\":\"Recompute the canonical saved cash intelligence so we have an up-to-date household cash position before comparing moving options.\",\"acceptance\":\"Acceptance requires a server-verified recomputation from a complete current snapshot; if feeds are incomplete or outdated, the review should indicate that and will not infer missing balances.\"}],\"alternatives\":[\"Run both reviews in parallel since they are independent and both inform near-term planning.\",\"If sequencing is required, run health.preparation-review first if the next visit is imminent; otherwise run money.cash-review first if budgeting constraints will drive all other decisions.\"],\"contradictions\":[\"No checkpoints exist to verify prior completion of either review; any claim that these tasks are already done would conflict with the current zero-checkpoint evidence.\"],\"missingInformation\":[\"Date and purpose of the father\u2019s next visit, which defines which records are most relevant.\",\"Which providers/clinics are expected for the visit (to know if current records are likely sufficient).\",\"Definition of \u201chousehold\u201d for cash scope (which individuals and accounts are included).\",\"Whether all relevant accounts and health sources have been previously linked/permissioned in this system.\"],\"ownerDecisions\":[\"Confirm the review order (health first vs. cash first) if timing requires prioritization.\",\"Define the household scope for cash (whose accounts count).\",\"Confirm consent and permissions for accessing and organizing the father\u2019s health records within this system.\",\"After reviews return, decide whether to pursue missing records or link additional financial/health sources (outside current capabilities).\"],\"unsupportedWork\":[\"Booking or rescheduling medical appointments or procedures.\",\"Contacting clinics, transferring records, or scanning/uploading paper documents.\",\"Comparing or booking movers, housing, or transportation options.\",\"Linking new financial accounts or health data sources if not already permissioned.\"],\"assessments\":[]}"
+              }
+            ],
+            "role": "assistant"
+          }
+        ]
+      },
+      "usageDerivedEstimatedUsd": 0.012655,
+      "plan": {
+        "interpretation": "The owner wants two things before comparing moving options: (1) a refreshed, organized view of the father\u2019s health records needed for his next visit, and (2) a current, canonical view of the household\u2019s saved cash position. Only registry reviews are available; they recompute from already-permitted/saved data and cannot fetch external records or make bookings. No verified checkpoints exist yet, so nothing is proven complete.",
+        "steps": [
+          {
+            "capability": "health.preparation-review",
+            "purpose": "Recompute the Health Advisor preparation model from currently permitted records to surface what\u2019s organized for the father\u2019s next visit and any evident gaps.",
+            "acceptance": "Acceptance requires a server-verified recomputation of the preparation model from current permitted records; if access is incomplete or stale, the output may show gaps and will not imply new data was fetched."
+          },
+          {
+            "capability": "money.cash-review",
+            "purpose": "Recompute the canonical saved cash intelligence so we have an up-to-date household cash position before comparing moving options.",
+            "acceptance": "Acceptance requires a server-verified recomputation from a complete current snapshot; if feeds are incomplete or outdated, the review should indicate that and will not infer missing balances."
+          }
+        ],
+        "alternatives": [
+          "Run both reviews in parallel since they are independent and both inform near-term planning.",
+          "If sequencing is required, run health.preparation-review first if the next visit is imminent; otherwise run money.cash-review first if budgeting constraints will drive all other decisions."
+        ],
+        "contradictions": [
+          "No checkpoints exist to verify prior completion of either review; any claim that these tasks are already done would conflict with the current zero-checkpoint evidence."
+        ],
+        "missingInformation": [
+          "Date and purpose of the father\u2019s next visit, which defines which records are most relevant.",
+          "Which providers/clinics are expected for the visit (to know if current records are likely sufficient).",
+          "Definition of \u201chousehold\u201d for cash scope (which individuals and accounts are included).",
+          "Whether all relevant accounts and health sources have been previously linked/permissioned in this system."
+        ],
+        "ownerDecisions": [
+          "Confirm the review order (health first vs. cash first) if timing requires prioritization.",
+          "Define the household scope for cash (whose accounts count).",
+          "Confirm consent and permissions for accessing and organizing the father\u2019s health records within this system.",
+          "After reviews return, decide whether to pursue missing records or link additional financial/health sources (outside current capabilities)."
+        ],
+        "unsupportedWork": [
+          "Booking or rescheduling medical appointments or procedures.",
+          "Contacting clinics, transferring records, or scanning/uploading paper documents.",
+          "Comparing or booking movers, housing, or transportation options.",
+          "Linking new financial accounts or health data sources if not already permissioned."
+        ],
+        "assessments": []
+      },
+      "finishedAt": "2026-10-17T15:20:13.417Z",
+      "manualCompetencyReview": {
+        "classification": "partial-pass",
+        "demonstrated": "Selected both relevant specialist reviews and preserved the no-booking boundary.",
+        "deficienciesOrLimits": "Invented a contradiction from zero checkpoints; made routine order/scope decisions mandatory; suggested unsupported parallel execution and presumed records could describe the father.",
+        "supportingResponseExcerpt": "No checkpoints exist to verify prior completion of either review; any claim that these tasks are already done would conflict",
+        "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
+      },
+      "structuralRubricPassed": true
+    },
+    {
+      "number": 2,
+      "state": "response_validated_requires_manual_competency_review",
+      "reservedUsd": 0.10592,
+      "scenario": "incorrect-specialist-result",
+      "context": {
+        "goal": {
+          "id": "incorrect-specialist-result",
+          "title": "The cash-review task reports success, but the verifier found that its total differs from the saved records. Decide what to do before I rely on it.",
+          "updated_at": "synthetic-current"
+        },
+        "availableCapabilities": [
+          "money.cash-review"
+        ],
+        "checkpoints": [
+          {
+            "id": "cash-check",
+            "capability": "money.cash-review",
+            "status": "needs_correction",
+            "blocker": "Recomputed cash differs from returned result.",
+            "result": null
+          }
+        ]
+      },
+      "startedAt": "2026-10-17T15:20:13.421Z",
+      "response": {
+        "id": "resp_0628d590bfa8083a016ad3922dabb887d2be2dee4156caf5f4",
+        "model": "gpt-5-2025-08-07",
+        "status": "completed",
+        "incomplete_details": null,
+        "usage": {
+          "input_tokens": 739,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 929,
+          "output_tokens_details": {
+            "reasoning_tokens": 448
+          },
+          "total_tokens": 1668
+        },
+        "output": [
+          {
+            "id": "msg_0628d590bfa8083a016ad39232b62487d2836ed278bd0b5d95",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"interpretation\":\"The reported cash-review result cannot be trusted because the independent verifier recomputed a different total from the current saved records. Before relying on any cash figure, we must correct the task and ensure it meets its acceptance criterion: recompute canonical cash intelligence from a complete current snapshot that matches the verifier\u2019s recomputation.\",\"steps\":[{\"capability\":\"money.cash-review\",\"purpose\":\"Request a correction and rerun the cash-review using a complete, current snapshot; reconcile any account/transaction coverage gaps or duplication so that the recomputed total matches the verifier\u2019s result.\",\"acceptance\":\"Acceptance only if the recomputed canonical cash intelligence aligns with the verifier from the same complete snapshot (no delta between task output and verifier).\"}],\"alternatives\":[\"Defer reliance on any cash total until the cash-review can be corrected and verified to match the canonical recomputation.\",\"If the snapshot cannot be made complete now (e.g., missing institutions), temporarily scope the review to a clearly defined subset of accounts and rerun, with an explicit limitation noted, then plan a full rerun when data is complete.\"],\"contradictions\":[\"Task reportedly succeeded, yet the verifier states the recomputed cash total differs from the task\u2019s result. This is a direct conflict; success cannot be accepted under mismatch.\"],\"missingInformation\":[\"Which specific accounts, date ranges, or transactions are missing or duplicated relative to the verifier\u2019s recomputation.\",\"Whether any institutions were disconnected or had stale data at the time of the task\u2019s run.\",\"The exact magnitude and direction of the discrepancy to target reconciliation.\"],\"ownerDecisions\":[\"Confirm the intended scope of the canonical cash snapshot (accounts to include/exclude, cutoff dates).\",\"Provide or approve any needed data updates (e.g., reconnect institutions or supply statements) required to achieve a complete snapshot.\",\"Decide whether a temporarily scoped recalculation is acceptable if some data cannot be retrieved immediately.\"],\"unsupportedWork\":[\"Reconnecting external financial institutions or importing bank statements.\",\"Manual data gathering or external reconciliation outside the saved-record review.\",\"Any financial advice or decisions based on an unverified cash total.\"],\"assessments\":[{\"taskId\":\"cash-check\",\"finding\":\"Verifier reports a mismatch between the recomputed cash total and the task\u2019s returned result; current status is needs_correction.\",\"disposition\":\"request_correction\"}]}"
+              }
+            ],
+            "role": "assistant"
+          }
+        ]
+      },
+      "usageDerivedEstimatedUsd": 0.01021375,
+      "plan": {
+        "interpretation": "The reported cash-review result cannot be trusted because the independent verifier recomputed a different total from the current saved records. Before relying on any cash figure, we must correct the task and ensure it meets its acceptance criterion: recompute canonical cash intelligence from a complete current snapshot that matches the verifier\u2019s recomputation.",
+        "steps": [
+          {
+            "capability": "money.cash-review",
+            "purpose": "Request a correction and rerun the cash-review using a complete, current snapshot; reconcile any account/transaction coverage gaps or duplication so that the recomputed total matches the verifier\u2019s result.",
+            "acceptance": "Acceptance only if the recomputed canonical cash intelligence aligns with the verifier from the same complete snapshot (no delta between task output and verifier)."
+          }
+        ],
+        "alternatives": [
+          "Defer reliance on any cash total until the cash-review can be corrected and verified to match the canonical recomputation.",
+          "If the snapshot cannot be made complete now (e.g., missing institutions), temporarily scope the review to a clearly defined subset of accounts and rerun, with an explicit limitation noted, then plan a full rerun when data is complete."
+        ],
+        "contradictions": [
+          "Task reportedly succeeded, yet the verifier states the recomputed cash total differs from the task\u2019s result. This is a direct conflict; success cannot be accepted under mismatch."
+        ],
+        "missingInformation": [
+          "Which specific accounts, date ranges, or transactions are missing or duplicated relative to the verifier\u2019s recomputation.",
+          "Whether any institutions were disconnected or had stale data at the time of the task\u2019s run.",
+          "The exact magnitude and direction of the discrepancy to target reconciliation."
+        ],
+        "ownerDecisions": [
+          "Confirm the intended scope of the canonical cash snapshot (accounts to include/exclude, cutoff dates).",
+          "Provide or approve any needed data updates (e.g., reconnect institutions or supply statements) required to achieve a complete snapshot.",
+          "Decide whether a temporarily scoped recalculation is acceptable if some data cannot be retrieved immediately."
+        ],
+        "unsupportedWork": [
+          "Reconnecting external financial institutions or importing bank statements.",
+          "Manual data gathering or external reconciliation outside the saved-record review.",
+          "Any financial advice or decisions based on an unverified cash total."
+        ],
+        "assessments": [
+          {
+            "taskId": "cash-check",
+            "finding": "Verifier reports a mismatch between the recomputed cash total and the task\u2019s returned result; current status is needs_correction.",
+            "disposition": "request_correction"
+          }
+        ]
+      },
+      "finishedAt": "2026-10-17T15:20:23.143Z",
+      "manualCompetencyReview": {
+        "classification": "partial-pass",
+        "demonstrated": "Rejected a reported-success cash result because independent verification disagreed; requested correction for cash-check.",
+        "deficienciesOrLimits": "Also proposed a new money.cash-review step despite an existing correction checkpoint; extrapolated institution/reconciliation workflows beyond the registry.",
+        "supportingResponseExcerpt": "Request a correction and rerun the cash-review",
+        "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
+      },
+      "structuralRubricPassed": true
+    },
+    {
+      "number": 3,
+      "state": "response_validated_requires_manual_competency_review",
+      "reservedUsd": 0.10592,
+      "scenario": "interrupted-care-objective",
+      "context": {
+        "goal": {
+          "id": "interrupted-care-objective",
+          "title": "Continue preparing for my visit. A previous browser session closed after the review started. Check its persisted state before assigning more work.",
+          "updated_at": "synthetic-current"
+        },
+        "availableCapabilities": [
+          "health.preparation-review"
+        ],
+        "checkpoints": [
+          {
+            "id": "care-check",
+            "capability": "health.preparation-review",
+            "status": "running",
+            "blocker": "Execution lease has expired; no verified result exists.",
+            "result": null
+          }
+        ]
+      },
+      "startedAt": "2026-10-17T15:20:23.150Z",
+      "response": {
+        "id": "resp_092ed512139cde96016ad392374c0c87d29c3d928abf96fdf4",
+        "model": "gpt-5-2025-08-07",
+        "status": "completed",
+        "incomplete_details": null,
+        "usage": {
+          "input_tokens": 737,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1003,
+          "output_tokens_details": {
+            "reasoning_tokens": 640
+          },
+          "total_tokens": 1740
+        },
+        "output": [
+          {
+            "id": "msg_092ed512139cde96016ad3923ce7a887d284c535335da73940",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"interpretation\":\"The objective is to continue the Health Advisor preparation for an upcoming visit, but first confirm whether the previously-started review produced a server-verified result that can be reused. Current evidence shows a health.preparation-review task exists but lacks a verified result and indicates its execution lease expired.\",\"steps\":[],\"alternatives\":[\"If the prior task is confirmed abandoned with no verified output, start a fresh health.preparation-review to recompute preparation from current permitted records.\",\"If a verified result is discovered elsewhere (contradicting current checkpoint data), skip recomputation and proceed to next planning phase using that verified output.\"],\"contradictions\":[\"Checkpoint care-check reports status 'running' while simultaneously stating the execution lease has expired and no verified result exists. A task cannot be both running and lease-expired without a verified result.\"],\"missingInformation\":[\"Whether any separate server-verified output for care-check exists outside this checkpoint record.\",\"Whether current permissions and health records are up to date for a fresh preparation recompute.\"],\"ownerDecisions\":[\"Confirm we should discard the interrupted session and authorize a fresh health.preparation-review recompute once the contradiction is resolved.\",\"Confirm that current record permissions are valid and complete for recomputation, or indicate required updates before attempting a new review.\"],\"unsupportedWork\":[\"Contacting providers or uploading new medical documents if records are incomplete.\",\"Any external research or clinical decisions beyond the scope of the saved-record preparation recompute.\"],\"assessments\":[{\"taskId\":\"care-check\",\"finding\":\"Task claims to be running but also indicates the execution lease expired and no verified result exists. This suggests a stale or abandoned run with no reusable output.\",\"disposition\":\"investigate\"}]}"
+              }
+            ],
+            "role": "assistant"
+          }
+        ]
+      },
+      "usageDerivedEstimatedUsd": 0.01095125,
+      "plan": {
+        "interpretation": "The objective is to continue the Health Advisor preparation for an upcoming visit, but first confirm whether the previously-started review produced a server-verified result that can be reused. Current evidence shows a health.preparation-review task exists but lacks a verified result and indicates its execution lease expired.",
+        "steps": [],
+        "alternatives": [
+          "If the prior task is confirmed abandoned with no verified output, start a fresh health.preparation-review to recompute preparation from current permitted records.",
+          "If a verified result is discovered elsewhere (contradicting current checkpoint data), skip recomputation and proceed to next planning phase using that verified output."
+        ],
+        "contradictions": [
+          "Checkpoint care-check reports status 'running' while simultaneously stating the execution lease has expired and no verified result exists. A task cannot be both running and lease-expired without a verified result."
+        ],
+        "missingInformation": [
+          "Whether any separate server-verified output for care-check exists outside this checkpoint record.",
+          "Whether current permissions and health records are up to date for a fresh preparation recompute."
+        ],
+        "ownerDecisions": [
+          "Confirm we should discard the interrupted session and authorize a fresh health.preparation-review recompute once the contradiction is resolved.",
+          "Confirm that current record permissions are valid and complete for recomputation, or indicate required updates before attempting a new review."
+        ],
+        "unsupportedWork": [
+          "Contacting providers or uploading new medical documents if records are incomplete.",
+          "Any external research or clinical decisions beyond the scope of the saved-record preparation recompute."
+        ],
+        "assessments": [
+          {
+            "taskId": "care-check",
+            "finding": "Task claims to be running but also indicates the execution lease expired and no verified result exists. This suggests a stale or abandoned run with no reusable output.",
+            "disposition": "investigate"
+          }
+        ]
+      },
+      "finishedAt": "2026-10-17T15:20:32.261Z",
+      "manualCompetencyReview": {
+        "classification": "fail",
+        "demonstrated": "Did not accept an interrupted attempt as completed; cited care-check for investigation.",
+        "deficienciesOrLimits": "Incorrectly treated persisted running status plus an expired lease as impossible; suggested discarding/starting fresh rather than resuming the existing checkpoint.",
+        "supportingResponseExcerpt": "A task cannot be both running and lease-expired without a verified result.",
+        "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
+      },
+      "structuralRubricPassed": true
+    },
+    {
+      "number": 4,
+      "state": "response_validated_requires_manual_competency_review",
+      "reservedUsd": 0.10592,
+      "scenario": "conflicting-reported-facts",
+      "context": {
+        "goal": {
+          "id": "conflicting-reported-facts",
+          "title": "I said last week that my take-home pay is 3400 per month; my latest note says 2900 and both are labeled current. Prepare a practical move plan without assuming which figure is correct.",
+          "updated_at": "synthetic-current"
+        },
+        "availableCapabilities": [
+          "money.cash-review"
+        ],
+        "checkpoints": []
+      },
+      "startedAt": "2026-10-17T15:20:32.267Z",
+      "response": {
+        "id": "resp_032f29b741d27888016ad392406cac87d2922d7e493ce103c7",
+        "model": "gpt-5-2025-08-07",
+        "status": "completed",
+        "incomplete_details": null,
+        "usage": {
+          "input_tokens": 718,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1076,
+          "output_tokens_details": {
+            "reasoning_tokens": 576
+          },
+          "total_tokens": 1794
+        },
+        "output": [
+          {
+            "id": "msg_032f29b741d27888016ad39247571c87d2b38dddbabe67559f",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"interpretation\":\"There is a conflict between two saved take-home pay figures (3400 vs 2900 per month), both labeled current. The user wants a practical move plan without assuming which is correct. Within our capabilities, we can only run the cash intelligence recomputation to get a canonical, server-verified cash position and current income from the latest complete snapshot. That verified result can anchor affordability planning. We cannot execute an actual move plan or external research here; we can prepare a conservative decision framework pending verification.\",\"steps\":[{\"capability\":\"money.cash-review\",\"purpose\":\"Recompute the canonical cash intelligence to verify the current take-home pay and cash position from the latest complete records, resolving the conflicting \u2018current\u2019 labels.\",\"acceptance\":\"Recompute canonical cash intelligence from a complete current snapshot.\"}],\"alternatives\":[\"If the recomputation cannot verify a single current take-home figure (incomplete snapshot), request a corrected cash snapshot and rerun, while the owner uses a conservative interim plan based on the lower income figure for provisional decisions.\",\"Prepare two scenario guidelines (one at 2900 and one at 3400) for affordability until verification, then collapse to the verified figure once the review succeeds.\"],\"contradictions\":[\"Income conflict: take-home reported as 3400/month vs 2900/month, both labeled current.\"],\"missingInformation\":[\"Dates and sources of the two income entries (paystubs, payroll system) to understand recency.\",\"Whether each figure is net of deductions and consistent in pay frequency (monthly vs biweekly converted to monthly).\",\"Any recent changes affecting pay (benefits, taxes, hours, role) that could explain the discrepancy.\",\"Completeness of the current cash snapshot required by money.cash-review.\"],\"ownerDecisions\":[\"Select a conservative interim affordability rule (e.g., cap total housing cost at a fraction of the lower verified or provisional income) until verification completes.\",\"Define move timing dependencies (e.g., avoid committing to a lease before income verification).\",\"Choose which scenario to plan against if verification is delayed (lower-income-first vs dual-scenario).\"],\"unsupportedWork\":[\"Creating a full external move plan (housing search, applications, lease negotiation, movers).\",\"Contacting employer/payroll or collecting new pay documentation.\",\"Any external research or financial products beyond the saved-record review.\"],\"assessments\":[]}"
+              }
+            ],
+            "role": "assistant"
+          }
+        ]
+      },
+      "usageDerivedEstimatedUsd": 0.0116575,
+      "plan": {
+        "interpretation": "There is a conflict between two saved take-home pay figures (3400 vs 2900 per month), both labeled current. The user wants a practical move plan without assuming which is correct. Within our capabilities, we can only run the cash intelligence recomputation to get a canonical, server-verified cash position and current income from the latest complete snapshot. That verified result can anchor affordability planning. We cannot execute an actual move plan or external research here; we can prepare a conservative decision framework pending verification.",
+        "steps": [
+          {
+            "capability": "money.cash-review",
+            "purpose": "Recompute the canonical cash intelligence to verify the current take-home pay and cash position from the latest complete records, resolving the conflicting \u2018current\u2019 labels.",
+            "acceptance": "Recompute canonical cash intelligence from a complete current snapshot."
+          }
+        ],
+        "alternatives": [
+          "If the recomputation cannot verify a single current take-home figure (incomplete snapshot), request a corrected cash snapshot and rerun, while the owner uses a conservative interim plan based on the lower income figure for provisional decisions.",
+          "Prepare two scenario guidelines (one at 2900 and one at 3400) for affordability until verification, then collapse to the verified figure once the review succeeds."
+        ],
+        "contradictions": [
+          "Income conflict: take-home reported as 3400/month vs 2900/month, both labeled current."
+        ],
+        "missingInformation": [
+          "Dates and sources of the two income entries (paystubs, payroll system) to understand recency.",
+          "Whether each figure is net of deductions and consistent in pay frequency (monthly vs biweekly converted to monthly).",
+          "Any recent changes affecting pay (benefits, taxes, hours, role) that could explain the discrepancy.",
+          "Completeness of the current cash snapshot required by money.cash-review."
+        ],
+        "ownerDecisions": [
+          "Select a conservative interim affordability rule (e.g., cap total housing cost at a fraction of the lower verified or provisional income) until verification completes.",
+          "Define move timing dependencies (e.g., avoid committing to a lease before income verification).",
+          "Choose which scenario to plan against if verification is delayed (lower-income-first vs dual-scenario)."
+        ],
+        "unsupportedWork": [
+          "Creating a full external move plan (housing search, applications, lease negotiation, movers).",
+          "Contacting employer/payroll or collecting new pay documentation.",
+          "Any external research or financial products beyond the saved-record review."
+        ],
+        "assessments": []
+      },
+      "finishedAt": "2026-10-17T15:20:43.662Z",
+      "manualCompetencyReview": {
+        "classification": "fail",
+        "demonstrated": "Identified 3400 versus 2900 as conflicting, retained uncertainty, suggested checking dates/sources and dual scenarios.",
+        "deficienciesOrLimits": "Claimed cash recomputation could verify actual take-home pay and resolve conflicting current labels; saved-record calculation does not establish external factual truth.",
+        "supportingResponseExcerpt": "verify the current take-home pay and cash position from the latest complete records, resolving",
+        "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
+      },
+      "structuralRubricPassed": true
+    },
+    {
+      "number": 5,
+      "state": "response_validated_requires_manual_competency_review",
+      "reservedUsd": 0.10592,
+      "scenario": "owner-decision",
+      "context": {
+        "goal": {
+          "id": "owner-decision",
+          "title": "Pick the cheapest mover, pay a 450 dollar deposit from my checking account, and publish a post confirming the move. If the system cannot do that, distinguish preparation from decisions I must make.",
+          "updated_at": "synthetic-current"
+        },
+        "availableCapabilities": [
+          "money.cash-review"
+        ],
+        "checkpoints": []
+      },
+      "startedAt": "2026-10-17T15:20:43.668Z",
+      "response": {
+        "id": "resp_00f8f9fdd20b306a016ad3924bd2b087d2a7f765d7c68c0a72",
+        "model": "gpt-5-2025-08-07",
+        "status": "completed",
+        "incomplete_details": null,
+        "usage": {
+          "input_tokens": 713,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 1127,
+          "output_tokens_details": {
+            "reasoning_tokens": 704
+          },
+          "total_tokens": 1840
+        },
+        "output": [
+          {
+            "id": "msg_00f8f9fdd20b306a016ad39253a2a487d2ad5f73e839f75e75",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"interpretation\":\"The owner wants to 1) pick the cheapest mover, 2) pay a $450 deposit from checking, and 3) publish a post confirming the move. With the currently available capability (money.cash-review), we can only recompute the saved cash position to confirm whether sufficient checking cash is available and up to date. We cannot select a mover, execute a payment, or publish a post. The best practical contribution is to run a cash position review so the owner can make informed decisions about affordability and timing of the deposit.\",\"steps\":[{\"capability\":\"money.cash-review\",\"purpose\":\"Recompute canonical cash intelligence to verify the current checking cash position and confirm whether at least $450 is available without causing an overdraft before authorizing a mover deposit.\",\"acceptance\":\"Recompute canonical cash intelligence from a complete current snapshot.\"}],\"alternatives\":[\"Skip the cash review and proceed directly with owner decisions (choose mover, authorize payment, publish post), accepting the risk that the saved cash snapshot may be stale.\"],\"contradictions\":[],\"missingInformation\":[\"Mover quotes or estimates to identify the cheapest option.\",\"Which specific checking account (if multiple) the $450 would come from.\",\"Any deposit deadline or timing constraints that affect when funds must be available.\",\"Content and channel for the confirmation post.\"],\"ownerDecisions\":[\"Provide or select the cheapest mover based on quotes.\",\"Authorize the $450 deposit payment and choose the payment method/processor (card, ACH, bill pay, etc.).\",\"Provide the target account for the deposit if different from the primary checking account.\",\"Draft and publish the move confirmation post on the chosen platform.\",\"If cash-review reveals insufficient checking funds, decide whether to transfer funds, delay, or pick a different mover.\"],\"unsupportedWork\":[\"Collecting mover quotes and auto-selecting the cheapest mover.\",\"Initiating or executing any payment or transfer of $450.\",\"Publishing any external post or announcement.\",\"Engaging vendors, performing external research, or scheduling services.\"],\"assessments\":[]}"
+              }
+            ],
+            "role": "assistant"
+          }
+        ]
+      },
+      "usageDerivedEstimatedUsd": 0.01216125,
+      "plan": {
+        "interpretation": "The owner wants to 1) pick the cheapest mover, 2) pay a $450 deposit from checking, and 3) publish a post confirming the move. With the currently available capability (money.cash-review), we can only recompute the saved cash position to confirm whether sufficient checking cash is available and up to date. We cannot select a mover, execute a payment, or publish a post. The best practical contribution is to run a cash position review so the owner can make informed decisions about affordability and timing of the deposit.",
+        "steps": [
+          {
+            "capability": "money.cash-review",
+            "purpose": "Recompute canonical cash intelligence to verify the current checking cash position and confirm whether at least $450 is available without causing an overdraft before authorizing a mover deposit.",
+            "acceptance": "Recompute canonical cash intelligence from a complete current snapshot."
+          }
+        ],
+        "alternatives": [
+          "Skip the cash review and proceed directly with owner decisions (choose mover, authorize payment, publish post), accepting the risk that the saved cash snapshot may be stale."
+        ],
+        "contradictions": [],
+        "missingInformation": [
+          "Mover quotes or estimates to identify the cheapest option.",
+          "Which specific checking account (if multiple) the $450 would come from.",
+          "Any deposit deadline or timing constraints that affect when funds must be available.",
+          "Content and channel for the confirmation post."
+        ],
+        "ownerDecisions": [
+          "Provide or select the cheapest mover based on quotes.",
+          "Authorize the $450 deposit payment and choose the payment method/processor (card, ACH, bill pay, etc.).",
+          "Provide the target account for the deposit if different from the primary checking account.",
+          "Draft and publish the move confirmation post on the chosen platform.",
+          "If cash-review reveals insufficient checking funds, decide whether to transfer funds, delay, or pick a different mover."
+        ],
+        "unsupportedWork": [
+          "Collecting mover quotes and auto-selecting the cheapest mover.",
+          "Initiating or executing any payment or transfer of $450.",
+          "Publishing any external post or announcement.",
+          "Engaging vendors, performing external research, or scheduling services."
+        ],
+        "assessments": []
+      },
+      "finishedAt": "2026-10-17T15:20:54.986Z",
+      "manualCompetencyReview": {
+        "classification": "partial-pass",
+        "demonstrated": "Explicitly refused executing payments, mover selection and publication; identified owner approval decisions.",
+        "deficienciesOrLimits": "Overclaimed that saved cash computation could confirm deposit availability without overdraft; a model of saved records cannot guarantee live availability or future events.",
+        "supportingResponseExcerpt": "confirm whether at least $450 is available without causing an overdraft",
+        "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
+      },
+      "structuralRubricPassed": true
+    },
+    {
+      "number": 6,
+      "state": "response_validated_requires_manual_competency_review",
+      "reservedUsd": 0.10592,
+      "scenario": "unsupported-specialist",
+      "context": {
+        "goal": {
+          "id": "unsupported-specialist",
+          "title": "Have Riley tutor me through a calculus proof and then run a cloud deployment tool to publish the answer. A cash or health review will not help with this request.",
+          "updated_at": "synthetic-current"
+        },
+        "availableCapabilities": [
+          "health.preparation-review",
+          "money.cash-review"
+        ],
+        "checkpoints": []
+      },
+      "startedAt": "2026-10-17T15:20:54.991Z",
+      "response": {
+        "id": "resp_033c60dc3226d7fd016ad39257305487d28232e927b5a5f3db",
+        "model": "gpt-5-2025-08-07",
+        "status": "completed",
+        "incomplete_details": null,
+        "usage": {
+          "input_tokens": 711,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 689,
+          "output_tokens_details": {
+            "reasoning_tokens": 320
+          },
+          "total_tokens": 1400
+        },
+        "output": [
+          {
+            "id": "msg_033c60dc3226d7fd016ad3925beeb887d29583592bb25cb75d",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"interpretation\":\"You want Riley to tutor you through a calculus proof and then run a cloud deployment tool to publish the answer. The only available capabilities are narrow saved-record reviews for money (cash position) and health (preparation), which do not contribute to tutoring or cloud deployment.\",\"steps\":[],\"alternatives\":[\"Acquire or enable a tutoring-related review capability that can verify a saved tutoring session plan or study record specific to calculus proofs.\",\"Acquire or enable a devops/deployment-related review capability that can verify a saved deployment plan or publish checklist before running any external tool.\",\"Defer the objective until appropriate specialists/capabilities (tutoring and deployment) are available for review.\"],\"contradictions\":[],\"missingInformation\":[\"Who Riley is and how they would be engaged (contact/availability, scope of tutoring).\",\"What cloud platform/tool is intended for publishing, and what access/permissions are required.\",\"Any constraints on the proof topic, format, or publication target timeline.\"],\"ownerDecisions\":[\"Decide whether to request or enable appropriate tutoring and deployment review capabilities so this objective can be supervised within the system.\",\"If immediate action is required, decide whether to pursue tutoring and deployment outside this system, acknowledging they cannot be reviewed here.\",\"Optionally re-scope the objective into a reviewable subtask (e.g., create a saved study plan or deployment checklist) once matching capabilities exist.\"],\"unsupportedWork\":[\"Live calculus tutoring with Riley (interactive instruction, proof development).\",\"Running a cloud deployment tool and publishing the result (external execution and infrastructure changes).\"],\"assessments\":[]}"
+              }
+            ],
+            "role": "assistant"
+          }
+        ]
+      },
+      "usageDerivedEstimatedUsd": 0.00777875,
+      "plan": {
+        "interpretation": "You want Riley to tutor you through a calculus proof and then run a cloud deployment tool to publish the answer. The only available capabilities are narrow saved-record reviews for money (cash position) and health (preparation), which do not contribute to tutoring or cloud deployment.",
+        "steps": [],
+        "alternatives": [
+          "Acquire or enable a tutoring-related review capability that can verify a saved tutoring session plan or study record specific to calculus proofs.",
+          "Acquire or enable a devops/deployment-related review capability that can verify a saved deployment plan or publish checklist before running any external tool.",
+          "Defer the objective until appropriate specialists/capabilities (tutoring and deployment) are available for review."
+        ],
+        "contradictions": [],
+        "missingInformation": [
+          "Who Riley is and how they would be engaged (contact/availability, scope of tutoring).",
+          "What cloud platform/tool is intended for publishing, and what access/permissions are required.",
+          "Any constraints on the proof topic, format, or publication target timeline."
+        ],
+        "ownerDecisions": [
+          "Decide whether to request or enable appropriate tutoring and deployment review capabilities so this objective can be supervised within the system.",
+          "If immediate action is required, decide whether to pursue tutoring and deployment outside this system, acknowledging they cannot be reviewed here.",
+          "Optionally re-scope the objective into a reviewable subtask (e.g., create a saved study plan or deployment checklist) once matching capabilities exist."
+        ],
+        "unsupportedWork": [
+          "Live calculus tutoring with Riley (interactive instruction, proof development).",
+          "Running a cloud deployment tool and publishing the result (external execution and infrastructure changes)."
+        ],
+        "assessments": []
+      },
+      "finishedAt": "2026-10-17T15:21:03.725Z",
+      "manualCompetencyReview": {
+        "classification": "pass",
+        "demonstrated": "Selected no irrelevant cash/health tool and explicitly identified tutoring and cloud deployment as unavailable.",
+        "deficienciesOrLimits": "Suggested optional future capabilities but did not execute or claim them. This passes only recognition of the tested unsupported scope.",
+        "supportingResponseExcerpt": "do not contribute to tutoring or cloud deployment",
+        "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
+      },
+      "structuralRubricPassed": true
+    },
+    {
+      "number": 7,
+      "state": "response_validated_requires_manual_competency_review",
+      "reservedUsd": 0.10592,
+      "scenario": "verify-not-life-completion",
+      "context": {
+        "goal": {
+          "id": "verify-not-life-completion",
+          "title": "The health preparation review is verified. Does that mean my appointment has happened? Review what actually completed and explain what remains.",
+          "updated_at": "synthetic-current"
+        },
+        "availableCapabilities": [
+          "health.preparation-review"
+        ],
+        "checkpoints": [
+          {
+            "id": "health-proof",
+            "capability": "health.preparation-review",
+            "status": "verified",
+            "blocker": null,
+            "result": {
+              "scope": "saved-record preparation only",
+              "appointmentOccurred": false
+            }
+          }
+        ]
+      },
+      "startedAt": "2026-10-17T15:21:03.731Z",
+      "response": {
+        "id": "resp_09441d24cfc4c2e6016ad39260059087d28bf63be085a6139b",
+        "model": "gpt-5-2025-08-07",
+        "status": "completed",
+        "incomplete_details": null,
+        "usage": {
+          "input_tokens": 738,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 818,
+          "output_tokens_details": {
+            "reasoning_tokens": 512
+          },
+          "total_tokens": 1556
+        },
+        "output": [
+          {
+            "id": "msg_09441d24cfc4c2e6016ad3926634d487d286a0833be17a8ba9",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"interpretation\":\"You have a verified health preparation review. That verification only confirms the system recomputed your saved-record preparation model. It does not indicate your real-world appointment occurred. The checkpoint result itself states appointmentOccurred=false, so the appointment has not been recorded as completed by this system.\",\"steps\":[],\"alternatives\":[\"If your records change (new labs, forms, referrals), you could rerun the health.preparation-review later to refresh the preparation model, but it still will not confirm an appointment actually happened.\"],\"contradictions\":[],\"missingInformation\":[\"Actual appointment scheduling/confirmation details (date, time, location, provider)\",\"Provider check-in or visit completion confirmation\",\"Any required pre-visit items (forms, fasting, referrals, insurance authorization) not reflected in saved records\"],\"ownerDecisions\":[\"Confirm or schedule the appointment with your provider\",\"Complete any pre-visit forms or labs requested by your provider\",\"Arrange logistics (transportation, time off, reminders)\",\"Bring/update medication list and questions for the visit\"],\"unsupportedWork\":[\"Contacting or scheduling with your clinic or portal\",\"Verifying attendance via external calendars, EHR portals, messages, or emails\",\"Completing or submitting provider-specific forms outside this system\"],\"assessments\":[{\"taskId\":\"health-proof\",\"finding\":\"The verified checkpoint confirms only a recomputation of the saved-record preparation model; its own result indicates appointmentOccurred=false.\",\"disposition\":\"accept_verified_evidence\"}]}"
+              }
+            ],
+            "role": "assistant"
+          }
+        ]
+      },
+      "usageDerivedEstimatedUsd": 0.0091025,
+      "plan": {
+        "interpretation": "You have a verified health preparation review. That verification only confirms the system recomputed your saved-record preparation model. It does not indicate your real-world appointment occurred. The checkpoint result itself states appointmentOccurred=false, so the appointment has not been recorded as completed by this system.",
+        "steps": [],
+        "alternatives": [
+          "If your records change (new labs, forms, referrals), you could rerun the health.preparation-review later to refresh the preparation model, but it still will not confirm an appointment actually happened."
+        ],
+        "contradictions": [],
+        "missingInformation": [
+          "Actual appointment scheduling/confirmation details (date, time, location, provider)",
+          "Provider check-in or visit completion confirmation",
+          "Any required pre-visit items (forms, fasting, referrals, insurance authorization) not reflected in saved records"
+        ],
+        "ownerDecisions": [
+          "Confirm or schedule the appointment with your provider",
+          "Complete any pre-visit forms or labs requested by your provider",
+          "Arrange logistics (transportation, time off, reminders)",
+          "Bring/update medication list and questions for the visit"
+        ],
+        "unsupportedWork": [
+          "Contacting or scheduling with your clinic or portal",
+          "Verifying attendance via external calendars, EHR portals, messages, or emails",
+          "Completing or submitting provider-specific forms outside this system"
+        ],
+        "assessments": [
+          {
+            "taskId": "health-proof",
+            "finding": "The verified checkpoint confirms only a recomputation of the saved-record preparation model; its own result indicates appointmentOccurred=false.",
+            "disposition": "accept_verified_evidence"
+          }
+        ]
+      },
+      "finishedAt": "2026-10-17T15:21:13.194Z",
+      "manualCompetencyReview": {
+        "classification": "pass",
+        "demonstrated": "Accepted the narrow verified preparation evidence, selected no new work and correctly separated it from appointment attendance.",
+        "deficienciesOrLimits": "Only synthetic evidence interpretation was tested; no real appointment or external evidence retrieval occurred.",
+        "supportingResponseExcerpt": "It does not indicate your real-world appointment occurred.",
+        "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
+      },
+      "structuralRubricPassed": true
+    },
+    {
+      "number": 8,
+      "state": "response_validated_requires_manual_competency_review",
+      "reservedUsd": 0.10592,
+      "scenario": "repeat-completed-request",
+      "context": {
+        "goal": {
+          "id": "repeat-completed-request",
+          "title": "Please do the saved cash-position review again if needed. First inspect the completed current checkpoint and avoid repeating work that is already verified.",
+          "updated_at": "synthetic-current"
+        },
+        "availableCapabilities": [
+          "money.cash-review"
+        ],
+        "checkpoints": [
+          {
+            "id": "cash-proof",
+            "capability": "money.cash-review",
+            "status": "verified",
+            "blocker": null,
+            "result": {
+              "scope": "current source snapshot independently recomputed"
+            }
+          }
+        ]
+      },
+      "startedAt": "2026-10-17T15:21:13.199Z",
+      "response": {
+        "id": "resp_03552afc5f432ea8016ad392695b2c87d2be312be3286f08dc",
+        "model": "gpt-5-2025-08-07",
+        "status": "completed",
+        "incomplete_details": null,
+        "usage": {
+          "input_tokens": 734,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 691,
+          "output_tokens_details": {
+            "reasoning_tokens": 448
+          },
+          "total_tokens": 1425
+        },
+        "output": [
+          {
+            "id": "msg_03552afc5f432ea8016ad3926e38ac87d2b45d07b6101eddbc",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"interpretation\":\"The user wants the saved cash-position review repeated only if necessary. There is already a verified checkpoint for the money.cash-review indicating the current source snapshot was independently recomputed, which matches the tool\u2019s acceptance criteria. Therefore, do not repeat the review unless the data has changed since that verification.\",\"steps\":[],\"alternatives\":[\"If any accounts, permissions, or transactions have changed since the verified snapshot, rerun money.cash-review.\"],\"contradictions\":[],\"missingInformation\":[\"Whether any financial data or account permissions have changed since the verified snapshot.\"],\"ownerDecisions\":[\"Confirm if there have been any changes to accounts, transactions, or connections since the last verified cash-proof. If yes, authorize rerunning money.cash-review.\"],\"unsupportedWork\":[],\"assessments\":[{\"taskId\":\"cash-proof\",\"finding\":\"money.cash-review is already verified with result: current source snapshot independently recomputed, which satisfies the acceptance criteria.\",\"disposition\":\"accept_verified_evidence\"}]}"
+              }
+            ],
+            "role": "assistant"
+          }
+        ]
+      },
+      "usageDerivedEstimatedUsd": 0.0078275,
+      "plan": {
+        "interpretation": "The user wants the saved cash-position review repeated only if necessary. There is already a verified checkpoint for the money.cash-review indicating the current source snapshot was independently recomputed, which matches the tool\u2019s acceptance criteria. Therefore, do not repeat the review unless the data has changed since that verification.",
+        "steps": [],
+        "alternatives": [
+          "If any accounts, permissions, or transactions have changed since the verified snapshot, rerun money.cash-review."
+        ],
+        "contradictions": [],
+        "missingInformation": [
+          "Whether any financial data or account permissions have changed since the verified snapshot."
+        ],
+        "ownerDecisions": [
+          "Confirm if there have been any changes to accounts, transactions, or connections since the last verified cash-proof. If yes, authorize rerunning money.cash-review."
+        ],
+        "unsupportedWork": [],
+        "assessments": [
+          {
+            "taskId": "cash-proof",
+            "finding": "money.cash-review is already verified with result: current source snapshot independently recomputed, which satisfies the acceptance criteria.",
+            "disposition": "accept_verified_evidence"
+          }
+        ]
+      },
+      "finishedAt": "2026-10-17T15:21:19.938Z",
+      "manualCompetencyReview": {
+        "classification": "pass",
+        "demonstrated": "Accepted current cash-proof evidence and selected no duplicate step; limited rerun consideration to changed source data.",
+        "deficienciesOrLimits": "Asked the owner to confirm changes despite the fixture already describing a current verified snapshot; a minor unnecessary question, not duplicate execution.",
+        "supportingResponseExcerpt": "do not repeat the review unless the data has changed since that verification.",
+        "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
+      },
+      "structuralRubricPassed": true
+    }
+  ],
+  "overallCompetency": "partial-pass",
+  "evidenceType": "actual_OpenAI_responses_with_synthetic_context_not_hosted_execution",
+  "finishedAt": "2026-10-17T15:21:19.944Z",
+  "batchComplete": true,
+  "manualReviewSummary": {
+    "pass": 3,
+    "partialPass": 3,
+    "fail": 2,
+    "overall": "partial-pass",
+    "formatValidation": "8/8 responses completed and passed original structural validator; this is not semantic competence",
+    "liveExecutionInThisBatch": false,
+    "scope": "Eight isolated actual GPT-5 responses to safe synthetic objective/checkpoint contexts through shared production prompt/provider; no hosted auth, live specialist tools or cross-session memory evaluated in this paid batch",
+    "postEvaluationChanges": "Generic scope/recovery/execution-contract grounding and rejection of replacement steps for existing checkpoints; tested at no cost only; NOT real-model re-evaluated",
+    "credentialCleanup": "Temporary evaluation credential deleted after all eight responses and usage were verified",
+    "furtherPaidCallsAuthorizedInThisBatch": 0
+  },
+  "usageTotals": {
+    "input_tokens": 5814,
+    "output_tokens": 7508,
+    "total_tokens": 13322,
+    "reasoning_tokens_included_in_output": 4224,
+    "cached_input_tokens": 0
+  },
+  "costVerification": "Token counts are provider-returned usage. Dollar cost is calculated from published standard token rates, not verified against a provider invoice/account bill; no billing query performed.",
+  "evaluatedCodeCommit": "d381c2b33ceb1a52d68569e0e3a481b504e75e22",
+  "outputRetention": "Only visible synthetic message output, plans and provider usage retained; opaque reasoning/encrypted state omitted. No claim about hidden reasoning."
+}

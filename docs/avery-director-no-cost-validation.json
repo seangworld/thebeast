@@ -1,0 +1,194 @@
+{
+  "date": "2026-10-17",
+  "phase": "targeted reasoning improvements; no-cost verification only",
+  "overallCompetency": "partial-pass",
+  "thisPhasePaidCalls": 0,
+  "thisPhaseCostUsd": 0,
+  "credentialAccess": "none; previous temporary evaluation key remains deleted",
+  "priorActualModelResults": {
+    "pass": 3,
+    "partialPass": 3,
+    "fail": 2,
+    "usageDerivedEstimatedUsd": 0.0823475,
+    "evidence": "avery-director-real-model-results.json",
+    "postCorrectionRealModelVerified": false
+  },
+  "corrections": [
+    {
+      "area": "recovery",
+      "change": "Provide metadata-derived lease/dependency/retry guidance. Exhausted expired running rows now transition to blocked with cleared lease, enabling existing explicit correction without replacement.",
+      "verification": "Old evaluated source reproduces stuck running/refused correction. Current source passes deterministic reproduction and real local auth/API/SQL recovery; same id/history retained."
+    },
+    {
+      "area": "evidence",
+      "change": "Only operational metadata and existing verification timestamps/limitations enter reasoning. Evidence claims have an exact permitted saved-record-consistency scope and require current permitted verified checkpoints. Raw financial/clinical outputs stay local.",
+      "verification": "Adversarial scope, revoked/unverified proof and private-output exclusion tests pass; free-form prose correctness remains real-model unverified."
+    },
+    {
+      "area": "unnecessary blockers",
+      "change": "Separate planningNotes from actual owner/source/conflict blockers; valid routine resume/wait assessments do not block unrelated new review approval.",
+      "verification": "Contract tests plus real local synthetic-proposal UI approval with planning notes; genuine approval decisions and unresolved dependencies still block."
+    },
+    {
+      "area": "correction handling",
+      "change": "Preserve same-checkpoint correction/retry flow and replacement-plan guard; exhausted cycles require explicit member authorization.",
+      "verification": "Real local persistence, specialist recomputation, history, repeat without duplicate, active-lease refusal and cross-user denial pass."
+    },
+    {
+      "area": "planning",
+      "change": "Expose actual operational dependencies and validate proposed dependsOn ordering, permitted/verified prerequisites and no cycles; show prerequisites for member review.",
+      "verification": "No-cost unknown/cyclic/unresolved dependency tests pass; meaningful semantic selection remains unverified."
+    }
+  ],
+  "verification": {
+    "targeted": {
+      "tests": 59,
+      "pass": 59,
+      "fail": 0,
+      "details": "51 Director tests; 3 budget, 3 captured-output replay, 2 old/new source reproduction checks"
+    },
+    "fullSuite": {
+      "tests": 2406,
+      "pass": 2388,
+      "fail": 18,
+      "newFailingNames": [],
+      "baselineIssue": "https://github.com/seangworld/thebeast/issues/266"
+    },
+    "lint": "pass",
+    "typescript": "pass",
+    "localSupabase": {
+      "migrations": 125,
+      "postgresMajor": 17,
+      "realAuthenticationAndRLS": "pass; synthetic accounts only",
+      "sameCheckpointRecovery": "pass",
+      "approvalWithNonBlockingNotes": "pass; seeded synthetic model adapter only",
+      "responsiveChromium": [
+        {
+          "width": 1440,
+          "height": 900,
+          "status": "pass"
+        },
+        {
+          "width": 390,
+          "height": 844,
+          "status": "pass"
+        },
+        {
+          "width": 375,
+          "height": 812,
+          "status": "pass"
+        }
+      ]
+    },
+    "requiredBuild": "blocked by unchanged full npm audit gate",
+    "fullAudit": {
+      "high": 7,
+      "moderate": 0
+    },
+    "productionOnlyAudit": {
+      "advisories": 0
+    },
+    "cleanup": "task-created dev server and local stack stopped; synthetic volumes/private fixtures removed"
+  },
+  "safetyReview": "Automatic review rejected proposed new financial/clinical summary egress. Implemented operational-metadata-only alternative instead; no new sensitive-value provider access. No action remains blocked by that rejection.",
+  "remainingDefects": [
+    "Post-correction planning, recovery judgment, contradiction recognition and escalation calibration are not real-model tested.",
+    "Typed metadata/evidence scopes cannot prove free-form narrative truth or actual-world outcomes.",
+    "No detailed specialist numerical/clinical reasoning input is supplied; absence must be reported, not invented.",
+    "No new general orchestrator, research capability, background autonomy or other specialist upgrade.",
+    "Hosted auth/migration/tenant, WebKit/native/physical-device gates remain unverified.",
+    "Seven high advisory package alerts and eighteen unrelated baseline failures remain."
+  ],
+  "retestProposal": {
+    "artifact": "avery-director-retest-plan.json",
+    "authorization": "approved in Issue #264; blocked by unavailable development credential; 0 calls",
+    "model": "gpt-5; expected prior snapshot gpt-5-2025-08-07; stop rather than substitute model silently",
+    "callsIncludingFailures": 16,
+    "ownerCostCeilingUsd": 2,
+    "conservativeReservedWorstCaseUsd": 1.69472,
+    "composition": "8 originals + 4 fresh variations + 4 adaptive follow-ups",
+    "evidenceNeeded": "Manual semantic judgment plus real synthetic same-checkpoint execution for recovery/correction; no passing grades from schema or fixture matching alone."
+  },
+  "nextAction": "Owner review. Keep partial-pass; do not issue another model call under this exhausted authorization. Retained credential may be used only for future explicitly authorized development tests.",
+  "approvedSecondRetestAttempt": {
+    "date": "2026-10-17",
+    "authorization": "Owner-approved second batch: at most 16 calls and $2 total, distinct from the exhausted first batch",
+    "approvalRecordedAt": "2026-10-17T15:46:33Z",
+    "approvalSource": "https://github.com/seangworld/thebeast/issues/264#issuecomment-6236024287",
+    "status": "blocked_no_accessible_development_credential",
+    "credentialChecks": {
+      "temporaryEvaluationFile": "absent; deleted after previous successful first-batch verification",
+      "mainLocalEnv": "exists; zero OPENAI_API_KEY definitions",
+      "worktreeLocalEnv": "absent",
+      "otherExistingNonProductionRootEnvFiles": "no key definitions",
+      "otherAveryTemporaryEnvFiles": "none",
+      "processKeyPresent": false,
+      "vercelDevelopmentMetadata": {
+        "thebeast": "access succeeded; no OPENAI_API_KEY entry",
+        "seangworld": "access succeeded; no OPENAI_API_KEY entry"
+      }
+    },
+    "productionOrPreviewValuesRetrieved": false,
+    "paidCalls": 0,
+    "paidRetries": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "actualCostUsd": 0,
+    "modelExecuted": null,
+    "results": "No second-round results. Prior actual-model score remains 3 pass / 3 partial-pass / 2 fail.",
+    "noCostTests": "Prior verified evidence retained; not rerun in this credential-only attempt.",
+    "nextAction": "Stop this attempt. Resume the approved bounded batch only when a permitted development credential is accessible. No owner technical setup requested."
+  },
+  "secondActualModelEvaluation": {
+    "date": "2026-10-17",
+    "status": "completed_actual_second_model_batch",
+    "model": "gpt-5-2025-08-07",
+    "calls": 16,
+    "maxCalls": 16,
+    "maxUsd": 2,
+    "reservedWorstCaseUsd": 1.69472,
+    "usage": {
+      "input_tokens": 25985,
+      "output_tokens": 15371,
+      "cached_input_tokens": 16128,
+      "reasoning_tokens_included_in_output": 8832,
+      "total_tokens": 41356
+    },
+    "usageDerivedEstimatedUsd": 0.16804725,
+    "providerInvoiceVerifiedUsd": null,
+    "grades": {
+      "pass": 9,
+      "partialPass": 3,
+      "fail": 4
+    },
+    "originalEight": {
+      "pass": 5,
+      "partialPass": 2,
+      "fail": 1
+    },
+    "overallCompetency": "partial-pass",
+    "actualModelGatedRecoveryWorkflows": 1,
+    "credentialLocatedAndUsed": true,
+    "credentialPreservedUnchanged": true,
+    "credentialScope": "Owner-specified development credential; no production or preview secret retrieved",
+    "evidence": "avery-director-second-model-results.json",
+    "postBatchCorrectionsModelRetested": false,
+    "thisAuthorizationExhausted": true,
+    "nextAction": "Owner review. Keep partial-pass; do not issue another model call under this exhausted authorization. Retained credential may be used only for future explicitly authorized development tests."
+  },
+  "latestNoCostChecks": {
+    "targetedTests": 68,
+    "pass": 68,
+    "fail": 0,
+    "fullSuite": {
+      "tests": 2406,
+      "pass": 2388,
+      "fail": 18,
+      "newFailingNames": []
+    },
+    "lint": "pass",
+    "typescript": "pass",
+    "requiredBuild": "blocked by unchanged 7-high full audit gate",
+    "evidence": "actual second-batch replay, no-cost repaired contract fixtures and existing Director regressions; not additional model responses"
+  }
+}

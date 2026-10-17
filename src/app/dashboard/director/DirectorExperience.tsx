@@ -26,6 +26,7 @@ import {
 } from "@/app/components/agents/ProfessionalConversationIdentity";
 import type { DirectorRecommendation } from "@/lib/director";
 import { digitalStaffUnavailableMessage } from "@/lib/digitalStaffRuntime/security";
+import DirectorObjectives from "./DirectorObjectives";
 
 type DirectorMessage = {
   id: string;
@@ -312,6 +313,7 @@ export default function DirectorExperience() {
       professionalName="Director"
       drawerId="director-conversation-history"
     >
+      <DirectorObjectives />
       <AgentExperience
         className="max-w-none border-violet-300/15 bg-[#141824]"
         header={

@@ -19,6 +19,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const configuration = resolveSupabasePublicConfiguration({
+    allowInsecureLoopback: process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test",
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,
     publicKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   });
