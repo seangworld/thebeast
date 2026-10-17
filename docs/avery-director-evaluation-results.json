@@ -105,5 +105,78 @@
     },
     "hostedFunctionalVerification": "not performed; candidate migration absent",
     "cleanup": "task-created local stack and private fixtures removed"
+  },
+  "latestAttempt": {
+    "date": "2026-10-17",
+    "status": "blocked_missing_development_credential",
+    "authorization": {
+      "maxUsd": 3,
+      "maxPaidModelCalls": 8
+    },
+    "credentialCheck": {
+      "suppliedEnvFile": "exists_no_OPENAI_API_KEY_definition",
+      "worktreeEnvFile": "absent",
+      "temporaryEvaluationEnvFile": "absent",
+      "processKeyPresent": false,
+      "otherExistingRootEnvFiles": "no_additional_key_definitions"
+    },
+    "modelExecuted": null,
+    "paidCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "actualCostUsd": 0,
+    "apiRequests": 0,
+    "scenarioResults": [
+      {
+        "id": "cross-domain-transition",
+        "status": "blocked",
+        "reason": "Missing development OpenAI API credential; no model evaluation attempted."
+      },
+      {
+        "id": "incorrect-specialist-result",
+        "status": "blocked",
+        "reason": "Missing development OpenAI API credential; no model evaluation attempted."
+      },
+      {
+        "id": "interrupted-care-objective",
+        "status": "blocked",
+        "reason": "Missing development OpenAI API credential; no model evaluation attempted."
+      },
+      {
+        "id": "conflicting-reported-facts",
+        "status": "blocked",
+        "reason": "Missing development OpenAI API credential; no model evaluation attempted."
+      },
+      {
+        "id": "owner-decision",
+        "status": "blocked",
+        "reason": "Missing development OpenAI API credential; no model evaluation attempted."
+      },
+      {
+        "id": "unsupported-specialist",
+        "status": "blocked",
+        "reason": "Missing development OpenAI API credential; no model evaluation attempted."
+      },
+      {
+        "id": "verify-not-life-completion",
+        "status": "blocked",
+        "reason": "Missing development OpenAI API credential; no model evaluation attempted."
+      },
+      {
+        "id": "repeat-completed-request",
+        "status": "blocked",
+        "reason": "Missing development OpenAI API credential; no model evaluation attempted."
+      }
+    ],
+    "fullAudit": {
+      "high": 7,
+      "moderate": 0
+    },
+    "productionAudit": {
+      "advisories": 0
+    },
+    "requiredBuild": "blocked_by_unchanged_full_audit_gate",
+    "reasoningChanges": "none; no actual inference defects demonstrated",
+    "previousLocalVerification": "retained historical results, not rerun in this attempt"
   }
 }

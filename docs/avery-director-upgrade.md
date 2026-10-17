@@ -15,7 +15,60 @@ verified checkpoints. This is not evidence of general AI Director competence,
 autonomous research, arbitrary specialist task completion, or commercial readiness.
 The PR must not be described as completing the entire requested Director upgrade.
 
-## Continuation evidence: 2026-10-16 (current)
+## 2026-10-17: capped real-model evaluation blocked before any request
+
+The owner authorized at most **$3 total and eight paid model calls** for the eight
+established cases. This replaces the previous free-only evaluation instruction
+for this bounded run. **No usable development credential was found**, so paid
+evaluation stopped before any authentication probe or model request.
+
+Credential checks returned only existence/definition metadata, never values:
+
+- `/Users/seangworld/Desktop/Beast/thebeast/.env.local`: exists, **zero** `OPENAI_API_KEY` definitions.
+- Avery worktree `.env.local`: absent.
+- `/private/tmp/avery-director-eval.env`: absent.
+- Current process environment: no `OPENAI_API_KEY`.
+- Other existing non-template root `.env*` files in these two checkouts: no additional key definitions found.
+
+**Model executed: none. Calls: 0/8. Input/output tokens: 0/0. Actual cost: $0.00/$3.00.**
+No model identity, returned usage or reasoning output exists for this attempt.
+All eight established scenarios remain **blocked/unverified**, not passed or failed
+on reasoning merit. Earlier deterministic, mocked and local authenticated integration
+results below are prior evidence, not rerun AI evaluations. No reasoning defects
+were demonstrated in this attempt, so no speculative feature/prompt changes were made.
+
+### Dependency investigation refreshed
+
+`npm audit --json` still reports **seven high, zero moderate**, affecting `braces`,
+`micromatch`, `fast-glob`, `chokidar`, `tailwindcss`, `@next/eslint-plugin-next`
+and `eslint-config-next`. These are seven package alerts from one root advisory,
+not seven independent root flaws. `npm audit --omit=dev --json` reports **zero**.
+
+- Installed path: Tailwind 3.4.19 -> Chokidar 3.6.0 -> braces 3.0.3;
+  Tailwind -> micromatch 4.0.8 -> braces 3.0.3; Next ESLint 15.5.27 ->
+  fast-glob 3.3.1 -> micromatch -> braces. Tailwind also has fast-glob 3.3.3.
+- Registry checks: latest braces remains **3.0.3**, latest micromatch **4.0.8**;
+  its dependency remains `braces:^3.0.3`. Tailwind 3.4.19 still requires
+  `chokidar:^3.6.0`, `fast-glob:^3.3.2`, `micromatch:^4.0.8`.
+- [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+  still lists affected versions <=3.0.3 and **no patched version** (checked today).
+- Chokidar 4 removes its braces dependency, but replacing Tailwind's required major
+  version alone would leave micromatch's affected path. It is not a full safe fix.
+- npm proposes a breaking ESLint-config downgrade to 14.2.35; a downgrade is not
+  evidence of a supported patched Next 15 toolchain and was not applied.
+
+The required `npm run build` was rerun and remains blocked by its unchanged full
+`npm audit` gate. No dependency/package/lockfile changes, forced fixes, omitted
+security checks, features, production changes or deployments were performed.
+
+**Next concrete action:** configure a development key outside chat at the supplied
+local secret-file path, then resume only this authorized eight-call/$3 batch with
+pre-request worst-case budget reservation, a persistent call ledger, no retries,
+actual response usage/cost recording and manual competency review. Do not count
+validation fixtures as inference. The current blocker is missing configuration,
+not a failed provider-authentication response. Preserve the existing partial-pass.
+
+## Continuation evidence: 2026-10-16 (prior verified implementation)
 
 **Overall: partial-pass. No real-model competency pass. Free-only evaluation; zero paid calls.**
 The sections below this continuation preserve the earlier implementation record;
