@@ -158,3 +158,49 @@ test("exhausted interrupted assignment enters correction workflow and preserves 
   assert.equal((await nextSession.run({ execute: () => { throw new Error("duplicate"); } })).state, "verified");
   assert.equal(nextSession.store.tasks[0].id, row.id); assert.equal(nextSession.store.tasks.length, 1);
 });
+
+test("revoked first specialist does not starve independent permitted work or read denied records", async () => {
+  const care: DirectorAssignment = { ...task("care"), capability: "health.preparation-review" };
+  const store = new MemoryStore([task("cash"), care]);
+  let deniedReads = 0;
+  const access: AssignmentAccess = {
+    authorize: async (owner, capability) => owner === "alice" && capability === "health.preparation-review",
+    snapshot: async (owner, capability) => {
+      if (capability !== "health.preparation-review") { deniedReads++; throw new Error("Denied records must not be read"); }
+      return { ownerId: owner, capability, complete: true, health: [{ id: "own-care", ownerId: owner, recordType: "appointment", title: "Synthetic paperwork", status: "active", occurredOn: null, source: "synthetic", notes: null, details: {}, createdAt: now, updatedAt: now }] };
+    },
+  };
+  const outcome = await advanceDirectorObjective({ store, access, ownerId: "alice", goalId: "goal", now, leaseId: "care-lease" });
+  assert.equal(outcome.state, "verified");
+  assert.equal(store.tasks[0].status, "blocked");
+  assert.equal(store.tasks[0].attempts, 0);
+  assert.equal(store.tasks[0].result, null);
+  assert.equal(store.tasks[1].status, "verified");
+  assert.equal(deniedReads, 0);
+});
+
+test("skipping a denied specialist never bypasses a dependent task's prerequisite", async () => {
+  const care: DirectorAssignment = { ...task("care"), capability: "health.preparation-review", dependencies: ["cash"] };
+  const store = new MemoryStore([task("cash"), care]);
+  let reads = 0;
+  const access: AssignmentAccess = {
+    authorize: async (_owner, capability) => capability === "health.preparation-review",
+    snapshot: async () => { reads++; throw new Error("No task may read records"); },
+  };
+  const outcome = await advanceDirectorObjective({ store, access, ownerId: "alice", goalId: "goal", now, leaseId: "lease" });
+  assert.equal(outcome.state, "blocked"); assert.equal(reads, 0);
+  assert.equal(store.tasks[1].attempts, 0); assert.equal(store.tasks[1].status, "planned");
+});
+
+test("permission-denial persistence contention stops before independent execution", async () => {
+  const care: DirectorAssignment = { ...task("care"), capability: "health.preparation-review" };
+  const store = new MemoryStore([task("cash"), care]);
+  store.compareAndSwap = async () => false;
+  let reads = 0;
+  const access: AssignmentAccess = {
+    authorize: async (_owner, capability) => capability === "health.preparation-review",
+    snapshot: async () => { reads++; throw new Error("Contended decision must not execute"); },
+  };
+  assert.equal((await advanceDirectorObjective({ store, access, ownerId: "alice", goalId: "goal", now, leaseId: "lease" })).state, "busy");
+  assert.equal(reads, 0); assert.equal(store.tasks[1].attempts, 0);
+});

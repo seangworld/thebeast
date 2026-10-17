@@ -120,8 +120,18 @@ export async function advanceDirectorObjective(input: {
     }
   }
   if (tasks.length && tasks.every((task) => task.status === "verified")) return { state: "verified" as const, detail: "All approved saved-record reviews verified. The underlying goal is not marked complete." };
-  const task = tasks.find((item) => item.status !== "verified" && (item.status !== "running" || Date.parse(item.lease_until || "") <= Date.parse(now)) && item.dependencies.every((id) => tasks.some((dependency) => dependency.id === id && dependency.status === "verified")));
-  if (!task) return { state: "blocked" as const, detail: "No runnable assignment. Check dependencies or an active execution lease." };
+  const runnable = tasks.filter((item) => item.status !== "verified" && (item.status !== "running" || Date.parse(item.lease_until || "") <= Date.parse(now)) && item.dependencies.every((id) => tasks.some((dependency) => dependency.id === id && dependency.status === "verified")));
+  let task: DirectorAssignment | undefined;
+  let permissionBlocker: string | null = null;
+  // A revoked independent assignment must not starve other approved work.
+  // Keep denied rows blocked without reading their records or consuming attempts.
+  for (const candidate of runnable) {
+    if (candidate.attempts >= 3 || await access.authorize(ownerId, candidate.capability)) { task = candidate; break; }
+    const blocked = transition(candidate, "blocked", "Specialist permission unavailable. No module records were read.", now);
+    if (!await store.compareAndSwap(candidate, blocked)) return { state: "busy" as const };
+    permissionBlocker = blocked.blocker;
+  }
+  if (!task) return { state: "blocked" as const, detail: permissionBlocker || "No runnable assignment. Check dependencies or an active execution lease." };
   if (task.attempts >= 3) {
     const detail = "Retry limit reached. Authorize a correction cycle on this existing checkpoint after resolving its blocker; do not create replacement work.";
     // Make an expired running row visible to the existing explicit-correction UI.
@@ -132,7 +142,7 @@ export async function advanceDirectorObjective(input: {
   }
   if (!await access.authorize(ownerId, task.capability)) {
     const blocked = transition(task, "blocked", "Specialist permission unavailable. No module records were read.", now);
-    await store.compareAndSwap(task, blocked);
+    if (!await store.compareAndSwap(task, blocked)) return { state: "busy" as const };
     return { state: "blocked" as const, detail: blocked.blocker };
   }
   const claimed = transition(task, "running", "Specialist checkpoint claimed.", now);
