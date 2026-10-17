@@ -1,6 +1,6 @@
-# Model optimization continuation (2026-10-17)
+# Staged evaluation and approved audit continuation (2026-10-17)
 
-Offline comparison prepared; no new paid calls. See [model optimization report](avery-director-model-optimization.md) and [frozen preparation manifest](avery-director-model-benchmark-plan.json). Fresh targeted checks: **76/76** (existing 68 plus 8 benchmark tests). Full suite remains 2,388/2,406 passing with the same 18 failures in #266. Avery remains partial-pass; candidate competence and release remain unverified.
+The rejected 432-call/$65 proposal is superseded. Proposed Stage 1: **24 calls/$3** (Luna low, Luna medium, Sol high); Stage 2: **48 calls/$9**, separately approved after actual finalist selection; Stage 3: no calls. Both paid stages remain unapproved. Fresh official npm audit confirms **7 high / 0 production-only**; required build still fails the unchanged security gate, with no compatible full-tree fix established. **83/83 targeted checks pass**; full suite remains 2,388/2,406 passing with the same 18 failures in #266. Avery remains partial-pass. See [current report](avery-director-model-optimization.md), [offline manifest](avery-director-model-benchmark-plan.json), and [audit evidence](avery-director-security-audit.json).
 
 # Avery Stone Director: bounded supervision upgrade
 

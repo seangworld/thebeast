@@ -7,9 +7,9 @@
   "productionModelChanged": false,
   "overallCompetency": "partial-pass",
   "targeted": {
-    "existing": 68,
-    "new": 8,
-    "pass": 76,
+    "priorPreserved": 76,
+    "additionalStaged": 7,
+    "pass": 83,
     "fail": 0,
     "command": "node --test .test-dist/tests/director*.test.js .test-dist/tests/digitalStaffDirector.test.js .test-dist/tests/beastOSDirector*.test.js scripts/test-director-evaluation-budget.mjs scripts/test-director-observed-model-regressions.mjs scripts/test-director-recovery-reproduction.mjs scripts/test-director-second-budget.mjs scripts/test-director-second-followups.mjs scripts/test-director-second-observed-regressions.mjs scripts/test-director-model-benchmark.mjs"
   },
@@ -17,6 +17,7 @@
     "total": 2406,
     "pass": 2388,
     "fail": 18,
+    "sameFailingNames": true,
     "baselineIssue": 266
   },
   "lint": "pass",
@@ -29,7 +30,12 @@
     "newEvaluation": false
   },
   "candidateMeasurements": null,
-  "liveAudit": "not completed; initial DNS error, then automatic approval review rejected dependency metadata upload; no workaround",
+  "liveAudit": {
+    "high": 7,
+    "productionFindings": 0,
+    "registry": "https://registry.npmjs.org",
+    "evidence": "avery-director-security-audit.json"
+  },
   "publicAdvisory": {
     "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
     "refreshed": "2026-10-17",
@@ -37,10 +43,34 @@
     "patchedVersion": null
   },
   "localDependencyTree": "Tailwind 3.4.19 -> Chokidar 3.6.0 -> braces 3.0.3; Tailwind and Next ESLint -> fast-glob/micromatch 4.0.8 -> braces 3.0.3",
-  "requiredBuild": "blocked/unverified; audit gate unchanged; no direct build bypass",
+  "requiredBuild": "rerun; failed unchanged full npm audit gate on seven high findings; no bypass",
   "hashes": {
-    "scripts/director-model-benchmark.mjs": "6a5dd067e408dd41481b6f622451d9b844262678a93eaccfa822def5651e80f6",
-    "scripts/test-director-model-benchmark.mjs": "4472521b9e3ac5269064c0f13ddf2f62e6cc9174e9bb1c707298faaa870fc10c",
+    "scripts/director-model-benchmark.mjs": "51c075e1a4a8110200883a1fd2173ec41800a2c44d65eed6a2e2315808108c23",
+    "scripts/test-director-model-benchmark.mjs": "b015ff32bf5fe92929c819bd1e60642f637d2b7cfda575ad77ef031dd00022dd",
     "tests/fixtures/director-model-comparison.json": "b59fe12f79e27a9decdd307587b8cde5e736bd543d470e584f38dfe3d4d23455"
+  },
+  "phase": "staged proposal and approved official-registry audit",
+  "proposal": {
+    "stage1": {
+      "maxCalls": 24,
+      "maxUsd": 3,
+      "reservationUsd": 2.8064256
+    },
+    "stage2": {
+      "maxCalls": 48,
+      "maxUsd": 9,
+      "reservationUsd": 8.0365824,
+      "separateApprovalRequired": true
+    },
+    "stage3": {
+      "maxCalls": 0,
+      "maxUsd": 0
+    },
+    "aggregate": {
+      "maxCalls": 72,
+      "maxUsd": 12,
+      "reservationUsd": 10.843008
+    },
+    "authorized": false
   }
 }

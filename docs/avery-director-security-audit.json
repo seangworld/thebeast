@@ -1,0 +1,198 @@
+{
+  "date": "2026-10-17",
+  "registry": "https://registry.npmjs.org",
+  "authorization": "Owner explicitly approved dependency metadata audit; no installs/upgrades/edits",
+  "fullAudit": {
+    "exitCode": 1,
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 7,
+        "critical": 0,
+        "total": 7
+      },
+      "dependencies": {
+        "prod": 161,
+        "dev": 408,
+        "optional": 71,
+        "peer": 11,
+        "peerOptional": 0,
+        "total": 607
+      }
+    },
+    "findings": [
+      {
+        "package": "@next/eslint-plugin-next",
+        "severity": "high",
+        "isDirect": false,
+        "range": ">=14.3.0-canary.0",
+        "via": [
+          "fast-glob"
+        ],
+        "effects": [
+          "eslint-config-next"
+        ],
+        "fixAvailable": {
+          "name": "eslint-config-next",
+          "version": "14.2.35",
+          "isSemVerMajor": true
+        }
+      },
+      {
+        "package": "braces",
+        "severity": "high",
+        "isDirect": false,
+        "range": "*",
+        "via": [
+          {
+            "source": 1240992,
+            "name": "braces",
+            "dependency": "braces",
+            "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+            "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+            "severity": "high",
+            "cwe": [
+              "CWE-674"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<=3.0.3"
+          }
+        ],
+        "effects": [
+          "chokidar",
+          "micromatch"
+        ],
+        "fixAvailable": {
+          "name": "eslint-config-next",
+          "version": "14.2.35",
+          "isSemVerMajor": true
+        }
+      },
+      {
+        "package": "chokidar",
+        "severity": "high",
+        "isDirect": false,
+        "range": "2.0.0 - 3.6.0",
+        "via": [
+          "braces"
+        ],
+        "effects": [
+          "tailwindcss"
+        ],
+        "fixAvailable": true
+      },
+      {
+        "package": "eslint-config-next",
+        "severity": "high",
+        "isDirect": true,
+        "range": ">=14.3.0-canary.0",
+        "via": [
+          "@next/eslint-plugin-next"
+        ],
+        "effects": [],
+        "fixAvailable": {
+          "name": "eslint-config-next",
+          "version": "14.2.35",
+          "isSemVerMajor": true
+        }
+      },
+      {
+        "package": "fast-glob",
+        "severity": "high",
+        "isDirect": false,
+        "range": "*",
+        "via": [
+          "micromatch"
+        ],
+        "effects": [
+          "@next/eslint-plugin-next"
+        ],
+        "fixAvailable": {
+          "name": "eslint-config-next",
+          "version": "14.2.35",
+          "isSemVerMajor": true
+        }
+      },
+      {
+        "package": "micromatch",
+        "severity": "high",
+        "isDirect": false,
+        "range": ">=0.2.0",
+        "via": [
+          "braces"
+        ],
+        "effects": [
+          "fast-glob",
+          "tailwindcss"
+        ],
+        "fixAvailable": {
+          "name": "eslint-config-next",
+          "version": "14.2.35",
+          "isSemVerMajor": true
+        }
+      },
+      {
+        "package": "tailwindcss",
+        "severity": "high",
+        "isDirect": true,
+        "range": "<=0.0.0-oxide-insiders.ff2c25f || 2.1.0-canary.1 - 3.4.19",
+        "via": [
+          "chokidar",
+          "fast-glob",
+          "micromatch"
+        ],
+        "effects": [],
+        "fixAvailable": true
+      }
+    ]
+  },
+  "productionAudit": {
+    "exitCode": 0,
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependencies": {
+        "prod": 161,
+        "dev": 408,
+        "optional": 71,
+        "peer": 11,
+        "peerOptional": 0,
+        "total": 607
+      }
+    }
+  },
+  "requiredBuild": {
+    "command": "npm --registry=https://registry.npmjs.org run build",
+    "exitCode": 1,
+    "stoppedAt": "unchanged full npm audit gate; Next compilation not reached"
+  },
+  "registryVersions": {
+    "braces": "3.0.3",
+    "micromatch": "4.0.8",
+    "fast-glob": "3.3.3",
+    "tailwindcss3": "3.4.19",
+    "tailwindcssLatest": "4.3.3",
+    "chokidarLatest": "5.0.0",
+    "nextEslintPluginLatest": "16.4.2"
+  },
+  "compatibleCompleteFixEstablished": false,
+  "dependencyChanges": false,
+  "sourceOrCustomerDataSupplied": false,
+  "credentialAccess": false,
+  "remediation": "Upstream patched root dependency or separately validated elimination of all Tailwind and lint affected paths; no force/downgrade/waiver",
+  "packageFilesSha256": {
+    "package.json": "a1b23d4a7b9acc61724e9617e4681474d3d72c11d5e32e872f907728a7adefc1",
+    "package-lock.json": "748975740f68531a83f3d586334a5e7c12b42bdbb05b646713d2be201232c142"
+  }
+}
