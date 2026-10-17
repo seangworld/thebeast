@@ -1,3 +1,7 @@
+# Model optimization continuation (2026-10-17)
+
+Offline comparison prepared; no new paid calls. See [model optimization report](avery-director-model-optimization.md) and [frozen preparation manifest](avery-director-model-benchmark-plan.json). Fresh targeted checks: **76/76** (existing 68 plus 8 benchmark tests). Full suite remains 2,388/2,406 passing with the same 18 failures in #266. Avery remains partial-pass; candidate competence and release remain unverified.
+
 # Avery Stone Director: bounded supervision upgrade
 
 Tracking: https://github.com/seangworld/thebeast/issues/264

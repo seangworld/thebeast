@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-17",
+  "evidenceType": "offline_preparation_and_no_cost_tests_only",
+  "paidCalls": 0,
+  "inferenceSpendUsd": 0,
+  "credentialAccess": false,
+  "productionModelChanged": false,
+  "overallCompetency": "partial-pass",
+  "targeted": {
+    "existing": 68,
+    "new": 8,
+    "pass": 76,
+    "fail": 0,
+    "command": "node --test .test-dist/tests/director*.test.js .test-dist/tests/digitalStaffDirector.test.js .test-dist/tests/beastOSDirector*.test.js scripts/test-director-evaluation-budget.mjs scripts/test-director-observed-model-regressions.mjs scripts/test-director-recovery-reproduction.mjs scripts/test-director-second-budget.mjs scripts/test-director-second-followups.mjs scripts/test-director-second-observed-regressions.mjs scripts/test-director-model-benchmark.mjs"
+  },
+  "fullSuite": {
+    "total": 2406,
+    "pass": 2388,
+    "fail": 18,
+    "baselineIssue": 266
+  },
+  "lint": "pass",
+  "applicationTypeScript": "pass",
+  "historicalSecondBatchResponseTimingSeconds": {
+    "mean": 11.3363125,
+    "worst": 18.375,
+    "p95NearestRank": 18.375,
+    "source": "avery-director-second-model-results.json",
+    "newEvaluation": false
+  },
+  "candidateMeasurements": null,
+  "liveAudit": "not completed; initial DNS error, then automatic approval review rejected dependency metadata upload; no workaround",
+  "publicAdvisory": {
+    "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+    "refreshed": "2026-10-17",
+    "affected": "<=3.0.3",
+    "patchedVersion": null
+  },
+  "localDependencyTree": "Tailwind 3.4.19 -> Chokidar 3.6.0 -> braces 3.0.3; Tailwind and Next ESLint -> fast-glob/micromatch 4.0.8 -> braces 3.0.3",
+  "requiredBuild": "blocked/unverified; audit gate unchanged; no direct build bypass",
+  "hashes": {
+    "scripts/director-model-benchmark.mjs": "6a5dd067e408dd41481b6f622451d9b844262678a93eaccfa822def5651e80f6",
+    "scripts/test-director-model-benchmark.mjs": "4472521b9e3ac5269064c0f13ddf2f62e6cc9174e9bb1c707298faaa870fc10c",
+    "tests/fixtures/director-model-comparison.json": "b59fe12f79e27a9decdd307587b8cde5e736bd543d470e584f38dfe3d4d23455"
+  }
+}
