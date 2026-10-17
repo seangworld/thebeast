@@ -15,7 +15,52 @@ verified checkpoints. This is not evidence of general AI Director competence,
 autonomous research, arbitrary specialist task completion, or commercial readiness.
 The PR must not be described as completing the entire requested Director upgrade.
 
-## 2026-10-17: capped real-model evaluation blocked before any request
+## Existing ecosystem credential reuse investigation — 2026-10-17
+
+**Precise blocker: no accessible, suitable development OpenAI credential exists in
+the inspected local configurations or authorized Vercel development environments.**
+This expands the earlier check beyond the supplied `.env.local`. The owner does
+not need to repeat setup instructions; discovery stopped at the existing-resource
+and production-separation boundary. No key creation, remote configuration change,
+secret pull, credential copy or model request occurred.
+
+| Existing resource | Read-only finding | Evaluation eligibility |
+| --- | --- | --- |
+| Local Beast/BeastFusion/SEANGWORLD development configurations under Desktop/Beast | Bounded `.env*` scan excluding production/templates/build/dependency directories; no OpenAI key definitions found | Unavailable |
+| Local Desktop/seangworld.com | No development env files/key definitions found | Unavailable |
+| Supplied `.env.local`, Avery worktree, current process, temporary evaluation file | Previously checked; no development credential configured | Unavailable |
+| Vercel `thebeast` | `OPENAI_API_KEY` metadata exists as **sensitive**, targets **production + preview**, no development entry; CLI development listing confirms absence | Excluded: shared production credential; value not requested |
+| Vercel `seangworld` | `OPENAI_API_KEY` metadata exists as **sensitive**, production-only | Excluded: production credential; value not requested |
+| Vercel `thebeast-bf-agt-012` | Connector metadata request returned an API error; one documented CLI development-list fallback succeeded: **no environment variables** | Unavailable; no repeated access attempts |
+| Vercel `changetheworld` | No OpenAI credential metadata | Unavailable |
+
+Only environment names, types and targets were retained in evidence. No secret
+values were printed, committed, logged, copied to development, or sent to GitHub.
+Production and preview values were not decrypted or retrieved. CLI and connector
+access themselves work; this is a credential scope/availability blocker, not a
+request for the owner to create a key or a generic access/login failure.
+
+**Actual evaluation usage: 0 of 8 paid calls, 0 input/output tokens, $0.00 of $3.00.**
+Model executed: none. Verified billed cost from provider: unavailable (no requests;
+no billing query needed). All eight established cases remain **blocked/unverified**.
+No fabricated responses, simulated passing grades or claims of AI competence were
+substituted. The overall classification remains **partial-pass** based on prior
+narrow execution evidence. No actual inference defect was demonstrated to correct.
+
+Fresh dependency checks still report **seven high, zero moderate** in the full
+audit and **zero production-only advisories**. Registry latest `braces` remains
+3.0.3, the affected version from the existing advisory investigation. The recorded
+Tailwind/Chokidar/micromatch and Next ESLint/fast-glob dependency paths still require
+an affected version; no supported complete patch was identified. No forced major
+replacement or security-gate bypass was applied. Package manifests/lockfile unchanged.
+
+**Next action:** stop this evaluation attempt. Resumption requires an accessible
+existing non-production credential through an authorized store; no such resource
+was found, and no owner technical-setup task is requested. The approved $3/eight-call
+cap does not authorize copying the located production/shared-production secrets.
+No merge, deployment, other agent upgrade or production change was performed.
+
+## Earlier 2026-10-17 local credential check
 
 The owner authorized at most **$3 total and eight paid model calls** for the eight
 established cases. This replaces the previous free-only evaluation instruction
