@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-17",
+  "phase": "Stage 1 preflight; independent ChatGPT novelty review pending",
+  "authorization": {
+    "issue": 264,
+    "commentId": 6236922578,
+    "stage": 1,
+    "maxCalls": 24,
+    "maxUsd": 3
+  },
+  "paidCalls": 0,
+  "inferenceSpendUsd": 0,
+  "generationMeasurements": null,
+  "recommendedConfiguration": null,
+  "independentReview": {
+    "reviewer": "ChatGPT",
+    "noveltyStatus": "pending",
+    "semanticStatus": "not run; no model responses",
+    "ownerInstruction": "Wait for independent scenario-novelty review before paid execution"
+  },
+  "targeted": {
+    "total": 94,
+    "pass": 94,
+    "fail": 0,
+    "priorPreserved": 83,
+    "newBudgetAndDurability": 8,
+    "newPacketFidelityAndBlinding": 3
+  },
+  "fullSuite": {
+    "total": 2406,
+    "pass": 2388,
+    "fail": 18,
+    "sameBaselineNames": true,
+    "baselineIssue": 266
+  },
+  "lint": "pass",
+  "applicationTypeScript": "pass",
+  "freeMetadataRequests": 2,
+  "credentialPreserved": true,
+  "stageTwoAuthorized": false,
+  "frozenHashes": {
+    "promptSha256": "55e31473b4ec1addfaace65585cfcdd4646923da83b81d543f14835aec0c1d9f",
+    "schemaSha256": "c4d21982ca409bb5b0281006670ef9dbba451525feea27f8870e4b7580cd5596",
+    "casesSha256": "0e20d529f0bef217a933adf859376879dd3708ec55442080cd095c39cef8a446"
+  },
+  "resumption": "Independent scenario review, then offline dispatcher integration and Stage 1 only; no Stage 2/merge/deploy"
+}

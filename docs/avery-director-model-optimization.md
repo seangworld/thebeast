@@ -1,3 +1,7 @@
+# Stage 1 authorization and independent-review hold (2026-10-17)
+
+Stage 1 spending is approved at **24 calls/$3**; the owner requires ChatGPT independent scenario-novelty review before execution. **Zero paid calls run.** Availability metadata checks succeeded; **94/94 no-cost checks pass**. See [current status and exact resumption point](avery-director-stage-one-status.md) and [scenarios for independent review](avery-director-stage-one-scenarios-review.md). Stage 2 remains unauthorized.
+
 # Avery Stone: staged model evaluation and approved security audit
 
 2026-10-17. Tracking #264, existing draft PR #265, branch
@@ -5,9 +9,8 @@
 
 **Current status: partial-pass; not release-ready. Zero new paid AI calls.**
 The owner rejected the 432-call/$65 proposal. It is superseded by the staged
-proposal below. Only official-registry security auditing and no-cost preparation
-are approved. No dependency changes, runtime model changes, routing, other-agent
-upgrades, credential access, merge or deployment occurred.
+proposal below. Official-registry security auditing, no-cost preparation and Stage 1 spending are approved; paid execution is waiting for the owner-required independent ChatGPT scenario review. No dependency changes, runtime model changes, routing, other-agent
+upgrades, credential modification, merge or deployment occurred.
 
 ## Approved npm audit findings
 
@@ -181,7 +184,7 @@ reliability (two-sided 95% Wilson lower bound is only about 80.6%). Larger repea
 representative reliability testing remains a later gate. Adaptive routing remains
 deferred; do not add services or routing based on these small samples.
 
-## Revised budget submitted for approval — no paid calls authorized
+## Staged budget — Stage 1 approved, waiting for independent scenario review
 
 | Stage | Configurations | Maximum calls | Conservative reservation | Proposed dollar cap |
 | --- | --- | --- | --- | --- |
@@ -190,10 +193,10 @@ deferred; do not add services or routing based on these small samples.
 | 3 | Human/evidence comparison only | 0 | $0 | $0 |
 | Total | No other catalog configurations | **72** | **$10.843008** | **$12** |
 
-Propose approval of **Stage 1 only: 24 calls / $3**, then submit real results and exact
-finalists for Stage 2 approval. Both stages are currently unapproved. Historical
+Stage 1 authorization is **24 calls / $3**. After independent scenario review and
+actual Stage 1 results, submit exact finalists for separate Stage 2 approval. Stage 1 is now approved in Issue #264 comment 6236922578; the owner explicitly requires independent ChatGPT scenario-novelty review before paid execution. Stage 2 remains unapproved. Historical
 8-call/$3 and 16-call/$2 approvals remain exhausted; rejected 432-call/$65 proposal
-confers no authority. No new API executor or live credential access was introduced.
+confers no authority. No paid API executor was invoked. A free authenticated model-metadata check used the existing credential read-only and verified it unchanged.
 
 Per-request envelope: <=20,000 UTF-8 JSON bytes, conservative 65,536 input-token
 reservation, 2,400 total output tokens including reasoning, standard tier,
@@ -228,7 +231,7 @@ handling. No further spending authority is inferred from model availability.
 The original 76 targeted checks are preserved; seven additional staged tests cover
 call arithmetic, every finalist pair, single-call screening, critical exclusion,
 independent outcome-based selection, mandatory held-out follow-up and early stop
-accounting. **83/83 targeted checks pass**. Lint and application TypeScript pass.
+accounting. **94/94 targeted checks pass**, including eleven additional budget/durability and blinding checks in this continuation. Lint and application TypeScript pass.
 Full suite remains **2,406 total / 2,388 pass / same 18 failures**, tracked solely in
 [#266](https://github.com/seangworld/thebeast/issues/266). No UI/runtime change or
 new browser/hosted/device verification is claimed.
@@ -240,7 +243,7 @@ and request hashes. It sends neither criteria nor grading protocols to the model
 Offline scoring requires independent review, counts failures and disqualifies
 critical violations; it cannot verify truthfulness of a human-entered grade.
 
-Remaining blockers: Stage 1 owner spending authorization; independent novelty and
+Remaining blockers: owner-required independent ChatGPT novelty/fairness review and
 blinded grading arrangements; tested extension of the existing reservation ledger
 before any API dispatch; unverified revised-prompt competence and current account
 model availability; Stage 2 results/approval; broader reliability evidence; unresolved

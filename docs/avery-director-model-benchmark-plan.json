@@ -1,5 +1,11 @@
 {
-  "authorization": "NOT AUTHORIZED: staged proposal only; no API executor included; prior 432-call/$65 proposal rejected and superseded",
+  "authorization": "Stage 1 approved by owner in Issue #264 comment 6236922578, 24 calls/$3; WAIT for independent ChatGPT scenario novelty review before execution. Stage 2 unapproved; prior 432-call/$65 proposal rejected.",
+  "authorizedLimits": {
+    "stage": 1,
+    "maxCalls": 24,
+    "maxUsd": 3
+  },
+  "executionStatus": "awaiting_independent_scenario_review",
   "paidCallsExecuted": 0,
   "bounds": {
     "bodyBytes": 20000,
@@ -129,6 +135,7 @@
     {
       "stage": 1,
       "name": "screening",
+      "authorization": "owner approved 24 calls/$3; independent scenario review pending",
       "configurations": [
         "gpt-6-luna:low",
         "gpt-6-luna:medium",
@@ -152,6 +159,7 @@
     {
       "stage": 2,
       "name": "finalists",
+      "authorization": "NOT APPROVED",
       "configurations": null,
       "scenarioIds": [
         "routine-b",

@@ -42,13 +42,14 @@ export function prepare() {
   const possibleFinalistPairs = screeningIds.flatMap((id,i)=>screeningIds.slice(i+1).map(other=>({ configurations:[id,other], maxCalls:48, worstCaseReservedUsd:finalistBudget([id,other]) })));
   const finalistReservedUsd = Math.max(...possibleFinalistPairs.map(p=>p.worstCaseReservedUsd));
   const manifest = {
-    authorization: 'NOT AUTHORIZED: staged proposal only; no API executor included; prior 432-call/$65 proposal rejected and superseded',
+    authorization: 'Stage 1 approved by owner in Issue #264 comment 6236922578, 24 calls/$3; WAIT for independent ChatGPT scenario novelty review before execution. Stage 2 unapproved; prior 432-call/$65 proposal rejected.',
+    authorizedLimits:{stage:1,maxCalls:24,maxUsd:3}, executionStatus:'awaiting_independent_scenario_review',
     paidCallsExecuted: 0, bounds, stageLimits,
     promptSha256: hash(directorReasoningInstructions), schemaSha256: hash(directorReasoningSchema), casesSha256: hash(cases),
     candidates, screeningConfigurations: screeningIds,
     stages: [
-      { stage:1, name:'screening', configurations:screeningIds, scenarioIds:cases.filter(c=>c.split==='screen').map(c=>c.id), maxCalls:24, maxUsd:3, worstCaseReservedUsd:screeningReservedUsd, completionEvidence:'one model decision followed only by permitted actual synthetic execution; post-result model interpretation unmeasured' },
-      { stage:2, name:'finalists', configurations:null, scenarioIds:cases.filter(c=>c.split==='locked-confirmation').map(c=>c.id), maxCalls:48, maxUsd:9, worstCaseReservedUsd:finalistReservedUsd, possibleFinalistPairs, entryGate:'Two independently graded eligible Stage 1 configurations; no forced promotion if fewer than two qualify' },
+      { stage:1, name:'screening', authorization:'owner approved 24 calls/$3; independent scenario review pending', configurations:screeningIds, scenarioIds:cases.filter(c=>c.split==='screen').map(c=>c.id), maxCalls:24, maxUsd:3, worstCaseReservedUsd:screeningReservedUsd, completionEvidence:'one model decision followed only by permitted actual synthetic execution; post-result model interpretation unmeasured' },
+      { stage:2, name:'finalists', authorization:'NOT APPROVED', configurations:null, scenarioIds:cases.filter(c=>c.split==='locked-confirmation').map(c=>c.id), maxCalls:48, maxUsd:9, worstCaseReservedUsd:finalistReservedUsd, possibleFinalistPairs, entryGate:'Two independently graded eligible Stage 1 configurations; no forced promotion if fewer than two qualify' },
       { stage:3, name:'recommendation', maxCalls:0, maxUsd:0, results:null },
     ],
     proposedMaxCalls:72, worstCaseReservedUsd:Number((screeningReservedUsd+finalistReservedUsd).toFixed(8)),
@@ -109,5 +110,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (process.argv.length !== 2) throw new Error('Offline preparation only; no execution flags supported');
   const plan = prepare();
   writeFileSync('docs/avery-director-model-benchmark-plan.json', JSON.stringify(plan,null,2)+'\n');
-  console.log(JSON.stringify({cases:plan.cases.length,catalogConfigs:candidates.length,screeningConfigs:screeningIds.length,maxCalls:plan.proposedMaxCalls,reservationUsd:plan.worstCaseReservedUsd,paidCalls:0}));
+  console.log(JSON.stringify({cases:plan.cases.length,catalogConfigs:candidates.length,screeningConfigs:screeningIds.length,proposedAllStagesMaxCalls:plan.proposedMaxCalls,authorizedStageOneMaxCalls:24,reservationUsd:plan.worstCaseReservedUsd,paidCalls:0}));
 }

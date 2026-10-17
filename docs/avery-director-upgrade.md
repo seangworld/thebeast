@@ -1,3 +1,7 @@
+# Stage 1 preflight and independent review (2026-10-17)
+
+Owner approved **24 calls/$3** for Stage 1 and designated ChatGPT independent reviewer; explicit scenario-review hold remains in force. **0 paid calls**, exact model availability verified by free metadata, credential preserved. **94/94 targeted checks pass**. See [current status](avery-director-stage-one-status.md) and [proposed scenarios for ChatGPT](avery-director-stage-one-scenarios-review.md). Stage 2 remains unauthorized.
+
 # Staged evaluation and approved audit continuation (2026-10-17)
 
 The rejected 432-call/$65 proposal is superseded. Proposed Stage 1: **24 calls/$3** (Luna low, Luna medium, Sol high); Stage 2: **48 calls/$9**, separately approved after actual finalist selection; Stage 3: no calls. Both paid stages remain unapproved. Fresh official npm audit confirms **7 high / 0 production-only**; required build still fails the unchanged security gate, with no compatible full-tree fix established. **83/83 targeted checks pass**; full suite remains 2,388/2,406 passing with the same 18 failures in #266. Avery remains partial-pass. See [current report](avery-director-model-optimization.md), [offline manifest](avery-director-model-benchmark-plan.json), and [audit evidence](avery-director-security-audit.json).
