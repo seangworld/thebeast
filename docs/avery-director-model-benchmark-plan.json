@@ -5,7 +5,7 @@
     "maxCalls": 24,
     "maxUsd": 3
   },
-  "executionStatus": "stage_one_requests_complete_independent_blinded_grading_pending",
+  "executionStatus": "stage_one_complete_independent_grades_locked_comparison_published",
   "paidCallsExecuted": 24,
   "bounds": {
     "bodyBytes": 20000,
@@ -156,7 +156,11 @@
       "worstCaseReservedUsd": 2.8064256,
       "completionEvidence": "one model decision followed only by permitted actual synthetic execution; post-result model interpretation unmeasured",
       "actualCalls": 24,
-      "independentSemanticGrades": null
+      "independentSemanticGrades": {
+        "source": "https://github.com/seangworld/thebeast/issues/264#issuecomment-6237688638",
+        "locked": true,
+        "comparison": "avery-director-stage-one-comparison.json"
+      }
     },
     {
       "stage": 2,
@@ -506,8 +510,15 @@
   ],
   "results": {
     "stageOneExecutionComplete": true,
-    "independentGrades": null,
-    "modelIdentityKey": "withheld privately until grades locked",
+    "independentGradesLocked": true,
+    "comparison": "avery-director-stage-one-comparison.json",
+    "identityMapping": {
+      "Candidate A": "gpt-6-luna:low",
+      "Candidate B": "gpt-6.1-sol:high",
+      "Candidate C": "gpt-6-luna:medium"
+    },
+    "provisionalRecommendation": "gpt-6.1-sol:high",
+    "productionAccepted": false,
     "scope": "Regression/model comparison only; not novel competency certification"
   }
 }

@@ -29,14 +29,34 @@
   },
   "apiCompletedResponses": 24,
   "runtimeValidatedPlans": 24,
-  "semanticCorrectness": null,
-  "semanticCompletionRate": null,
-  "criticalFailureRate": null,
-  "falseCompletionRate": null,
+  "semanticCorrectness": {
+    "definition": "strict independent PASS/8 regression cases",
+    "perConfigurationComparison": "avery-director-stage-one-comparison.json"
+  },
+  "semanticCompletionRate": {
+    "definition": "Verified action-case completion, not life-goal completion; three no-new-action cases excluded",
+    "perConfiguration": {
+      "gpt-6-luna:low": 1,
+      "gpt-6.1-sol:high": 1,
+      "gpt-6-luna:medium": 0.8
+    }
+  },
+  "criticalFailureRate": {
+    "observed": 0,
+    "scope": "Independent response review, not general safety certification"
+  },
+  "falseCompletionRate": {
+    "observed": 0,
+    "scope": "Independent response review"
+  },
   "costPerSemanticallySuccessfulObjective": null,
-  "independentGrades": null,
-  "recommendedConfiguration": null,
-  "blinding": "Requested/returned IDs, candidate identity mapping, per-config usage/cost/latency, original API message objects retained privately until independent grades locked. No identities or implementation-side grades in packets.",
+  "independentGrades": {
+    "locked": true,
+    "source": "https://github.com/seangworld/thebeast/issues/264#issuecomment-6237688638",
+    "comparison": "avery-director-stage-one-comparison.json"
+  },
+  "recommendedConfiguration": "gpt-6.1-sol:high",
+  "blinding": "Blind packets preserved unchanged. Identities and per-configuration metrics revealed only after locked independent grades in comment 6237688638; see comparison.",
   "credentialPreserved": true,
   "syntheticExecution": {
     "decisionsInvokingExistingRunner": 14,
@@ -60,9 +80,11 @@
   },
   "verification": {
     "targeted": {
-      "pass": 101,
+      "pass": 104,
       "fail": 0
     },
+    "lint": "pass",
+    "applicationTypeScript": "pass",
     "fullSuite": {
       "total": 2406,
       "pass": 2388,
@@ -70,7 +92,14 @@
       "sameBaselineNames": true,
       "issue": 266
     },
-    "lint": "pass",
-    "applicationTypeScript": "pass"
-  }
+    "originalBlindPacketsUnchanged": true,
+    "credentialAccessThisContinuation": false
+  },
+  "comparison": "avery-director-stage-one-comparison.json",
+  "costPerStrictPass": {
+    "gpt-6-luna:low": 0.0002852892857142857,
+    "gpt-6.1-sol:high": 0.007922562499999999,
+    "gpt-6-luna:medium": 0.0003703607142857144
+  },
+  "costPerSemanticallySuccessfulObjectiveNote": "Underlying life-goal completion was not measured. Estimated cost per strict regression PASS is supplied separately."
 }

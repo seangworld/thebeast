@@ -1,3 +1,7 @@
+# Stage 1 comparison complete after locked grading (2026-10-17)
+
+Independent grades are locked in Issue #264 comment 6237688638. **A = Luna Low (7 pass/1 partial); B = Sol High (8 pass); C = Luna Medium (7 pass/1 fail).** Provisional recommendation: **gpt-6.1-sol with high reasoning**, the only configuration meeting Stage 1 criteria. No production switch is made; no additional paid calls or credential access occurred. [Read the published comparison, timing, usage and cost](avery-director-stage-one-comparison.md). Original blind evidence and grades are preserved. Stage 2 remains unauthorized and its two-qualified-finalist gate is not met. Earlier pending-grading notes below are historical.
+
 # Stage 1 executed; blinded semantic grading pending (2026-10-17)
 
 **24/24 approved requests completed**, no retries or Stage 2 calls. Conservative reservation **$2.8064256**; usage-derived estimated spend **$0.06797005** (not invoice verified). Credential preserved. **101/101 targeted checks pass**. Identities and per-configuration metrics remain private until independent grades are locked. Read [current execution report](avery-director-stage-one-status.md) and [completed blinded grading packets](avery-director-stage-one-grading-index.md). Earlier preflight/approval holds below are historical and have been satisfied for regression screening only; semantic competence remains ungraded.

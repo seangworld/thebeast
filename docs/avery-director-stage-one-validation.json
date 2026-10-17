@@ -1,6 +1,6 @@
 {
   "date": "2026-10-17",
-  "phase": "Stage 1 execution complete; independent semantic grading pending",
+  "phase": "Stage 1 comparison complete after locked independent grading",
   "authorization": {
     "issue": 264,
     "commentId": 6236922578,
@@ -10,19 +10,19 @@
   },
   "paidCalls": 24,
   "generationMeasurements": "Aggregate metrics in avery-director-stage-one-results-summary.json; identities/per-config metrics retained privately",
-  "recommendedConfiguration": null,
+  "recommendedConfiguration": "gpt-6.1-sol:high",
   "independentReview": {
     "reviewer": "ChatGPT",
-    "noveltyStatus": "approved for regression screening only, Issue #264 comment 6237368187",
-    "semanticStatus": "pending locked blind grades"
+    "noveltyStatus": "regression-screening review approved",
+    "semanticStatus": "locked before unblinding",
+    "gradeCommentId": 6237688638
   },
   "targeted": {
-    "total": 101,
-    "pass": 101,
+    "total": 104,
+    "pass": 104,
     "fail": 0,
-    "priorPreserved": 94,
-    "additionalDispatcher": 4,
-    "additionalCompletedPackets": 3
+    "priorPreserved": 101,
+    "additionalLockedGradeAndAssociationChecks": 3
   },
   "fullSuite": {
     "total": 2406,
@@ -41,6 +41,9 @@
     "schemaSha256": "c4d21982ca409bb5b0281006670ef9dbba451525feea27f8870e4b7580cd5596",
     "casesSha256": "0e20d529f0bef217a933adf859376879dd3708ec55442080cd095c39cef8a446"
   },
-  "resumption": "ChatGPT blind semantic grading; then unblind IDs/metrics and compare; no Stage 2",
-  "inferenceSpendUsdEstimated": 0.06797005
+  "resumption": "Comparison complete. No further calls or Stage 2 authorized; production unchanged.",
+  "inferenceSpendUsdEstimated": 0.06797005,
+  "newPaidCallsThisPhase": 0,
+  "credentialAccessThisPhase": false,
+  "comparison": "avery-director-stage-one-comparison.json"
 }
