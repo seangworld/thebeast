@@ -135,6 +135,7 @@ const expectedCliMigrations = [
   "20261010213000_beastfusion_private_release_bucket.sql",
   "20261010234500_beastfusion_internal_test_license.sql",
   "20261017022337_avery_director_assignments.sql",
+  "20261017025810_director_data_api_grants.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

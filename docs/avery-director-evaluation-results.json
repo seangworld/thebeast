@@ -1,0 +1,109 @@
+{
+  "evidenceType": "no_model_evaluated",
+  "realModelEvaluated": false,
+  "paidCalls": 0,
+  "overallCompetency": "partial-pass",
+  "results": [
+    {
+      "id": "cross-domain-transition",
+      "status": "blocked",
+      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+    },
+    {
+      "id": "incorrect-specialist-result",
+      "status": "blocked",
+      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+    },
+    {
+      "id": "interrupted-care-objective",
+      "status": "blocked",
+      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+    },
+    {
+      "id": "conflicting-reported-facts",
+      "status": "blocked",
+      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+    },
+    {
+      "id": "owner-decision",
+      "status": "blocked",
+      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+    },
+    {
+      "id": "unsupported-specialist",
+      "status": "blocked",
+      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+    },
+    {
+      "id": "verify-not-life-completion",
+      "status": "blocked",
+      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+    },
+    {
+      "id": "repeat-completed-request",
+      "status": "blocked",
+      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+    }
+  ],
+  "localVerification": {
+    "directorRegression": {
+      "tests": 41,
+      "pass": 41,
+      "fail": 0
+    },
+    "fullSuite": {
+      "tests": 2396,
+      "pass": 2378,
+      "fail": 18,
+      "remainingFailures": "preexisting; names in avery-director-upgrade.md"
+    },
+    "fullMigrationReplay": {
+      "count": 125,
+      "postgresMajor": 17,
+      "realLocalAuth": true
+    },
+    "syntheticModelApprovalIntegration": "pass; seeded model output, not real inference",
+    "chromiumViewports": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "status": "pass",
+        "realLocalAuth": true,
+        "paidCalls": 0
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "pass",
+        "realLocalAuth": true,
+        "paidCalls": 0
+      },
+      {
+        "viewport": {
+          "width": 375,
+          "height": 812
+        },
+        "status": "pass",
+        "realLocalAuth": true,
+        "paidCalls": 0
+      }
+    ],
+    "lint": "pass",
+    "typescript": "pass",
+    "diagnosticNextBuild": "pass; synthetic loopback HTTPS configuration",
+    "requiredBuild": "blocked by unchanged full audit gate",
+    "fullAudit": {
+      "high": 7,
+      "moderate": 0
+    },
+    "productionAudit": {
+      "advisories": 0
+    },
+    "hostedFunctionalVerification": "not performed; candidate migration absent",
+    "cleanup": "task-created local stack and private fixtures removed"
+  }
+}

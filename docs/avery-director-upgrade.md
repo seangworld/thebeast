@@ -15,6 +15,164 @@ verified checkpoints. This is not evidence of general AI Director competence,
 autonomous research, arbitrary specialist task completion, or commercial readiness.
 The PR must not be described as completing the entire requested Director upgrade.
 
+## Continuation evidence: 2026-10-16 (current)
+
+**Overall: partial-pass. No real-model competency pass. Free-only evaluation; zero paid calls.**
+The sections below this continuation preserve the earlier implementation record;
+older counts and environment limitations there are historical, superseded here.
+
+### Implemented improvements
+
+- `directorReasoning.ts` adds structured objective interpretation, practical alternatives,
+  capability selection, conflict/missing-fact/owner-decision reporting and checkpoint
+  assessments. This is a model contract and defensive validator, not demonstrated intelligence.
+- `directorReasoningProvider.ts` reuses the shared provider, strong-model selection
+  and request lease. Off by default; requires explicit feature enablement plus a key.
+  One bounded pass, no tools/search/retries, 24,000-character input and 2,400 output-token
+  ceiling, 60-second timeout, `store:false`. It was tested with injected transport only.
+  These per-call limits are not a durable organization spending cap. Do not enable
+  the paid path under the current free-only instruction.
+- The existing assignments API and UI persist proposed plans in existing Director
+  conversation history, revalidate permissions/current evidence before explicit member
+  approval, and run at most two approved checkpoints per foreground request.
+  Proposed, authorized, attempted and independently verified results remain separate.
+- `20261017025810_director_data_api_grants.sql` makes current Supabase Data API
+  privileges explicit after asserting RLS, permits only birthday profile updates,
+  includes Health in the existing module-denial constraint, and applies restrictive
+  age/module checks to direct saved-record reads. Version-bound plan approval locks
+  the owned canonical goal; stale approval returns an explicit conflict.
+- Director routes now await Next cookies and share the existing request lease.
+  Local HTTP Supabase is permitted only on loopback in development/test; production
+  continues requiring HTTPS. Local CSP exceptions are development-only.
+- Compatible Browserslist/parser patches reduce the full audit from 8 high/1 moderate
+  to **7 high/0 moderate**. Production dependency audit reports **zero**. Remaining
+  alerts share unpatched `braces <=3.0.3` (GHSA-vfj7-8cjw-p6xm); the unchanged full
+  audit gate still rejects `npm run build`. No security gate bypass is committed.
+
+### Current evidence and scorecard
+
+| Requirement | Evidence type | Current assessment |
+| --- | --- | --- |
+| Unfamiliar complex objectives and practical plans | Generic prompt/schema and mocked transport; eight held-out cases blocked | **Unverified** |
+| Intelligent specialist selection | Closed two-capability validation; no real inference | **Unverified** |
+| Actual specialist execution | Existing Health preparation and Money cash functions, real authenticated local API/UI | **Pass within these narrow reviews** |
+| Incorrect-result recognition/correction | Independent deterministic recomputation, correction/recovery tests | **Pass mechanically; AI judgment unverified** |
+| Interrupted/repeated work | Persistent checkpoints, CAS leases, bounded retry and deduplication tests | **Pass within supported runner** |
+| Conflicting information | Structured stop conditions tested; no real reasoning | **Unverified** |
+| Owner approval/unsupported tools | Closed registry, explicit approval, validation, local RLS tests | **Pass for enforced boundary; AI decisions unverified** |
+| Independent verification | Fresh canonical evidence recomputed; goal stays Active | **Pass within supported reviews** |
+| Session continuity | Real GoTrue login, persisted objective/checkpoints, browser reload | **Pass locally; hosted unverified** |
+| Customer isolation/security | Real local PostgreSQL 17/GoTrue/RLS; foreign/minor/disabled access denied | **Pass for tested local paths only** |
+| Commercial/general Director readiness | Missing real-model, hosted and release-gate evidence | **Partial-pass; not release-ready** |
+
+The reasoning input deliberately contains checkpoint identity/status, timestamps and
+limitations rather than raw clinical/financial values. This limits privacy exposure,
+but does **not** let Avery independently inspect detailed specialist calculations or
+investigate conflicting records. Do not claim semantic supervision from this contract.
+No background worker, general research tool, arbitrary specialist adapter, automatic
+correction dialogue or open-ended task completion has been demonstrated.
+
+### Eight-case competency evaluation
+
+`scripts/evaluate-director-no-cost.mjs` probes an existing local model only; it does
+not provision/download a model or fall back to paid inference. No local model was
+configured. **All eight cases are BLOCKED, not passed**:
+
+1. Complex care/cash/moving objective requiring useful specialist selection.
+2. Incorrect specialist result requiring rejection/correction.
+3. Interrupted objective requiring recovery without duplicate work.
+4. Conflicting income claims requiring investigation.
+5. Purchase/publication requiring owner approval.
+6. Unavailable Tutor or unsupported cloud tool.
+7. Completed preparation review that does not prove an appointment occurred.
+8. Repeated request with an already completed cash checkpoint.
+
+Cases live in `tests/fixtures/director-competency.json`, outside the production prompt.
+The separate synthetic-model-adapter approval test verifies plumbing only. Passing
+mocked/provider/unit tests does not change any of these eight competency grades.
+
+### Verification and reproduction
+
+- Full suite: **2,396 tests; 2,378 pass; 18 fail**. No new failing names relative to
+  the previously recorded baseline. Repaired relevant stale security pin, runtime-origin
+  and async-client assertions; migration inventory now records 125 migrations.
+- Director-focused regressions: **41/41 pass** (deterministic and mocked checks).
+- Diagnostic `next build` compilation, type validation and static generation pass
+  using synthetic loopback HTTPS configuration. This does not replace the required
+  audit-gated build or establish hosted readiness.
+- Lint and application TypeScript checks pass. Required build remains blocked by the
+  seven-high full dependency audit, despite zero production-only advisories.
+- `scripts/test-director-local-auth.mjs`: complete **125-migration PostgreSQL 17**
+  local replay, real GoTrue account/password/getUser, actual owner-scoped goals/RPCs,
+  cross-user denial, minor/module denial, direct retained-data revocation, prohibited
+  profile role escalation and owner reassignment. Synthetic local accounts only.
+- `scripts/test-director-browser.mjs`: actual authenticated Chromium at 1440x900,
+  390x844 and 375x812; real specialist execution, reload persistence, repeated work
+  stays at one attempt, foreign goal denied, disabled AI endpoint returns 503,
+  no page errors/horizontal overflow. Mobile widths are not native device evidence.
+- `scripts/test-director-plan-approval.mjs`: seeded **synthetic model output** with real
+  auth/database/UI/transaction/tool execution; never a model-competence result.
+- Hosted DEV metadata was inspected without reading customer rows. New Director
+  migration is absent there. No hosted functional auth/tenant claim is established;
+  no hosted migration/account/data was changed. WebKit and physical devices untested.
+
+Run the three local integration scripts only against a task-created disposable
+Supabase stack (`API_URL` must equal `http://127.0.0.1:54321`). They require private
+local status/fixture/session files in `/private/tmp`; never commit those files or
+real credentials. The local auth script prepares synthetic fixtures, then run the
+approval and responsive browser scripts against the local development app. The
+standard `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and
+`npm audit --omit=dev` reproduce their respective distinct checks.
+
+The task-created local development server and Supabase stack were stopped after
+verification; their synthetic data volumes and private temporary credentials/session
+files were removed. The base checkout version-manifest modification was preserved.
+
+### Exact blockers and recommended next sequence
+
+1. **No free local model configured.** Actual planning, selection, judgment,
+   investigation and correction competency remain untested. Do not substitute
+   fixtures or seek another paid cap under the current free-only instruction.
+2. **Upstream dependency blocker.** Seven high development-tree alerts prevent the
+   required build. Await a compatible patched dependency or separately review a
+   supported toolchain migration; do not use `audit fix --force` or waive the gate.
+3. **Hosted candidate absent.** Review migrations and test a specifically authorized
+   isolated hosted environment with synthetic members before any release decision.
+4. **18 unrelated baseline failures** in admin/navigation/Money UI/public SEO remain.
+   Their exact names are listed below; do not expand into other agent upgrades.
+5. **Device/platform coverage.** Chromium phone widths pass; WebKit/native iOS/Android
+   and physical-device sessions remain unverified.
+
+Estimated follow-up: 1–3 days for no-cost model integration/evaluation if an existing
+suitable model becomes available; 2–5 days for evidence-based reasoning/correction
+improvements after evaluation; 1–2 days for authorized hosted isolation/browser checks;
+1–3 days for baseline test triage. Upstream patched dependency availability has no
+reliable estimate; a toolchain migration requires separate impact assessment.
+These estimates are recommendations, not new assignments or release authorization.
+
+### Remaining baseline failing names
+
+- BA-IA-101 defines one grouped persistent BeastAdmin workspace switcher
+- BA-112 presents every requested owner inspection area without mutation controls
+- BA-126 keeps deferred work separate from the operational Revenue Center
+- BA-107 presents central management, release history, and future rollback
+- Money Settings retains saved cash and debt controls in standard Money surfaces
+- BP-230 exposes only the approved workspace hierarchy
+- BA-107 validates a new email and keeps callback destinations internal
+- BA-106 recovery paths preserve only safe BeastOS destinations
+- BM-42D debt actions retain the selected-debt canonical edit workflow
+- debt management keeps open zero-balance revolving accounts active and exposes explicit restore
+- owner-only roster and profiles preserve the established BeastAdmin surface
+- sitemap includes public routes and excludes private application routes
+- module navigation centralizes expandable child items
+- BeastAdmin foundation registers modules and protects owner-only navigation
+- BM-37 renders Dashboard Immediate Attention and durably tracks rate changes
+- BP-230 keeps the record-backed Daily Briefing in Dashboard
+- BP-230 navigation follows the approved workspace hierarchy
+- public SEO inventory contains only real indexable application routes
+
+## Earlier implementation record (historical)
+
 ## Initial gaps and reused architecture
 
 The existing Director conversation endpoint invoked the shared Digital Staff

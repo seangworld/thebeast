@@ -14,12 +14,12 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  `connect-src 'self' https://*.supabase.co wss://*.supabase.co${isDevelopment ? " http://127.0.0.1:54321 ws://127.0.0.1:54321" : ""}`,
   "media-src 'self' blob: https:",
   "worker-src 'self' blob:",
   "frame-src 'none'",
   "manifest-src 'self'",
-  "upgrade-insecure-requests",
+  ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const productionSecurityHeaders = [

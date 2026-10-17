@@ -82,7 +82,7 @@ b.auth.getUser = async () => ({ data: { user: { id: bob } }, error: null });
 const originalLoad = Module._load;
 const root = fileURLToPath(new URL('../.test-dist/src/', import.meta.url));
 Module._load = function(id, ...args) {
-  if (id === '@/lib/supabase/server') return { createRouteClient: () => activeClient };
+  if (id === '@/lib/supabase/server') return { createRouteClient: () => activeClient, createAsyncRouteClient: async () => activeClient };
   return originalLoad.call(this, id.startsWith('@/') ? root + id.slice(2) : id, ...args);
 };
 let route;

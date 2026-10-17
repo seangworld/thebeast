@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DirectorCapability } from "@/lib/directorAssignments";
+import type { DirectorReasonedPlan } from "@/lib/directorReasoning";
 
 type Goal = { id: string; title: string; category: string };
 type Assignment = { id: string; capability: DirectorCapability; status: string; blocker: string | null; attempts: number; dependencies: string[]; events: Array<{ at: string; status: string; detail: string }>; result: { asOf: string; output: unknown; limitations: string[] } | null };
@@ -16,6 +17,8 @@ export default function DirectorObjectives() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [reasoningAvailable, setReasoningAvailable] = useState(false);
+  const [proposal, setProposal] = useState<{ id: string; plan: DirectorReasonedPlan } | null>(null);
   const requestVersion = useRef(0);
   const pending = useRef(false);
 
@@ -25,32 +28,38 @@ export default function DirectorObjectives() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Saved objectives unavailable.");
       setGoals(payload.goals || []);
+      setReasoningAvailable(payload.reasoningAvailable === true);
     }).catch((failure) => { if (!controller.signal.aborted) setError(failure.message); });
     return () => controller.abort();
   }, []);
 
   const load = useCallback(async (selected: string) => {
     const version = ++requestVersion.current;
-    setTasks([]); setError(null); setNotice(null);
+    setTasks([]); setError(null); setNotice(null); setProposal(null);
     if (!selected) return;
     try {
       const response = await fetch(`/api/director/assignments?goalId=${encodeURIComponent(selected)}`, { cache: "no-store" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Saved assignments unavailable.");
-      if (version === requestVersion.current) setTasks(payload.assignments || []);
+      if (version === requestVersion.current) {
+        setTasks(payload.assignments || []);
+        if (payload.proposal?.content?.directorPlan?.plan) setProposal({ id: payload.proposal.id, plan: payload.proposal.content.directorPlan.plan });
+      }
     } catch (failure) { if (version === requestVersion.current) setError(failure instanceof Error ? failure.message : "Assignments unavailable."); }
   }, []);
 
-  async function act(action: "plan" | "resume" | "correction", assignmentId?: string) {
+  async function act(action: "plan" | "resume" | "correction" | "reason" | "approve_reasoned_plan" | "supervise", assignmentId?: string) {
     if (pending.current || !goalId) return;
     pending.current = true; setBusy(true); setError(null); setNotice(null);
     ++requestVersion.current;
     try {
-      const response = await fetch("/api/director/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, goalId, capabilities, assignmentId }) });
+      const response = await fetch("/api/director/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, goalId, capabilities, assignmentId, proposalId: action === "approve_reasoned_plan" ? assignmentId : undefined }) });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Assignment request failed.");
       setTasks(payload.assignments || []);
-      setNotice(payload.outcome?.detail || "Review plan saved. Resume to execute its next checkpoint.");
+      if (payload.proposal?.content?.directorPlan?.plan) setProposal({ id: payload.proposal.id, plan: payload.proposal.content.directorPlan.plan });
+      if (action === "approve_reasoned_plan") setProposal(null);
+      setNotice(payload.outcome?.detail || payload.outcomes?.at(-1)?.detail || (action === "reason" ? "Avery proposed a plan. No work has been assigned or executed." : "Review plan saved. Resume to execute its next checkpoint."));
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Assignment request failed."); }
     finally { pending.current = false; setBusy(false); }
   }
@@ -58,19 +67,31 @@ export default function DirectorObjectives() {
   return <details className="mb-4 rounded-xl border border-violet-300/20 bg-[#141824] p-4">
     <summary className="cursor-pointer font-bold text-white">Supervised objectives · saved-record reviews</summary>
     <p className="my-3 text-sm text-slate-300">Attach supported specialist reviews to an existing BeastGoals objective. Each resume executes one checkpoint. Reviews do not complete the life goal or authorize transactions, medical decisions, publishing, or production changes.</p>
-    <label className="block text-sm text-slate-200">Saved objective
-      <select className="mt-1 w-full rounded border border-white/20 bg-[#111827] p-2" value={goalId} disabled={busy} onChange={(event) => { setGoalId(event.target.value); setCapabilities([]); void load(event.target.value); }}>
+    <label htmlFor="director-objective-goal" className="block text-sm text-slate-200">Saved objective</label>
+      <select id="director-objective-goal" className="mt-1 w-full rounded border border-white/20 bg-[#111827] p-2 text-slate-200" value={goalId} disabled={busy} onChange={(event) => { setGoalId(event.target.value); setCapabilities([]); void load(event.target.value); }}>
         <option value="">Choose an objective</option>
         {goals.map((goal) => <option key={goal.id} value={goal.id}>{goal.title}</option>)}
       </select>
-    </label>
     <fieldset className="my-3 grid gap-2" disabled={busy || !goalId}>
       <legend className="text-sm text-slate-300">Authorize these read-only specialist reviews</legend>
       {(Object.keys(labels) as DirectorCapability[]).map((capability) => <label key={capability} className="flex items-center gap-2 text-sm text-slate-200"><input type="checkbox" checked={capabilities.includes(capability)} onChange={(event) => setCapabilities((current) => event.target.checked ? [...current, capability] : current.filter((item) => item !== capability))} />{labels[capability]}</label>)}
     </fieldset>
+    <div className="my-3 rounded border border-white/10 p-3 text-sm text-slate-200">
+      <button type="button" className="beast-button" disabled={busy || !goalId || !reasoningAvailable} onClick={() => void act("reason")}>Ask Avery to plan or review</button>
+      {!reasoningAvailable && <p className="mt-2 text-xs text-amber-200">AI planning is unavailable. You can continue with saved-record reviews.</p>}
+      {proposal && <div className="mt-3 grid gap-2 break-words">
+        <p className="font-bold">Proposed plan · not executed</p><p>{proposal.plan.interpretation}</p>
+        <ol>{proposal.plan.steps.map((step) => <li key={step.capability}>{labels[step.capability]}: {step.purpose}. Acceptance: {step.acceptance}</li>)}</ol>
+        {(["alternatives", "contradictions", "missingInformation", "ownerDecisions", "unsupportedWork"] as const).map((key) => proposal.plan[key].length ? <div key={key}><p className="font-bold">{({ alternatives: "Alternatives", contradictions: "Conflicting information", missingInformation: "Missing information", ownerDecisions: "Owner decisions", unsupportedWork: "Unsupported work" })[key]}</p><ul>{proposal.plan[key].map((item, index) => <li key={index}>{item}</li>)}</ul></div> : null)}
+        {proposal.plan.assessments.map((assessment) => <p key={assessment.taskId}>{assessment.disposition.replaceAll("_", " ")}: {assessment.finding}</p>)}
+        <button type="button" className="beast-button" disabled={busy || !proposal.plan.steps.length || !!(proposal.plan.contradictions.length || proposal.plan.missingInformation.length || proposal.plan.ownerDecisions.length || proposal.plan.assessments.some((item) => item.disposition !== "accept_verified_evidence"))} onClick={() => void act("approve_reasoned_plan", proposal.id)}>Authorize supported steps</button>
+        <p className="text-xs text-slate-400">Model interpretation is unverified advice. This approval authorizes only the listed saved-record reviews, never unsupported work or external actions.</p>
+      </div>}
+    </div>
     <div className="flex flex-wrap gap-2">
       <button type="button" className="beast-button" disabled={busy || !goalId || !capabilities.length} onClick={() => void act("plan")}>Save review plan</button>
       <button type="button" className="beast-button" disabled={busy || !goalId || !tasks.length} onClick={() => void act("resume")}>{busy ? "Checking checkpoint…" : "Resume next checkpoint"}</button>
+      <button type="button" className="beast-button" disabled={busy || !goalId || !tasks.length} onClick={() => void act("supervise")}>Run approved checkpoints</button>
       <button type="button" className="beast-button" disabled={busy || !goalId} onClick={() => void load(goalId)}>Refresh evidence</button>
     </div>
     {error && <p role="alert" className="mt-3 text-sm text-red-200">{error}</p>}
