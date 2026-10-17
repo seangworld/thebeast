@@ -122,7 +122,14 @@ export async function advanceDirectorObjective(input: {
   if (tasks.length && tasks.every((task) => task.status === "verified")) return { state: "verified" as const, detail: "All approved saved-record reviews verified. The underlying goal is not marked complete." };
   const task = tasks.find((item) => item.status !== "verified" && (item.status !== "running" || Date.parse(item.lease_until || "") <= Date.parse(now)) && item.dependencies.every((id) => tasks.some((dependency) => dependency.id === id && dependency.status === "verified")));
   if (!task) return { state: "blocked" as const, detail: "No runnable assignment. Check dependencies or an active execution lease." };
-  if (task.attempts >= 3) return { state: "blocked" as const, detail: "Retry limit reached. Owner review is required; create a new review only after resolving the blocker." };
+  if (task.attempts >= 3) {
+    const detail = "Retry limit reached. Authorize a correction cycle on this existing checkpoint after resolving its blocker; do not create replacement work.";
+    // Make an expired running row visible to the existing explicit-correction UI.
+    const blocked = transition(task, "blocked", detail, now);
+    blocked.lease_id = null; blocked.lease_until = null; blocked.result = null;
+    if (task.status !== "blocked" && !await store.compareAndSwap(task, blocked)) return { state: "busy" as const };
+    return { state: "blocked" as const, detail };
+  }
   if (!await access.authorize(ownerId, task.capability)) {
     const blocked = transition(task, "blocked", "Specialist permission unavailable. No module records were read.", now);
     await store.compareAndSwap(task, blocked);

@@ -15,7 +15,128 @@ verified checkpoints. This is not evidence of general AI Director competence,
 autonomous research, arbitrary specialist task completion, or commercial readiness.
 The PR must not be described as completing the entire requested Director upgrade.
 
-## Real-model competency evaluation — current result, 2026-10-17
+## Targeted reasoning improvements — current no-cost verification, 2026-10-17
+
+**Overall classification remains partial-pass.** The observed real-model score is
+still **3 pass / 3 partial-pass / 2 fail**. The changes below have no-cost workflow,
+contract and local integration evidence; they have **not** been re-evaluated with
+an actual model. **This phase: zero paid calls and $0.** No credential was retrieved,
+created or requested; the previous temporary evaluation key remains deleted.
+
+### Corrections and demonstrated verification
+
+| Area | Correction | What is verified now | Still unverified |
+| --- | --- | --- | --- |
+| Recovery | Derive guidance from actual lease, attempts and dependencies rather than interpreting blocker prose. Exhausted expired running rows enter the existing blocked/correction path with cleared leases. | Old evaluated source reproduces stuck running/refused correction; corrected code passes the same regression plus real local API/SQL recovery. | Model correctly choosing recovery for unfamiliar states. |
+| Evidence accuracy | Cite only a permitted verified checkpoint with scope `saved_record_consistency_only`. Keep numerical/clinical output local; explicitly report unavailable details. | Incorrect, revoked and unverified structured evidence scope is rejected; privacy tests exclude raw outputs/snapshots from model context. | Correctness of free-form narrative and detailed specialist interpretation. |
+| Unnecessary blockers | Add optional `planningNotes`; valid routine resume/wait assessments do not block unrelated supported review proposals. | Independent review approval remains available with notes; real owner/source/conflict blockers and unresolved dependencies still stop approval. Real local UI case passes. | Model placing optional questions in the right field and avoiding fabricated contradictions. |
+| Correction handling | Reuse persisted checkpoint, explicit exhausted-cycle authorization and existing CAS/history/reverification. Never create replacement work. | Real local correction -> actual specialist calculation -> verified result -> reload/repeat retains same id/history and executes once. Active lease and foreign goal denial pass. | Model making correct correction requests and interpreting revised evidence. |
+| Planning | Use actual dependency metadata; validate proposed prerequisites against earlier steps or current verified permitted capabilities; reject cycles/unknown/unresolved prerequisites. Show them for member review. | Structural dependency/authorization tests pass; existing sequential runner/SQL plan is reused. | Whether a selected specialist or logical dependency is meaningful for the real objective. |
+
+The recovery test initially exposed an additional SQL constraint: leaving a lease
+on a blocked row violates the existing running/lease invariant. The final fix
+clears the expired lease and unverified result in the same CAS write. This was
+verified with actual PostgreSQL, not inferred from an in-memory test.
+
+`directorReasoningEvidence.ts` supplies operational guidance and a strict metadata
+projection after existing `publicAssignments` permission checks and independent
+recomputation. It is not another planner or orchestrator. Proposals remain inert;
+resume/wait model assessments do not execute anything or grant authority. New work
+still requires member approval; exhausted retry cycles still require explicit
+correction authorization. Earlier proposal schemas remain readable, while stale
+contexts must be refreshed before approval. Assignment history is preserved.
+
+Automatic approval review rejected sending additional financial/clinical summaries
+to an external provider. The implemented alternative keeps those values local and
+adds only operational metadata to the existing reasoning context. No new sensitive
+summary egress, hosted changes or customer-data access occurred. This limits how
+much detailed result interpretation can be tested in the model, intentionally.
+
+### Exact no-cost results
+
+- **59/59 targeted checks pass:** 51 Director regressions, three spending-guard
+  checks, three captured actual-output replay checks and two old/new-source recovery
+  reproductions. None invokes a paid model. Captured semantic failures are not
+  retroactively converted into model passes by these tests.
+- Full suite: **2,406 tests; 2,388 pass; 18 fail**. The failing names exactly match
+  the existing baseline; no new failing names. Unrelated remediation is separately
+  tracked in [Issue #266](https://github.com/seangworld/thebeast/issues/266), with no
+  fixes/assignments added outside Avery's scope.
+- Lint and application TypeScript pass. Required `npm run build` still fails the
+  unchanged full `npm audit` gate: **seven high, zero moderate**. Production-only
+  audit reports **zero**. Registry latest braces remains **3.0.3** and micromatch
+  **4.0.8** still depends on it; no compatible complete patched tree was identified.
+  No downgrade, forced override, package/lockfile change or gate waiver was applied.
+- Disposable local PostgreSQL 17/Supabase: all **125 migrations**, real GoTrue
+  login/getUser and RLS tests pass with synthetic accounts only. Current recovery
+  and member-approved seeded-plan integration pass through actual Next routes.
+- Actual local Chromium workflows pass at **1440x900, 390x844 and 375x812**, including
+  retained evidence, no duplicates, disabled reasoning and foreign-goal checks.
+  The test adapters now wait for the asynchronously displayed existing first-use
+  tour; product onboarding behavior was not changed.
+- The task-created local dev server and Supabase stack were stopped; synthetic
+  volumes, local credentials/session fixtures and startup secret output were removed.
+  The original checkout's version-manifest modification is preserved.
+
+Reproduce: `npm test`, `npm run lint`, `npx tsc --noEmit`; after test compilation,
+run `node --test .test-dist/tests/director*.test.js .test-dist/tests/digitalStaffDirector.test.js .test-dist/tests/beastOSDirector*.test.js scripts/test-director-evaluation-budget.mjs scripts/test-director-observed-model-regressions.mjs scripts/test-director-recovery-reproduction.mjs`.
+The existing local fixture setup supports `scripts/test-director-local-auth.mjs`,
+`scripts/test-director-recovery-local.mjs`, `scripts/test-director-plan-approval.mjs`
+and `scripts/test-director-browser.mjs`; they reject non-local configuration.
+Machine-readable current evidence: `docs/avery-director-no-cost-validation.json`.
+
+### Second real-model retest proposal — not executed or authorized
+
+The offline-only `scripts/prepare-director-retest.mjs` imports **no provider transport**
+and reads **no credential**. It produces `docs/avery-director-retest-plan.json` with
+prompt/schema/holdout hashes, 12 initial cases and review criteria. Four fresh
+variations were prepared after the corrections and are not production prompt data;
+they have not been used to tune model responses. Their lack of model results is
+explicit. This is a fixed small suite, not a statistical reliability claim.
+
+Proposed model: **GPT-5**, low reasoning, standard tier, compare returned identity
+with prior **gpt-5-2025-08-07**. Do not silently substitute a different model if the
+alias is retired/unavailable. Proposed total: **16 paid requests including failures
+and retries, no retries planned**, consisting of eight original cases, four fresh
+variations and four follow-ups. **Proposed owner ceiling: $2.00**; conservative
+reservation **$1.69472**, using 65,536 input tokens and 2,400 output tokens per call
+at [published GPT-5 prices](https://developers.openai.com/api/docs/models/gpt-5).
+Each actual request must stay <=20KB with no previous-response expansion, search,
+paid tools or grading calls. Follow-up bodies require their own reservation and
+size check; stop on unreliable bounds, unknown usage, unexpected pricing/model,
+16 attempts or the $2 ceiling. Recheck pricing before any future dispatch.
+
+The follow-ups cover actual synthetic same-checkpoint correction, interrupted
+recovery, dependent recovery, and a new unsupported member claim without external
+proof. They should include the bounded previous visible decision and the actual
+permitted execution result metadata. A wrong model action must be graded as wrong,
+not silently repaired by a test adapter and presented as successful AI delegation.
+The existing exhausted eight-call batch ledger remains untouched and cannot be
+reused to authorize this proposal. No second-round paid runner is enabled by this
+preparation; new authorization and guarded execution are prerequisites.
+
+Acceptance needs manual semantic review of practical plans, real contradictions,
+meaningful dependencies, appropriate escalation, same-checkpoint recovery/correction,
+accurate evidence limits and truthful completion reporting. Passing a schema,
+a model request or a deterministic fixture is insufficient. Any unresolved safety,
+scope or recovery deficiency retains partial-pass. A suitable development credential
+will be needed at execution time, but none is fetched or requested in this no-cost phase.
+
+### Remaining defects and exact next action
+
+Free-form prose can still invent facts, contradictions or blockers even when typed
+evidence scopes pass. The original failed/partial model responses remain the last
+actual reasoning observations. Detailed numerical/clinical result judgment is not
+supported by the metadata-only model input; Avery must say so rather than claim
+independent analysis. General tool execution, research/citations and cross-session
+model judgment remain limited to the previously documented architecture. Hosted
+migration/auth/tenant, WebKit/native/physical-device and release gates remain open.
+
+**Next action:** owner review of the corrections, known limits and proposed 16-call,
+$2 retest. No additional paid evaluation is authorized or running. No merge,
+deployment, production configuration change or other agent upgrade was performed.
+
+## First real-model competency evaluation — prior observed result, 2026-10-17
 
 **Overall: partial-pass. Eight actual model responses; three pass, three partial-pass,
 two fail under manual semantic review. No general Director-complete claim.**

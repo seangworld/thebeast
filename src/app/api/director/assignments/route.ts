@@ -4,6 +4,7 @@ import { advanceDirectorObjective, authorizeDirectorCorrection, AssignmentBlocke
 import { directorAssignmentAccess, directorAssignmentStore, publicAssignments } from "@/lib/directorAssignmentStore";
 import { requireMemberModuleEntitlement } from "@/lib/memberAgeServer";
 import { approveDirectorReasoning, type DirectorReasoningContext } from "@/lib/directorReasoning";
+import { reasoningCheckpointMetadata } from "@/lib/directorReasoningEvidence";
 import { directorReasoningAvailable, reasonAboutDirectorObjective } from "@/lib/directorReasoningProvider";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ async function reasoningContext(ctx: Exclude<Awaited<ReturnType<typeof context>>
   const availableCapabilities: DirectorReasoningContext["availableCapabilities"] = [];
   for (const capability of Object.keys(directorCapabilities) as Array<keyof typeof directorCapabilities>) if (await ctx.access.authorize(ctx.user.id, capability)) availableCapabilities.push(capability);
   const assignments = await publicAssignments(ctx.store, ctx.access, ctx.user.id, ctx.goal.id);
-  return { goal: ctx.goal, availableCapabilities, checkpoints: assignments.map((task) => ({ id: task.id, capability: task.capability, status: task.status, blocker: task.blocker, result: task.result ? { capability: task.capability, asOf: task.result.asOf, limitations: task.result.limitations } : null })) };
+  return { goal: ctx.goal, availableCapabilities, checkpoints: assignments.map(reasoningCheckpointMetadata) };
 }
 
 async function refreshObjectiveHistory(ctx: Exclude<Awaited<ReturnType<typeof context>>, { response: unknown }>) {

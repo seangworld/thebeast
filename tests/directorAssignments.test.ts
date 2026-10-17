@@ -142,3 +142,19 @@ test("missing financial amounts are not silently certified as zero", () => {
     assert.throws(() => executeSpecialist(source, now), /missing or invalid/);
   }
 });
+
+test("exhausted interrupted assignment enters correction workflow and preserves checkpoint history", async () => {
+  const row = task(); row.status = "running"; row.attempts = 3; row.lease_id = "abandoned"; row.lease_until = "2026-10-16T11:59:00Z";
+  row.events = [{ at: "2026-10-16T11:58:00Z", status: "running", detail: "Third authorized attempt interrupted" }];
+  const h = harness(new MemoryStore([row]));
+  assert.equal((await h.run()).state, "blocked");
+  assert.equal(h.store.tasks[0].status, "blocked"); assert.equal(h.store.tasks[0].attempts, 3);
+  assert.equal(h.store.tasks[0].lease_id, null); assert.equal(h.store.tasks[0].lease_until, null);
+  assert.equal(h.reads(), 0, "retry exhaustion does not read private sources");
+  assert.equal(await authorizeDirectorCorrection({ ...h, ownerId: "alice", goalId: "goal", taskId: row.id, now }), true);
+  assert.equal(h.store.tasks[0].id, row.id); assert.equal(h.store.tasks[0].events[0].detail, row.events[0].detail);
+  assert.equal((await h.run()).state, "verified"); assert.equal(h.store.tasks[0].attempts, 1);
+  const nextSession = harness(new MemoryStore(structuredClone(h.store.tasks)));
+  assert.equal((await nextSession.run({ execute: () => { throw new Error("duplicate"); } })).state, "verified");
+  assert.equal(nextSession.store.tasks[0].id, row.id); assert.equal(nextSession.store.tasks.length, 1);
+});

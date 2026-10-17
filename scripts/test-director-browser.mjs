@@ -13,7 +13,7 @@ try {
     await page.goto('http://127.0.0.1:3017/dashboard/director', { waitUntil: 'domcontentloaded' });
     await page.getByText('Supervised objectives · saved-record reviews', { exact: true }).waitFor({ timeout: 60000 });
     const skip = page.getByRole('button', { name: 'Skip', exact: true });
-    if (await skip.isVisible()) await skip.click();
+    try { await skip.waitFor({ state: 'visible', timeout: 5000 }); await skip.click(); } catch (error) { if (error.name !== 'TimeoutError') throw error; }
     await page.getByText('Supervised objectives · saved-record reviews', { exact: true }).click();
     await page.getByLabel('Saved objective', { exact: true }).selectOption(fixture.goalIds[0]);
     await page.getByText(/Health Advisor: record preparation · (planned|verified)/).waitFor();

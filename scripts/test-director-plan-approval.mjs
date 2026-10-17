@@ -18,7 +18,7 @@ const goal=created.data;
 const stale=await client.rpc('approve_director_review_plan',{p_goal_id:goal.id,p_goal_updated_at:'2000-01-01T00:00:00Z',p_capabilities:['money.cash-review']});
 assert.equal(stale.error?.code,'PT409','database rejects an outdated objective version atomically');
 console.log('Stale objective version rejected');
-const plan={interpretation:'Synthetic adapter: prepare current care records, then calculate the saved cash position.',steps:[{capability:'health.preparation-review',purpose:'Prepare existing care records',acceptance:'Recompute current preparation model'},{capability:'money.cash-review',purpose:'Review saved cash',acceptance:'Recompute canonical cash calculation'}],alternatives:['Defer unsupported moving decisions until the reviews are available.'],contradictions:[],missingInformation:[],ownerDecisions:[],unsupportedWork:['No booking, payment or publication is performed.'],assessments:[]};
+const plan={interpretation:'Synthetic adapter: prepare current care records, then calculate the saved cash position.',steps:[{capability:'health.preparation-review',purpose:'Prepare existing care records',acceptance:'Recompute current preparation model'},{capability:'money.cash-review',purpose:'Review saved cash',acceptance:'Recompute canonical cash calculation'}],alternatives:['Defer unsupported moving decisions until the reviews are available.'],contradictions:[],missingInformation:[],ownerDecisions:[],unsupportedWork:['No booking, payment or publication is performed.'],assessments:[],planningNotes:['Compare scheduling preferences later; the saved-record reviews can proceed.'],evidenceClaims:[]};
 const evidence={goal,availableCapabilities:['money.cash-review','health.preparation-review'],checkpoints:[]};
 const conversationId=`director-objective-${goal.id}`,proposalId=randomUUID();
 assert.equal((await client.from('agent_conversations').insert({id:conversationId,owner_id:fixture.accounts[0].id,agent_id:'beastfusion.fusion-director',title:goal.title})).error,null);
@@ -29,10 +29,13 @@ try {
   const context=await browser.newContext({storageState:'/private/tmp/avery-local-browser-state.json',viewport:{width:1440,height:900}});
   const page=await context.newPage();
   await page.goto('http://127.0.0.1:3017/dashboard/director',{waitUntil:'networkidle'});
-  const skip=page.getByRole('button',{name:'Skip',exact:true});if(await skip.isVisible())await skip.click();
+  const skip=page.getByRole('button',{name:'Skip',exact:true});
+  try { await skip.waitFor({state:'visible',timeout:5000}); await skip.click(); } catch(error) { if(error.name!=='TimeoutError')throw error; }
   await page.getByText('Supervised objectives · saved-record reviews',{exact:true}).click();
   await page.getByLabel('Saved objective',{exact:true}).selectOption(goal.id);
   await page.getByText('Proposed plan · not executed',{exact:true}).waitFor();
+  await page.getByText('Planning notes · not execution blockers',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Authorize supported steps',exact:true}).isEnabled(),true,'routine planning notes do not create another approval blocker');
   const approval=page.waitForResponse(r=>r.url().endsWith('/api/director/assignments')&&r.request().method()==='POST');
   await page.getByRole('button',{name:'Authorize supported steps',exact:true}).click();
   assert.equal((await approval).status(),200);

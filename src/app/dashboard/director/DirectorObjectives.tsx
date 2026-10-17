@@ -81,10 +81,12 @@ export default function DirectorObjectives() {
       {!reasoningAvailable && <p className="mt-2 text-xs text-amber-200">AI planning is unavailable. You can continue with saved-record reviews.</p>}
       {proposal && <div className="mt-3 grid gap-2 break-words">
         <p className="font-bold">Proposed plan · not executed</p><p>{proposal.plan.interpretation}</p>
-        <ol>{proposal.plan.steps.map((step) => <li key={step.capability}>{labels[step.capability]}: {step.purpose}. Acceptance: {step.acceptance}</li>)}</ol>
+        <ol>{proposal.plan.steps.map((step) => <li key={step.capability}>{labels[step.capability]}: {step.purpose}. Acceptance: {step.acceptance}{step.dependsOn?.length ? ` Prerequisites: ${step.dependsOn.map(capability => labels[capability]).join(", ")}.` : ""}</li>)}</ol>
         {(["alternatives", "contradictions", "missingInformation", "ownerDecisions", "unsupportedWork"] as const).map((key) => proposal.plan[key].length ? <div key={key}><p className="font-bold">{({ alternatives: "Alternatives", contradictions: "Conflicting information", missingInformation: "Missing information", ownerDecisions: "Owner decisions", unsupportedWork: "Unsupported work" })[key]}</p><ul>{proposal.plan[key].map((item, index) => <li key={index}>{item}</li>)}</ul></div> : null)}
+        {proposal.plan.planningNotes?.length ? <div><p className="font-bold">Planning notes · not execution blockers</p><ul>{proposal.plan.planningNotes.map((item, index) => <li key={index}>{item}</li>)}</ul></div> : null}
+        {proposal.plan.evidenceClaims?.map((claim, index) => <p key={index}>Checkpoint {claim.taskId}: saved-record consistency only. This does not establish a real-world outcome.</p>)}
         {proposal.plan.assessments.map((assessment) => <p key={assessment.taskId}>{assessment.disposition.replaceAll("_", " ")}: {assessment.finding}</p>)}
-        <button type="button" className="beast-button" disabled={busy || !proposal.plan.steps.length || !!(proposal.plan.contradictions.length || proposal.plan.missingInformation.length || proposal.plan.ownerDecisions.length || proposal.plan.assessments.some((item) => item.disposition !== "accept_verified_evidence"))} onClick={() => void act("approve_reasoned_plan", proposal.id)}>Authorize supported steps</button>
+        <button type="button" className="beast-button" disabled={busy || !proposal.plan.steps.length || !!(proposal.plan.contradictions.length || proposal.plan.missingInformation.length || proposal.plan.ownerDecisions.length || proposal.plan.assessments.some((item) => ["request_correction", "investigate"].includes(item.disposition)))} onClick={() => void act("approve_reasoned_plan", proposal.id)}>Authorize supported steps</button>
         <p className="text-xs text-slate-400">Model interpretation is unverified advice. This approval authorizes only the listed saved-record reviews, never unsupported work or external actions.</p>
       </div>}
     </div>

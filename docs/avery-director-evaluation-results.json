@@ -266,5 +266,19 @@
   "reservedWorstCaseUsd": 0.84736,
   "realModelEvidence": "avery-director-real-model-results.json",
   "credentialDeleted": true,
-  "postCorrectionModelRetest": "not run; eight-call budget exhausted"
+  "postCorrectionModelRetest": "not run; eight-call budget exhausted",
+  "currentNoCostImprovements": {
+    "report": "avery-director-no-cost-validation.json",
+    "overallCompetency": "partial-pass",
+    "paidCalls": 0,
+    "modelRetestExecuted": false,
+    "targetedTests": 59,
+    "fullSuite": {
+      "tests": 2406,
+      "pass": 2388,
+      "fail": 18
+    },
+    "baselineIssue": 266,
+    "retestPlan": "avery-director-retest-plan.json"
+  }
 }
