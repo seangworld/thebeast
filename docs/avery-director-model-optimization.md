@@ -1,3 +1,5 @@
+> Current phase (2026-10-17): [focused Sol High assessment preparation](avery-director-focused-assessment.md) and [independent novelty review packets](avery-director-focused-review-index.md). No new paid authorization or production switch; Stage 1 locked evidence below remains unchanged.
+
 # Stage 1 comparison complete after locked grading (2026-10-17)
 
 Independent grades are locked in Issue #264 comment 6237688638. **A = Luna Low (7 pass/1 partial); B = Sol High (8 pass); C = Luna Medium (7 pass/1 fail).** Provisional recommendation: **gpt-6.1-sol with high reasoning**, the only configuration meeting Stage 1 criteria. No production switch is made; no additional paid calls or credential access occurred. [Read the published comparison, timing, usage and cost](avery-director-stage-one-comparison.md). Original blind evidence and grades are preserved. Stage 2 remains unauthorized and its two-qualified-finalist gate is not met. Earlier pending-grading notes below are historical.

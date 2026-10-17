@@ -1,0 +1,161 @@
+{
+  "date": "2026-10-17",
+  "registry": "https://registry.npmjs.org",
+  "fullAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 7,
+      "critical": 0,
+      "total": 7
+    },
+    "dependencies": {
+      "prod": 161,
+      "dev": 408,
+      "optional": 71,
+      "peer": 11,
+      "peerOptional": 0,
+      "total": 607
+    }
+  },
+  "productionAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 161,
+      "dev": 408,
+      "optional": 71,
+      "peer": 11,
+      "peerOptional": 0,
+      "total": 607
+    }
+  },
+  "findings": [
+    {
+      "name": "@next/eslint-plugin-next",
+      "severity": "high",
+      "via": [
+        "fast-glob"
+      ],
+      "fixAvailable": {
+        "name": "eslint-config-next",
+        "version": "14.2.35",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "name": "braces",
+      "severity": "high",
+      "via": [
+        {
+          "source": 1240992,
+          "name": "braces",
+          "dependency": "braces",
+          "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+          "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+          "severity": "high",
+          "cwe": [
+            "CWE-674"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": "<=3.0.3"
+        }
+      ],
+      "fixAvailable": {
+        "name": "tailwindcss",
+        "version": "4.3.3",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "name": "chokidar",
+      "severity": "high",
+      "via": [
+        "braces"
+      ],
+      "fixAvailable": {
+        "name": "tailwindcss",
+        "version": "4.3.3",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "name": "eslint-config-next",
+      "severity": "high",
+      "via": [
+        "@next/eslint-plugin-next"
+      ],
+      "fixAvailable": {
+        "name": "eslint-config-next",
+        "version": "14.2.35",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "name": "fast-glob",
+      "severity": "high",
+      "via": [
+        "micromatch"
+      ],
+      "fixAvailable": {
+        "name": "eslint-config-next",
+        "version": "14.2.35",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "name": "micromatch",
+      "severity": "high",
+      "via": [
+        "braces"
+      ],
+      "fixAvailable": {
+        "name": "tailwindcss",
+        "version": "4.3.3",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "name": "tailwindcss",
+      "severity": "high",
+      "via": [
+        "chokidar",
+        "fast-glob",
+        "micromatch"
+      ],
+      "fixAvailable": {
+        "name": "tailwindcss",
+        "version": "4.3.3",
+        "isSemVerMajor": true
+      }
+    }
+  ],
+  "requiredBuild": {
+    "exitCode": 1,
+    "stopsAt": "unchanged npm audit gate, before Next compilation"
+  },
+  "registryVersions": {
+    "braces": "3.0.3",
+    "micromatch": "4.0.8",
+    "nextEslintPluginLatest": "16.4.2",
+    "tailwindLatest": "4.3.3"
+  },
+  "tailwindMigrationMetadata": {
+    "tailwindPostcss": "4.3.3 -> @tailwindcss/node / oxide / tailwindcss / postcss / quick-lru",
+    "nodePackage": "4.3.3 uses lightningcss/enhanced-resolve and no direct fast-glob/micromatch/braces dependency; full migrated tree has not been installed/audited"
+  },
+  "supportedPath": "No root patch published. Await root patched release; alternatively independently review Tailwind v4 compatibility migration plus removal of every Next lint fast-glob path. Current Next plugin latest still uses fast-glob 3.3.1. Do not claim migration fixed until full lockfile audit and compatibility tests pass.",
+  "dependenciesModified": false,
+  "gateWaived": false,
+  "compilerAfterAuditVerified": false
+}
