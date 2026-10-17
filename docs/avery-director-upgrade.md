@@ -5,7 +5,7 @@ Tracking: https://github.com/seangworld/thebeast/issues/264
 Base: `13005e948e78483bf917aab9c110bd478b846247` (current main at start).
 Branch: `codex/avery-director-capability`. Codex is sole engineering executor.
 Authorization: development, local synthetic testing, branch and PR only. No merge,
-deployment, hosted database change, customer data access or paid AI evaluations.
+production deployment, hosted database change, customer data access or paid AI evaluations.
 
 ## Owner review verdict
 
@@ -209,4 +209,6 @@ erasure and backup behavior require separate environment verification.
 Actual paid AI evaluation cost for this work: **$0; no model requests executed**.
 The new deterministic runner makes no provider calls. Existing conversational AI
 usage/cost behavior remains in the shared runtime. No subscription, provider,
-production change or deployment was created.
+production change or production deployment was created. Vercel automatically
+started its usual PR preview check after the branch push; that preview is pending
+and is not part of the completed verification above.
