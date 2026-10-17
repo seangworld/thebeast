@@ -1,100 +1,94 @@
-# Stage 1: approved budget, waiting for independent scenario review
+# Stage 1 execution complete; independent blinded grading pending
 
-2026-10-17. Branch `codex/avery-director-capability`, draft PR #265, tracker #264.
+2026-10-17. Existing branch `codex/avery-director-capability`, draft PR #265,
+tracker #264. Owner authorization: comment 6236922578, **24 calls/$3 maximum**.
+Independent ChatGPT scenario review: comment 6237368187, approved **regression
+screening/model comparison only**, not independently novel competency certification.
+The reviewed prompt/schema/case hashes were recomputed and matched before execution.
 
-The owner approved **Stage 1 only: 24 model calls maximum and $3 total maximum**
-in Issue #264 comment 6236922578. The owner subsequently designated **ChatGPT** as
-independent semantic/novelty reviewer and explicitly instructed Codex to wait until
-scenario-novelty review is complete before paid evaluation.
+## Actual execution and spending
 
-**Paid inference executed: 0 calls / $0.** No accuracy, response latency, generation
-tokens, generated model snapshots or winner exists yet. Avery remains partial-pass.
-Stage 2 remains unauthorized; no merge or deployment.
+**24/24 API model requests completed, with zero retries or Stage 2 calls.**
+Permanent conservative reservations total **$2.8064256**, below $3. Every dispatch
+persisted its reservation under the exclusive ledger lock before transport. No
+additional model, paid grader, external tool, premium service tier or follow-up call.
 
-## Materials for ChatGPT
+Provider-reported usage totals:
 
-- [Eight proposed screening scenarios](avery-director-stage-one-scenarios-review.md).
-- [Exact model-visible instructions, schema, contexts, inputs and hashes](avery-director-stage-one-scenarios-review.json).
-- [Prior scenarios and all 16 prior sent contexts for novelty comparison](avery-director-stage-one-novelty-reference.json), excluding prior identities and grades.
-- [Blinded result-packet templates](avery-director-stage-one-blinded-packets.json): eight scenarios x Candidate A/B/C, with original-response and actual-execution fields null because nothing has run.
+| Input | Cached input subset | Cache-write input subset | Output | Reasoning subset of output |
+| --- | --- | --- | --- | --- |
+| 43,875 | 31,500 | 12,303 | 11,902 | 4,383 |
 
-The standalone review packets exclude model identities, Codex grades, cost/latency
-signals and preferred candidates. Screening criteria are shared across candidates.
-Original generated responses will be included verbatim when they exist. Future
-packets must also contain actual tool/runner/verifier/persistence evidence and safe
-validation feedback; no corrected/fabricated response may replace a model response.
-No candidate-to-model mapping has been created or disclosed in these templates.
+Published-rate **usage-derived estimated cost: $0.06797005**. This is not independently
+invoice verified. Input categories are disjoint: ordinary noncached/nonwrite input,
+cached input, and cache-write input are charged once at their respective rates;
+reasoning tokens are included in total output. An initial conservative usage formula
+also charged the ordinary input rate on cache writes; that was corrected during
+reconciliation, retaining the original conservative estimates privately. The
+pre-dispatch reservation/caps were unchanged and remained safe throughout.
 
-Independent reviewer response needed: per-scenario novelty/fairness findings,
-classification of known regression overlap, required edits if any, and approval of
-the exact frozen hashes below. Do not claim repeated development/regression examples
-as independent competency proof. No independent review is presumed complete.
+Aggregate response latency: **8.6666s average, 21.1252s worst, 20.7492s nearest-rank
+p95**. This measures the existing Responses transport through parsed response receipt,
+not the entire objective or human review. Full per-request and per-configuration
+usage, timing, requested/returned model IDs and response metadata are retained
+privately until grading is locked. They are withheld from grading packets to avoid
+identity/performance cues. The reviewed exact three configurations were used; no
+unexpected returned model or service tier was observed.
 
-- Prompt SHA-256: `55e31473b4ec1addfaace65585cfcdd4646923da83b81d543f14835aec0c1d9f`
-- Schema SHA-256: `c4d21982ca409bb5b0281006670ef9dbba451525feea27f8870e4b7580cd5596`
-- All prepared scenario fixtures SHA-256: `0e20d529f0bef217a933adf859376879dd3708ec55442080cd095c39cef8a446`
+The existing reusable development credential was read from the owner-controlled,
+owner-only regular file, used in memory and checked unchanged after **every** request
+(content, inode, owner and mode). It was never printed, copied into configuration,
+committed, modified or deleted. Original visible model responses and actual returned
+IDs remain preserved privately; candidate A/B/C assignment was randomized before
+execution and is consistent across all eight cases.
 
-The fixture hash covers the original 16-case artifact; only its eight `screen`
-cases are proposed for Stage 1. No Stage 2 execution or confirmation outcomes exist.
+## Evidence for independent ChatGPT grading
 
-## Completed security and budget checks
+**Start here: [per-scenario grading index](avery-director-stage-one-grading-index.md).**
+Each of eight files contains the exact model-visible instructions/schema/input and
+relevant checkpoint evidence, expected responsibilities/criteria, all three verbatim
+responses under Candidate A/B/C, response hashes, validator feedback and actual
+persisted synthetic runner outputs/source snapshots. No model names, API IDs, request
+order, costs, timing, implementer grades or preferred candidates appear in packets.
+[Combined packet](avery-director-stage-one-blinded-packets.json) is also available.
 
-Two **free authenticated model-metadata GET requests** to api.openai.com returned
-HTTP 200 for the exact approved model IDs, `gpt-6-luna` and `gpt-6.1-sol`.
-These are availability IDs, **not returned generation snapshots or benchmark calls**.
-The reusable development credential was read only from its existing owner-only
-regular file, used in memory, never printed/committed/changed/deleted, and verified
-unchanged with the same inode, owner and mode afterward. No production/preview
-credential or customer record was accessed. Sanitized evidence:
-`avery-director-stage-one-preflight.json`.
+All 24 responses passed runtime validation. This is **not 24 semantic passes**.
+Fourteen decisions invoked the existing runner against private synthetic records;
+one decision's execution blockers caused correction to be withheld, with original
+response and actual withheld-execution evidence retained unchanged. Previously
+verified checkpoint rows were seeded using actual synthetic specialist functions,
+not attributed to model execution. Claims of external truth, clinical/financial
+outcomes, appointment attendance or live bank availability are not established.
+Tenant scenarios test claims/refusal boundaries, not hosted database isolation.
+One-response screening does not test model judgment after execution.
 
-Official model documentation was refreshed and supports the prepared efforts and
-rates. Proposed Stage 1 requests retain standard tier, store:false, no hosted tools,
-20KB request envelope, 65,536 conservative input-token reservation and 2,400 total
-output-token cap. Worst-case reservations remain **$2.8064256**: eight Luna low,
-eight Luna medium and eight Sol high. This is below $3 with no cache discounts and
-an input-plus-cache-write contingency. No dollars have actually been reserved for
-inference or spent.
+**Accuracy, semantic completion/reliability, unnecessary blockers, false-completion
+and critical-failure rates, cost per successful objective and best configuration are
+pending independent grades.** No final Director acceptance or production model change
+is recommended from schema/transport success alone. Once ChatGPT records locked
+candidate/case grades, unblind the private identity/metrics table, compute the accepted
+comparison and recommend the cheapest qualifying configuration. Do not unblind early.
 
-The existing `director-evaluation-budget.mjs` now includes a distinct Stage 1
-reservation profile bound to the approved models, efforts and eight case IDs:
+## No-cost verification and remaining gates
 
-- 24 total attempts maximum, eight per configuration, no repeated configuration/case
-  pair, no held-out B requests or silent model/effort substitution.
-- Every attempt consumes its permanent conservative reservation, including failures;
-  reject model changes, tools/history, premiums, excess input/output and corrupt totals.
-- Exclusive ledger lock and atomic write/fsync persist the reservation before a
-  future dispatcher sends a request. Concurrent execution refuses the second lock.
-- A stale crash lock or unsettled/unknown charge refuses restart; no blind retry,
-  ledger reset or reservation release. Known settled usage retains consumed cases.
-- Validate provider usage and output bounds, count reasoning within output, and keep
-  separately reported cache-write contingency in conservative estimates. Unknown
-  usage halts evaluation and retains the full reservation.
+**101/101 targeted checks pass** (prior 94 plus four dispatcher/execution and three
+completed-packet checks). These verify reservation-before-transport, hash binding,
+unknown-charge halt, rejected-output execution withholding, actual same-checkpoint
+correction/recovery and exact original-response preservation/blinding. Lint and
+application TypeScript pass. Full suite remains **2,406 tests / 2,388 pass / same 18
+failing names**, separately tracked in #266.
 
-These primitives were exercised offline, including simulated crash/restart and
-concurrency. No paid runner was invoked. Before future dispatch, bind the reviewed
-request hashes to the dispatcher and actual synthetic execution adapter, and exercise
-that integration offline; never infer scenario approval from this preparation.
+Original production prompt/schema, scenario fixture contents, runtime infrastructure
+and dependency files are unchanged. The previously verified seven-high dependency
+security gate remains unresolved; no new build/audit pass is claimed. No merge,
+deployment, hosted mutation, other-agent upgrade or Stage 2 execution occurred.
 
-**94/94 targeted no-cost checks pass**, preserving the previous 83 and adding eight
-budget/durability checks and three blinding/input-fidelity checks. Lint and application
-TypeScript pass. Full suite: **2,406 total / 2,388 pass / same 18 failing names**,
-tracked separately in #266. No production runtime, source prompt, capability registry,
-scenario fixtures or dependency files changed.
+Current resumption point: **independent ChatGPT semantic grading of completed blinded
+packets**. Stage 1 spending authorization is exhausted by call count. Stage 2 remains
+unauthorized regardless of unused dollars. Broader held-out competency/reliability,
+security gate and existing hosted/release verification remain later blockers.
 
-The previously approved full npm audit found seven high development-tree alerts and
-zero production-only findings; no compatible complete remediation was established.
-Package/lockfile remain unchanged from that audited state. The unchanged security
-build gate remains a release blocker. No new audit, package installation or gate waiver
-is claimed during this preflight.
-
-## Exact resumption point
-
-Wait for ChatGPT's independent novelty/fairness review of the eight scenarios and
-frozen hashes. If changes are required, prepare/re-freeze and validate them without
-paid calls. Once review is complete, integrate/test the approved request hash and
-reservation boundary with the existing provider/runner, run only Stage 1 within
-**24 calls/$3**, preserve original responses, prepare blinded semantic packets for
-ChatGPT, and publish measured results. The best-performing configuration cannot yet
-be recommended without those results and independent grades. Stage 2, merging and
-deployment remain outside authorization.
+Machine-readable aggregate evidence: `avery-director-stage-one-results-summary.json`.
+Private originals, identity map and detailed model/usage records remain in the owner-only
+`/private/tmp/avery-stage-one-private/ledger.json` (0600; directory 0700), excluded from
+GitHub until independent grading is locked. No credential is stored in that ledger.

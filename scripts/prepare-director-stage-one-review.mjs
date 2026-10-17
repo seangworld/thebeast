@@ -2,6 +2,8 @@
 import { readFileSync,writeFileSync } from 'node:fs';
 import { directorReasoningInstructions,directorReasoningSchema,reasoningInput } from '../.test-dist/src/lib/directorReasoning.js';
 import { hash } from './director-model-benchmark.mjs';
+const existingPacket=JSON.parse(readFileSync('docs/avery-director-stage-one-blinded-packets.json','utf8'));
+if(existingPacket.scenarios.some(s=>s.candidates.some(c=>c.originalResponseText!==null)))throw Error('Completed verbatim evaluation evidence cannot be overwritten by preparation');
 const all=JSON.parse(readFileSync('tests/fixtures/director-model-comparison.json','utf8'));
 const cases=all.filter(c=>c.split==='screen');
 const manifest=JSON.parse(readFileSync('docs/avery-director-model-benchmark-plan.json','utf8'));

@@ -1,6 +1,6 @@
 // Offline benchmark preparation and scoring. No credential access or API transport.
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { directorReasoningInstructions, directorReasoningSchema, reasoningInput } from '../.test-dist/src/lib/directorReasoning.js';
 export const bounds = Object.freeze({ bodyBytes: 20000, inputTokens: 65536, outputTokens: 2400, turns: 3, maxCalls: 72, maxUsd: 12 });
@@ -108,6 +108,7 @@ export function summarize(records, expectedIds) {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv.length !== 2) throw new Error('Offline preparation only; no execution flags supported');
+  if(existsSync('docs/avery-director-model-benchmark-plan.json') && JSON.parse(readFileSync('docs/avery-director-model-benchmark-plan.json','utf8')).paidCallsExecuted>0)throw Error('Completed Stage 1 evidence retained; preparation cannot overwrite actual usage');
   const plan = prepare();
   writeFileSync('docs/avery-director-model-benchmark-plan.json', JSON.stringify(plan,null,2)+'\n');
   console.log(JSON.stringify({cases:plan.cases.length,catalogConfigs:candidates.length,screeningConfigs:screeningIds.length,proposedAllStagesMaxCalls:plan.proposedMaxCalls,authorizedStageOneMaxCalls:24,reservationUsd:plan.worstCaseReservedUsd,paidCalls:0}));

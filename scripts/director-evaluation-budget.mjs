@@ -55,8 +55,9 @@ export function stageOneUsageCost(configId,usage){
  const r=Object.hasOwn(stageOneRates,configId)?stageOneRates[configId]:null;if(!r)throw Error('Unknown Stage 1 configuration');
  const input=usage?.input_tokens,output=usage?.output_tokens,cached=usage?.input_tokens_details?.cached_tokens??0,writes=usage?.input_tokens_details?.cache_write_tokens??0,reasoning=usage?.output_tokens_details?.reasoning_tokens??0;
  if(![input,output,cached,writes,reasoning].every(n=>Number.isSafeInteger(n)&&n>=0) || input>65536 || output>2400 || cached+writes>input || reasoning>output)throw Error('Unknown or out-of-budget Stage 1 usage; retain reservation and halt');
- // Conservative usage estimate includes input plus separately reported cache writes.
- return ((input-cached)*r.input+cached*r.cached+writes*r.cacheWrite+output*r.output)/1e6;
+ // Usage categories partition input tokens; cache writes are charged once at their own rate.
+ // Pre-dispatch reservation separately keeps the conservative input-plus-write contingency.
+ return ((input-cached-writes)*r.input+cached*r.cached+writes*r.cacheWrite+output*r.output)/1e6;
 }
 
 // Same exclusive-lock/atomic-fsync pattern as the prior evaluated batch runner.

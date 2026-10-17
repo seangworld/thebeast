@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync,existsSync } from 'node:fs';
+import { hash } from './director-model-benchmark.mjs';
+const packet=JSON.parse(readFileSync('docs/avery-director-stage-one-blinded-packets.json','utf8'));
+test('all 24 actual responses are present, complete and hashed verbatim',()=>{assert.equal(packet.scenarios.length,8);let n=0;for(const s of packet.scenarios)for(const c of s.candidates){assert.equal(c.originalResponseStatus,'completed');assert.equal(typeof c.originalResponseText,'string');assert.equal(hash(c.originalResponseText),c.originalResponseSha256);assert.ok(c.actualToolAndExecutionEvidence);n++;}assert.equal(n,24);});
+test('per-scenario files retain identical evidence without identity, costs or grading leaks',()=>{for(const s of packet.scenarios){const text=readFileSync('docs/avery-stage-one-blinded/'+s.id+'.json','utf8'),one=JSON.parse(text);assert.deepEqual(one.scenario,s);assert.doesNotMatch(text,/gpt-[0-9]|usageDerivedEstimatedUsd|configId|responseElapsedMs|executionElapsedMs|manualCompetencyReview/);}});
+test('local private originals match published response bytes while the identity map stays private',()=>{const path='/private/tmp/avery-stage-one-private/ledger.json';if(!existsSync(path))return;const ledger=JSON.parse(readFileSync(path));assert.equal(ledger.attempts.length,24);for(const s of packet.scenarios)for(const c of s.candidates){const a=ledger.attempts.find(a=>a.scenario===s.id&&a.configId===ledger.mapping[c.candidate]);assert.equal(c.originalResponseText,a.originalResponseText);assert.equal(a.response.status,'completed');}assert.equal(ledger.credentialPreserved,true);});

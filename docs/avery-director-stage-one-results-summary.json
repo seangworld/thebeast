@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-17",
+  "scope": "Stage 1 regression/model comparison, not independent novel competency certification",
+  "authorization": {
+    "issue": 264,
+    "commentId": 6236922578,
+    "reviewCommentId": 6237368187,
+    "maxCalls": 24,
+    "maxUsd": 3
+  },
+  "callsExecuted": 24,
+  "additionalStageTwoCalls": 0,
+  "retries": 0,
+  "reservedUsd": 2.8064256,
+  "usageDerivedEstimatedUsd": 0.06797005,
+  "providerInvoiceVerifiedUsd": null,
+  "costAccounting": "Input categories are disjoint: ordinary noncached/nonwrite input + cached input + cache-write input + total output; reasoning already included in output. Conservative pre-dispatch reservations unchanged.",
+  "tokens": {
+    "input": 43875,
+    "cachedInput": 31500,
+    "cacheWrite": 12303,
+    "output": 11902,
+    "reasoningIncludedInOutput": 4383
+  },
+  "aggregateLatencySeconds": {
+    "mean": 8.666638663208333,
+    "worst": 21.125164166999998,
+    "p95NearestRank": 20.749213458
+  },
+  "apiCompletedResponses": 24,
+  "runtimeValidatedPlans": 24,
+  "semanticCorrectness": null,
+  "semanticCompletionRate": null,
+  "criticalFailureRate": null,
+  "falseCompletionRate": null,
+  "costPerSemanticallySuccessfulObjective": null,
+  "independentGrades": null,
+  "recommendedConfiguration": null,
+  "blinding": "Requested/returned IDs, candidate identity mapping, per-config usage/cost/latency, original API message objects retained privately until independent grades locked. No identities or implementation-side grades in packets.",
+  "credentialPreserved": true,
+  "syntheticExecution": {
+    "decisionsInvokingExistingRunner": 14,
+    "decisionsWithExecutionWithheldByBlockers": 1,
+    "externalActionsPerformed": false,
+    "hostedIsolationVerified": false,
+    "postExecutionModelJudgmentEvaluated": false
+  },
+  "novelty": "All eight scenario families designated regression-style or overlapping prior examples by independent reviewer",
+  "frozenHashes": {
+    "prompt": "55e31473b4ec1addfaace65585cfcdd4646923da83b81d543f14835aec0c1d9f",
+    "schema": "c4d21982ca409bb5b0281006670ef9dbba451525feea27f8870e4b7580cd5596",
+    "cases": "0e20d529f0bef217a933adf859376879dd3708ec55442080cd095c39cef8a446"
+  },
+  "blindedPacketSha256": "1fd390c65b2e3ce70e7f3583e96efaaa059ea87f293b747af68ee18e5fe2f6b3",
+  "executionArtifacts": {
+    "scripts/evaluate-director-stage-one.mjs": "bb67d2aa91a45534c7d87d8d4cd995c4a6360ee87fdb9e77f19015eb90dc2f58",
+    "scripts/director-stage-one-execution.mjs": "5d9e35ee5a436c0f4145841603bdbafd28fa3d467e6d9340ed32ef5fe5dcabde",
+    "scripts/director-evaluation-budget.mjs": "96dd61405b54f6a0a5b189d194b827593ae5a5b6fbfefc26863cc437f47e3d11",
+    "scripts/publish-director-stage-one-blinded.mjs": "2ec42ac55211704ce776a54224fddd8e37b11d7952a2ffc88ea18034336f7d94"
+  },
+  "verification": {
+    "targeted": {
+      "pass": 101,
+      "fail": 0
+    },
+    "fullSuite": {
+      "total": 2406,
+      "pass": 2388,
+      "fail": 18,
+      "sameBaselineNames": true,
+      "issue": 266
+    },
+    "lint": "pass",
+    "applicationTypeScript": "pass"
+  }
+}

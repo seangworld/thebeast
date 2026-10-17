@@ -1,6 +1,6 @@
 {
   "date": "2026-10-17",
-  "phase": "Stage 1 preflight; independent ChatGPT novelty review pending",
+  "phase": "Stage 1 execution complete; independent semantic grading pending",
   "authorization": {
     "issue": 264,
     "commentId": 6236922578,
@@ -8,23 +8,21 @@
     "maxCalls": 24,
     "maxUsd": 3
   },
-  "paidCalls": 0,
-  "inferenceSpendUsd": 0,
-  "generationMeasurements": null,
+  "paidCalls": 24,
+  "generationMeasurements": "Aggregate metrics in avery-director-stage-one-results-summary.json; identities/per-config metrics retained privately",
   "recommendedConfiguration": null,
   "independentReview": {
     "reviewer": "ChatGPT",
-    "noveltyStatus": "pending",
-    "semanticStatus": "not run; no model responses",
-    "ownerInstruction": "Wait for independent scenario-novelty review before paid execution"
+    "noveltyStatus": "approved for regression screening only, Issue #264 comment 6237368187",
+    "semanticStatus": "pending locked blind grades"
   },
   "targeted": {
-    "total": 94,
-    "pass": 94,
+    "total": 101,
+    "pass": 101,
     "fail": 0,
-    "priorPreserved": 83,
-    "newBudgetAndDurability": 8,
-    "newPacketFidelityAndBlinding": 3
+    "priorPreserved": 94,
+    "additionalDispatcher": 4,
+    "additionalCompletedPackets": 3
   },
   "fullSuite": {
     "total": 2406,
@@ -43,5 +41,6 @@
     "schemaSha256": "c4d21982ca409bb5b0281006670ef9dbba451525feea27f8870e4b7580cd5596",
     "casesSha256": "0e20d529f0bef217a933adf859376879dd3708ec55442080cd095c39cef8a446"
   },
-  "resumption": "Independent scenario review, then offline dispatcher integration and Stage 1 only; no Stage 2/merge/deploy"
+  "resumption": "ChatGPT blind semantic grading; then unblind IDs/metrics and compare; no Stage 2",
+  "inferenceSpendUsdEstimated": 0.06797005
 }

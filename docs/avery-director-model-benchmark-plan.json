@@ -1,12 +1,12 @@
 {
-  "authorization": "Stage 1 approved by owner in Issue #264 comment 6236922578, 24 calls/$3; WAIT for independent ChatGPT scenario novelty review before execution. Stage 2 unapproved; prior 432-call/$65 proposal rejected.",
+  "authorization": "Stage 1 authorized 24 calls/$3; regression-screening review approved in Issue #264 comment 6237368187. Stage 1 exhausted; Stage 2 NOT AUTHORIZED.",
   "authorizedLimits": {
     "stage": 1,
     "maxCalls": 24,
     "maxUsd": 3
   },
-  "executionStatus": "awaiting_independent_scenario_review",
-  "paidCallsExecuted": 0,
+  "executionStatus": "stage_one_requests_complete_independent_blinded_grading_pending",
+  "paidCallsExecuted": 24,
   "bounds": {
     "bodyBytes": 20000,
     "inputTokens": 65536,
@@ -135,7 +135,7 @@
     {
       "stage": 1,
       "name": "screening",
-      "authorization": "owner approved 24 calls/$3; independent scenario review pending",
+      "authorization": "Approved and executed; all 24 calls consumed",
       "configurations": [
         "gpt-6-luna:low",
         "gpt-6-luna:medium",
@@ -154,7 +154,9 @@
       "maxCalls": 24,
       "maxUsd": 3,
       "worstCaseReservedUsd": 2.8064256,
-      "completionEvidence": "one model decision followed only by permitted actual synthetic execution; post-result model interpretation unmeasured"
+      "completionEvidence": "one model decision followed only by permitted actual synthetic execution; post-result model interpretation unmeasured",
+      "actualCalls": 24,
+      "independentSemanticGrades": null
     },
     {
       "stage": 2,
@@ -502,5 +504,10 @@
       "maxRequestBytes": 11063
     }
   ],
-  "results": null
+  "results": {
+    "stageOneExecutionComplete": true,
+    "independentGrades": null,
+    "modelIdentityKey": "withheld privately until grades locked",
+    "scope": "Regression/model comparison only; not novel competency certification"
+  }
 }

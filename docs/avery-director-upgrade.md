@@ -1,3 +1,7 @@
+# Stage 1 executed; blinded semantic grading pending (2026-10-17)
+
+**24/24 approved requests completed**, no retries or Stage 2 calls. Conservative reservation **$2.8064256**; usage-derived estimated spend **$0.06797005** (not invoice verified). Credential preserved. **101/101 targeted checks pass**. Identities and per-configuration metrics remain private until independent grades are locked. Read [current execution report](avery-director-stage-one-status.md) and [completed blinded grading packets](avery-director-stage-one-grading-index.md). Earlier preflight/approval holds below are historical and have been satisfied for regression screening only; semantic competence remains ungraded.
+
 # Stage 1 preflight and independent review (2026-10-17)
 
 Owner approved **24 calls/$3** for Stage 1 and designated ChatGPT independent reviewer; explicit scenario-review hold remains in force. **0 paid calls**, exact model availability verified by free metadata, credential preserved. **94/94 targeted checks pass**. See [current status](avery-director-stage-one-status.md) and [proposed scenarios for ChatGPT](avery-director-stage-one-scenarios-review.md). Stage 2 remains unauthorized.
