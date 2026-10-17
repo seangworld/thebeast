@@ -18,7 +18,7 @@ test("unavailable tools, duplicates and invented specialist assessments cannot p
 test("model cannot promote attempted, failed, stale or incomplete work to verified", () => {
   for (const status of ["running", "blocked", "needs_correction", "planned"]) {
     const ctx = { ...context, checkpoints: [{ id: "task", capability: "money.cash-review", status, blocker: "Missing proof", result: null }] };
-    const bad = plan(); bad.assessments = [{ taskId: "task", finding: "I consider it done", disposition: "accept_verified_evidence" }];
+    const bad = plan(); bad.steps = bad.steps.filter(step => step.capability !== "money.cash-review"); bad.assessments = [{ taskId: "task", finding: "I consider it done", disposition: "accept_verified_evidence" }];
     assert.throws(() => validateDirectorReasoning(bad, ctx), /unverified/);
     bad.assessments[0].disposition = "request_correction";
     assert.equal(validateDirectorReasoning(bad, ctx).assessments[0].disposition, "request_correction");
@@ -54,4 +54,13 @@ test("production configuration never opts into plaintext loopback", () => {
   Object.assign(process.env, { NODE_ENV: "production", NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321", NEXT_PUBLIC_SUPABASE_ANON_KEY: "synthetic-key-at-least-twenty-characters" });
   try { assert.throws(requireSupabasePublicConfiguration, /not configured/); }
   finally { for (const [name, value] of Object.entries({ NODE_ENV: saved.mode, NEXT_PUBLIC_SUPABASE_URL: saved.url, NEXT_PUBLIC_SUPABASE_ANON_KEY: saved.key })) { if (value === undefined) delete process.env[name]; else process.env[name] = value; } }
+});
+
+test("a model correction proposal cannot create replacement work for any existing checkpoint", () => {
+  for (const status of ["planned", "running", "blocked", "needs_correction"]) {
+    const ctx = { ...context, checkpoints: [{ id: "existing", capability: "money.cash-review", status, blocker: null, result: null }] };
+    assert.throws(() => validateDirectorReasoning(plan(), ctx), /replace existing work/);
+    const assessment = plan(); assessment.steps = []; assessment.assessments = [{ taskId: "existing", finding: "Reuse the persisted checkpoint under its existing correction or recovery workflow.", disposition: "investigate" }];
+    assert.equal(validateDirectorReasoning(assessment, ctx).assessments[0].taskId, "existing");
+  }
 });

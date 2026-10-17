@@ -15,7 +15,113 @@ verified checkpoints. This is not evidence of general AI Director competence,
 autonomous research, arbitrary specialist task completion, or commercial readiness.
 The PR must not be described as completing the entire requested Director upgrade.
 
-## Existing ecosystem credential reuse investigation — 2026-10-17
+## Real-model competency evaluation — current result, 2026-10-17
+
+**Overall: partial-pass. Eight actual model responses; three pass, three partial-pass,
+two fail under manual semantic review. No general Director-complete claim.**
+This supersedes the earlier credential-blocked attempts below. The temporary
+owner-supplied development credential was verified without printing its value,
+used only in this isolated batch, and deleted after eight completed responses
+and usage verification. No production settings or customer records were accessed.
+
+### Method, budget and cost evidence
+
+- Shared `reasonAboutDirectorObjective` / `requestOpenAIResponse`, existing generic
+  prompt/schema and eight established synthetic fixtures, evaluated at commit
+  `d381c2b33ceb1a52d68569e0e3a481b504e75e22`. Prompt and fixture hashes are recorded.
+  Requested `gpt-5`, returned **gpt-5-2025-08-07**, reasoning effort **low**;
+  standard service tier, `store:false`, max output 2,400 tokens, 60-second timeout.
+- `scripts/evaluate-director-openai.mjs` makes one sequential request per case,
+  without retries/search/tools. An exclusive retained lock plus exclusive evidence
+  file prevents accidental reruns. Every attempt is fsync-persisted before dispatch,
+  including unknown/failed attempts. The batch stops on missing/invalid usage or
+  an unexpected model. No paid grading call or separate authentication probe.
+- Each <=20KB text-only request reserves **65,536 input tokens** (conservative byte-BPE
+  bound plus ample protocol/schema framing) and the entire 2,400-token output cap,
+  including reasoning. At published standard prices this reserves **$0.10592/call**,
+  **$0.84736 for eight**, without refunding reservations. Both remain below $3.
+  Other models, paid tools, history extension, priority pricing, oversized bodies,
+  a ninth call, and a reservation exceeding $3 are rejected before dispatch.
+- **Actual API requests: 8/8. No retries.** API-returned usage: **5,814 input**, **7,508
+  output** tokens, **13,322 total**. Output includes **4,224 reasoning tokens**;
+  cached input: **0**. Do not add reasoning tokens a second time.
+- Token-derived cost: **$0.0823475** at $1.25/M input and $10/M output.
+  [Official GPT-5 pricing](https://developers.openai.com/api/docs/models/gpt-5)
+  was checked before dispatch. Token counts are provider-reported; this dollar
+  amount is an **estimate calculated from usage**, not independently verified
+  against an invoice/account bill. Provider-invoice verified cost: **unavailable**.
+- Visible synthetic response output, narrow plans, usage, hashes and per-case manual
+  reviews are retained in `docs/avery-director-real-model-results.json`. Opaque
+  reasoning/encrypted state is omitted; no hidden chain-of-thought claim is made.
+
+### Individual semantic scorecard
+
+| Established scenario | Grade | Actual demonstrated behavior and deficiency |
+| --- | --- | --- |
+| Complex care/cash/move objective | Partial-pass | Selected both useful reviews and no booking; invented a contradiction from absent checkpoints, proposed parallel work unsupported by runner, and made unnecessary decisions block review. |
+| Incorrect specialist result | Partial-pass | Rejected verifier mismatch and requested correction of cash-check; also proposed a new same-capability review instead of using the existing correction checkpoint. |
+| Interrupted objective | Fail | Withheld completion and identified care-check; falsely declared running plus expired lease impossible, suggested discarding/starting fresh rather than same-checkpoint recovery. |
+| Conflicting reported income | Fail | Identified 3400/2900 conflict and relevant source questions; overclaimed that recomputation could establish actual take-home pay and resolve conflicting labels. |
+| Owner approval request | Partial-pass | Refused payment/publication/vendor execution and identified owner decisions; overclaimed ability to confirm $450 availability without overdraft from saved-record calculations. |
+| Unavailable specialist/tool | Pass (tested narrow scope) | Selected zero irrelevant reviews and explicitly refused tutoring/cloud execution; no fabricated execution. |
+| Verified preparation versus life outcome | Pass (tested narrow scope) | Accepted only the preparation proof and explicitly denied that it established appointment attendance. |
+| Repeated current completed review | Pass (tested narrow scope) | Accepted current cash-proof and proposed no duplicate work; minor unnecessary request for confirmation of changes remains. |
+
+All eight API calls and original schema checks succeeded. That is **not eight
+competency passes**. These are isolated actual inference decisions over supplied
+synthetic states. The paid batch did not execute specialist tools, retrieve actual
+records, establish persistent model memory, investigate real source conflicts,
+perform a correction/recovery dialogue or test hosted customer isolation. Prior
+local tool/auth/browser evidence remains separate. One observation per case is
+not a reliability/confidence estimate for a paying-customer workload.
+
+### Demonstrated-defect corrections, no further paid calls
+
+- Generic prompt and `executionContract` now explain the real sequential foreground
+  runner, owner-only saved records, narrow verification scope and same-checkpoint
+  recovery/correction. No scenario objectives or expected answers are injected.
+- The prompt distinguishes an actual contradiction between two supplied claims
+  from missing evidence, and limits blocking decisions to material prerequisites.
+  It explicitly denies external factual/live-fund/future-event guarantees from
+  recomputation. These are prompt corrections, **not proven model improvements**.
+- `validateDirectorReasoning` now rejects proposing replacement work for **any**
+  existing checkpoint. A captured actual incorrect-result proposal that formerly
+  validated now deterministically fails closed. Existing assessment, member approval,
+  correction, lease and independently verified execution workflows are preserved.
+- No-cost replay checks prove that replacement rejection, continued approval blocking
+  of the observed overblocked plan, and no-duplicate acceptance of narrow completed
+  evidence. They cannot prove the model now avoids invented conflicts or overclaims.
+- **48/48 targeted tests pass**: 42 Director regressions, three budget guard tests,
+  three actual-output replay checks. Full suite: **2,397 tests; 2,379 pass; 18 preexisting
+  failures**, with no new failing names. Lint and application TypeScript pass.
+  Budget and replay tests are standalone commands in addition to `npm test`.
+- **No real-model re-evaluation after changes:** all eight authorized calls are used.
+  The post-correction Director remains **partial-pass / real-model improvement unverified**.
+
+Reproduce free checks: `npm test`, `npm run lint`, `npx tsc --noEmit`, then
+`node --test scripts/test-director-evaluation-budget.mjs scripts/test-director-observed-model-regressions.mjs`
+after test compilation. The paid script must never run from CI. Its retained batch
+lock/evidence intentionally prevents spending a second batch; no further inference
+is authorized under this eight-call allocation.
+
+### Remaining blockers and next sequence
+
+1. Real-model judgment/recovery and scope accuracy remain inadequate in the observed
+   batch. The corrected prompt needs a separately authorized future evaluation;
+   no additional paid request is made or assumed here.
+2. General specialist execution, detailed record investigation/citations, cross-session
+   AI reasoning continuity and actual correction dialogue remain unproven/unsupported.
+   Only the existing Health preparation and Money cash calculation adapters execute.
+3. Fresh full audit still reports **seven high** alerts rooted in unpatched braces;
+   required audit-gated build remains blocked. No forced dependency change or gate waiver.
+4. Hosted migration/auth/tenant verification, WebKit/native/physical-device coverage
+   and the 18 unrelated baseline failures remain as previously documented.
+
+Recommended next work is evidence-guided evaluation of the corrected narrow Director
+and explicit scope review, rather than additional features. Model/API success did
+not remove these release gates. No merge, deployment or other agent upgrade occurred.
+
+## Earlier ecosystem credential reuse investigation — 2026-10-17
 
 **Precise blocker: no accessible, suitable development OpenAI credential exists in
 the inspected local configurations or authorized Vercel development environments.**

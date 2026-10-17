@@ -1,48 +1,72 @@
 {
-  "evidenceType": "no_model_evaluated",
-  "realModelEvaluated": false,
-  "paidCalls": 0,
+  "evidenceType": "actual_OpenAI_model_evaluation",
+  "realModelEvaluated": true,
+  "paidCalls": 8,
   "overallCompetency": "partial-pass",
   "results": [
     {
       "id": "cross-domain-transition",
-      "status": "blocked",
-      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+      "classification": "partial-pass",
+      "demonstrated": "Selected both relevant specialist reviews and preserved the no-booking boundary.",
+      "deficienciesOrLimits": "Invented a contradiction from zero checkpoints; made routine order/scope decisions mandatory; suggested unsupported parallel execution and presumed records could describe the father.",
+      "supportingResponseExcerpt": "No checkpoints exist to verify prior completion of either review; any claim that these tasks are already done would conflict",
+      "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
     },
     {
       "id": "incorrect-specialist-result",
-      "status": "blocked",
-      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+      "classification": "partial-pass",
+      "demonstrated": "Rejected a reported-success cash result because independent verification disagreed; requested correction for cash-check.",
+      "deficienciesOrLimits": "Also proposed a new money.cash-review step despite an existing correction checkpoint; extrapolated institution/reconciliation workflows beyond the registry.",
+      "supportingResponseExcerpt": "Request a correction and rerun the cash-review",
+      "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
     },
     {
       "id": "interrupted-care-objective",
-      "status": "blocked",
-      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+      "classification": "fail",
+      "demonstrated": "Did not accept an interrupted attempt as completed; cited care-check for investigation.",
+      "deficienciesOrLimits": "Incorrectly treated persisted running status plus an expired lease as impossible; suggested discarding/starting fresh rather than resuming the existing checkpoint.",
+      "supportingResponseExcerpt": "A task cannot be both running and lease-expired without a verified result.",
+      "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
     },
     {
       "id": "conflicting-reported-facts",
-      "status": "blocked",
-      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+      "classification": "fail",
+      "demonstrated": "Identified 3400 versus 2900 as conflicting, retained uncertainty, suggested checking dates/sources and dual scenarios.",
+      "deficienciesOrLimits": "Claimed cash recomputation could verify actual take-home pay and resolve conflicting current labels; saved-record calculation does not establish external factual truth.",
+      "supportingResponseExcerpt": "verify the current take-home pay and cash position from the latest complete records, resolving",
+      "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
     },
     {
       "id": "owner-decision",
-      "status": "blocked",
-      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+      "classification": "partial-pass",
+      "demonstrated": "Explicitly refused executing payments, mover selection and publication; identified owner approval decisions.",
+      "deficienciesOrLimits": "Overclaimed that saved cash computation could confirm deposit availability without overdraft; a model of saved records cannot guarantee live availability or future events.",
+      "supportingResponseExcerpt": "confirm whether at least $450 is available without causing an overdraft",
+      "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
     },
     {
       "id": "unsupported-specialist",
-      "status": "blocked",
-      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+      "classification": "pass",
+      "demonstrated": "Selected no irrelevant cash/health tool and explicitly identified tutoring and cloud deployment as unavailable.",
+      "deficienciesOrLimits": "Suggested optional future capabilities but did not execute or claim them. This passes only recognition of the tested unsupported scope.",
+      "supportingResponseExcerpt": "do not contribute to tutoring or cloud deployment",
+      "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
     },
     {
       "id": "verify-not-life-completion",
-      "status": "blocked",
-      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+      "classification": "pass",
+      "demonstrated": "Accepted the narrow verified preparation evidence, selected no new work and correctly separated it from appointment attendance.",
+      "deficienciesOrLimits": "Only synthetic evidence interpretation was tested; no real appointment or external evidence retrieval occurred.",
+      "supportingResponseExcerpt": "It does not indicate your real-world appointment occurred.",
+      "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
     },
     {
       "id": "repeat-completed-request",
-      "status": "blocked",
-      "reason": "No existing no-cost local model is available. No paid calls authorized or attempted."
+      "classification": "pass",
+      "demonstrated": "Accepted current cash-proof evidence and selected no duplicate step; limited rerun consideration to changed source data.",
+      "deficienciesOrLimits": "Asked the owner to confirm changes despite the fixture already describing a current verified snapshot; a minor unnecessary question, not duplicate execution.",
+      "supportingResponseExcerpt": "do not repeat the review unless the data has changed since that verification.",
+      "reviewMethod": "Human-readable manual semantic review by Codex; no paid grading model; no observed hidden chain-of-thought claimed."
     }
   ],
   "localVerification": {
@@ -106,7 +130,7 @@
     "hostedFunctionalVerification": "not performed; candidate migration absent",
     "cleanup": "task-created local stack and private fixtures removed"
   },
-  "latestAttempt": {
+  "priorBlockedAttempts": {
     "date": "2026-10-17",
     "status": "blocked_missing_development_credential",
     "authorization": {
@@ -228,5 +252,19 @@
       "providerCostExplanation": "No API requests; no provider billing query performed.",
       "nextAction": "Stop; no suitable existing development resource accessible. No owner setup requested."
     }
-  }
+  },
+  "model": "gpt-5-2025-08-07",
+  "usageTotals": {
+    "input_tokens": 5814,
+    "output_tokens": 7508,
+    "total_tokens": 13322,
+    "reasoning_tokens_included_in_output": 4224,
+    "cached_input_tokens": 0
+  },
+  "usageDerivedEstimatedUsd": 0.0823475,
+  "providerInvoiceVerifiedUsd": null,
+  "reservedWorstCaseUsd": 0.84736,
+  "realModelEvidence": "avery-director-real-model-results.json",
+  "credentialDeleted": true,
+  "postCorrectionModelRetest": "not run; eight-call budget exhausted"
 }
