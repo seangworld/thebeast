@@ -1,8 +1,9 @@
 // Offline preparation only. This script imports no API transport and reads no key.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { directorReasoningInstructions, directorReasoningSchema, reasoningInput } from '../.test-dist/src/lib/directorReasoning.js';
 import { limits } from './director-evaluation-budget.mjs';
+if (existsSync('docs/avery-director-retest-plan.json') && JSON.parse(readFileSync('docs/avery-director-retest-plan.json', 'utf8')).paidCallsExecuted > 0) throw new Error('Completed batch evidence retained; a new reviewed plan requires new authorization.');
 const originals=JSON.parse(readFileSync('tests/fixtures/director-competency.json','utf8'));
 const holdout=JSON.parse(readFileSync('tests/fixtures/director-retest-holdout.json','utf8'));
 const cases=[...originals.map(s=>({...s,tasks:s.tasks.map(t=>({...t,attempts:1,dependencies:[],...(t.status==='running'?{leaseUntil:'2000-01-01T00:00:00Z'}:{})}))})),...holdout];

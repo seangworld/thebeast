@@ -109,7 +109,7 @@
     "composition": "8 originals + 4 fresh variations + 4 adaptive follow-ups",
     "evidenceNeeded": "Manual semantic judgment plus real synthetic same-checkpoint execution for recovery/correction; no passing grades from schema or fixture matching alone."
   },
-  "nextAction": "Stop this attempt. Resume the approved bounded batch only when a permitted development credential is accessible. No owner technical setup requested.",
+  "nextAction": "Owner review. Keep partial-pass; do not issue another model call under this exhausted authorization. Retained credential may be used only for future explicitly authorized development tests.",
   "approvedSecondRetestAttempt": {
     "date": "2026-10-17",
     "authorization": "Owner-approved second batch: at most 16 calls and $2 total, distinct from the exhausted first batch",
@@ -138,5 +138,57 @@
     "results": "No second-round results. Prior actual-model score remains 3 pass / 3 partial-pass / 2 fail.",
     "noCostTests": "Prior verified evidence retained; not rerun in this credential-only attempt.",
     "nextAction": "Stop this attempt. Resume the approved bounded batch only when a permitted development credential is accessible. No owner technical setup requested."
+  },
+  "secondActualModelEvaluation": {
+    "date": "2026-10-17",
+    "status": "completed_actual_second_model_batch",
+    "model": "gpt-5-2025-08-07",
+    "calls": 16,
+    "maxCalls": 16,
+    "maxUsd": 2,
+    "reservedWorstCaseUsd": 1.69472,
+    "usage": {
+      "input_tokens": 25985,
+      "output_tokens": 15371,
+      "cached_input_tokens": 16128,
+      "reasoning_tokens_included_in_output": 8832,
+      "total_tokens": 41356
+    },
+    "usageDerivedEstimatedUsd": 0.16804725,
+    "providerInvoiceVerifiedUsd": null,
+    "grades": {
+      "pass": 9,
+      "partialPass": 3,
+      "fail": 4
+    },
+    "originalEight": {
+      "pass": 5,
+      "partialPass": 2,
+      "fail": 1
+    },
+    "overallCompetency": "partial-pass",
+    "actualModelGatedRecoveryWorkflows": 1,
+    "credentialLocatedAndUsed": true,
+    "credentialPreservedUnchanged": true,
+    "credentialScope": "Owner-specified development credential; no production or preview secret retrieved",
+    "evidence": "avery-director-second-model-results.json",
+    "postBatchCorrectionsModelRetested": false,
+    "thisAuthorizationExhausted": true,
+    "nextAction": "Owner review. Keep partial-pass; do not issue another model call under this exhausted authorization. Retained credential may be used only for future explicitly authorized development tests."
+  },
+  "latestNoCostChecks": {
+    "targetedTests": 68,
+    "pass": 68,
+    "fail": 0,
+    "fullSuite": {
+      "tests": 2406,
+      "pass": 2388,
+      "fail": 18,
+      "newFailingNames": []
+    },
+    "lint": "pass",
+    "typescript": "pass",
+    "requiredBuild": "blocked by unchanged 7-high full audit gate",
+    "evidence": "actual second-batch replay, no-cost repaired contract fixtures and existing Director regressions; not additional model responses"
   }
 }

@@ -309,5 +309,51 @@
     "results": "No second-round results. Prior actual-model score remains 3 pass / 3 partial-pass / 2 fail.",
     "noCostTests": "Prior verified evidence retained; not rerun in this credential-only attempt.",
     "nextAction": "Stop this attempt. Resume the approved bounded batch only when a permitted development credential is accessible. No owner technical setup requested."
-  }
+  },
+  "secondActualModelEvaluation": {
+    "date": "2026-10-17",
+    "status": "completed_actual_second_model_batch",
+    "model": "gpt-5-2025-08-07",
+    "calls": 16,
+    "maxCalls": 16,
+    "maxUsd": 2,
+    "reservedWorstCaseUsd": 1.69472,
+    "usage": {
+      "input_tokens": 25985,
+      "output_tokens": 15371,
+      "cached_input_tokens": 16128,
+      "reasoning_tokens_included_in_output": 8832,
+      "total_tokens": 41356
+    },
+    "usageDerivedEstimatedUsd": 0.16804725,
+    "providerInvoiceVerifiedUsd": null,
+    "grades": {
+      "pass": 9,
+      "partialPass": 3,
+      "fail": 4
+    },
+    "originalEight": {
+      "pass": 5,
+      "partialPass": 2,
+      "fail": 1
+    },
+    "overallCompetency": "partial-pass",
+    "actualModelGatedRecoveryWorkflows": 1,
+    "credentialLocatedAndUsed": true,
+    "credentialPreservedUnchanged": true,
+    "credentialScope": "Owner-specified development credential; no production or preview secret retrieved",
+    "evidence": "avery-director-second-model-results.json",
+    "postBatchCorrectionsModelRetested": false,
+    "thisAuthorizationExhausted": true,
+    "nextAction": "Owner review. Keep partial-pass; do not issue another model call under this exhausted authorization. Retained credential may be used only for future explicitly authorized development tests."
+  },
+  "latestActualModelEvidence": "avery-director-second-model-results.json",
+  "latestActualModelGradeCounts": {
+    "pass": 9,
+    "partialPass": 3,
+    "fail": 4
+  },
+  "paidCallsAllCompletedBatches": 24,
+  "usageDerivedEstimatedUsdAllBatches": 0.25039475,
+  "priorFirstBatchFields": "Top-level paidCalls/usage/results above preserve the first batch; latest second-round results are in secondActualModelEvaluation."
 }

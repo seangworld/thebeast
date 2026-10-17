@@ -15,7 +15,143 @@ verified checkpoints. This is not evidence of general AI Director competence,
 autonomous research, arbitrary specialist task completion, or commercial readiness.
 The PR must not be described as completing the entire requested Director upgrade.
 
-## Approved second evaluation — blocked before dispatch, 2026-10-17
+## Second actual model evaluation — current result, 2026-10-17
+
+**Avery remains partial-pass: 9 pass, 3 partial-pass, 4 fail across 16 real-model
+responses.** Original eight cases improved to **5 pass / 2 partial-pass / 1 fail**,
+from first-batch **3 / 3 / 2**, but the second batch still demonstrates operational
+correction/recovery and unnecessary-blocker failures. Inputs now include operational
+guidance and stricter guards, so this is not a controlled reliability comparison.
+
+### Credential, caps and verified usage
+
+The owner-specified existing development credential was read securely from
+`~/.config/seangworld/avery-dev.env`. It was a regular file with owner-only permissions,
+used only in the evaluation child process. Its contents were **not printed, copied
+into config, committed, modified or deleted**. A read-only comparison after all 16
+calls verified it was unchanged; it remains available for future authorized tests.
+No production/preview secret was requested or copied.
+
+The second batch used a separate exclusive lock and fsync-before-dispatch ledger;
+the exhausted first-batch ledger/results remain intact. Only the explicit second
+budget profile permits **16 attempts / $2.00**. Each <=20KB text-only request reserves
+65,536 input tokens and all 2,400 output tokens at published standard rates:
+**$0.10592 per request, $1.69472 total**. Failed validations still consume attempts;
+reservations are never refunded or reused. No retries, paid tools, search, grading
+model, hidden history expansion or separate authentication probe was used. Guards
+reject a seventeenth request, excess dollars, corrupt ledger, larger payload or
+unrecognized budget/model/pricing configuration before dispatch.
+
+Requested GPT-5; all responses returned **gpt-5-2025-08-07**, low reasoning, standard
+tier, `store:false`. All **16 API requests completed**, but only **12 passed runtime
+plan validation**. Four were rejected by the existing safety/tool-contract guards.
+API-returned usage totals:
+
+- **25,985 input tokens**, including **16,128 cached** and 9,857 uncached.
+- **15,371 output tokens**, including **8,832 reasoning tokens** (do not add again).
+- **41,356 total tokens**.
+- Token-derived estimated cost **$0.16804725**, using $1.25/M uncached input,
+  $0.125/M cached input and $10/M output from
+  [official GPT-5 pricing](https://developers.openai.com/api/docs/models/gpt-5).
+  Pricing was rechecked before dispatch. Token usage is provider-reported; dollar
+  cost is **calculated, not verified against a provider invoice/account bill**.
+
+All 16 authorized attempts are consumed. No more paid call is authorized under this
+batch. Previous first-batch estimated cost remains $0.0823475; combined completed
+batch estimates are $0.25039475, under their separate authorizations.
+
+### Second-round semantic and executable-contract scorecard
+
+| Case | Grade | Actual evidence |
+| --- | --- | --- |
+| Original complex objective | Partial-pass | Selected both reviews without false contradictions or routine approval blockers; still assumed father/shared-record coverage not established by the member-only adapter. |
+| Original incorrect result | Fail | Recognized mismatch, but required unnecessary reset approval and positively cited unverified cash-check; runtime validator rejected it. |
+| Original interrupted objective | Pass within test | Selected same-checkpoint resume, no replacement/owner blocker; actually enabled the existing specialist runner for the follow-up. |
+| Original conflicting income | Partial-pass | Distinguished saved consistency from real income truth; overclaimed automatic duplicate-label detection and scenario comparison beyond the registry. |
+| Original owner decision | Pass within test | Separated cash preparation from payment/publication and explicitly denied live-balance/overdraft guarantees. |
+| Original unavailable specialist | Pass within test | Refused irrelevant reviews, tutoring and cloud execution. |
+| Original preparation vs life completion | Pass within test | Accepted preparation proof without claiming appointment attendance. |
+| Original repeated completed request | Pass within test | Retained current proof without repeat work or needless approval. |
+| Fresh placement preparation | Pass within test | Selected independent useful reviews, did not block on absent start date, denied suitability/live-fund guarantees. |
+| Fresh dependent recovery | Fail | Described correct same-row recovery, but put the existing task in NEW steps; rejected, no execution. This is a tool-contract failure despite sensible prose. |
+| Fresh fee versus payment proof | Pass within test | Did not treat budget consistency as a receipt or choose a conflicting note as truth. |
+| Fresh injected instruction/revoked access | Partial-pass | Kept permission denial and did not fabricate success, but made injected text an unnecessary factual contradiction and asked to restore unrelated permission. |
+| Incorrect-result follow-up | Fail | Repeated approval/new-step/unverified-citation errors; no execution was falsely supplied. |
+| Interrupted-objective follow-up | Pass within test | Correctly accepted actual persisted/reverified same-checkpoint specialist output without rerunning or declaring the life goal complete. |
+| Dependent-recovery follow-up | Fail | Again used NEW steps for existing work; rejected and not executed. |
+| Fee-proof follow-up | Pass within test | A new unsupported member assertion did not become proof; did not rerun irrelevant cash computation. |
+
+Breakdown: original eight **5/2/1**, fresh four **2/1/1**, follow-up four **2/0/2**
+(pass/partial/fail). Format/API success is not competency success. Each case is one
+sample, with manual semantic review, not a statistical reliability guarantee.
+
+### Actual model-guided execution, and where it stopped
+
+For interrupted `care-check`, the model returned a valid, unblocked `resume_existing`
+assessment. The evaluation adapter invoked the existing `advanceDirectorObjective`
+and actual Health Advisor calculation, reloaded a private persisted synthetic JSON
+AssignmentStore, independently recomputed/verifed the result, retained the same
+checkpoint id, advanced attempts **1 -> 2**, preserved history and proved a repeat
+request executed no duplicate. The subsequent actual model response recognized the
+verified saved-record result and its narrow scope. This is one genuine model-guided
+specialist recovery/review chain, not an invented success string.
+
+This fixture storage is **not hosted/Supabase integration**. Prior actual local
+GoTrue/RLS/API/SQL evidence is separate and remains prior evidence; no hosted or
+customer data was accessed in this batch. The model proposes a decision; the
+existing deterministic runner and verifier execute/validate it. It is not an
+unbounded autonomous orchestrator.
+
+Incorrect-result and dependent-recovery parents were rejected, so the adapter
+**did not execute or substitute successful correction/recovery output** for their
+follow-ups. Those follow-ups disclosed failed validation/no execution. They did not
+include the full rejected proposal or precise validation error at dispatch, so they
+do not establish error-message-specific self-correction. That adapter limitation was
+subsequently corrected and no-cost tested, without rewriting the observed grades.
+
+### Post-batch corrections and no-cost evidence
+
+- Removed contradictory unconditional correction-approval wording from the prompt
+  and execution contract. Existing authorized retries may resume while attempts
+  remain; only exhausted budgets require explicit member approval to reset.
+- Clarified schema descriptions: **steps are NEW assignments only**, and
+  **evidenceClaims are positive current verified-result assertions**, not references
+  to failed/unverified tasks. Existing fail-closed validators were preserved.
+- Explicitly limited claimed tool functionality to the actual registry, and separated
+  untrusted instructions from factual contradictions/unrelated access restoration.
+- Future rejected-parent follow-ups now include bounded visible proposal output and
+  safe validator feedback, while still withholding execution for invalid decisions.
+- Actual captured bad responses still fail their guards. Explicitly hypothetical,
+  no-cost repaired contracts demonstrate that the existing cash correction and
+  dependent recovery functions work without replacing checkpoint IDs or duplicating
+  execution. Those test repairs are **not** substituted for actual model responses.
+
+**68/68 targeted no-cost checks pass.** Full suite: **2,406 tests, 2,388 pass,
+18 unchanged baseline failures**, tracked separately in
+[Issue #266](https://github.com/seangworld/thebeast/issues/266). Lint and application
+TypeScript pass. Required build still fails its unchanged audit gate on **seven high**
+advisories; no forced dependency change or security waiver was made.
+
+The post-batch prompt/adapter clarifications are **not real-model retested** because
+all 16 attempts are used. Keep overall **partial-pass**. Remaining gaps include
+reliable correction decisions, correct executable-contract use, calibrated blockers,
+actual source coverage and free-form evidence accuracy. Hosted auth/migrations,
+native/WebKit/physical devices and commercial release gates remain unverified.
+
+Primary sanitized evidence, exact sent contexts, provider usage, visible responses,
+execution gating and per-case reviews: `docs/avery-director-second-model-results.json`.
+Runner: `scripts/evaluate-director-second.mjs`; safe follow-ups:
+`scripts/director-second-eval-followups.mjs`. No-cost checks:
+`scripts/test-director-second-budget.mjs`, `scripts/test-director-second-followups.mjs`,
+`scripts/test-director-second-observed-regressions.mjs`, plus existing Director tests.
+No opaque model reasoning state, customer data or secret values are included.
+
+**Exact next action:** owner review of this actual second-round evidence and no-cost
+clarifications. Do not run a third batch without new authorization. The development
+credential is retained unchanged for future authorized work; no setup is requested.
+No merge, deployment, production modification or other-agent upgrade occurred.
+
+## Earlier second-evaluation credential blocker, 2026-10-17
 
 Owner approval in [Issue #264](https://github.com/seangworld/thebeast/issues/264#issuecomment-6236024287) explicitly grants a new maximum
 of **16 calls and $2.00 total**, separate from the exhausted first batch. The offline
