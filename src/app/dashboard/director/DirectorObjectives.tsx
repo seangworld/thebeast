@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DirectorCapability } from "@/lib/directorAssignments";
+import { readyDirectorSteps } from "../../../lib/directorPlanReadiness";
 import type { DirectorReasonedPlan } from "@/lib/directorReasoning";
 
 type Goal = { id: string; title: string; category: string };
@@ -48,7 +49,7 @@ export default function DirectorObjectives() {
     } catch (failure) { if (version === requestVersion.current) setError(failure instanceof Error ? failure.message : "Assignments unavailable."); }
   }, []);
 
-  async function act(action: "plan" | "resume" | "correction" | "reason" | "approve_reasoned_plan" | "supervise", assignmentId?: string) {
+  async function act(action: "plan" | "resume" | "correction" | "reason" | "approve_reasoned_plan" | "supervise" | "cancel", assignmentId?: string) {
     if (pending.current || !goalId) return;
     pending.current = true; setBusy(true); setError(null); setNotice(null);
     ++requestVersion.current;
@@ -59,7 +60,7 @@ export default function DirectorObjectives() {
       setTasks(payload.assignments || []);
       if (payload.proposal?.content?.directorPlan?.plan) setProposal({ id: payload.proposal.id, plan: payload.proposal.content.directorPlan.plan });
       if (action === "approve_reasoned_plan") setProposal(null);
-      setNotice(payload.outcome?.detail || payload.outcomes?.at(-1)?.detail || (action === "reason" ? "Avery proposed a plan. No work has been assigned or executed." : "Review plan saved. Resume to execute its next checkpoint."));
+      setNotice(payload.notice || payload.outcome?.detail || payload.outcomes?.at(-1)?.detail || (action === "reason" ? "Avery proposed a plan. No work has been assigned or executed." : "Review plan saved. Resume to execute its next checkpoint."));
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Assignment request failed."); }
     finally { pending.current = false; setBusy(false); }
   }
@@ -83,17 +84,19 @@ export default function DirectorObjectives() {
         <p className="font-bold">Proposed plan · not executed</p><p>{proposal.plan.interpretation}</p>
         <ol>{proposal.plan.steps.map((step) => <li key={step.capability}>{labels[step.capability]}: {step.purpose}. Acceptance: {step.acceptance}{step.dependsOn?.length ? ` Prerequisites: ${step.dependsOn.map(capability => labels[capability]).join(", ")}.` : ""}</li>)}</ol>
         {(["alternatives", "contradictions", "missingInformation", "ownerDecisions", "unsupportedWork"] as const).map((key) => proposal.plan[key].length ? <div key={key}><p className="font-bold">{({ alternatives: "Alternatives", contradictions: "Conflicting information", missingInformation: "Missing information", ownerDecisions: "Owner decisions", unsupportedWork: "Unsupported work" })[key]}</p><ul>{proposal.plan[key].map((item, index) => <li key={index}>{item}</li>)}</ul></div> : null)}
+        {proposal.plan.requirements?.length ? <div><p className="font-bold">Requirements before affected work</p><ul>{proposal.plan.requirements.map((requirement, index) => <li key={index}>{requirement.scope === "all_new_work" ? "All new work" : labels[requirement.scope]}: {requirement.detail}</li>)}</ul></div> : null}
         {proposal.plan.planningNotes?.length ? <div><p className="font-bold">Planning notes · not execution blockers</p><ul>{proposal.plan.planningNotes.map((item, index) => <li key={index}>{item}</li>)}</ul></div> : null}
         {proposal.plan.evidenceClaims?.map((claim, index) => <p key={index}>Checkpoint {claim.taskId}: saved-record consistency only. This does not establish a real-world outcome.</p>)}
         {proposal.plan.assessments.map((assessment) => <p key={assessment.taskId}>{assessment.disposition.replaceAll("_", " ")}: {assessment.finding}</p>)}
-        <button type="button" className="beast-button" disabled={busy || !proposal.plan.steps.length || !!(proposal.plan.contradictions.length || proposal.plan.missingInformation.length || proposal.plan.ownerDecisions.length || proposal.plan.assessments.some((item) => ["request_correction", "investigate"].includes(item.disposition)))} onClick={() => void act("approve_reasoned_plan", proposal.id)}>Authorize supported steps</button>
-        <p className="text-xs text-slate-400">Model interpretation is unverified advice. This approval authorizes only the listed saved-record reviews, never unsupported work or external actions.</p>
+        <button type="button" className="beast-button" disabled={busy || !readyDirectorSteps(proposal.plan, { goal: { id: goalId, title: "", updated_at: "" }, availableCapabilities: Object.keys(labels) as DirectorCapability[], checkpoints: tasks }).length} onClick={() => void act("approve_reasoned_plan", proposal.id)}>Authorize supported steps</button>
+        <p className="text-xs text-slate-400">Model interpretation is unverified advice. This approval authorizes only ready listed saved-record reviews. Tasks with unresolved requirements and their dependents remain unassigned. It never authorizes unsupported work or external actions.</p>
       </div>}
     </div>
     <div className="flex flex-wrap gap-2">
       <button type="button" className="beast-button" disabled={busy || !goalId || !capabilities.length} onClick={() => void act("plan")}>Save review plan</button>
       <button type="button" className="beast-button" disabled={busy || !goalId || !tasks.length} onClick={() => void act("resume")}>{busy ? "Checking checkpoint…" : "Resume next checkpoint"}</button>
       <button type="button" className="beast-button" disabled={busy || !goalId || !tasks.length} onClick={() => void act("supervise")}>Run approved checkpoints</button>
+      <button type="button" className="beast-button" disabled={busy || !goalId || !tasks.some(task => !["verified", "cancelled"].includes(task.status))} onClick={() => void act("cancel")}>Cancel remaining reviews</button>
       <button type="button" className="beast-button" disabled={busy || !goalId} onClick={() => void load(goalId)}>Refresh evidence</button>
     </div>
     {error && <p role="alert" className="mt-3 text-sm text-red-200">{error}</p>}

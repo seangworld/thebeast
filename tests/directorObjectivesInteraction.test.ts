@@ -59,3 +59,25 @@ test("Director objective UI reports unavailable persistence without fabricated p
   await waitFor(() => assert.match(view.getByRole("alert", { hidden: true }).textContent || "", /unavailable/));
   assert.equal((view.getByRole("button", { name: "Resume next checkpoint", hidden: true }) as HTMLButtonElement).disabled, true);
 });
+
+test("scoped requirements leave independent review approval enabled and show what remains blocked", async()=>{
+  const proposal={id:"proposal",content:{directorPlan:{plan:{contractVersion:2,requirements:[{scope:"money.cash-review",kind:"required_information",detail:"Cash-specific source issue"}],interpretation:"Independent permitted care can proceed",steps:[{capability:"health.preparation-review",purpose:"Care review",acceptance:"Current permitted records",dependsOn:[]},{capability:"money.cash-review",purpose:"Cash review",acceptance:"Saved consistency",dependsOn:[]}],planningNotes:["Ordinary approval is handled by this button"],evidenceClaims:[],alternatives:[],contradictions:[],missingInformation:[],ownerDecisions:[],unsupportedWork:[],assessments:[]}}}};
+  const writes:Record<string,unknown>[]=[];
+  globalThis.fetch=(async(url:unknown,init?:RequestInit)=>{
+    if(init?.method==="POST"){writes.push(JSON.parse(String(init.body)));return Response.json({assignments:[assigned]});}
+    return Response.json(String(url).includes("goalId=")?{assignments:[],proposal}:{goals});
+  }) as typeof fetch;
+  const view=render(React.createElement(DirectorObjectives));await waitFor(()=>assert.ok(view.getByRole("option",{name:goals[0].title,hidden:true})));fireEvent.click(view.getByText(/Supervised objectives/));fireEvent.change(view.getByLabelText("Saved objective"),{target:{value:"saved-goal"}});
+  await waitFor(()=>assert.ok(view.getByText("Cash-specific source issue",{exact:false})));
+  const button=view.getByRole("button",{name:"Authorize supported steps"}) as HTMLButtonElement;assert.equal(button.disabled,false);fireEvent.click(button);await waitFor(()=>assert.equal(writes.length,1));assert.equal(writes[0].action,"approve_reasoned_plan");assert.equal(writes[0].proposalId,"proposal");
+});
+
+test("current cancellation is an explicit owner action and preserves displayed completed evidence",async()=>{
+  const complete={...assigned,id:"care",status:"verified",attempts:1,result:{asOf:new Date().toISOString(),output:{review:"saved only"},limitations:["No life goal completion"]}};
+  const pending={...assigned,id:"cash",capability:"money.cash-review"};let writes=0;
+  globalThis.fetch=(async(url:unknown,init?:RequestInit)=>{
+    if(init?.method==="POST"){assert.equal(JSON.parse(String(init.body)).action,"cancel");writes++;return Response.json({assignments:[complete,{...pending,status:"cancelled"}],notice:"Remaining visible reviews cancelled. Verified reviews retained."});}
+    return Response.json(String(url).includes("goalId=")?{assignments:[complete,pending]}:{goals});
+  }) as typeof fetch;
+  const view=render(React.createElement(DirectorObjectives));await waitFor(()=>assert.ok(view.getByRole("option",{name:goals[0].title,hidden:true})));fireEvent.click(view.getByText(/Supervised objectives/));fireEvent.change(view.getByLabelText("Saved objective"),{target:{value:"saved-goal"}});await waitFor(()=>assert.ok(view.getByText(/saved cash review · planned/)));fireEvent.click(view.getByRole("button",{name:"Cancel remaining reviews"}));await waitFor(()=>assert.equal(writes,1));await waitFor(()=>assert.ok(view.getByText(/saved cash review · cancelled/)));assert.ok(view.getByText(/record preparation · verified/));
+});

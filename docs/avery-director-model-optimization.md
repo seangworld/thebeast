@@ -1,3 +1,5 @@
+> **Execution repair (no paid calls):** six authored PostgreSQL/PostgREST workflows and real API-handler checks pass under the versioned contract. Original model result stays semantic partial-pass/end-to-end FAIL. [Current repair report](avery-director-execution-repair.md). New model testing requires independent contract review and separate authorization; no production deployment or merge.
+
 > **Focused assessment executed (October 17):16/16 calls, $0.2152785 usage-derived estimate, no retries. End-to-end competency gate FAIL; independent semantic grades pending. [Current report](avery-director-focused-report.md) · [Six completed independent review packets](avery-director-focused-grading-index.md). Earlier preparation/funding statuses below are historical. No production switch, merge or deployment.
 
 > Current phase (2026-10-17): [focused Sol High assessment preparation](avery-director-focused-assessment.md) and [independent novelty review packets](avery-director-focused-review-index.md). No new paid authorization or production switch; Stage 1 locked evidence below remains unchanged.

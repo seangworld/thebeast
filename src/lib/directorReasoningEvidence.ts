@@ -4,7 +4,7 @@ export type ReasoningCheckpoint = {
 };
 export type CheckpointGuidance = {
   taskId: string;
-  action: "retain_verified" | "resume_existing" | "wait_for_lease" | "wait_for_dependencies" | "owner_correction_required" | "permission_required" | "inspect_existing";
+  action: "retain_verified" | "retain_cancelled" | "resume_existing" | "wait_for_lease" | "wait_for_dependencies" | "owner_correction_required" | "permission_required" | "inspect_existing";
   dependencies: string[];
 };
 
@@ -31,6 +31,7 @@ export function checkpointGuidance(tasks: ReasoningCheckpoint[], available: read
     let action: CheckpointGuidance["action"] = "inspect_existing";
     const lease = Date.parse(task.leaseUntil || "");
     if (!available.includes(task.capability)) action = "permission_required";
+    else if (task.status === "cancelled") action = "retain_cancelled";
     else if (task.status === "verified" && task.result) action = "retain_verified";
     else if (task.status === "running" && (!Number.isFinite(lease) || lease > now)) action = Number.isFinite(lease) ? "wait_for_lease" : "inspect_existing";
     else if (!Number.isInteger(task.attempts) || task.attempts! < 0) action = "inspect_existing";

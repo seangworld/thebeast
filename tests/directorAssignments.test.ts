@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { advanceDirectorObjective, authorizeDirectorCorrection, executeSpecialist, verifySpecialistResult, isDirectorCapability, type AssignmentAccess, type AssignmentStore, type DirectorAssignment, type SpecialistSnapshot } from "../src/lib/directorAssignments";
+import { advanceDirectorObjective, authorizeDirectorCorrection, cancelDirectorAssignment, executeSpecialist, verifySpecialistResult, isDirectorCapability, type AssignmentAccess, type AssignmentStore, type DirectorAssignment, type SpecialistSnapshot } from "../src/lib/directorAssignments";
 import { publicAssignments } from "../src/lib/directorAssignmentStore";
 
 const now = "2026-10-16T12:00:00.000Z";
@@ -203,4 +203,18 @@ test("permission-denial persistence contention stops before independent executio
   };
   assert.equal((await advanceDirectorObjective({ store, access, ownerId: "alice", goalId: "goal", now, leaseId: "lease" })).state, "busy");
   assert.equal(reads, 0); assert.equal(store.tasks[1].attempts, 0);
+});
+
+
+test("current cancellation wins over an in-flight result and never resets its attempt counter", async () => {
+  const store = new MemoryStore(); let reads = 0;
+  const access: AssignmentAccess = { authorize: async owner => owner === "alice", snapshot: async () => {
+    if (++reads === 1) assert.equal(await cancelDirectorAssignment({ store, ownerId: "alice", goalId: "goal", taskId: "money", now }), true);
+    return snapshot();
+  } };
+  const result = await advanceDirectorObjective({ store, access, ownerId: "alice", goalId: "goal", now, leaseId: "in-flight" });
+  assert.equal(result.state, "busy"); assert.equal(store.tasks[0].status, "cancelled");
+  assert.equal(store.tasks[0].attempts, 1); assert.equal(store.tasks[0].result, null);
+  assert.equal((await advanceDirectorObjective({ store, access, ownerId: "alice", goalId: "goal", now, leaseId: "stale-continue" })).state, "cancelled");
+  await assert.rejects(authorizeDirectorCorrection({ store, access, ownerId: "alice", goalId: "goal", taskId: "money", now }), /Cancelled/);
 });

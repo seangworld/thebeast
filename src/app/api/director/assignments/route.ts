@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       const conversation = await ctx.client.from("agent_conversations").upsert({ id: conversationId, owner_id: ctx.user.id, agent_id: "beastfusion.fusion-director", title: ctx.goal.title.slice(0, 80), tags: ["director", "objective-plan"] }, { onConflict: "id", ignoreDuplicates: true });
       if (conversation.error) throw new AssignmentBlocked("Reasoned plan could not be saved. Nothing was assigned.");
       const proposalId = crypto.randomUUID();
-      const saved = await ctx.client.from("agent_conversation_messages").insert({ id: proposalId, owner_id: ctx.user.id, conversation_id: conversationId, sender: { kind: "agent", id: "beastfusion.fusion-director" }, recipient: { kind: "user", id: ctx.user.id }, content: { text: plan.interpretation, directorPlan: { plan, context: evidence, version: 1 } } });
+      const saved = await ctx.client.from("agent_conversation_messages").insert({ id: proposalId, owner_id: ctx.user.id, conversation_id: conversationId, sender: { kind: "agent", id: "beastfusion.fusion-director" }, recipient: { kind: "user", id: ctx.user.id }, content: { text: plan.interpretation, directorPlan: { plan, context: evidence, version: 2 } } });
       if (saved.error) throw new AssignmentBlocked("Reasoned plan could not be saved. Nothing was assigned.");
       await refreshObjectiveHistory(ctx);
       return json({ proposal: { id: proposalId, content: { directorPlan: { plan } } }, assignments: await publicAssignments(ctx.store, ctx.access, ctx.user.id, ctx.goal.id) });
@@ -88,12 +88,18 @@ export async function POST(request: Request) {
       let capabilities;
       try { capabilities = approveDirectorReasoning(saved.plan, saved.context, await reasoningContext(ctx)); }
       catch (error) { return json({ error: error instanceof Error ? error.message : "Plan requires review." }, 409); }
-      const planned = await ctx.client.rpc("approve_director_review_plan", { p_goal_id: ctx.goal.id, p_goal_updated_at: ctx.goal.updated_at, p_capabilities: capabilities });
+      const planned = await ctx.client.rpc("approve_director_scoped_plan", { p_goal_id: ctx.goal.id, p_goal_updated_at: ctx.goal.updated_at, p_steps: saved.plan.steps.filter((step: { capability: string }) => capabilities.some(capability => capability === step.capability)).map((step: { capability: string; dependsOn?: string[] }) => ({ capability: step.capability, dependsOn: step.dependsOn || [] })) });
       if (planned.error?.code === "PT409") return json({ error: "Objective changed before approval. Request a current plan." }, 409);
       if (planned.error) throw new AssignmentBlocked("Plan approval could not be saved. No specialist work was executed.");
       const recorded = await ctx.client.from("agent_conversation_messages").insert({ id: crypto.randomUUID(), owner_id: ctx.user.id, conversation_id: `director-objective-${ctx.goal.id}`, sender: { kind: "user", id: ctx.user.id }, recipient: { kind: "agent", id: "beastfusion.fusion-director" }, content: { text: "Authorized the supported saved-record review plan.", approvedDirectorProposalId: body.proposalId } });
       if (recorded.error) throw new AssignmentBlocked("Assignments saved, but the approval history could not be saved. Refresh before continuing.");
       await refreshObjectiveHistory(ctx);
+    } else if (body.action === "cancel") {
+      const pending = (await ctx.store.list(ctx.user.id, ctx.goal.id)).filter(t => !["verified", "cancelled"].includes(t.status));
+      if (!pending.length) return json({ assignments: await publicAssignments(ctx.store, ctx.access, ctx.user.id, ctx.goal.id), notice: "No remaining visible reviews to cancel." });
+      const cancelled = await ctx.client.rpc("cancel_director_reviews", { p_goal_id: ctx.goal.id, p_goal_updated_at: ctx.goal.updated_at, p_capabilities: pending.map(t => t.capability) });
+      if (cancelled.error) throw new AssignmentBlocked("Cancellation could not be recorded. Refresh the current permissions and assignments; no cancellation is confirmed.");
+      return json({ assignments: await publicAssignments(ctx.store, ctx.access, ctx.user.id, ctx.goal.id), notice: "Remaining visible reviews cancelled. Verified reviews retained. Revoked modules remain inaccessible." });
     } else if (body.action === "plan") {
       if (!Array.isArray(body.capabilities) || !body.capabilities.length || body.capabilities.length > 2 || !body.capabilities.every(isDirectorCapability)) return json({ error: "Choose supported saved-record reviews. Other work needs specialist or owner review." }, 400);
       const capabilities = Array.from(new Set(body.capabilities)) as Array<keyof typeof directorCapabilities>;

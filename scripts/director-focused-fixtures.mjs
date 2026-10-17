@@ -1,7 +1,7 @@
 // Assessment-only authenticated synthetic fixtures; existing specialist/runner/verifier.
 import { readFileSync,writeFileSync,renameSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { advanceDirectorObjective,executeSpecialist,verifySpecialistResult } from '../.test-dist/src/lib/directorAssignments.js';
+import { advanceDirectorObjective,executeSpecialist,verifySpecialistResult,cancelDirectorAssignment } from '../.test-dist/src/lib/directorAssignments.js';
 export const clock='2026-10-17T18:00:00.000Z';
 export const owner='synthetic-focused-member';
 export const health='health.preparation-review',money='money.cash-review';
@@ -25,7 +25,7 @@ export function createFocusedFixture(path,scenario,{live=false,resumeState=null}
  const access={authorize:async(o,c)=>o===owner&&allowed.has(c),snapshot:async(o,c)=>{if(o!==owner){reads.denied++;throw Error('Foreign owner denied before source access');}if(!allowed.has(c)){reads.denied++;throw Error('Permission denied before source access');}reads.own++;return snapshot(c);}};
  const step=()=>advanceDirectorObjective({store,access,ownerId:owner,goalId:scenario.id,now,leaseId:fixtureLease()});
  const evidence=()=>({clock:now,authenticatedOwner:owner,availableCapabilities:[...allowed],rows:list(),verification:list().map(t=>({id:t.id,status:t.status,problem:t.status==='verified'?verifySpecialistResult(t.result,snapshot(t.capability),now):'No verified result'})),reads:{...reads},storage:'Actual private synthetic JSON AssignmentStore reload; not hosted isolation',modelGenerated:false});
- return {step,evidence,access,approve:plan=>{const rows=list();for(const s of plan.steps){if(rows.some(t=>t.capability===s.capability))throw Error("Duplicate checkpoint refused");const dependencies=s.dependsOn.map(c=>{const parent=rows.find(t=>t.capability===c);if(!parent)throw Error("Missing dependency");return parent.id;});rows.push(make(s.capability===health?"care-row":"cash-row",s.capability,"planned",dependencies));}persist(rows);},setClock:value=>{now=value;},setPay:value=>{amount=value;},deny:c=>allowed.delete(c),addCash:()=>{const rows=list();if(rows.some(t=>t.capability===money))throw Error('Duplicate cash checkpoint refused');rows.push(make('cash-row',money,'planned',['care-row']));persist(rows);}};
+ return {step,evidence,access,cancel:taskId=>cancelDirectorAssignment({store,ownerId:owner,goalId:scenario.id,taskId,now}),approve:plan=>{const rows=list();for(const s of plan.steps){if(rows.some(t=>t.capability===s.capability))throw Error("Duplicate checkpoint refused");const dependencies=s.dependsOn.map(c=>{const parent=rows.find(t=>t.capability===c);if(!parent)throw Error("Missing dependency");return parent.id;});rows.push(make(s.capability===health?"care-row":"cash-row",s.capability,"planned",dependencies));}persist(rows);},setClock:value=>{now=value;},setPay:value=>{amount=value;},deny:c=>allowed.delete(c),addCash:()=>{const rows=list();if(rows.some(t=>t.capability===money))throw Error('Duplicate cash checkpoint refused');rows.push(make('cash-row',money,'planned',['care-row']));persist(rows);}};
 }
 export async function dryRunFocusedScenario(scenario,path){
  const f=createFocusedFixture(path,scenario),events=[],initial=f.evidence();

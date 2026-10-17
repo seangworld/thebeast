@@ -1,0 +1,84 @@
+{
+  "phase": "No-cost Director execution contract repair",
+  "paidCalls": 0,
+  "developmentCredentialFileAccess": false,
+  "independentReviewComment": 6241665711,
+  "originalEvidenceEdited": false,
+  "targeted": {
+    "runtime": 76,
+    "offline": 76,
+    "passed": 152,
+    "failed": 0
+  },
+  "fullSuite": {
+    "total": 2418,
+    "passed": 2400,
+    "failed": 18,
+    "baselineFailureNamesUnchanged": true,
+    "baselineTrackingIssue": 266,
+    "failureNames": [
+      "\u2716 BA-106 recovery paths preserve only safe BeastOS destinations",
+      "\u2716 BA-107 presents central management, release history, and future rollback",
+      "\u2716 BA-107 validates a new email and keeps callback destinations internal",
+      "\u2716 BA-112 presents every requested owner inspection area without mutation controls",
+      "\u2716 BA-126 keeps deferred work separate from the operational Revenue Center",
+      "\u2716 BA-IA-101 defines one grouped persistent BeastAdmin workspace switcher",
+      "\u2716 BM-37 renders Dashboard Immediate Attention and durably tracks rate changes",
+      "\u2716 BM-42D debt actions retain the selected-debt canonical edit workflow",
+      "\u2716 BP-230 exposes only the approved workspace hierarchy",
+      "\u2716 BP-230 keeps the record-backed Daily Briefing in Dashboard",
+      "\u2716 BP-230 navigation follows the approved workspace hierarchy",
+      "\u2716 BeastAdmin foundation registers modules and protects owner-only navigation",
+      "\u2716 Money Settings retains saved cash and debt controls in standard Money surfaces",
+      "\u2716 debt management keeps open zero-balance revolving accounts active and exposes explicit restore",
+      "\u2716 module navigation centralizes expandable child items",
+      "\u2716 owner-only roster and profiles preserve the established BeastAdmin surface",
+      "\u2716 public SEO inventory contains only real indexable application routes",
+      "\u2716 sitemap includes public routes and excludes private application routes"
+    ]
+  },
+  "lint": "PASS",
+  "applicationTypeScript": "PASS",
+  "integration": {
+    "sixAuthoredPersistedWorkflows": "PASS",
+    "actualApiHandlersWithSyntheticSession": "PASS",
+    "preservedPostgresPostgrestDatabaseRegression": "PASS",
+    "productionCookieAuthentication": "NOT TESTED",
+    "hostedDatabase": "NOT ACCESSED",
+    "fullProductionMigrationChain": "NOT APPLIED",
+    "disposableServicesRemoved": true
+  },
+  "security": {
+    "fullNpmAudit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 7,
+      "critical": 0,
+      "total": 7
+    },
+    "productionNpmAudit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "officialRegistryOnly": true,
+    "dependenciesChanged": false,
+    "gateWeakened": false,
+    "requiredBuild": "BLOCKED at unchanged npm audit before Next compilation",
+    "localSupabaseSecurityAdvisor": "No issues found in disposable subset fixture via explicit loopback --db-url; not hosted/full-schema certification",
+    "rootPatch": "braces3.0.3 still affected; Next plugin16.4.2 still depends on fast-glob3.3.1",
+    "newRpcCatalogAssertions": "PASS: security invoker, empty search_path, no anonymous execute, assignment RLS enabled"
+  },
+  "modelCompetency": "UNCHANGED: independent semantic partial-pass; original end-to-end FAIL. No model retest.",
+  "readiness": "Mechanically ready for independent contract review and future authorized synthetic evaluation; not production certification. Revised prompt/schema/evidence exposure must be reviewed before inference.",
+  "artifactSha256": {
+    "docs/avery-execution-repair/api.json": "8598e397a56f670b7793809159e542ce340b4e595ecd9db5e44454cf4f61f645",
+    "docs/avery-execution-repair/workflows.json": "6679b743d79e891bf161420526e517ba3604f055ec541531d9bfe4c275c15c0b",
+    "docs/avery-execution-repair/independent-grades.json": "2512b9106d7e1304c61e8bd697bae7d5b6e218a4219a7a7f819a79a87fcb1540",
+    "docs/avery-execution-repair/diagnosis.json": "e1749fc7bc67a484f2b7c03a0291b3027a9f8c9ceac3b4ee10fd11486b0b8586"
+  }
+}

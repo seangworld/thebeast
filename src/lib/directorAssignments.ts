@@ -8,7 +8,7 @@ export const directorCapabilities = {
   "health.preparation-review": { specialist: "beasthealth.health-advisor", module: "health", label: "Prepare saved health record review", acceptance: "Recompute the Health Advisor preparation model from current permitted records." },
 } as const;
 export type DirectorCapability = keyof typeof directorCapabilities;
-export type AssignmentStatus = "planned" | "running" | "verified" | "needs_correction" | "blocked";
+export type AssignmentStatus = "planned" | "running" | "verified" | "needs_correction" | "blocked" | "cancelled";
 export type AssignmentEvent = { at: string; status: AssignmentStatus; detail: string };
 export type DirectorAssignment = {
   id: string; owner_id: string; goal_id: string; capability: DirectorCapability;
@@ -91,11 +91,22 @@ function transition(task: DirectorAssignment, status: AssignmentStatus, detail: 
 export async function authorizeDirectorCorrection(input: { store: AssignmentStore; access: AssignmentAccess; ownerId: string; goalId: string; taskId: string; now: string }) {
   const task = (await input.store.list(input.ownerId, input.goalId)).find((item) => item.id === input.taskId);
   if (!task || task.owner_id !== input.ownerId || task.goal_id !== input.goalId) throw new AssignmentBlocked("Assignment unavailable.");
+  if (task.status === "cancelled") throw new AssignmentBlocked("Cancelled work cannot be resumed or reset by stale approval.");
   if (task.status === "running") throw new AssignmentBlocked("Resume the active or expired execution before requesting another correction cycle.");
   if (!await input.access.authorize(input.ownerId, task.capability)) throw new AssignmentBlocked("Specialist permission unavailable.");
   if (task.status === "verified" && !verifySpecialistResult(task.result, await input.access.snapshot(input.ownerId, task.capability), input.now)) throw new AssignmentBlocked("Current verified work will not be repeated.");
   const next = transition(task, "planned", "Member explicitly authorized a new correction cycle. Prior checkpoint history retained.", input.now);
   next.attempts = 0; next.result = null; next.lease_id = null; next.lease_until = null;
+  return input.store.compareAndSwap(task, next);
+}
+
+/** Explicit current owner action; prose and old queued requests cannot invoke this. */
+export async function cancelDirectorAssignment(input: { store: AssignmentStore; ownerId: string; goalId: string; taskId: string; now: string }) {
+  const task = (await input.store.list(input.ownerId, input.goalId)).find(t => t.id === input.taskId);
+  if (!task || task.owner_id !== input.ownerId || task.goal_id !== input.goalId) throw new AssignmentBlocked("Assignment unavailable.");
+  if (["verified", "cancelled"].includes(task.status)) return true;
+  const next = transition(task, "cancelled", "Current member instruction cancelled remaining work. Prior completed reviews retained.", input.now);
+  next.lease_id = null; next.lease_until = null; next.result = null;
   return input.store.compareAndSwap(task, next);
 }
 
@@ -119,8 +130,9 @@ export async function advanceDirectorObjective(input: {
       return { state: "needs_correction" as const, taskId: task.id, detail: problem };
     }
   }
+  if (tasks.some(task => task.status === "cancelled") && tasks.every(task => ["verified", "cancelled"].includes(task.status))) return { state: "cancelled" as const, detail: "Remaining reviews cancelled by the member. Previously verified reviews retained; the underlying goal is not complete." };
   if (tasks.length && tasks.every((task) => task.status === "verified")) return { state: "verified" as const, detail: "All approved saved-record reviews verified. The underlying goal is not marked complete." };
-  const runnable = tasks.filter((item) => item.status !== "verified" && (item.status !== "running" || Date.parse(item.lease_until || "") <= Date.parse(now)) && item.dependencies.every((id) => tasks.some((dependency) => dependency.id === id && dependency.status === "verified")));
+  const runnable = tasks.filter((item) => item.status !== "verified" && item.status !== "cancelled" && (item.status !== "running" || Date.parse(item.lease_until || "") <= Date.parse(now)) && item.dependencies.every((id) => tasks.some((dependency) => dependency.id === id && dependency.status === "verified")));
   let task: DirectorAssignment | undefined;
   let permissionBlocker: string | null = null;
   // A revoked independent assignment must not starve other approved work.
