@@ -280,5 +280,34 @@
     },
     "baselineIssue": 266,
     "retestPlan": "avery-director-retest-plan.json"
+  },
+  "approvedSecondRetestAttempt": {
+    "date": "2026-10-17",
+    "authorization": "Owner-approved second batch: at most 16 calls and $2 total, distinct from the exhausted first batch",
+    "approvalRecordedAt": "2026-10-17T15:46:33Z",
+    "approvalSource": "https://github.com/seangworld/thebeast/issues/264#issuecomment-6236024287",
+    "status": "blocked_no_accessible_development_credential",
+    "credentialChecks": {
+      "temporaryEvaluationFile": "absent; deleted after previous successful first-batch verification",
+      "mainLocalEnv": "exists; zero OPENAI_API_KEY definitions",
+      "worktreeLocalEnv": "absent",
+      "otherExistingNonProductionRootEnvFiles": "no key definitions",
+      "otherAveryTemporaryEnvFiles": "none",
+      "processKeyPresent": false,
+      "vercelDevelopmentMetadata": {
+        "thebeast": "access succeeded; no OPENAI_API_KEY entry",
+        "seangworld": "access succeeded; no OPENAI_API_KEY entry"
+      }
+    },
+    "productionOrPreviewValuesRetrieved": false,
+    "paidCalls": 0,
+    "paidRetries": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "actualCostUsd": 0,
+    "modelExecuted": null,
+    "results": "No second-round results. Prior actual-model score remains 3 pass / 3 partial-pass / 2 fail.",
+    "noCostTests": "Prior verified evidence retained; not rerun in this credential-only attempt.",
+    "nextAction": "Stop this attempt. Resume the approved bounded batch only when a permitted development credential is accessible. No owner technical setup requested."
   }
 }

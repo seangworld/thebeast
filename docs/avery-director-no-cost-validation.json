@@ -101,7 +101,7 @@
   ],
   "retestProposal": {
     "artifact": "avery-director-retest-plan.json",
-    "authorization": "not authorized; no paid calls executed",
+    "authorization": "approved in Issue #264; blocked by unavailable development credential; 0 calls",
     "model": "gpt-5; expected prior snapshot gpt-5-2025-08-07; stop rather than substitute model silently",
     "callsIncludingFailures": 16,
     "ownerCostCeilingUsd": 2,
@@ -109,5 +109,34 @@
     "composition": "8 originals + 4 fresh variations + 4 adaptive follow-ups",
     "evidenceNeeded": "Manual semantic judgment plus real synthetic same-checkpoint execution for recovery/correction; no passing grades from schema or fixture matching alone."
   },
-  "nextAction": "Owner review of this implementation, residual limits and proposed bounded retest. Do not run inference before new authorization; no credential setup requested during preparation."
+  "nextAction": "Stop this attempt. Resume the approved bounded batch only when a permitted development credential is accessible. No owner technical setup requested.",
+  "approvedSecondRetestAttempt": {
+    "date": "2026-10-17",
+    "authorization": "Owner-approved second batch: at most 16 calls and $2 total, distinct from the exhausted first batch",
+    "approvalRecordedAt": "2026-10-17T15:46:33Z",
+    "approvalSource": "https://github.com/seangworld/thebeast/issues/264#issuecomment-6236024287",
+    "status": "blocked_no_accessible_development_credential",
+    "credentialChecks": {
+      "temporaryEvaluationFile": "absent; deleted after previous successful first-batch verification",
+      "mainLocalEnv": "exists; zero OPENAI_API_KEY definitions",
+      "worktreeLocalEnv": "absent",
+      "otherExistingNonProductionRootEnvFiles": "no key definitions",
+      "otherAveryTemporaryEnvFiles": "none",
+      "processKeyPresent": false,
+      "vercelDevelopmentMetadata": {
+        "thebeast": "access succeeded; no OPENAI_API_KEY entry",
+        "seangworld": "access succeeded; no OPENAI_API_KEY entry"
+      }
+    },
+    "productionOrPreviewValuesRetrieved": false,
+    "paidCalls": 0,
+    "paidRetries": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "actualCostUsd": 0,
+    "modelExecuted": null,
+    "results": "No second-round results. Prior actual-model score remains 3 pass / 3 partial-pass / 2 fail.",
+    "noCostTests": "Prior verified evidence retained; not rerun in this credential-only attempt.",
+    "nextAction": "Stop this attempt. Resume the approved bounded batch only when a permitted development credential is accessible. No owner technical setup requested."
+  }
 }

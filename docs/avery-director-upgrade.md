@@ -15,7 +15,35 @@ verified checkpoints. This is not evidence of general AI Director competence,
 autonomous research, arbitrary specialist task completion, or commercial readiness.
 The PR must not be described as completing the entire requested Director upgrade.
 
-## Targeted reasoning improvements — current no-cost verification, 2026-10-17
+## Approved second evaluation — blocked before dispatch, 2026-10-17
+
+Owner approval in [Issue #264](https://github.com/seangworld/thebeast/issues/264#issuecomment-6236024287) explicitly grants a new maximum
+of **16 calls and $2.00 total**, separate from the exhausted first batch. The offline
+plan still proposes GPT-5 and a conservative total reservation of **$1.69472**.
+
+**Genuine blocker: no securely accessible development credential is configured.**
+The temporary evaluation file `/private/tmp/avery-director-eval.env` is absent
+(it was deleted as requested after the first successful batch). The main local
+`.env.local` has zero `OPENAI_API_KEY` definitions; the worktree local file is absent;
+other checked non-production root/Avery temporary env files and the process provide
+none. Read-only Vercel **development** listings for `thebeast` and `seangworld` both
+succeed but contain no OpenAI key. Production/preview secret values were not requested,
+decrypted or copied. No new key, service or configuration change was made.
+
+**This second batch: 0/16 calls, zero retries, zero input/output tokens, $0.00/$2.00;
+model executed: none.** No second-round competency result exists. The last actual
+model score remains **3 pass / 3 partial-pass / 2 fail**, overall **partial-pass**.
+The corrected prompt has still not been real-model verified. Previously recorded
+no-cost test/integration results remain prior evidence, not rerun results here.
+
+The prepared manifest and machine-readable summaries now record the approval and
+specific blocked attempt. No paid dispatcher was started, no original exhausted
+ledger was reset, and no result was simulated. **Next action:** stop this attempt;
+resume only when a permitted development credential is accessible. No owner key
+creation, environment setup, repeat budget approval or technical setup is requested.
+No merge, deployment, production change or other agent work occurred.
+
+## Targeted reasoning improvements — prior no-cost verification, 2026-10-17
 
 **Overall classification remains partial-pass.** The observed real-model score is
 still **3 pass / 3 partial-pass / 2 fail**. The changes below have no-cost workflow,
