@@ -127,6 +127,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20261017022337_avery_director_assignments.sql",
   "20261017025810_director_data_api_grants.sql",
   "20261017215227_director_execution_contract.sql",
+  "20261017230022_director_cancellation_intent.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

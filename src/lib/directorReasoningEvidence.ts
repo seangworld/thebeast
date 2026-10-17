@@ -25,13 +25,13 @@ export function reasoningCheckpointMetadata(task: {
 }
 
 /** Operational metadata only: no financial/clinical values or new provider access. */
-export function checkpointGuidance(tasks: ReasoningCheckpoint[], available: readonly string[], now = Date.now()): CheckpointGuidance[] {
+export function checkpointGuidance(tasks: ReasoningCheckpoint[], available: readonly string[], now = Date.now(), cancelled = false): CheckpointGuidance[] {
   return tasks.map(task => {
     const dependencies = task.dependencies || [];
     let action: CheckpointGuidance["action"] = "inspect_existing";
     const lease = Date.parse(task.leaseUntil || "");
     if (!available.includes(task.capability)) action = "permission_required";
-    else if (task.status === "cancelled") action = "retain_cancelled";
+    else if (task.status === "cancelled" || (cancelled && task.status !== "verified")) action = "retain_cancelled";
     else if (task.status === "verified" && task.result) action = "retain_verified";
     else if (task.status === "running" && (!Number.isFinite(lease) || lease > now)) action = Number.isFinite(lease) ? "wait_for_lease" : "inspect_existing";
     else if (!Number.isInteger(task.attempts) || task.attempts! < 0) action = "inspect_existing";

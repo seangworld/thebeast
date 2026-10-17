@@ -1,0 +1,56 @@
+{
+  "paidCalls": 0,
+  "syntheticOnly": true,
+  "realGoTrue": true,
+  "realBrowserCookies": true,
+  "results": [
+    {
+      "check": "actual verified owner-selected evidence with provenance",
+      "pass": true,
+      "evidence": {
+        "selections": [
+          {
+            "taskId": "0d1c3cc6-af38-473c-969f-d445d2418145",
+            "recordIds": [
+              "a90b8c10-c509-484a-a617-3b2e910ba610"
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "taskId": "0d1c3cc6-af38-473c-969f-d445d2418145",
+            "capability": "health.preparation-review",
+            "asOf": "2026-10-17T23:05:39.854Z",
+            "provenance": "Current member-owned saved records; specialist output independently recomputed. Selected excerpts only, not external truth or a complete record set.",
+            "excerptsComplete": true,
+            "findings": {
+              "selectedNextAppointmentRecordId": null,
+              "review": "Health Advisor appointment preparation; selected appointment excerpts only"
+            },
+            "records": [
+              {
+                "recordId": "a90b8c10-c509-484a-a617-3b2e910ba610",
+                "title": "Synthetic transport logistics a90b8c10-c509-484a-a617-3b2e910ba610",
+                "status": "active",
+                "date": "2026-10-20",
+                "notes": "Transport paperwork remains outstanding.",
+                "context": "Owner-selected logistics",
+                "updatedAt": "2026-10-17T23:05:39.540789+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "check": "revoked hidden work cancellation + permission restoration + stale/late results + foreign denial",
+      "pass": true,
+      "remainingAttempts": 0,
+      "verifiedCarePreserved": true
+    },
+    {
+      "check": "evidence revoked after selection fails closed",
+      "pass": true
+    }
+  ]
+}

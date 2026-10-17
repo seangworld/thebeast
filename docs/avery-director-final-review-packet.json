@@ -1,0 +1,33 @@
+{
+  "status": "TEMPLATE ONLY - NO NEW MODEL RESPONSES OR GRADES",
+  "candidate": "Candidate A",
+  "scenarioId": null,
+  "scenarioAndOriginalCriteria": null,
+  "turns": [
+    {
+      "turn": null,
+      "completeModelInputIncludingInstructionsAndEvidence": null,
+      "originalResponseTextVerbatim": null,
+      "responseStatus": null,
+      "serverValidationAndExecutionEvidence": null,
+      "ownerEventsAndInterventions": null,
+      "stateBeforeAndAfter": null
+    }
+  ],
+  "independentReview": {
+    "reviewer": "ChatGPT",
+    "score": null,
+    "objectiveOutcome": null,
+    "criticalFailures": null,
+    "reasoningVersusDeterministicProtection": null,
+    "unsupportedClaims": null,
+    "unnecessaryInterventions": null
+  },
+  "blindingRules": [
+    "No requested or returned model identities, preferred outcome or Codex semantic grades in reviewer packets.",
+    "Keep full scenario, original rubric, complete actual instructions/input, verbatim responses and real tool/validation results.",
+    "Replace only identity metadata outside original response text. Never edit original model responses; if a response self-identifies, disclose that blinding was compromised rather than rewrite it.",
+    "Store exact raw provider envelope, identity map, request hashes, token usage and cost privately and separately; reveal identity only after independent grades are locked.",
+    "Single-candidate assessment cannot provide strong model-comparison blinding; report this limitation honestly."
+  ]
+}

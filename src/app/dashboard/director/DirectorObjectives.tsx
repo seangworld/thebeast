@@ -15,6 +15,10 @@ export default function DirectorObjectives() {
   const [goalId, setGoalId] = useState("");
   const [capabilities, setCapabilities] = useState<DirectorCapability[]>([]);
   const [tasks, setTasks] = useState<Assignment[]>([]);
+  const [evidenceOptions, setEvidenceOptions] = useState<Array<{ taskId: string; records: Array<{ id: string; label: string }> }>>([]);
+  const [evidenceSelection, setEvidenceSelection] = useState<Record<string, string[]>>({});
+  const [ownerMessage, setOwnerMessage] = useState("");
+  const [cancelled, setCancelled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -36,7 +40,7 @@ export default function DirectorObjectives() {
 
   const load = useCallback(async (selected: string) => {
     const version = ++requestVersion.current;
-    setTasks([]); setError(null); setNotice(null); setProposal(null);
+    setTasks([]); setOwnerMessage(""); setEvidenceOptions([]); setEvidenceSelection({}); setCancelled(false); setError(null); setNotice(null); setProposal(null);
     if (!selected) return;
     try {
       const response = await fetch(`/api/director/assignments?goalId=${encodeURIComponent(selected)}`, { cache: "no-store" });
@@ -44,6 +48,7 @@ export default function DirectorObjectives() {
       if (!response.ok) throw new Error(payload.error || "Saved assignments unavailable.");
       if (version === requestVersion.current) {
         setTasks(payload.assignments || []);
+        setEvidenceOptions(payload.evidenceOptions || []); setCancelled(Boolean(payload.cancellation));
         if (payload.proposal?.content?.directorPlan?.plan) setProposal({ id: payload.proposal.id, plan: payload.proposal.content.directorPlan.plan });
       }
     } catch (failure) { if (version === requestVersion.current) setError(failure instanceof Error ? failure.message : "Assignments unavailable."); }
@@ -54,11 +59,13 @@ export default function DirectorObjectives() {
     pending.current = true; setBusy(true); setError(null); setNotice(null);
     ++requestVersion.current;
     try {
-      const response = await fetch("/api/director/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, goalId, capabilities, assignmentId, proposalId: action === "approve_reasoned_plan" ? assignmentId : undefined }) });
+      const response = await fetch("/api/director/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, goalId, capabilities, assignmentId, ownerMessage: action === "reason" ? ownerMessage : undefined, evidenceSelection: action === "reason" ? Object.entries(evidenceSelection).filter(([, ids]) => ids.length).map(([taskId, recordIds]) => ({ taskId, recordIds })) : undefined, proposalId: action === "approve_reasoned_plan" ? assignmentId : undefined }) });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Assignment request failed.");
       setTasks(payload.assignments || []);
       if (payload.proposal?.content?.directorPlan?.plan) setProposal({ id: payload.proposal.id, plan: payload.proposal.content.directorPlan.plan });
+      setEvidenceOptions([]); setEvidenceSelection({});
+      if (action === "cancel") setCancelled(true);
       if (action === "approve_reasoned_plan") setProposal(null);
       setNotice(payload.notice || payload.outcome?.detail || payload.outcomes?.at(-1)?.detail || (action === "reason" ? "Avery proposed a plan. No work has been assigned or executed." : "Review plan saved. Resume to execute its next checkpoint."));
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Assignment request failed."); }
@@ -78,6 +85,9 @@ export default function DirectorObjectives() {
       {(Object.keys(labels) as DirectorCapability[]).map((capability) => <label key={capability} className="flex items-center gap-2 text-sm text-slate-200"><input type="checkbox" checked={capabilities.includes(capability)} onChange={(event) => setCapabilities((current) => event.target.checked ? [...current, capability] : current.filter((item) => item !== capability))} />{labels[capability]}</label>)}
     </fieldset>
     <div className="my-3 rounded border border-white/10 p-3 text-sm text-slate-200">
+      <label className="block">Current request or correction for Avery<textarea className="my-2 w-full rounded bg-[#111827] p-2" maxLength={2000} value={ownerMessage} disabled={busy} onChange={event => setOwnerMessage(event.target.value)} /></label>
+      {evidenceOptions.length > 0 && <fieldset disabled={busy}><legend>Optional: share selected verified evidence with Avery for this objective</legend><p className="text-xs text-slate-400">Only selected income or appointment excerpts and the review summary are sent to the AI provider. Other records stay local. Selection does not authorize execution. Refresh evidence after running a review.</p>{evidenceOptions.flatMap(option => option.records.map(record => <label key={`${option.taskId}-${record.id}`} className="flex gap-2"><input type="checkbox" checked={evidenceSelection[option.taskId]?.includes(record.id) || false} onChange={event => setEvidenceSelection(current => ({ ...current, [option.taskId]: event.target.checked ? [...(current[option.taskId] || []), record.id] : (current[option.taskId] || []).filter(id => id !== record.id) }))} />{record.label}</label>))}</fieldset>}
+      {cancelled && <p>Owner cancelled remaining work. Restoring permissions does not restore authorization.</p>}
       <button type="button" className="beast-button" disabled={busy || !goalId || !reasoningAvailable} onClick={() => void act("reason")}>Ask Avery to plan or review</button>
       {!reasoningAvailable && <p className="mt-2 text-xs text-amber-200">AI planning is unavailable. You can continue with saved-record reviews.</p>}
       {proposal && <div className="mt-3 grid gap-2 break-words">
@@ -96,7 +106,7 @@ export default function DirectorObjectives() {
       <button type="button" className="beast-button" disabled={busy || !goalId || !capabilities.length} onClick={() => void act("plan")}>Save review plan</button>
       <button type="button" className="beast-button" disabled={busy || !goalId || !tasks.length} onClick={() => void act("resume")}>{busy ? "Checking checkpoint…" : "Resume next checkpoint"}</button>
       <button type="button" className="beast-button" disabled={busy || !goalId || !tasks.length} onClick={() => void act("supervise")}>Run approved checkpoints</button>
-      <button type="button" className="beast-button" disabled={busy || !goalId || !tasks.some(task => !["verified", "cancelled"].includes(task.status))} onClick={() => void act("cancel")}>Cancel remaining reviews</button>
+      <button type="button" className="beast-button" disabled={busy || !goalId || cancelled} onClick={() => void act("cancel")}>Cancel remaining reviews</button>
       <button type="button" className="beast-button" disabled={busy || !goalId} onClick={() => void load(goalId)}>Refresh evidence</button>
     </div>
     {error && <p role="alert" className="mt-3 text-sm text-red-200">{error}</p>}

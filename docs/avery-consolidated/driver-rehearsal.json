@@ -1,0 +1,2200 @@
+{
+  "provenance": "16 AUTHORED MODEL-TRANSPORT ADAPTER RESPONSES; no AI judgments/charges or real owner approval. Synthetic fake approval used only with injected local transport.",
+  "paidCalls": 0,
+  "completedSlots": 16,
+  "reservationGuardUsd": 5.486592,
+  "perCase": 6,
+  "attempts": [
+    {
+      "id": "folio-17",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "actualApiExecution": [
+        {
+          "approved": true,
+          "kind": "explicit_synthetic_owner_approval_via_real_cookie_API",
+          "status": 200,
+          "payload": {
+            "assignments": [
+              {
+                "id": "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63",
+                "owner_id": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                "goal_id": "3f856ab8-2a33-4b45-8e3f-ba023d8964a7",
+                "capability": "health.preparation-review",
+                "status": "planned",
+                "dependencies": [],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:34.217582+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:34.217582+00:00",
+                "updated_at": "2026-10-17T23:12:34.217582+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "taskId": "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63",
+              "detail": "Specialist result recomputed and source snapshot verified."
+            },
+            "assignments": [
+              {
+                "id": "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63",
+                "owner_id": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                "goal_id": "3f856ab8-2a33-4b45-8e3f-ba023d8964a7",
+                "capability": "health.preparation-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:34.318Z",
+                  "output": {
+                    "safety": [
+                      "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                      "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                      "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                      "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                    ],
+                    "outcomeLearning": [],
+                    "recommendations": [
+                      {
+                        "href": "/dashboard/health/profile",
+                        "title": "Build a current health profile",
+                        "confidence": {
+                          "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                          "label": "insufficient",
+                          "score": 0
+                        },
+                        "limitations": [
+                          "This is a record-completeness suggestion, not a medical recommendation.",
+                          "Do not add information you do not want stored in BeastHealth."
+                        ],
+                        "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beasthealth",
+                            "profileRecordCount": 0
+                          }
+                        ],
+                        "sourceRecommendationId": "health-profile-review"
+                      },
+                      {
+                        "href": "/dashboard/health/appointments",
+                        "title": "Prepare for Own appointment paperwork",
+                        "confidence": {
+                          "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                          "label": "moderate",
+                          "score": 64
+                        },
+                        "limitations": [
+                          "Appointment preparation is organizational support and does not determine clinical priorities.",
+                          "Confirm the appointment time, location, and instructions with the provider."
+                        ],
+                        "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beast_health_records",
+                            "healthRecordId": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                            "sourceRecommendationId": "appointment-preparation:ca2d75bf-72fe-4d51-a774-25cf64263bbf"
+                          }
+                        ],
+                        "sourceRecommendationId": "appointment-preparation:ca2d75bf-72fe-4d51-a774-25cf64263bbf"
+                      }
+                    ],
+                    "timelineSummary": {
+                      "byType": [
+                        {
+                          "kind": "appointment",
+                          "count": 1
+                        }
+                      ],
+                      "totalEvents": 1,
+                      "recentEvents": [
+                        {
+                          "id": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                          "date": "2026-10-27",
+                          "title": "Own appointment paperwork",
+                          "source": null,
+                          "status": "active",
+                          "recordType": "appointment"
+                        }
+                      ]
+                    },
+                    "medicationReview": [],
+                    "executiveBriefing": {
+                      "title": "Your saved health context is ready for review",
+                      "summary": "1 active record across 1 health area. This briefing describes record coverage only.",
+                      "totalRecords": 1,
+                      "documentCount": 0,
+                      "lastUpdatedAt": "2026-10-17T23:12:34.032045+00:00",
+                      "populatedAreas": 1
+                    },
+                    "documentUnderstanding": [],
+                    "appointmentPreparation": {
+                      "questions": [
+                        "What should I understand or prepare for \"Own appointment paperwork\"?"
+                      ],
+                      "nextAppointment": {
+                        "id": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                        "notes": "Transport paperwork has not yet been arranged.",
+                        "title": "Own appointment paperwork",
+                        "source": null,
+                        "status": "active",
+                        "details": {},
+                        "ownerId": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                        "createdAt": "2026-10-17T23:12:34.032045+00:00",
+                        "updatedAt": "2026-10-17T23:12:34.032045+00:00",
+                        "occurredOn": "2026-10-27",
+                        "recordType": "appointment"
+                      },
+                      "recordsToReview": [],
+                      "documentsToReview": []
+                    }
+                  },
+                  "capability": "health.preparation-review",
+                  "specialist": "beasthealth.health-advisor",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:34.217582+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:34.318Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:34.318Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:34.217582+00:00",
+                "updated_at": "2026-10-17T23:12:34.318+00:00"
+              }
+            ]
+          }
+        }
+      ],
+      "finalAssignments": [
+        {
+          "id": "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-17",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "actualApiExecution": [
+        {
+          "approved": true,
+          "kind": "explicit_synthetic_owner_approval_via_real_cookie_API",
+          "status": 200,
+          "payload": {
+            "assignments": [
+              {
+                "id": "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63",
+                "owner_id": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                "goal_id": "3f856ab8-2a33-4b45-8e3f-ba023d8964a7",
+                "capability": "health.preparation-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:34.318Z",
+                  "output": {
+                    "safety": [
+                      "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                      "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                      "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                      "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                    ],
+                    "outcomeLearning": [],
+                    "recommendations": [
+                      {
+                        "href": "/dashboard/health/profile",
+                        "title": "Build a current health profile",
+                        "confidence": {
+                          "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                          "label": "insufficient",
+                          "score": 0
+                        },
+                        "limitations": [
+                          "This is a record-completeness suggestion, not a medical recommendation.",
+                          "Do not add information you do not want stored in BeastHealth."
+                        ],
+                        "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beasthealth",
+                            "profileRecordCount": 0
+                          }
+                        ],
+                        "sourceRecommendationId": "health-profile-review"
+                      },
+                      {
+                        "href": "/dashboard/health/appointments",
+                        "title": "Prepare for Own appointment paperwork",
+                        "confidence": {
+                          "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                          "label": "moderate",
+                          "score": 64
+                        },
+                        "limitations": [
+                          "Appointment preparation is organizational support and does not determine clinical priorities.",
+                          "Confirm the appointment time, location, and instructions with the provider."
+                        ],
+                        "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beast_health_records",
+                            "healthRecordId": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                            "sourceRecommendationId": "appointment-preparation:ca2d75bf-72fe-4d51-a774-25cf64263bbf"
+                          }
+                        ],
+                        "sourceRecommendationId": "appointment-preparation:ca2d75bf-72fe-4d51-a774-25cf64263bbf"
+                      }
+                    ],
+                    "timelineSummary": {
+                      "byType": [
+                        {
+                          "kind": "appointment",
+                          "count": 1
+                        }
+                      ],
+                      "totalEvents": 1,
+                      "recentEvents": [
+                        {
+                          "id": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                          "date": "2026-10-27",
+                          "title": "Own appointment paperwork",
+                          "source": null,
+                          "status": "active",
+                          "recordType": "appointment"
+                        }
+                      ]
+                    },
+                    "medicationReview": [],
+                    "executiveBriefing": {
+                      "title": "Your saved health context is ready for review",
+                      "summary": "1 active record across 1 health area. This briefing describes record coverage only.",
+                      "totalRecords": 1,
+                      "documentCount": 0,
+                      "lastUpdatedAt": "2026-10-17T23:12:34.032045+00:00",
+                      "populatedAreas": 1
+                    },
+                    "documentUnderstanding": [],
+                    "appointmentPreparation": {
+                      "questions": [
+                        "What should I understand or prepare for \"Own appointment paperwork\"?"
+                      ],
+                      "nextAppointment": {
+                        "id": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                        "notes": "Transport paperwork has not yet been arranged.",
+                        "title": "Own appointment paperwork",
+                        "source": null,
+                        "status": "active",
+                        "details": {},
+                        "ownerId": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                        "createdAt": "2026-10-17T23:12:34.032045+00:00",
+                        "updatedAt": "2026-10-17T23:12:34.032045+00:00",
+                        "occurredOn": "2026-10-27",
+                        "recordType": "appointment"
+                      },
+                      "recordsToReview": [],
+                      "documentsToReview": []
+                    }
+                  },
+                  "capability": "health.preparation-review",
+                  "specialist": "beasthealth.health-advisor",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:34.217582+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:34.318Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:34.318Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:34.217582+00:00",
+                "updated_at": "2026-10-17T23:12:34.318+00:00"
+              },
+              {
+                "id": "61fd7377-776e-4a52-8832-302dc57e042c",
+                "owner_id": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                "goal_id": "3f856ab8-2a33-4b45-8e3f-ba023d8964a7",
+                "capability": "money.cash-review",
+                "status": "planned",
+                "dependencies": [
+                  "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63"
+                ],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:34.741059+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:34.741059+00:00",
+                "updated_at": "2026-10-17T23:12:34.741059+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "taskId": "61fd7377-776e-4a52-8832-302dc57e042c",
+              "detail": "Specialist result recomputed and source snapshot verified."
+            },
+            "assignments": [
+              {
+                "id": "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63",
+                "owner_id": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                "goal_id": "3f856ab8-2a33-4b45-8e3f-ba023d8964a7",
+                "capability": "health.preparation-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:34.318Z",
+                  "output": {
+                    "safety": [
+                      "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                      "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                      "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                      "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                    ],
+                    "outcomeLearning": [],
+                    "recommendations": [
+                      {
+                        "href": "/dashboard/health/profile",
+                        "title": "Build a current health profile",
+                        "confidence": {
+                          "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                          "label": "insufficient",
+                          "score": 0
+                        },
+                        "limitations": [
+                          "This is a record-completeness suggestion, not a medical recommendation.",
+                          "Do not add information you do not want stored in BeastHealth."
+                        ],
+                        "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beasthealth",
+                            "profileRecordCount": 0
+                          }
+                        ],
+                        "sourceRecommendationId": "health-profile-review"
+                      },
+                      {
+                        "href": "/dashboard/health/appointments",
+                        "title": "Prepare for Own appointment paperwork",
+                        "confidence": {
+                          "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                          "label": "moderate",
+                          "score": 64
+                        },
+                        "limitations": [
+                          "Appointment preparation is organizational support and does not determine clinical priorities.",
+                          "Confirm the appointment time, location, and instructions with the provider."
+                        ],
+                        "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beast_health_records",
+                            "healthRecordId": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                            "sourceRecommendationId": "appointment-preparation:ca2d75bf-72fe-4d51-a774-25cf64263bbf"
+                          }
+                        ],
+                        "sourceRecommendationId": "appointment-preparation:ca2d75bf-72fe-4d51-a774-25cf64263bbf"
+                      }
+                    ],
+                    "timelineSummary": {
+                      "byType": [
+                        {
+                          "kind": "appointment",
+                          "count": 1
+                        }
+                      ],
+                      "totalEvents": 1,
+                      "recentEvents": [
+                        {
+                          "id": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                          "date": "2026-10-27",
+                          "title": "Own appointment paperwork",
+                          "source": null,
+                          "status": "active",
+                          "recordType": "appointment"
+                        }
+                      ]
+                    },
+                    "medicationReview": [],
+                    "executiveBriefing": {
+                      "title": "Your saved health context is ready for review",
+                      "summary": "1 active record across 1 health area. This briefing describes record coverage only.",
+                      "totalRecords": 1,
+                      "documentCount": 0,
+                      "lastUpdatedAt": "2026-10-17T23:12:34.032045+00:00",
+                      "populatedAreas": 1
+                    },
+                    "documentUnderstanding": [],
+                    "appointmentPreparation": {
+                      "questions": [
+                        "What should I understand or prepare for \"Own appointment paperwork\"?"
+                      ],
+                      "nextAppointment": {
+                        "id": "ca2d75bf-72fe-4d51-a774-25cf64263bbf",
+                        "notes": "Transport paperwork has not yet been arranged.",
+                        "title": "Own appointment paperwork",
+                        "source": null,
+                        "status": "active",
+                        "details": {},
+                        "ownerId": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                        "createdAt": "2026-10-17T23:12:34.032045+00:00",
+                        "updatedAt": "2026-10-17T23:12:34.032045+00:00",
+                        "occurredOn": "2026-10-27",
+                        "recordType": "appointment"
+                      },
+                      "recordsToReview": [],
+                      "documentsToReview": []
+                    }
+                  },
+                  "capability": "health.preparation-review",
+                  "specialist": "beasthealth.health-advisor",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:34.217582+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:34.318Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:34.318Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:34.217582+00:00",
+                "updated_at": "2026-10-17T23:12:34.318+00:00"
+              },
+              {
+                "id": "61fd7377-776e-4a52-8832-302dc57e042c",
+                "owner_id": "c525c064-de23-4622-8ef5-6df117a4a1ca",
+                "goal_id": "3f856ab8-2a33-4b45-8e3f-ba023d8964a7",
+                "capability": "money.cash-review",
+                "status": "verified",
+                "dependencies": [
+                  "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63"
+                ],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:34.849Z",
+                  "output": {
+                    "asOf": "2026-10-17T23:12:34.849Z",
+                    "cashBuffer": 200,
+                    "calculation": "canonical BeastMoney Cash Intelligence; saved records only",
+                    "currentCash": 1000,
+                    "monthlyBills": 0,
+                    "monthlyIncome": 3000,
+                    "moneyGoalCount": 0,
+                    "activeBillCount": 0,
+                    "activeDebtCount": 0,
+                    "safeToSpendToday": 800,
+                    "activeIncomeCount": 1,
+                    "activeDebtStrategy": "minimum",
+                    "billsDueNext30Days": 0,
+                    "monthlyDebtMinimums": 0,
+                    "monthlyAvailableCash": 3000,
+                    "projectedCashBalance": 4000,
+                    "projectedAvailableCash": 3800,
+                    "requiredCashNext30Days": 0,
+                    "plannedExtraDebtPayment": 0,
+                    "retirementDataAvailable": false,
+                    "retirementScenarioCount": 0,
+                    "activeFundingSourceCount": 0,
+                    "incomeExpectedNext30Days": 3000,
+                    "openZeroBalanceDebtCount": 0,
+                    "safeFundingSourceCapacity": 0
+                  },
+                  "capability": "money.cash-review",
+                  "specialist": "beastmoney.money-coach",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:34.741059+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:34.849Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:34.849Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:34.741059+00:00",
+                "updated_at": "2026-10-17T23:12:34.849+00:00"
+              }
+            ]
+          }
+        }
+      ],
+      "finalAssignments": [
+        {
+          "id": "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1
+        },
+        {
+          "id": "61fd7377-776e-4a52-8832-302dc57e042c",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-17",
+      "turn": 3,
+      "state": "completed_with_usage",
+      "actualApiExecution": [],
+      "finalAssignments": [
+        {
+          "id": "1fb19e10-e9c2-4a1c-9c4e-06eb1456ba63",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1
+        },
+        {
+          "id": "61fd7377-776e-4a52-8832-302dc57e042c",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-28",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "actualApiExecution": [
+        {
+          "approved": true,
+          "kind": "explicit_synthetic_owner_approval_via_real_cookie_API",
+          "status": 200,
+          "payload": {
+            "assignments": [
+              {
+                "id": "f7520895-4b8c-459a-ac48-20b547e0d759",
+                "owner_id": "1a166069-5bbe-4da7-b27b-2dc80d87c43f",
+                "goal_id": "97245d24-2ed1-408c-8686-299686d54f03",
+                "capability": "money.cash-review",
+                "status": "planned",
+                "dependencies": [],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:35.399783+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:35.399783+00:00",
+                "updated_at": "2026-10-17T23:12:35.399783+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "taskId": "f7520895-4b8c-459a-ac48-20b547e0d759",
+              "detail": "Specialist result recomputed and source snapshot verified."
+            },
+            "assignments": [
+              {
+                "id": "f7520895-4b8c-459a-ac48-20b547e0d759",
+                "owner_id": "1a166069-5bbe-4da7-b27b-2dc80d87c43f",
+                "goal_id": "97245d24-2ed1-408c-8686-299686d54f03",
+                "capability": "money.cash-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:35.497Z",
+                  "output": {
+                    "asOf": "2026-10-17T23:12:35.497Z",
+                    "cashBuffer": 200,
+                    "calculation": "canonical BeastMoney Cash Intelligence; saved records only",
+                    "currentCash": 1000,
+                    "monthlyBills": 0,
+                    "monthlyIncome": 4800,
+                    "moneyGoalCount": 0,
+                    "activeBillCount": 0,
+                    "activeDebtCount": 0,
+                    "safeToSpendToday": 800,
+                    "activeIncomeCount": 1,
+                    "activeDebtStrategy": "minimum",
+                    "billsDueNext30Days": 0,
+                    "monthlyDebtMinimums": 0,
+                    "monthlyAvailableCash": 4800,
+                    "projectedCashBalance": 5800,
+                    "projectedAvailableCash": 5600,
+                    "requiredCashNext30Days": 0,
+                    "plannedExtraDebtPayment": 0,
+                    "retirementDataAvailable": false,
+                    "retirementScenarioCount": 0,
+                    "activeFundingSourceCount": 0,
+                    "incomeExpectedNext30Days": 4800,
+                    "openZeroBalanceDebtCount": 0,
+                    "safeFundingSourceCapacity": 0
+                  },
+                  "capability": "money.cash-review",
+                  "specialist": "beastmoney.money-coach",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:35.399783+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:35.497Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:35.497Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:35.399783+00:00",
+                "updated_at": "2026-10-17T23:12:35.497+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "detail": "All approved saved-record reviews verified. The underlying goal is not marked complete."
+            },
+            "assignments": [
+              {
+                "id": "f7520895-4b8c-459a-ac48-20b547e0d759",
+                "owner_id": "1a166069-5bbe-4da7-b27b-2dc80d87c43f",
+                "goal_id": "97245d24-2ed1-408c-8686-299686d54f03",
+                "capability": "money.cash-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:35.497Z",
+                  "output": {
+                    "asOf": "2026-10-17T23:12:35.497Z",
+                    "cashBuffer": 200,
+                    "calculation": "canonical BeastMoney Cash Intelligence; saved records only",
+                    "currentCash": 1000,
+                    "monthlyBills": 0,
+                    "monthlyIncome": 4800,
+                    "moneyGoalCount": 0,
+                    "activeBillCount": 0,
+                    "activeDebtCount": 0,
+                    "safeToSpendToday": 800,
+                    "activeIncomeCount": 1,
+                    "activeDebtStrategy": "minimum",
+                    "billsDueNext30Days": 0,
+                    "monthlyDebtMinimums": 0,
+                    "monthlyAvailableCash": 4800,
+                    "projectedCashBalance": 5800,
+                    "projectedAvailableCash": 5600,
+                    "requiredCashNext30Days": 0,
+                    "plannedExtraDebtPayment": 0,
+                    "retirementDataAvailable": false,
+                    "retirementScenarioCount": 0,
+                    "activeFundingSourceCount": 0,
+                    "incomeExpectedNext30Days": 4800,
+                    "openZeroBalanceDebtCount": 0,
+                    "safeFundingSourceCapacity": 0
+                  },
+                  "capability": "money.cash-review",
+                  "specialist": "beastmoney.money-coach",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:35.399783+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:35.497Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:35.497Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:35.399783+00:00",
+                "updated_at": "2026-10-17T23:12:35.497+00:00"
+              }
+            ]
+          }
+        }
+      ],
+      "finalAssignments": [
+        {
+          "id": "f7520895-4b8c-459a-ac48-20b547e0d759",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-28",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "actualApiExecution": [
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "detail": "All approved saved-record reviews verified. The underlying goal is not marked complete."
+            },
+            "assignments": [
+              {
+                "id": "f7520895-4b8c-459a-ac48-20b547e0d759",
+                "owner_id": "1a166069-5bbe-4da7-b27b-2dc80d87c43f",
+                "goal_id": "97245d24-2ed1-408c-8686-299686d54f03",
+                "capability": "money.cash-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:35.497Z",
+                  "output": {
+                    "asOf": "2026-10-17T23:12:35.497Z",
+                    "cashBuffer": 200,
+                    "calculation": "canonical BeastMoney Cash Intelligence; saved records only",
+                    "currentCash": 1000,
+                    "monthlyBills": 0,
+                    "monthlyIncome": 4800,
+                    "moneyGoalCount": 0,
+                    "activeBillCount": 0,
+                    "activeDebtCount": 0,
+                    "safeToSpendToday": 800,
+                    "activeIncomeCount": 1,
+                    "activeDebtStrategy": "minimum",
+                    "billsDueNext30Days": 0,
+                    "monthlyDebtMinimums": 0,
+                    "monthlyAvailableCash": 4800,
+                    "projectedCashBalance": 5800,
+                    "projectedAvailableCash": 5600,
+                    "requiredCashNext30Days": 0,
+                    "plannedExtraDebtPayment": 0,
+                    "retirementDataAvailable": false,
+                    "retirementScenarioCount": 0,
+                    "activeFundingSourceCount": 0,
+                    "incomeExpectedNext30Days": 4800,
+                    "openZeroBalanceDebtCount": 0,
+                    "safeFundingSourceCapacity": 0
+                  },
+                  "capability": "money.cash-review",
+                  "specialist": "beastmoney.money-coach",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:35.399783+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:35.497Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:35.497Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:35.399783+00:00",
+                "updated_at": "2026-10-17T23:12:35.497+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "detail": "All approved saved-record reviews verified. The underlying goal is not marked complete."
+            },
+            "assignments": [
+              {
+                "id": "f7520895-4b8c-459a-ac48-20b547e0d759",
+                "owner_id": "1a166069-5bbe-4da7-b27b-2dc80d87c43f",
+                "goal_id": "97245d24-2ed1-408c-8686-299686d54f03",
+                "capability": "money.cash-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:35.497Z",
+                  "output": {
+                    "asOf": "2026-10-17T23:12:35.497Z",
+                    "cashBuffer": 200,
+                    "calculation": "canonical BeastMoney Cash Intelligence; saved records only",
+                    "currentCash": 1000,
+                    "monthlyBills": 0,
+                    "monthlyIncome": 4800,
+                    "moneyGoalCount": 0,
+                    "activeBillCount": 0,
+                    "activeDebtCount": 0,
+                    "safeToSpendToday": 800,
+                    "activeIncomeCount": 1,
+                    "activeDebtStrategy": "minimum",
+                    "billsDueNext30Days": 0,
+                    "monthlyDebtMinimums": 0,
+                    "monthlyAvailableCash": 4800,
+                    "projectedCashBalance": 5800,
+                    "projectedAvailableCash": 5600,
+                    "requiredCashNext30Days": 0,
+                    "plannedExtraDebtPayment": 0,
+                    "retirementDataAvailable": false,
+                    "retirementScenarioCount": 0,
+                    "activeFundingSourceCount": 0,
+                    "incomeExpectedNext30Days": 4800,
+                    "openZeroBalanceDebtCount": 0,
+                    "safeFundingSourceCapacity": 0
+                  },
+                  "capability": "money.cash-review",
+                  "specialist": "beastmoney.money-coach",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:35.399783+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:35.497Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:35.497Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:35.399783+00:00",
+                "updated_at": "2026-10-17T23:12:35.497+00:00"
+              }
+            ]
+          }
+        }
+      ],
+      "finalAssignments": [
+        {
+          "id": "f7520895-4b8c-459a-ac48-20b547e0d759",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-28",
+      "turn": 3,
+      "state": "completed_with_usage",
+      "actualApiExecution": [],
+      "finalAssignments": [
+        {
+          "id": "f7520895-4b8c-459a-ac48-20b547e0d759",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 2
+        }
+      ]
+    },
+    {
+      "id": "folio-41",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "actualApiExecution": [],
+      "finalAssignments": [
+        {
+          "id": "8d5490cb-daab-43b8-8326-53750a780cec",
+          "capability": "health.preparation-review",
+          "status": "running",
+          "attempts": 1
+        },
+        {
+          "id": "55a6abff-4a81-487d-bac4-492693c5e8ed",
+          "capability": "money.cash-review",
+          "status": "running",
+          "attempts": 2
+        }
+      ]
+    },
+    {
+      "id": "folio-41",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "actualApiExecution": [
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "taskId": "8d5490cb-daab-43b8-8326-53750a780cec",
+              "detail": "Specialist result recomputed and source snapshot verified."
+            },
+            "assignments": [
+              {
+                "id": "8d5490cb-daab-43b8-8326-53750a780cec",
+                "owner_id": "2cbfab77-aacd-4a24-8423-95e5aaeaaa96",
+                "goal_id": "3e65c1a5-3c1e-4595-8907-a81e1123ff99",
+                "capability": "health.preparation-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 2,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:36.768Z",
+                  "output": {
+                    "safety": [
+                      "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                      "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                      "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                      "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                    ],
+                    "outcomeLearning": [],
+                    "recommendations": [
+                      {
+                        "href": "/dashboard/health/profile",
+                        "title": "Build a current health profile",
+                        "confidence": {
+                          "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                          "label": "insufficient",
+                          "score": 0
+                        },
+                        "limitations": [
+                          "This is a record-completeness suggestion, not a medical recommendation.",
+                          "Do not add information you do not want stored in BeastHealth."
+                        ],
+                        "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beasthealth",
+                            "profileRecordCount": 0
+                          }
+                        ],
+                        "sourceRecommendationId": "health-profile-review"
+                      },
+                      {
+                        "href": "/dashboard/health/appointments",
+                        "title": "Prepare for Own appointment paperwork",
+                        "confidence": {
+                          "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                          "label": "moderate",
+                          "score": 64
+                        },
+                        "limitations": [
+                          "Appointment preparation is organizational support and does not determine clinical priorities.",
+                          "Confirm the appointment time, location, and instructions with the provider."
+                        ],
+                        "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beast_health_records",
+                            "healthRecordId": "6f1987b9-0402-4b7d-8d25-c5a27e16acbc",
+                            "sourceRecommendationId": "appointment-preparation:6f1987b9-0402-4b7d-8d25-c5a27e16acbc"
+                          }
+                        ],
+                        "sourceRecommendationId": "appointment-preparation:6f1987b9-0402-4b7d-8d25-c5a27e16acbc"
+                      }
+                    ],
+                    "timelineSummary": {
+                      "byType": [
+                        {
+                          "kind": "appointment",
+                          "count": 1
+                        }
+                      ],
+                      "totalEvents": 1,
+                      "recentEvents": [
+                        {
+                          "id": "6f1987b9-0402-4b7d-8d25-c5a27e16acbc",
+                          "date": "2026-10-27",
+                          "title": "Own appointment paperwork",
+                          "source": null,
+                          "status": "active",
+                          "recordType": "appointment"
+                        }
+                      ]
+                    },
+                    "medicationReview": [],
+                    "executiveBriefing": {
+                      "title": "Your saved health context is ready for review",
+                      "summary": "1 active record across 1 health area. This briefing describes record coverage only.",
+                      "totalRecords": 1,
+                      "documentCount": 0,
+                      "lastUpdatedAt": "2026-10-17T23:12:36.591861+00:00",
+                      "populatedAreas": 1
+                    },
+                    "documentUnderstanding": [],
+                    "appointmentPreparation": {
+                      "questions": [
+                        "What should I understand or prepare for \"Own appointment paperwork\"?"
+                      ],
+                      "nextAppointment": {
+                        "id": "6f1987b9-0402-4b7d-8d25-c5a27e16acbc",
+                        "notes": "Transport paperwork has not yet been arranged.",
+                        "title": "Own appointment paperwork",
+                        "source": null,
+                        "status": "active",
+                        "details": {},
+                        "ownerId": "2cbfab77-aacd-4a24-8423-95e5aaeaaa96",
+                        "createdAt": "2026-10-17T23:12:36.591861+00:00",
+                        "updatedAt": "2026-10-17T23:12:36.591861+00:00",
+                        "occurredOn": "2026-10-27",
+                        "recordType": "appointment"
+                      },
+                      "recordsToReview": [],
+                      "documentsToReview": []
+                    }
+                  },
+                  "capability": "health.preparation-review",
+                  "specialist": "beasthealth.health-advisor",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:36.604427+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:36.768Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:36.768Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:36.604427+00:00",
+                "updated_at": "2026-10-17T23:12:36.768+00:00"
+              },
+              {
+                "id": "55a6abff-4a81-487d-bac4-492693c5e8ed",
+                "owner_id": "2cbfab77-aacd-4a24-8423-95e5aaeaaa96",
+                "goal_id": "3e65c1a5-3c1e-4595-8907-a81e1123ff99",
+                "capability": "money.cash-review",
+                "status": "running",
+                "dependencies": [
+                  "8d5490cb-daab-43b8-8326-53750a780cec"
+                ],
+                "revision": 0,
+                "attempts": 2,
+                "lease_id": "c4f64fcd-b346-4308-93dd-7e0ff91c7ead",
+                "lease_until": "2000-01-01T00:00:00+00:00",
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:36.604427+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:36.604427+00:00",
+                "updated_at": "2026-10-17T23:12:36.604427+00:00"
+              }
+            ]
+          }
+        }
+      ],
+      "finalAssignments": [
+        {
+          "id": "8d5490cb-daab-43b8-8326-53750a780cec",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 2
+        },
+        {
+          "id": "55a6abff-4a81-487d-bac4-492693c5e8ed",
+          "capability": "money.cash-review",
+          "status": "running",
+          "attempts": 2
+        }
+      ]
+    },
+    {
+      "id": "folio-41",
+      "turn": 3,
+      "state": "completed_with_usage",
+      "actualApiExecution": [],
+      "finalAssignments": [
+        {
+          "id": "8d5490cb-daab-43b8-8326-53750a780cec",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 2
+        },
+        {
+          "id": "55a6abff-4a81-487d-bac4-492693c5e8ed",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 3
+        }
+      ]
+    },
+    {
+      "id": "folio-55",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "actualApiExecution": [
+        {
+          "approved": true,
+          "kind": "explicit_synthetic_owner_approval_via_real_cookie_API",
+          "status": 200,
+          "payload": {
+            "assignments": [
+              {
+                "id": "a5ef6697-32ab-4a57-ae71-4cb98fc77bcd",
+                "owner_id": "8874b782-adae-49fe-a988-5a3aaecff260",
+                "goal_id": "f49a38cd-38d9-41a4-bddb-7afb778e94fc",
+                "capability": "health.preparation-review",
+                "status": "planned",
+                "dependencies": [],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:37.593065+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:37.593065+00:00",
+                "updated_at": "2026-10-17T23:12:37.593065+00:00"
+              },
+              {
+                "id": "a6ae02b7-63aa-474e-af38-e653176b34c0",
+                "owner_id": "8874b782-adae-49fe-a988-5a3aaecff260",
+                "goal_id": "f49a38cd-38d9-41a4-bddb-7afb778e94fc",
+                "capability": "money.cash-review",
+                "status": "planned",
+                "dependencies": [],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:37.593065+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:37.593065+00:00",
+                "updated_at": "2026-10-17T23:12:37.593065+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "taskId": "a5ef6697-32ab-4a57-ae71-4cb98fc77bcd",
+              "detail": "Specialist result recomputed and source snapshot verified."
+            },
+            "assignments": [
+              {
+                "id": "a5ef6697-32ab-4a57-ae71-4cb98fc77bcd",
+                "owner_id": "8874b782-adae-49fe-a988-5a3aaecff260",
+                "goal_id": "f49a38cd-38d9-41a4-bddb-7afb778e94fc",
+                "capability": "health.preparation-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:37.747Z",
+                  "output": {
+                    "safety": [
+                      "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                      "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                      "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                      "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                    ],
+                    "outcomeLearning": [],
+                    "recommendations": [
+                      {
+                        "href": "/dashboard/health/profile",
+                        "title": "Build a current health profile",
+                        "confidence": {
+                          "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                          "label": "insufficient",
+                          "score": 0
+                        },
+                        "limitations": [
+                          "This is a record-completeness suggestion, not a medical recommendation.",
+                          "Do not add information you do not want stored in BeastHealth."
+                        ],
+                        "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beasthealth",
+                            "profileRecordCount": 0
+                          }
+                        ],
+                        "sourceRecommendationId": "health-profile-review"
+                      },
+                      {
+                        "href": "/dashboard/health/appointments",
+                        "title": "Prepare for Own appointment paperwork",
+                        "confidence": {
+                          "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                          "label": "moderate",
+                          "score": 64
+                        },
+                        "limitations": [
+                          "Appointment preparation is organizational support and does not determine clinical priorities.",
+                          "Confirm the appointment time, location, and instructions with the provider."
+                        ],
+                        "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beast_health_records",
+                            "healthRecordId": "dfc37e90-f101-4aff-a55f-f54815a307f5",
+                            "sourceRecommendationId": "appointment-preparation:dfc37e90-f101-4aff-a55f-f54815a307f5"
+                          }
+                        ],
+                        "sourceRecommendationId": "appointment-preparation:dfc37e90-f101-4aff-a55f-f54815a307f5"
+                      }
+                    ],
+                    "timelineSummary": {
+                      "byType": [
+                        {
+                          "kind": "appointment",
+                          "count": 1
+                        }
+                      ],
+                      "totalEvents": 1,
+                      "recentEvents": [
+                        {
+                          "id": "dfc37e90-f101-4aff-a55f-f54815a307f5",
+                          "date": "2026-10-27",
+                          "title": "Own appointment paperwork",
+                          "source": null,
+                          "status": "active",
+                          "recordType": "appointment"
+                        }
+                      ]
+                    },
+                    "medicationReview": [],
+                    "executiveBriefing": {
+                      "title": "Your saved health context is ready for review",
+                      "summary": "1 active record across 1 health area. This briefing describes record coverage only.",
+                      "totalRecords": 1,
+                      "documentCount": 0,
+                      "lastUpdatedAt": "2026-10-17T23:12:37.431525+00:00",
+                      "populatedAreas": 1
+                    },
+                    "documentUnderstanding": [],
+                    "appointmentPreparation": {
+                      "questions": [
+                        "What should I understand or prepare for \"Own appointment paperwork\"?"
+                      ],
+                      "nextAppointment": {
+                        "id": "dfc37e90-f101-4aff-a55f-f54815a307f5",
+                        "notes": "Transport paperwork has not yet been arranged.",
+                        "title": "Own appointment paperwork",
+                        "source": null,
+                        "status": "active",
+                        "details": {},
+                        "ownerId": "8874b782-adae-49fe-a988-5a3aaecff260",
+                        "createdAt": "2026-10-17T23:12:37.431525+00:00",
+                        "updatedAt": "2026-10-17T23:12:37.431525+00:00",
+                        "occurredOn": "2026-10-27",
+                        "recordType": "appointment"
+                      },
+                      "recordsToReview": [],
+                      "documentsToReview": []
+                    }
+                  },
+                  "capability": "health.preparation-review",
+                  "specialist": "beasthealth.health-advisor",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:37.593065+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:37.747Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:37.747Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:37.593065+00:00",
+                "updated_at": "2026-10-17T23:12:37.747+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "detail": "All approved saved-record reviews verified. The underlying goal is not marked complete."
+            },
+            "assignments": [
+              {
+                "id": "a5ef6697-32ab-4a57-ae71-4cb98fc77bcd",
+                "owner_id": "8874b782-adae-49fe-a988-5a3aaecff260",
+                "goal_id": "f49a38cd-38d9-41a4-bddb-7afb778e94fc",
+                "capability": "health.preparation-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:37.747Z",
+                  "output": {
+                    "safety": [
+                      "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                      "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                      "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                      "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                    ],
+                    "outcomeLearning": [],
+                    "recommendations": [
+                      {
+                        "href": "/dashboard/health/profile",
+                        "title": "Build a current health profile",
+                        "confidence": {
+                          "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                          "label": "insufficient",
+                          "score": 0
+                        },
+                        "limitations": [
+                          "This is a record-completeness suggestion, not a medical recommendation.",
+                          "Do not add information you do not want stored in BeastHealth."
+                        ],
+                        "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beasthealth",
+                            "profileRecordCount": 0
+                          }
+                        ],
+                        "sourceRecommendationId": "health-profile-review"
+                      },
+                      {
+                        "href": "/dashboard/health/appointments",
+                        "title": "Prepare for Own appointment paperwork",
+                        "confidence": {
+                          "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                          "label": "moderate",
+                          "score": 64
+                        },
+                        "limitations": [
+                          "Appointment preparation is organizational support and does not determine clinical priorities.",
+                          "Confirm the appointment time, location, and instructions with the provider."
+                        ],
+                        "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beast_health_records",
+                            "healthRecordId": "dfc37e90-f101-4aff-a55f-f54815a307f5",
+                            "sourceRecommendationId": "appointment-preparation:dfc37e90-f101-4aff-a55f-f54815a307f5"
+                          }
+                        ],
+                        "sourceRecommendationId": "appointment-preparation:dfc37e90-f101-4aff-a55f-f54815a307f5"
+                      }
+                    ],
+                    "timelineSummary": {
+                      "byType": [
+                        {
+                          "kind": "appointment",
+                          "count": 1
+                        }
+                      ],
+                      "totalEvents": 1,
+                      "recentEvents": [
+                        {
+                          "id": "dfc37e90-f101-4aff-a55f-f54815a307f5",
+                          "date": "2026-10-27",
+                          "title": "Own appointment paperwork",
+                          "source": null,
+                          "status": "active",
+                          "recordType": "appointment"
+                        }
+                      ]
+                    },
+                    "medicationReview": [],
+                    "executiveBriefing": {
+                      "title": "Your saved health context is ready for review",
+                      "summary": "1 active record across 1 health area. This briefing describes record coverage only.",
+                      "totalRecords": 1,
+                      "documentCount": 0,
+                      "lastUpdatedAt": "2026-10-17T23:12:37.431525+00:00",
+                      "populatedAreas": 1
+                    },
+                    "documentUnderstanding": [],
+                    "appointmentPreparation": {
+                      "questions": [
+                        "What should I understand or prepare for \"Own appointment paperwork\"?"
+                      ],
+                      "nextAppointment": {
+                        "id": "dfc37e90-f101-4aff-a55f-f54815a307f5",
+                        "notes": "Transport paperwork has not yet been arranged.",
+                        "title": "Own appointment paperwork",
+                        "source": null,
+                        "status": "active",
+                        "details": {},
+                        "ownerId": "8874b782-adae-49fe-a988-5a3aaecff260",
+                        "createdAt": "2026-10-17T23:12:37.431525+00:00",
+                        "updatedAt": "2026-10-17T23:12:37.431525+00:00",
+                        "occurredOn": "2026-10-27",
+                        "recordType": "appointment"
+                      },
+                      "recordsToReview": [],
+                      "documentsToReview": []
+                    }
+                  },
+                  "capability": "health.preparation-review",
+                  "specialist": "beasthealth.health-advisor",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:37.593065+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:37.747Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:37.747Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:37.593065+00:00",
+                "updated_at": "2026-10-17T23:12:37.747+00:00"
+              }
+            ]
+          }
+        }
+      ],
+      "finalAssignments": [
+        {
+          "id": "a5ef6697-32ab-4a57-ae71-4cb98fc77bcd",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-55",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "actualApiExecution": [],
+      "finalAssignments": [
+        {
+          "id": "a5ef6697-32ab-4a57-ae71-4cb98fc77bcd",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-55",
+      "turn": 3,
+      "state": "completed_with_usage",
+      "actualApiExecution": [],
+      "finalAssignments": [
+        {
+          "id": "a5ef6697-32ab-4a57-ae71-4cb98fc77bcd",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-63",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "actualApiExecution": [
+        {
+          "approved": true,
+          "kind": "explicit_synthetic_owner_approval_via_real_cookie_API",
+          "status": 200,
+          "payload": {
+            "assignments": [
+              {
+                "id": "ae18021e-fa68-4c4b-bf82-6ae311ff7c26",
+                "owner_id": "cde50742-a59f-4649-9aa6-e93915815af8",
+                "goal_id": "8d71bb7a-4d32-41d9-bd8a-699b7aad774d",
+                "capability": "health.preparation-review",
+                "status": "planned",
+                "dependencies": [],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:38.435704+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:38.435704+00:00",
+                "updated_at": "2026-10-17T23:12:38.435704+00:00"
+              },
+              {
+                "id": "2108546d-798f-4f6b-8f8f-8f92b3f25c77",
+                "owner_id": "cde50742-a59f-4649-9aa6-e93915815af8",
+                "goal_id": "8d71bb7a-4d32-41d9-bd8a-699b7aad774d",
+                "capability": "money.cash-review",
+                "status": "planned",
+                "dependencies": [
+                  "ae18021e-fa68-4c4b-bf82-6ae311ff7c26"
+                ],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:38.435704+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:38.435704+00:00",
+                "updated_at": "2026-10-17T23:12:38.435704+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "taskId": "ae18021e-fa68-4c4b-bf82-6ae311ff7c26",
+              "detail": "Specialist result recomputed and source snapshot verified."
+            },
+            "assignments": [
+              {
+                "id": "ae18021e-fa68-4c4b-bf82-6ae311ff7c26",
+                "owner_id": "cde50742-a59f-4649-9aa6-e93915815af8",
+                "goal_id": "8d71bb7a-4d32-41d9-bd8a-699b7aad774d",
+                "capability": "health.preparation-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:38.536Z",
+                  "output": {
+                    "safety": [
+                      "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                      "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                      "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                      "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                    ],
+                    "outcomeLearning": [],
+                    "recommendations": [
+                      {
+                        "href": "/dashboard/health/profile",
+                        "title": "Build a current health profile",
+                        "confidence": {
+                          "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                          "label": "insufficient",
+                          "score": 0
+                        },
+                        "limitations": [
+                          "This is a record-completeness suggestion, not a medical recommendation.",
+                          "Do not add information you do not want stored in BeastHealth."
+                        ],
+                        "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beasthealth",
+                            "profileRecordCount": 0
+                          }
+                        ],
+                        "sourceRecommendationId": "health-profile-review"
+                      },
+                      {
+                        "href": "/dashboard/health/appointments",
+                        "title": "Prepare for Own appointment paperwork",
+                        "confidence": {
+                          "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                          "label": "moderate",
+                          "score": 64
+                        },
+                        "limitations": [
+                          "Appointment preparation is organizational support and does not determine clinical priorities.",
+                          "Confirm the appointment time, location, and instructions with the provider."
+                        ],
+                        "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                        "supportingEvidence": [
+                          {
+                            "source": "beast_health_records",
+                            "healthRecordId": "3a6b0b20-203a-4794-be7e-9c6544d9c3b1",
+                            "sourceRecommendationId": "appointment-preparation:3a6b0b20-203a-4794-be7e-9c6544d9c3b1"
+                          }
+                        ],
+                        "sourceRecommendationId": "appointment-preparation:3a6b0b20-203a-4794-be7e-9c6544d9c3b1"
+                      }
+                    ],
+                    "timelineSummary": {
+                      "byType": [
+                        {
+                          "kind": "appointment",
+                          "count": 1
+                        }
+                      ],
+                      "totalEvents": 1,
+                      "recentEvents": [
+                        {
+                          "id": "3a6b0b20-203a-4794-be7e-9c6544d9c3b1",
+                          "date": "2026-10-27",
+                          "title": "Own appointment paperwork",
+                          "source": null,
+                          "status": "active",
+                          "recordType": "appointment"
+                        }
+                      ]
+                    },
+                    "medicationReview": [],
+                    "executiveBriefing": {
+                      "title": "Your saved health context is ready for review",
+                      "summary": "1 active record across 1 health area. This briefing describes record coverage only.",
+                      "totalRecords": 1,
+                      "documentCount": 0,
+                      "lastUpdatedAt": "2026-10-17T23:12:38.279402+00:00",
+                      "populatedAreas": 1
+                    },
+                    "documentUnderstanding": [],
+                    "appointmentPreparation": {
+                      "questions": [
+                        "What should I understand or prepare for \"Own appointment paperwork\"?"
+                      ],
+                      "nextAppointment": {
+                        "id": "3a6b0b20-203a-4794-be7e-9c6544d9c3b1",
+                        "notes": "Transport paperwork has not yet been arranged.",
+                        "title": "Own appointment paperwork",
+                        "source": null,
+                        "status": "active",
+                        "details": {},
+                        "ownerId": "cde50742-a59f-4649-9aa6-e93915815af8",
+                        "createdAt": "2026-10-17T23:12:38.279402+00:00",
+                        "updatedAt": "2026-10-17T23:12:38.279402+00:00",
+                        "occurredOn": "2026-10-27",
+                        "recordType": "appointment"
+                      },
+                      "recordsToReview": [],
+                      "documentsToReview": []
+                    }
+                  },
+                  "capability": "health.preparation-review",
+                  "specialist": "beasthealth.health-advisor",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:38.435704+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:38.536Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:38.536Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:38.435704+00:00",
+                "updated_at": "2026-10-17T23:12:38.536+00:00"
+              },
+              {
+                "id": "2108546d-798f-4f6b-8f8f-8f92b3f25c77",
+                "owner_id": "cde50742-a59f-4649-9aa6-e93915815af8",
+                "goal_id": "8d71bb7a-4d32-41d9-bd8a-699b7aad774d",
+                "capability": "money.cash-review",
+                "status": "planned",
+                "dependencies": [
+                  "ae18021e-fa68-4c4b-bf82-6ae311ff7c26"
+                ],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:38.435704+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:38.435704+00:00",
+                "updated_at": "2026-10-17T23:12:38.435704+00:00"
+              }
+            ]
+          }
+        }
+      ],
+      "finalAssignments": [
+        {
+          "id": "ae18021e-fa68-4c4b-bf82-6ae311ff7c26",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1
+        },
+        {
+          "id": "2108546d-798f-4f6b-8f8f-8f92b3f25c77",
+          "capability": "money.cash-review",
+          "status": "planned",
+          "attempts": 0
+        }
+      ]
+    },
+    {
+      "id": "folio-63",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "actualApiExecution": [],
+      "finalAssignments": [
+        {
+          "id": "ae18021e-fa68-4c4b-bf82-6ae311ff7c26",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1
+        },
+        {
+          "id": "2108546d-798f-4f6b-8f8f-8f92b3f25c77",
+          "capability": "money.cash-review",
+          "status": "cancelled",
+          "attempts": 0
+        }
+      ]
+    },
+    {
+      "id": "folio-76",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "actualApiExecution": [
+        {
+          "approved": true,
+          "kind": "explicit_synthetic_owner_approval_via_real_cookie_API",
+          "status": 200,
+          "payload": {
+            "assignments": [
+              {
+                "id": "39ef6364-ea46-4de0-b0d9-7650ac0becdf",
+                "owner_id": "937856dc-e2f3-428c-9df9-41362cfed7f9",
+                "goal_id": "d697f8a1-28e9-4aa8-bb0d-df14940e9173",
+                "capability": "money.cash-review",
+                "status": "planned",
+                "dependencies": [],
+                "revision": 0,
+                "attempts": 0,
+                "lease_id": null,
+                "lease_until": null,
+                "result": null,
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:39.211095+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:39.211095+00:00",
+                "updated_at": "2026-10-17T23:12:39.211095+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "taskId": "39ef6364-ea46-4de0-b0d9-7650ac0becdf",
+              "detail": "Specialist result recomputed and source snapshot verified."
+            },
+            "assignments": [
+              {
+                "id": "39ef6364-ea46-4de0-b0d9-7650ac0becdf",
+                "owner_id": "937856dc-e2f3-428c-9df9-41362cfed7f9",
+                "goal_id": "d697f8a1-28e9-4aa8-bb0d-df14940e9173",
+                "capability": "money.cash-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:39.300Z",
+                  "output": {
+                    "asOf": "2026-10-17T23:12:39.300Z",
+                    "cashBuffer": 200,
+                    "calculation": "canonical BeastMoney Cash Intelligence; saved records only",
+                    "currentCash": 1000,
+                    "monthlyBills": 0,
+                    "monthlyIncome": 3000,
+                    "moneyGoalCount": 0,
+                    "activeBillCount": 0,
+                    "activeDebtCount": 0,
+                    "safeToSpendToday": 800,
+                    "activeIncomeCount": 1,
+                    "activeDebtStrategy": "minimum",
+                    "billsDueNext30Days": 0,
+                    "monthlyDebtMinimums": 0,
+                    "monthlyAvailableCash": 3000,
+                    "projectedCashBalance": 4000,
+                    "projectedAvailableCash": 3800,
+                    "requiredCashNext30Days": 0,
+                    "plannedExtraDebtPayment": 0,
+                    "retirementDataAvailable": false,
+                    "retirementScenarioCount": 0,
+                    "activeFundingSourceCount": 0,
+                    "incomeExpectedNext30Days": 3000,
+                    "openZeroBalanceDebtCount": 0,
+                    "safeFundingSourceCapacity": 0
+                  },
+                  "capability": "money.cash-review",
+                  "specialist": "beastmoney.money-coach",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:39.211095+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:39.300Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:39.300Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:39.211095+00:00",
+                "updated_at": "2026-10-17T23:12:39.3+00:00"
+              }
+            ]
+          }
+        },
+        {
+          "status": 200,
+          "payload": {
+            "outcome": {
+              "state": "verified",
+              "detail": "All approved saved-record reviews verified. The underlying goal is not marked complete."
+            },
+            "assignments": [
+              {
+                "id": "39ef6364-ea46-4de0-b0d9-7650ac0becdf",
+                "owner_id": "937856dc-e2f3-428c-9df9-41362cfed7f9",
+                "goal_id": "d697f8a1-28e9-4aa8-bb0d-df14940e9173",
+                "capability": "money.cash-review",
+                "status": "verified",
+                "dependencies": [],
+                "revision": 2,
+                "attempts": 1,
+                "lease_id": null,
+                "lease_until": null,
+                "result": {
+                  "asOf": "2026-10-17T23:12:39.300Z",
+                  "output": {
+                    "asOf": "2026-10-17T23:12:39.300Z",
+                    "cashBuffer": 200,
+                    "calculation": "canonical BeastMoney Cash Intelligence; saved records only",
+                    "currentCash": 1000,
+                    "monthlyBills": 0,
+                    "monthlyIncome": 3000,
+                    "moneyGoalCount": 0,
+                    "activeBillCount": 0,
+                    "activeDebtCount": 0,
+                    "safeToSpendToday": 800,
+                    "activeIncomeCount": 1,
+                    "activeDebtStrategy": "minimum",
+                    "billsDueNext30Days": 0,
+                    "monthlyDebtMinimums": 0,
+                    "monthlyAvailableCash": 3000,
+                    "projectedCashBalance": 4000,
+                    "projectedAvailableCash": 3800,
+                    "requiredCashNext30Days": 0,
+                    "plannedExtraDebtPayment": 0,
+                    "retirementDataAvailable": false,
+                    "retirementScenarioCount": 0,
+                    "activeFundingSourceCount": 0,
+                    "incomeExpectedNext30Days": 3000,
+                    "openZeroBalanceDebtCount": 0,
+                    "safeFundingSourceCapacity": 0
+                  },
+                  "capability": "money.cash-review",
+                  "specialist": "beastmoney.money-coach",
+                  "limitations": [
+                    "Saved-record review only; this does not complete the underlying life goal.",
+                    "No external research, medical judgment, transaction, publication or production action was performed."
+                  ]
+                },
+                "events": [
+                  {
+                    "at": "2026-10-17T23:12:39.211095+00:00",
+                    "detail": "Member explicitly approved this ready saved-record review.",
+                    "status": "planned"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:39.300Z",
+                    "detail": "Specialist checkpoint claimed.",
+                    "status": "running"
+                  },
+                  {
+                    "at": "2026-10-17T23:12:39.300Z",
+                    "detail": "Specialist result recomputed and source snapshot verified.",
+                    "status": "verified"
+                  }
+                ],
+                "blocker": null,
+                "created_at": "2026-10-17T23:12:39.211095+00:00",
+                "updated_at": "2026-10-17T23:12:39.3+00:00"
+              }
+            ]
+          }
+        }
+      ],
+      "finalAssignments": [
+        {
+          "id": "39ef6364-ea46-4de0-b0d9-7650ac0becdf",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "id": "folio-76",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "actualApiExecution": [],
+      "finalAssignments": [
+        {
+          "id": "39ef6364-ea46-4de0-b0d9-7650ac0becdf",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1
+        }
+      ]
+    }
+  ]
+}

@@ -53,4 +53,4 @@ assert.ok((await clients[0].from('beast_goals').update({owner_id:accounts[1].id}
 const browserCookies = cookies.map(({ name, value, options }) => ({ name, value, domain: '127.0.0.1', path: options.path || '/', httpOnly: Boolean(options.httpOnly), secure: false, sameSite: 'Lax' }));
 writeFileSync('/private/tmp/avery-local-browser-state.json', JSON.stringify({ cookies: browserCookies, origins: [] }), { mode: 0o600 });
 writeFileSync('/private/tmp/avery-local-fixture.json', JSON.stringify({ accounts, goalIds }), { mode: 0o600 });
-console.log('PASS: complete 125-migration PostgreSQL 17 local stack; real GoTrue creation, password login, getUser, canonical goal creation, duplicate-plan prevention, cross-user RPC/read denial, minor and disabled-module denial. Local synthetic fixtures only; hosted verification not established.');
+console.log('PASS: complete canonical-migration PostgreSQL 17 local stack; real GoTrue creation, password login, getUser, canonical goal creation, duplicate-plan prevention, cross-user RPC/read denial, minor and disabled-module denial. Local synthetic fixtures only; hosted verification not established.');
