@@ -219,7 +219,7 @@ export async function POST(request: Request) {
   const [context, recentResult, memoryResult] = await Promise.all([
     loadDirectorContext(supabase, user),
     supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("owner_id", user.id).eq("conversation_id", conversation.id).order("created_at", { ascending: false }).limit(12),
-    supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", directorProfessionalId).order("updated_at", { ascending: false }).limit(12),
+    supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", directorProfessionalId).or(`expires_at.is.null,expires_at.gt.${createdAt}`).order("updated_at", { ascending: false }).limit(12),
   ]);
   if (recentResult.error || memoryResult.error) return NextResponse.json({ error: "Director conversation context is temporarily unavailable." }, { status: 503 });
   const defaultState: ConversationState = { currentTopic: null, currentWorkspace: "/dashboard/director", lastProfessionalQuestion: null, unresolvedQuestions: [], corrections: [], pendingApprovals: [], currentGoal: null, previousDecisions: [] };

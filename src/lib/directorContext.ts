@@ -43,7 +43,7 @@ export async function loadDirectorContext(
     ...(moneyAccess.ok ? ["beastmoney.money-coach"] : []),
     ...(healthAccess.ok ? ["beasthealth.health-advisor"] : []),
   ];
-  const [goals, debts, health, roadmaps, documents, conversations] =
+  const [goals, debts, health, roadmaps, documents, conversations, assignments] =
     await Promise.all([
       supabase
         .from("beast_goals")
@@ -97,6 +97,14 @@ export async function loadDirectorContext(
         .eq("archived", false)
         .order("updated_at", { ascending: false })
         .limit(12),
+      supabase.from("beast_director_assignments")
+        .select("id, goal_id, capability, status, updated_at")
+        .eq("owner_id", ownerId)
+        .in("capability", [
+          ...(moneyAccess.ok ? ["money.cash-review"] : []),
+          ...(healthAccess.ok ? ["health.preparation-review"] : []),
+        ])
+        .order("updated_at", { ascending: false }).limit(20),
     ]);
 
   const signals: DirectorSignal[] = [
@@ -154,6 +162,7 @@ export async function loadDirectorContext(
     roadmaps.error ? "BeastEducation" : "",
     documents.error ? "BeastDocuments" : "",
     conversations.error ? "specialist conversation summaries" : "",
+    assignments.error ? "Director assignment history" : "",
   ].filter(Boolean);
   const specialistNames: Record<string, { name: string; href: string }> = {
     "beastmoney.money-coach": {
@@ -196,5 +205,8 @@ export async function loadDirectorContext(
         },
       );
 
-  return { signals, specialistSummaries, unavailableSources };
+  const assignmentCheckpoints: NonNullable<DirectorContext["assignmentCheckpoints"]> = assignments.error ? [] : ((assignments.data || []) as Record<string, unknown>[]).map((row) => ({
+    id: String(row.id), goalId: String(row.goal_id), capability: String(row.capability), savedStatus: String(row.status), updatedAt: String(row.updated_at), verification: "Saved history only; refresh supervised objectives to verify current evidence",
+  }));
+  return { signals, specialistSummaries, unavailableSources, assignmentCheckpoints };
 }
