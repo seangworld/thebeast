@@ -151,8 +151,9 @@ test("BM-37 renders Dashboard Immediate Attention and durably tracks rate change
   );
   assert.match(workspace, /Immediate Attention/);
   assert.match(workspace, /Minimum Due/);
-  assert.match(workspace, /MISSED PAYMENT/);
-  assert.match(workspace, /Review Payment Options/);
+  assert.match(workspace, /PAYMENT SKIPPED/);
+  assert.match(workspace, /NO PAYMENT RECORDED/);
+  assert.match(workspace, /Review payment record/);
   const migration = readFileSync(
     "supabase/migrations/20260801000300_track_debt_interest_changes.sql",
     "utf8"

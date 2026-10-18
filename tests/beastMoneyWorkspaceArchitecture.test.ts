@@ -29,6 +29,7 @@ test("BP-230 exposes only the approved workspace hierarchy", () => {
       { label: "Dashboard", parent: null },
       { label: "Money Coach", parent: null },
       { label: "Cash Flow", parent: null },
+      { label: "Funding Sources", parent: "Cash Flow" },
       { label: "Income", parent: "Cash Flow" },
       { label: "Expenses", parent: "Cash Flow" },
       { label: "Bills", parent: "Expenses" },
@@ -37,10 +38,12 @@ test("BP-230 exposes only the approved workspace hierarchy", () => {
       { label: "Strategies", parent: "Payoff Plan" },
       { label: "Timeline", parent: "Payoff Plan" },
       { label: "Velocity Banking", parent: null },
+      { label: "Connected Accounts", parent: null },
       { label: "Retirement", parent: null },
       { label: "Financial Goals", parent: null },
       { label: "Financial Documents", parent: null },
       { label: "Reports", parent: null },
+      { label: "Settings", parent: null },
     ]
   );
   assert.equal(
