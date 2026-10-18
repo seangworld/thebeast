@@ -1,9 +1,10 @@
+import { supportedMoneyProposal } from "../moneyCoachEvidence";
 import { moneyCoachModelConfiguration, moneyCoachProviderLimits, moneyCoachRequestLimits } from "../moneyCoachModelConfig";
-import { moneyCoachReasoningSchema, verifyMoneyCoachReasoning, moneyCoachResearchQuery } from "../moneyCoachReasoning";
+import { verifyMoneyCoachReasoning, moneyCoachResearchQuery } from "../moneyCoachReasoning";
 import { digitalStaffUnavailableMessage } from "./security";
 import { requireProfessionalConfig } from "./config";
 import { inferProductNavigationTarget, validateNavigationTarget } from "./navigation";
-import { buildRuntimeInput, buildRuntimeInstructions, runtimeJsonSchema } from "./prompt";
+import { buildRuntimeInput, buildRuntimeInstructions, buildRuntimeResponseSchema } from "./prompt";
 import { applyDigitalStaffInteractionPolicy, requestsConsequentialAction } from "./interactionPolicy";
 import { requestOpenAIResponseStream } from "./provider";
 import { deidentifyResearchQuery, validateToolCalls } from "./tools";
@@ -195,7 +196,7 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
     : navigation;
   const proposals = plan.intent === "clarification" || context.message.text.trim().endsWith("?")
     ? []
-    : plan.proposals.filter((proposal) => proposal.sourceMessageId === context.message.id && proposal.approvalStatus === "proposed");
+    : plan.proposals.filter((proposal) => proposal.sourceMessageId === context.message.id && proposal.approvalStatus === "proposed" && (context.professionalId !== "beastmoney.money-coach" || supportedMoneyProposal(proposal)));
   if (proposals.length !== plan.proposals.length) validationFailures.push("Rejected one or more unsafe structured proposals.");
   const explicitlyRequestsAuthoritativeResearch = config.researchDomains.length > 0
     && (requiresDeterministicResearch(context) || /\b(?:authoritative|according to|what does .{0,40} say)\b/i.test(context.message.text));
@@ -331,7 +332,7 @@ export async function runDigitalStaffRuntime(
   const runtimeInput = buildRuntimeInput(config, executionContext);
   const promptConstructionMs = Date.now() - promptStartedAt;
   if (context.professionalId === "beastmoney.money-coach" && runtimeInput.length > moneyCoachRequestLimits.maxInputCharacters) throw new Error("Money Coach context exceeds its bounded input budget; narrow the selected evidence.");
-  const responseSchema = context.professionalId === "beastmoney.money-coach" ? { ...runtimeJsonSchema, required: [...runtimeJsonSchema.required, "financialAnalysis"], properties: { ...runtimeJsonSchema.properties, financialAnalysis: moneyCoachReasoningSchema } } : runtimeJsonSchema;
+  const responseSchema = buildRuntimeResponseSchema(config, executionContext);
   const modelStartedAt = Date.now();
   const planPerformance = healthPlanPerformance(executionContext, model);
   providerInvocationCount += 1;

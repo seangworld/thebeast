@@ -1,0 +1,1093 @@
+{
+  "provenance": "No-cost replay/diagnosis. Original outputs remain unchanged and failed. Explicit offline representations are never runtime aliases. This is not fresh model reasoning or a revised grade.",
+  "historicalFinancialOutputs": 11,
+  "categories": {
+    "exact_existing_path_and_value": 21,
+    "incorrect_or_unavailable_value_for_mapped_fact": 4,
+    "unsupported_reference_or_computation": 19,
+    "supported_value_with_unsupported_representation": 20
+  },
+  "rows": [
+    {
+      "scenarioId": "folio-12",
+      "turn": 1,
+      "originalFailures": [
+        "Rejected unsupported financial evidence path.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.recurringIncomeExcludingDisputed",
+            "value": 3650,
+            "meaning": "Saved recurring income excluding the disputed reimbursement."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.recurringIncomeExcludingDisputed",
+            "value": 3650
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "monthlyBills[Rent]",
+            "value": 1850,
+            "meaning": "Saved monthly rent obligation."
+          },
+          "category": "incorrect_or_unavailable_value_for_mapped_fact",
+          "diagnosticCandidate": {
+            "selector": "monthlyBills",
+            "value": null
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "monthlyDebtMinimums",
+            "value": 188,
+            "meaning": "Saved minimum debt payments: $153 plus $35."
+          },
+          "category": "incorrect_or_unavailable_value_for_mapped_fact",
+          "diagnosticCandidate": {
+            "selector": "monthlyDebtMinimums",
+            "value": null
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "recurringIncomeExcludingDisputed - rent - monthlyDebtMinimums",
+            "value": 1612,
+            "meaning": "Arithmetic remainder before unlisted living expenses, irregular costs, and other obligations; not verified debt-payment capacity."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "currentCash",
+            "value": 2410,
+            "meaning": "Saved current cash balance, not independently bank-verified."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "currentCash",
+            "value": 2410
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "cashBuffer",
+            "value": 700,
+            "meaning": "Saved cash buffer that should be preserved rather than committed."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "cashBuffer",
+            "value": 700
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "plannedExtraDebtPayment",
+            "value": 160,
+            "meaning": "Existing saved extra-payment plan; conditional and not proof that a larger payment is affordable."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "plannedExtraDebtPayment",
+            "value": 160
+          },
+          "fixtureConflict": false,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-12",
+      "turn": 2,
+      "originalFailures": [
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.recurringIncomeExcludingDisputed",
+            "value": 3650,
+            "meaning": "Saved recurring monthly salary; the $840 reimbursement is excluded."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.recurringIncomeExcludingDisputed",
+            "value": 3650
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "monthlyBills + monthlyDebtMinimums",
+            "value": 2038,
+            "meaning": "Recorded recurring rent and debt minimums."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "monthlyAvailableCash",
+            "value": 1612,
+            "meaning": "Recorded monthly amount remaining before unrecorded living expenses and any additional debt payment."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "monthlyAvailableCash",
+            "value": 1612
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.requestedExtraPayment",
+            "value": 160,
+            "meaning": "The current modeled extra payment leaves $1,452 before other essentials and the protected cash reserve."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.requestedExtraPayment",
+            "value": 160
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons[2].totalInterest",
+            "value": 1227.79,
+            "meaning": "Modeled total interest under the $160 avalanche scenario, assuming constant saved APRs and recurring payments."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.totalInterest",
+            "value": 1227.79,
+            "canonicalPath": "financialAssessment.debtComparisons.2.totalInterest"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons[2].monthsToPayoff",
+            "value": 21,
+            "meaning": "Modeled payoff duration for the $160 avalanche scenario."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.monthsToPayoff",
+            "value": 21,
+            "canonicalPath": "financialAssessment.debtComparisons.2.monthsToPayoff"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-24",
+      "turn": 1,
+      "originalFailures": [
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons[strategy=avalanche].totalInterest",
+            "value": 1227.79,
+            "meaning": "Estimated total interest with $160/month extra: $1,227.79."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.totalInterest",
+            "value": 1227.79,
+            "canonicalPath": "financialAssessment.debtComparisons.2.totalInterest"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons[strategy=snowball].totalInterest",
+            "value": 1377.77,
+            "meaning": "Estimated total interest with $160/month extra: $1,377.77."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.snowball.totalInterest",
+            "value": 1377.77,
+            "canonicalPath": "financialAssessment.debtComparisons.1.totalInterest"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons[strategy=avalanche].monthsToPayoff",
+            "value": 21,
+            "meaning": "Estimated payoff duration for avalanche: 21 months."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.monthsToPayoff",
+            "value": 21,
+            "canonicalPath": "financialAssessment.debtComparisons.2.monthsToPayoff"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons[strategy=snowball].monthsToPayoff",
+            "value": 22,
+            "meaning": "Estimated payoff duration for snowball: 22 months."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.snowball.monthsToPayoff",
+            "value": 22,
+            "canonicalPath": "financialAssessment.debtComparisons.1.monthsToPayoff"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.supportedExtraPayment",
+            "value": 160,
+            "meaning": "The canonical affordability assessment supports a recurring $160 extra monthly debt payment."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.supportedExtraPayment",
+            "value": 160
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.lowestProjectedBalance.balance",
+            "value": 2410,
+            "meaning": "Lowest projected cash balance in the assessment: $2,410."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.lowestProjectedBalance.balance",
+            "value": 2410
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.cashBuffer",
+            "value": 700,
+            "meaning": "Saved cash buffer used for reserve-preservation context: $700."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-36",
+      "turn": 1,
+      "originalFailures": [
+        "Rejected one or more unsafe structured proposals.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.supportedExtraPayment",
+            "value": 160,
+            "meaning": "The saved affordability assessment supports $160 of extra monthly debt payment under its stated assumptions."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.supportedExtraPayment",
+            "value": 160
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.lowestProjectedBalance",
+            "value": 2410,
+            "meaning": "The saved projection's lowest projected cash balance is $2,410, but it is based on saved records and is not independently bank-verified."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "debt.card-17.balance",
+            "value": 5100,
+            "meaning": "Promotional Card Zenith has a saved balance of $5,100."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "debt.card-28.balance",
+            "value": 900,
+            "meaning": "Card Harbor has a saved balance of $900."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "debt.card-17.interest_rate",
+            "value": 0,
+            "meaning": "The saved model uses 0% as a constant rate and therefore does not model the reported 29.4% post-promotion rate."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-48",
+      "turn": 1,
+      "originalFailures": [
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.requestedExtraPayment",
+            "value": 160,
+            "meaning": "The proposed additional card payment."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.requestedExtraPayment",
+            "value": 160
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.supportedExtraPayment",
+            "value": 0,
+            "meaning": "The saved cash-flow assessment supports no extra payment before essential obligations."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.supportedExtraPayment",
+            "value": 0
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.lowestProjectedBalance",
+            "value": -1350,
+            "meaning": "The modeled lowest projected balance is negative before the expected November 28 salary."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "safeToSpendToday",
+            "value": 0,
+            "meaning": "The saved record shows no amount currently marked safe to spend."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "safeToSpendToday",
+            "value": 0
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.cashShortfall",
+            "value": null,
+            "meaning": "The assessment flags a near-term cash shortfall."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-59",
+      "turn": 1,
+      "originalFailures": [
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.recurringIncomeExcludingDisputed",
+            "value": 3650,
+            "meaning": "Current saved recurring income is $3,650 per month."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.recurringIncomeExcludingDisputed",
+            "value": 3650
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "monthlyAvailableCash",
+            "value": 1612,
+            "meaning": "Recorded monthly income less recorded bills and debt minimums leaves $1,612 before any extra debt payment."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "monthlyAvailableCash",
+            "value": 1612
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.supportedExtraPayment",
+            "value": 160,
+            "meaning": "The current canonical assessment supports a $160 extra monthly debt payment under its modeled assumptions."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.supportedExtraPayment",
+            "value": 160
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.lowestProjectedBalance.balance",
+            "value": 2410,
+            "meaning": "The modeled lowest projected balance is $2,410; current cash is also recorded as $2,410."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.lowestProjectedBalance.balance",
+            "value": 2410
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons[2].monthsToPayoff",
+            "value": 21,
+            "meaning": "The avalanche scenario with a $160 extra payment pays off the modeled debts in 21 months."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.monthsToPayoff",
+            "value": 21,
+            "canonicalPath": "financialAssessment.debtComparisons.2.monthsToPayoff"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons[2].totalInterest",
+            "value": 1227.79,
+            "meaning": "Estimated total interest under that avalanche scenario is $1,227.79, assuming constant saved APRs and the stated payment rules."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.totalInterest",
+            "value": 1227.79,
+            "canonicalPath": "financialAssessment.debtComparisons.2.totalInterest"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-67",
+      "turn": 1,
+      "originalFailures": [
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Current income source rows conflict with canonical monthlyIncome.",
+        "Current bill source rows conflict with canonical monthlyBills.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [
+        "Current income source rows conflict with canonical monthlyIncome.",
+        "Current bill source rows conflict with canonical monthlyBills."
+      ],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.supportedExtraPayment",
+            "value": 160,
+            "meaning": "The canonical assessment supports an additional $160 monthly payment without a modeled cash shortfall."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.supportedExtraPayment",
+            "value": 160
+          },
+          "fixtureConflict": true,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.lowestProjectedBalance",
+            "value": 2410,
+            "meaning": "The lowest projected balance in the modeled period is $2,410, equal to the stated current cash."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": true,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons.avalanche.monthsToPayoff",
+            "value": 21,
+            "meaning": "Avalanche is projected to repay both debts in 21 months under constant saved APRs and recurring-payment assumptions."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.monthsToPayoff",
+            "value": 21,
+            "canonicalPath": "financialAssessment.debtComparisons.2.monthsToPayoff"
+          },
+          "fixtureConflict": true,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons.avalanche.totalInterest",
+            "value": 1227.79,
+            "meaning": "Projected total interest under avalanche is $1,227.79."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.totalInterest",
+            "value": 1227.79,
+            "canonicalPath": "financialAssessment.debtComparisons.2.totalInterest"
+          },
+          "fixtureConflict": true,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons.minimum.totalInterest",
+            "value": 3469.51,
+            "meaning": "Projected total interest under minimum payments is $3,469.51; the modeled difference is approximately $2,241.72."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.minimum.totalInterest",
+            "value": 3469.51,
+            "canonicalPath": "financialAssessment.debtComparisons.0.totalInterest"
+          },
+          "fixtureConflict": true,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons.snowball.totalInterest",
+            "value": 1377.77,
+            "meaning": "Snowball is projected to finish one month later and cost approximately $149.98 more interest than avalanche, while targeting the smaller Card Harbor first."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.snowball.totalInterest",
+            "value": 1377.77,
+            "canonicalPath": "financialAssessment.debtComparisons.1.totalInterest"
+          },
+          "fixtureConflict": true,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-67",
+      "turn": 2,
+      "originalFailures": [
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "monthlyAvailableCash",
+            "value": 12,
+            "meaning": "Only $12 remains after the saved $2,400 monthly income, $2,200 rent, and $188 debt minimums."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "monthlyAvailableCash",
+            "value": 12
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.requestedExtraPayment",
+            "value": 160,
+            "meaning": "The previously considered extra payment exceeds the updated cash-flow capacity."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.requestedExtraPayment",
+            "value": 160
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.supportedExtraPayment",
+            "value": 12,
+            "meaning": "The current assessment supports about $12 per month as an extra payment, subject to unrecorded expenses and transactions being reviewed."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.supportedExtraPayment",
+            "value": 12
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons.avalanche.totalInterest",
+            "value": 2891.23,
+            "meaning": "Projected interest under avalanche with a $12 monthly extra payment, assuming constant saved APRs and recurring payments."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.totalInterest",
+            "value": 2891.23,
+            "canonicalPath": "financialAssessment.debtComparisons.2.totalInterest"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons.minimum.totalInterest",
+            "value": 3469.51,
+            "meaning": "Projected interest under minimum payments only, under the same model assumptions."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.minimum.totalInterest",
+            "value": 3469.51,
+            "canonicalPath": "financialAssessment.debtComparisons.0.totalInterest"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "financialAssessment.debtComparisons.avalanche.monthsToPayoff",
+            "value": 45,
+            "meaning": "Projected payoff duration for both debts under the modeled avalanche plan."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.debtComparisons.avalanche.monthsToPayoff",
+            "value": 45,
+            "canonicalPath": "financialAssessment.debtComparisons.2.monthsToPayoff"
+          },
+          "fixtureConflict": false,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-78",
+      "turn": 1,
+      "originalFailures": [
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "financialAssessment.facts.recurringIncomeExcludingDisputed",
+            "value": 3650,
+            "meaning": "Saved recurring monthly income."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "financialAssessment.facts.recurringIncomeExcludingDisputed",
+            "value": 3650
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "structuredRecords[canonical-affordability].monthlyBills",
+            "value": 1850,
+            "meaning": "Saved rent amount; the full expense total is not available."
+          },
+          "category": "incorrect_or_unavailable_value_for_mapped_fact",
+          "diagnosticCandidate": {
+            "selector": "monthlyBills",
+            "value": null
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "structuredRecords[canonical-affordability].monthlyDebtMinimums",
+            "value": 188,
+            "meaning": "Minimum payments are $153 plus $35 across two debts."
+          },
+          "category": "incorrect_or_unavailable_value_for_mapped_fact",
+          "diagnosticCandidate": {
+            "selector": "monthlyDebtMinimums",
+            "value": null
+          },
+          "fixtureConflict": false,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "derived from saved income minus rent and minimum debt payments",
+            "value": 1612,
+            "meaning": "Amount remaining before other living costs, taxes or obligations; not disposable income."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "structuredRecords[canonical-affordability].plannedExtraDebtPayment",
+            "value": 160,
+            "meaning": "Saved planned extra payment, but affordability is unverified."
+          },
+          "category": "supported_value_with_unsupported_representation",
+          "diagnosticCandidate": {
+            "selector": "plannedExtraDebtPayment",
+            "value": 160
+          },
+          "fixtureConflict": false,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-93",
+      "turn": 1,
+      "originalFailures": [
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence.",
+        "Financial numeric claim does not match current canonical evidence."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Current income source rows conflict with canonical monthlyIncome.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [
+        "Current income source rows conflict with canonical monthlyIncome."
+      ],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "safeToSpendToday",
+            "value": 1710,
+            "meaning": "Modeled amount available today after the saved $700 cash buffer."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "safeToSpendToday",
+            "value": 1710
+          },
+          "fixtureConflict": true,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "projectedCashBalance",
+            "value": 4022,
+            "meaning": "Projected balance using the review’s saved income, bills, and debt assumptions."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "projectedCashBalance",
+            "value": 4022
+          },
+          "fixtureConflict": true,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "monthlyAvailableCash",
+            "value": 1612,
+            "meaning": "Monthly income less saved monthly bills and debt minimums."
+          },
+          "category": "exact_existing_path_and_value",
+          "diagnosticCandidate": {
+            "selector": "monthlyAvailableCash",
+            "value": 1612
+          },
+          "fixtureConflict": true,
+          "notes": null
+        },
+        {
+          "originalClaim": {
+            "path": "debtComparisons.avalanche.totalInterest",
+            "value": 1227.79,
+            "meaning": "Modeled total interest with $160 extra monthly under constant saved APR assumptions."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": true,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "debtComparisons.snowball.totalInterest",
+            "value": 1377.77,
+            "meaning": "Modeled total interest with $160 extra monthly under the snowball strategy."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": true,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "debtComparisons.minimum.totalInterest",
+            "value": 3469.51,
+            "meaning": "Modeled total interest with minimum payments only."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": true,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        }
+      ]
+    },
+    {
+      "scenarioId": "folio-93",
+      "turn": 2,
+      "originalFailures": [
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "newVerbatimReplayFailures": [
+        "Financial evidence snapshot is missing or stale.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path.",
+        "Rejected unsupported financial evidence path."
+      ],
+      "sourceConflicts": [],
+      "claims": [
+        {
+          "originalClaim": {
+            "path": "current canonical affordability.monthlyIncome",
+            "value": 2400,
+            "meaning": "Current saved monthly salary."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "prior verified review.output.monthlyIncome",
+            "value": 3650,
+            "meaning": "Stale income input used by the old review."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "current canonical affordability.monthlyAvailableCash",
+            "value": 362,
+            "meaning": "Income minus saved monthly bills and debt minimums, before the planned extra payment and before omitted living expenses."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "current canonical affordability.projectedCashBalance",
+            "value": 2772,
+            "meaning": "Current-record projection after the planned extra debt payment; conditional because pending transactions, payment history, and all living expenses were not reconciled."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        },
+        {
+          "originalClaim": {
+            "path": "current canonical affordability.financialAssessment.debtComparisons.avalanche.totalInterest",
+            "value": 1227.79,
+            "meaning": "Modeled interest under the saved debt balances, APRs, and constant-payment assumptions."
+          },
+          "category": "unsupported_reference_or_computation",
+          "diagnosticCandidate": null,
+          "fixtureConflict": false,
+          "notes": "Not certified. Missing numeric evidence, expressions and booleans/objects cannot become numeric facts; no automatic repair."
+        }
+      ]
+    }
+  ],
+  "authoredContractAdaptation": {
+    "scenarioId": "folio-24",
+    "provenance": "AUTHORED selector/assessment adaptation only; original narrative preserved exactly. Not actual AI compliance with v2.",
+    "narrativeUnchanged": true,
+    "financialAssessmentDelivered": true,
+    "validationFailures": []
+  }
+}

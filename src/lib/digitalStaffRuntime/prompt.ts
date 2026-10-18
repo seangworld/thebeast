@@ -1,3 +1,5 @@
+import { moneyCoachReasoningSchemaFor } from "../moneyCoachReasoning";
+import { moneyEvidenceCatalog, moneyPriorityFields } from "../moneyCoachEvidence";
 import type { ProfessionalConfig } from "./config";
 import { navigationRegistry } from "./navigation";
 import type { RuntimeContext } from "./types";
@@ -39,6 +41,7 @@ ${authoritativeProfessionalPrompt(config.id)}`;
 export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeContext) {
   const productSupport = isProductSupportQuestion(context.message.text);
   return JSON.stringify({
+    ...(config.id === "beastmoney.money-coach" ? { financialEvidence: moneyEvidenceCatalog(context), supportedFinancialProposals: { entityTypes: ["priority","goal","preference"], fields: moneyPriorityFields, destination: "Owner-approved Money priority only; no debt, income, bill, APR, payment or account edits." } } : {}),
     currentMessage: context.message,
     conversationState: context.state,
     recentConversation: context.recentMessages.slice(productSupport ? -4 : config.id === "beasthealth.health-advisor" ? -32 : -8),
@@ -88,3 +91,17 @@ export const runtimeJsonSchema = {
     } },
   },
 } as const;
+
+/** Money uses the same runtime contract with current selectors and its existing priority-only writes. */
+export function buildRuntimeResponseSchema(config: ProfessionalConfig, context: RuntimeContext) {
+  if (config.id !== "beastmoney.money-coach") return runtimeJsonSchema;
+  const proposal=runtimeJsonSchema.properties.proposals.items;
+  const field=proposal.properties.fields.items;
+  return {...runtimeJsonSchema,required:[...runtimeJsonSchema.required,"financialAnalysis"],properties:{...runtimeJsonSchema.properties,
+    financialAnalysis:moneyCoachReasoningSchemaFor(context),
+    proposals:{type:"array",items:{...proposal,properties:{...proposal.properties,
+      domain:{type:"string",enum:["money","goal","preference"]},entityType:{type:"string",enum:["priority","goal","preference"]},
+      fields:{type:"array",items:{...field,properties:{name:{type:"string",enum:moneyPriorityFields},value:{type:"string"}}}},
+    }}},
+  }};
+}

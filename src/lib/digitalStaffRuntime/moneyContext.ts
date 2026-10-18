@@ -26,7 +26,7 @@ function active(rows: MoneyRow[]) {
 function structured(domain: string, rows: MoneyRow[], limit: number) {
   return rows.slice(0, limit).map((record) => ({
     domain,
-    record,
+    record: structuredClone(record),
     updatedAt: typeof record.updated_at === "string" ? record.updated_at : undefined,
   }));
 }

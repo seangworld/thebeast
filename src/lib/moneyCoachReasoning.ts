@@ -1,6 +1,8 @@
+import { moneyEvidenceCatalog } from "./moneyCoachEvidence";
 import type { RuntimeContext } from "./digitalStaffRuntime/types";
 
 export type MoneyCoachReasoning = {
+  snapshotId: string;
   objective: string;
   status: "supported" | "conditional" | "insufficient_evidence";
   claims: Array<{ path: string; value: number | null; meaning: string }>;
@@ -14,6 +16,13 @@ export const moneyCoachReasoningSchema = { anyOf: [{ type: "null" }, {
     alternatives: {type:"array",items:{type:"string"}}, uncertainties: {type:"array",items:{type:"string"}},
   },
 }]} as const;
+
+/** Runtime schema is constrained by the exact machine-generated current catalog. */
+export function moneyCoachReasoningSchemaFor(context: RuntimeContext) {
+  const catalog=moneyEvidenceCatalog(context);
+  const object=moneyCoachReasoningSchema.anyOf[1];
+  return {anyOf:[{type:"null"},{...object,required:[...object.required,"snapshotId"],properties:{...object.properties,snapshotId:{type:"string",enum:[catalog.snapshotId]},claims:{type:"array",items:{...object.properties.claims.items,properties:{...object.properties.claims.items.properties,path:{type:"string",enum:catalog.entries.length?catalog.entries.map(e=>e.selector):["no_supported_numeric_evidence"]}}}}}}]};
+}
 
 /** External retrieval gets public subject/year only; personal application stays private. */
 export function moneyCoachResearchQuery(message: string) {
@@ -35,13 +44,14 @@ export function verifyMoneyCoachReasoning(context: RuntimeContext, reasoning: Mo
     return failures;
   }
   if (!["supported","conditional","insufficient_evidence"].includes(reasoning.status) || !Array.isArray(reasoning.claims) || reasoning.claims.length > 24 || !Array.isArray(reasoning.alternatives) || !Array.isArray(reasoning.uncertainties)) return ["Malformed financial evidence assessment."];
+  const catalog = moneyEvidenceCatalog(context);
+  if (reasoning.snapshotId !== catalog.snapshotId) failures.push("Financial evidence snapshot is missing or stale.");
+  if (catalog.conflicts.length) failures.push(...catalog.conflicts);
   for (const claim of reasoning.claims) {
     if (!claim || typeof claim !== "object") { failures.push("Malformed financial numeric claim."); continue; }
-    const parts = typeof claim.path === "string" ? claim.path.split(".") : [];
-    let value: unknown = summary;
-    if (!parts.length || parts.length>8 || parts.some(p=>!/^\w+$/.test(p)||["__proto__","constructor","prototype"].includes(p))) { failures.push("Rejected unsupported financial evidence path.");continue; }
-    for (const part of parts) value = value && typeof value === "object" && Object.hasOwn(value,part) ? (value as Record<string,unknown>)[part] : undefined;
-    if (!(claim.value===null || typeof claim.value === "number" && Number.isFinite(claim.value)) || value !== claim.value) failures.push("Financial numeric claim does not match current canonical evidence.");
+    const entry=catalog.entries.find(e=>e.selector===claim.path);
+    if (!entry) { failures.push("Rejected unsupported financial evidence path."); continue; }
+    if (!(claim.value===null || typeof claim.value==="number" && Number.isFinite(claim.value)) || entry.value!==claim.value) failures.push("Financial numeric claim does not match current canonical evidence.");
   }
   const assessment=summary?.financialAssessment as {cashVerified?:boolean} | undefined;
   if (reasoning.status === "supported" && (!summary || !assessment?.cashVerified || !reasoning.claims.length || context.contextBoundary?.completeness.canonicalRecordsComplete === false)) failures.push("Incomplete or disputed financial evidence cannot support a verified recommendation.");

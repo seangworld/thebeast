@@ -1,3 +1,4 @@
+import { supportedMoneyProposal } from "../moneyCoachEvidence";
 import { validDate } from "../health/vaccinations";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProfessionalId, StructuredKnowledgeProposal } from "./types";
@@ -133,6 +134,7 @@ export async function applyApprovedKnowledgeProposal({
   }
 
   if (targetProfessional === "beastmoney.money-coach" && (normalized.domain === "money" || normalized.domain === "goal" || normalized.domain === "preference")) {
+    if (!supportedMoneyProposal({...normalized,fields:{...proposal.fields,...editedFields}})) throw new Error("Unsupported financial proposal; only owner-approved Money priorities can be saved.");
     const title = stringField(normalized, "priority", "goal", "title", "value") || "Financial priority";
     const existing = normalized.relatedRecordId
       ? { data: { id: normalized.relatedRecordId } }
