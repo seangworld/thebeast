@@ -1,0 +1,42 @@
+{
+  "baseCommit": "58c6f4a330d8878f8d415191c0ef2bf1749d6b63",
+  "outcome": "BLOCKED_UPSTREAM_NO_COMPATIBLE_COMPLETE_REMEDIATION",
+  "sourceOrDependencyChanges": false,
+  "currentAudit": {
+    "high": 7,
+    "critical": 0,
+    "total": 7
+  },
+  "productionOnlyAudit": {
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "disposableTailwind4Resolution": {
+    "tailwindcss": "4.3.3",
+    "postcssPlugin": "4.3.3",
+    "installed": false,
+    "repoApplied": false,
+    "remainingHigh": 5,
+    "remainingCritical": 0
+  },
+  "requiredBuild": "failed at unmodified npm audit gate; Next compilation not reached",
+  "tests": {
+    "passed": 2425,
+    "failed": 0
+  },
+  "typescript": "pass",
+  "lint": "pass",
+  "visualVerification": "No new browser pass claimed; application, styling and configuration are byte unchanged from Avery baseline with recorded local desktop/mobile checks. No migration applied.",
+  "paidCalls": 0,
+  "hostedMutation": false,
+  "merge": false,
+  "productionDeploy": false,
+  "sha256": {
+    "package.json": "a1b23d4a7b9acc61724e9617e4681474d3d72c11d5e32e872f907728a7adefc1",
+    "package-lock.json": "748975740f68531a83f3d586334a5e7c12b42bdbb05b646713d2be201232c142",
+    "tailwind.config.ts": "cd603b4a5f1a9a115f664a177bce4e7c2d1a24ae2a55fed645fb3dd9d2a7974d",
+    "postcss.config.js": "251ecddd4672c9cf467547e3dc535de00ad2129df26e7e7ae728fa4e5ac45fc5",
+    ".eslintrc.json": "1589a15e55fbebc6519c95d91d8f0a090618f20dc78e479858b9c27552484961"
+  }
+}

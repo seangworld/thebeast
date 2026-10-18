@@ -1,0 +1,299 @@
+{
+  "problems": [],
+  "packages": [
+    {
+      "name": "postcss",
+      "version": "8.5.26",
+      "path": "autoprefixer > postcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint-config-next",
+      "version": "15.5.27",
+      "path": "eslint-config-next",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "@next/eslint-plugin-next",
+      "version": "15.5.27",
+      "path": "eslint-config-next > @next/eslint-plugin-next",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "fast-glob",
+      "version": "3.3.1",
+      "path": "eslint-config-next > @next/eslint-plugin-next > fast-glob",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "micromatch",
+      "version": "4.0.8",
+      "path": "eslint-config-next > @next/eslint-plugin-next > fast-glob > micromatch",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > @typescript-eslint/eslint-plugin > @typescript-eslint/type-utils > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > @typescript-eslint/eslint-plugin > @typescript-eslint/type-utils > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > @typescript-eslint/eslint-plugin > @typescript-eslint/utils > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > @typescript-eslint/eslint-plugin > @typescript-eslint/utils > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > @typescript-eslint/eslint-plugin > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > @typescript-eslint/eslint-plugin > ts-api-utils > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > @typescript-eslint/eslint-plugin > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > @typescript-eslint/parser > @typescript-eslint/typescript-estree > @typescript-eslint/project-service > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > @typescript-eslint/parser > @typescript-eslint/typescript-estree > @typescript-eslint/tsconfig-utils > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > @typescript-eslint/parser > @typescript-eslint/typescript-estree > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > @typescript-eslint/parser > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > @typescript-eslint/parser > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > eslint-import-resolver-typescript > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > eslint-plugin-import > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > eslint-plugin-jsx-a11y > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > eslint-plugin-react-hooks > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > eslint-plugin-react > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint-config-next > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "eslint-config-next > typescript",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "eslint",
+      "version": "8.57.1",
+      "path": "eslint > @eslint-community/eslint-utils > eslint",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "next",
+      "version": "15.5.27",
+      "path": "next",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "postcss",
+      "version": "8.5.23",
+      "path": "next > postcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "postcss",
+      "version": "8.5.26",
+      "path": "postcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "tailwindcss",
+      "version": "3.4.19",
+      "path": "tailwindcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "chokidar",
+      "version": "3.6.0",
+      "path": "tailwindcss > chokidar",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "braces",
+      "version": "3.0.3",
+      "path": "tailwindcss > chokidar > braces",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "fast-glob",
+      "version": "3.3.3",
+      "path": "tailwindcss > fast-glob",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "micromatch",
+      "version": "4.0.8",
+      "path": "tailwindcss > fast-glob > micromatch",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "micromatch",
+      "version": "4.0.8",
+      "path": "tailwindcss > micromatch",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "braces",
+      "version": "3.0.3",
+      "path": "tailwindcss > micromatch > braces",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "postcss",
+      "version": "8.5.26",
+      "path": "tailwindcss > postcss-import > postcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "postcss",
+      "version": "8.5.26",
+      "path": "tailwindcss > postcss-js > postcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "postcss",
+      "version": "8.5.26",
+      "path": "tailwindcss > postcss-load-config > postcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "postcss",
+      "version": "8.5.26",
+      "path": "tailwindcss > postcss-nested > postcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "postcss",
+      "version": "8.5.26",
+      "path": "tailwindcss > postcss",
+      "invalid": false,
+      "missing": false
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "typescript",
+      "invalid": false,
+      "missing": false
+    }
+  ]
+}
