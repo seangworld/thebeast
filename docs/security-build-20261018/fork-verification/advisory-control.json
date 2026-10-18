@@ -1,0 +1,38 @@
+[
+  {
+    "inputChars": 9003,
+    "nestingDepth": 4500,
+    "stack": "default",
+    "method": "compile",
+    "status": 0,
+    "result": "{\"name\":\"RangeError\",\"message\":\"Maximum call stack size exceeded\"}",
+    "stderr": ""
+  },
+  {
+    "inputChars": 9003,
+    "nestingDepth": 4500,
+    "stack": "default",
+    "method": "expand",
+    "status": 0,
+    "result": "{\"name\":\"RangeError\",\"message\":\"Maximum call stack size exceeded\"}",
+    "stderr": ""
+  },
+  {
+    "inputChars": 9003,
+    "nestingDepth": 4500,
+    "stack": "256",
+    "method": "compile",
+    "status": 0,
+    "result": "{\"name\":\"RangeError\",\"message\":\"Maximum call stack size exceeded\"}",
+    "stderr": ""
+  },
+  {
+    "inputChars": 9003,
+    "nestingDepth": 4500,
+    "stack": "256",
+    "method": "expand",
+    "status": 0,
+    "result": "{\"name\":\"RangeError\",\"message\":\"Maximum call stack size exceeded\"}",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "width": 1440,
+    "route": "/dashboard/money",
+    "url": "/dashboard/money/dashboard",
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "route": "/dashboard/health",
+    "url": "/dashboard/health",
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "route": "/dashboard/money/settings",
+    "url": "/dashboard/money/settings",
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "ownerAdminDenied": true
+  },
+  {
+    "width": 390,
+    "route": "/dashboard/money",
+    "url": "/dashboard/money/dashboard",
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "route": "/dashboard/health",
+    "url": "/dashboard/health",
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "route": "/dashboard/money/settings",
+    "url": "/dashboard/money/settings",
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "ownerAdminDenied": true
+  }
+]

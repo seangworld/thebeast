@@ -1,0 +1,29 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "status": "pass",
+    "realLocalAuth": true,
+    "paidCalls": 0
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": "pass",
+    "realLocalAuth": true,
+    "paidCalls": 0
+  },
+  {
+    "viewport": {
+      "width": 375,
+      "height": 812
+    },
+    "status": "pass",
+    "realLocalAuth": true,
+    "paidCalls": 0
+  }
+]

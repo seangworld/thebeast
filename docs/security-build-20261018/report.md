@@ -1,3 +1,5 @@
+> Historical pre-authorization investigation. The owner subsequently authorized a scoped local fork; see [current fork implementation and verification](fork-report.md). The evidence below is retained as the earlier baseline.
+
 # Security/build remediation assessment — 18 October 2026
 
 **Outcome: genuinely blocked upstream. No complete supported compatible remediation is available in the checked releases. The release gate remains closed.** This isolated assessment is based on Avery PR #265 commit `58c6f4a330d8878f8d415191c0ef2bf1749d6b63`. It changes documentation/evidence only: no dependency, lockfile, application, lint-rule, Tailwind, audit or build configuration change is proposed for merge.

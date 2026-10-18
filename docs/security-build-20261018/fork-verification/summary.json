@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-18",
+  "baseAveryCommit": "58c6f4a330d8878f8d415191c0ef2bf1749d6b63",
+  "fork": "@seangworld/braces@3.0.3-beast.1",
+  "upstreamSupported": false,
+  "maintainedBy": "The Beast repository",
+  "tailwind": "3.4.19 unchanged",
+  "next": "15.5.27 unchanged",
+  "fullAudit": {
+    "total": 0,
+    "high": 0,
+    "critical": 0
+  },
+  "productionAudit": {
+    "total": 0
+  },
+  "forkSecurityTests": {
+    "pass": 22,
+    "fail": 0
+  },
+  "upstreamCompatibilityTests": {
+    "pass": 764,
+    "fail": 0
+  },
+  "applicationRegression": {
+    "pass": 2425,
+    "fail": 0
+  },
+  "requiredProductionBuild": "PASS; full audit plus fork code/consumer/security gate enforced",
+  "typescript": "PASS",
+  "lint": "PASS",
+  "cssByteIdentical": true,
+  "directorBrowserWidths": [
+    1440,
+    390,
+    375
+  ],
+  "moduleVisualWidths": [
+    1440,
+    390
+  ],
+  "moneyDashboardFunctionalLimit": "Synthetic local fixture Data API permission errors; no grants changed; no full Money functional pass claimed",
+  "newPaidCalls": 0,
+  "hostedChanges": false,
+  "productionDeploy": false,
+  "merge": false,
+  "recommendation": "Owner review scoped patch, then separately authorize targeted DEV migration/auth/end-to-end stage; production readiness not certified"
+}
