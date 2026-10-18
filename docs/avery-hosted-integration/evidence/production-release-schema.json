@@ -1,0 +1,289 @@
+{
+  "productionProject": "grpyzwvgqiwtxadfdtni",
+  "mergedCommit": "8b199938842d7eda73c888bb57d351fd42329b14",
+  "approvedHead": "8c8a6f12c397dd5f06ec6ab03cfc781dd19383dc",
+  "migrations": [
+    {
+      "file": "20261017022337_avery_director_assignments.sql",
+      "sha256": "0812d557b7abca023ddab6446485a839012f2e55189bbd0026a74b2901e51af4",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"success\":true}"
+          }
+        ],
+        "structuredContent": null,
+        "isError": false
+      }
+    },
+    {
+      "file": "20261017025810_director_data_api_grants.sql",
+      "sha256": "e671201fb5e3402691aba079dff5c8f28b84c100c17d48efca632491ff115a4e",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"success\":true}"
+          }
+        ],
+        "structuredContent": null,
+        "isError": false
+      }
+    },
+    {
+      "file": "20261017215227_director_execution_contract.sql",
+      "sha256": "302b58a30ff11c5409eafa90b94a57d4b2f660d12a5ac719a49b57567e7f11d7",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"success\":true}"
+          }
+        ],
+        "structuredContent": null,
+        "isError": false
+      }
+    },
+    {
+      "file": "20261017230022_director_cancellation_intent.sql",
+      "sha256": "b4d32d7af0af0084adcc9a8860bd02d7d3d96e8ef5fa22fdf329dc7af6708326",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"success\":true}"
+          }
+        ],
+        "structuredContent": null,
+        "isError": false
+      }
+    }
+  ],
+  "schema": [
+    {
+      "json_build_object": {
+        "migrations": [
+          {
+            "version": "20260726000900",
+            "name": "add_authoritative_beast_admin_member_directory"
+          },
+          {
+            "version": "20261018214541",
+            "name": "20261017022337_avery_director_assignments"
+          },
+          {
+            "version": "20261018214553",
+            "name": "20261017025810_director_data_api_grants"
+          },
+          {
+            "version": "20261018214604",
+            "name": "20261017215227_director_execution_contract"
+          },
+          {
+            "version": "20261018214616",
+            "name": "20261017230022_director_cancellation_intent"
+          }
+        ],
+        "tables": [
+          {
+            "relname": "beast_director_assignments",
+            "relrowsecurity": true,
+            "anon_select": false
+          },
+          {
+            "relname": "beast_director_cancellations",
+            "relrowsecurity": true,
+            "anon_select": false
+          }
+        ],
+        "functions": [
+          {
+            "proname": "approve_director_review_plan",
+            "prosecdef": false,
+            "proconfig": [
+              "search_path=\"\""
+            ],
+            "anon_execute": false
+          },
+          {
+            "proname": "approve_director_scoped_plan",
+            "prosecdef": false,
+            "proconfig": [
+              "search_path=\"\""
+            ],
+            "anon_execute": false
+          },
+          {
+            "proname": "can_access_director_review",
+            "prosecdef": false,
+            "proconfig": [
+              "search_path=\"\""
+            ],
+            "anon_execute": false
+          },
+          {
+            "proname": "cancel_director_reviews",
+            "prosecdef": false,
+            "proconfig": [
+              "search_path=\"\""
+            ],
+            "anon_execute": false
+          },
+          {
+            "proname": "fence_cancelled_director_work",
+            "prosecdef": false,
+            "proconfig": [
+              "search_path=\"\""
+            ],
+            "anon_execute": false
+          },
+          {
+            "proname": "plan_director_reviews",
+            "prosecdef": false,
+            "proconfig": [
+              "search_path=\"\""
+            ],
+            "anon_execute": false
+          },
+          {
+            "proname": "record_director_cancellation",
+            "prosecdef": false,
+            "proconfig": [
+              "search_path=\"\""
+            ],
+            "anon_execute": false
+          }
+        ],
+        "policies": [
+          {
+            "tablename": "debts",
+            "policyname": "director_dependency_money_access",
+            "qual": "can_access_director_review('money.cash-review'::text)",
+            "with_check": null
+          },
+          {
+            "tablename": "income_events",
+            "policyname": "director_dependency_money_access",
+            "qual": "can_access_director_review('money.cash-review'::text)",
+            "with_check": null
+          },
+          {
+            "tablename": "bill_events",
+            "policyname": "director_dependency_money_access",
+            "qual": "can_access_director_review('money.cash-review'::text)",
+            "with_check": null
+          },
+          {
+            "tablename": "cash_settings",
+            "policyname": "director_dependency_money_access",
+            "qual": "can_access_director_review('money.cash-review'::text)",
+            "with_check": null
+          },
+          {
+            "tablename": "debt_settings",
+            "policyname": "director_dependency_money_access",
+            "qual": "can_access_director_review('money.cash-review'::text)",
+            "with_check": null
+          },
+          {
+            "tablename": "funding_sources",
+            "policyname": "director_dependency_money_access",
+            "qual": "can_access_director_review('money.cash-review'::text)",
+            "with_check": null
+          },
+          {
+            "tablename": "retirement_scenarios",
+            "policyname": "director_dependency_money_access",
+            "qual": "can_access_director_review('money.cash-review'::text)",
+            "with_check": null
+          },
+          {
+            "tablename": "beast_health_records",
+            "policyname": "director_dependency_health_access",
+            "qual": "can_access_director_review('health.preparation-review'::text)",
+            "with_check": null
+          },
+          {
+            "tablename": "beast_director_assignments",
+            "policyname": "director_assignments_insert",
+            "qual": null,
+            "with_check": "((owner_id = ( SELECT auth.uid() AS uid)) AND can_access_director_review(capability) AND (EXISTS ( SELECT 1\n   FROM beast_goals g\n  WHERE ((g.id = beast_director_assignments.goal_id) AND (g.owner_id = ( SELECT auth.uid() AS uid)) AND (g.deleted_at IS NULL) AND (g.archived_at IS NULL)))))"
+          },
+          {
+            "tablename": "beast_director_assignments",
+            "policyname": "director_assignments_read",
+            "qual": "((owner_id = ( SELECT auth.uid() AS uid)) AND can_access_director_review(capability) AND (EXISTS ( SELECT 1\n   FROM beast_goals g\n  WHERE ((g.id = beast_director_assignments.goal_id) AND (g.owner_id = ( SELECT auth.uid() AS uid)) AND (g.deleted_at IS NULL) AND (g.archived_at IS NULL)))))",
+            "with_check": null
+          },
+          {
+            "tablename": "beast_director_assignments",
+            "policyname": "director_assignments_update",
+            "qual": "((owner_id = ( SELECT auth.uid() AS uid)) AND can_access_director_review(capability))",
+            "with_check": "((owner_id = ( SELECT auth.uid() AS uid)) AND can_access_director_review(capability) AND (EXISTS ( SELECT 1\n   FROM beast_goals g\n  WHERE ((g.id = beast_director_assignments.goal_id) AND (g.owner_id = ( SELECT auth.uid() AS uid)) AND (g.deleted_at IS NULL) AND (g.archived_at IS NULL)))))"
+          },
+          {
+            "tablename": "beast_director_cancellations",
+            "policyname": "director_cancellation_owner_insert",
+            "qual": null,
+            "with_check": "((( SELECT auth.uid() AS uid) = owner_id) AND (EXISTS ( SELECT 1\n   FROM beast_goals g\n  WHERE ((g.id = beast_director_cancellations.goal_id) AND (g.owner_id = ( SELECT auth.uid() AS uid))))))"
+          },
+          {
+            "tablename": "beast_director_cancellations",
+            "policyname": "director_cancellation_owner_read",
+            "qual": "(( SELECT auth.uid() AS uid) = owner_id)",
+            "with_check": null
+          }
+        ]
+      }
+    }
+  ],
+  "advisors": [
+    {
+      "name": "rls_enabled_no_policy",
+      "beforeCount": 26,
+      "afterCount": 26,
+      "detailsUnchanged": true
+    },
+    {
+      "name": "function_search_path_mutable",
+      "beforeCount": 4,
+      "afterCount": 4,
+      "detailsUnchanged": true
+    },
+    {
+      "name": "anon_security_definer_function_executable",
+      "beforeCount": 42,
+      "afterCount": 42,
+      "detailsUnchanged": true
+    },
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "beforeCount": 55,
+      "afterCount": 55,
+      "detailsUnchanged": true
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "beforeCount": 1,
+      "afterCount": 1,
+      "detailsUnchanged": true
+    }
+  ],
+  "productionDeployment": "dpl_B4S7WnXbsHsNGGGhDUNBrrwigVLR",
+  "previousProductionDeployment": "dpl_J6rqpMQTuv9gLtpBMXvXB7Z1g7at",
+  "paidEvaluationCalls": 0,
+  "runtimeMonitoring": {
+    "since": "2026-10-18T21:48:54Z",
+    "observedThrough": "2026-10-18T21:51:36.078Z",
+    "server5xxLogRecords": 0,
+    "directorInferenceReceiptLogRecords": 0,
+    "limit": 100,
+    "note": "Bounded observation window only; not a long-term reliability claim"
+  },
+  "existingProductionEnvironmentEntries": {
+    "count": 47,
+    "allUnchanged": true
+  },
+  "activeDeployment": "dpl_B4S7WnXbsHsNGGGhDUNBrrwigVLR"
+}

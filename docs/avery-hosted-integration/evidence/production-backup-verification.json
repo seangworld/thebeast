@@ -1,0 +1,52 @@
+{
+  "backupReceipt": "avery-pre-release-20261018",
+  "project": "grpyzwvgqiwtxadfdtni",
+  "verifiedAt": "2026-10-18T21:45:19.749277+00:00",
+  "managedBackupAvailable": false,
+  "privateStorage": "Owner-only local directory outside all repositories; exact location and restore runbook kept privately",
+  "directoryMode": "0700",
+  "fileMode": "0600",
+  "databaseImage": "public.ecr.aws/supabase/postgres:17.6.1.105",
+  "restores": {
+    "roles": 0,
+    "fullArchive": 0,
+    "extensionRuntime": 0
+  },
+  "source_snapshot_consistent": true,
+  "restore_exit": 0,
+  "tables_source": 202,
+  "tables_restored": 202,
+  "table_counts_and_row_digests_equal": true,
+  "mismatched_tables": [],
+  "total_source_rows": 14483,
+  "total_restored_rows": 14483,
+  "sequences_equal": true,
+  "extensions_equal": true,
+  "restore_network": "none",
+  "restore_cron_execution": false,
+  "backup_files": {
+    "database.dump": {
+      "bytes": 7746323,
+      "sha256": "a0adc36e475deb0af5b6f7f1e5151c4fd2735c4b7903485c008888b18645ef2a"
+    },
+    "roles.sql": {
+      "bytes": 5786,
+      "sha256": "6929a28ac9a9f2a9f063f3b79ab730997db2551bfebb60179cf7d29a28ac09d9"
+    },
+    "net-http-response.copy": {
+      "bytes": 86925,
+      "sha256": "76a44e389910a51c2c4287d91ca4422a36d8a67c4c174b63296abafc32c36839"
+    },
+    "net-http-request-queue.copy": {
+      "bytes": 21,
+      "sha256": "62a74fd0e2d1e3a59b88b5b71c06ca8d43662c6787430c516b8e0bc28bbbda02"
+    },
+    "net-sequence.sql": {
+      "bytes": 70,
+      "sha256": "61721af4dabe9e0f539f8a25e332538fa49b2be760dc2850f22e1687faa46a16"
+    }
+  },
+  "additionalPaidServices": 0,
+  "storageObjectBytes": "Outside logical database scope; not changed by this release",
+  "passwordsAndPlatformConfiguration": "Existing secure infrastructure preserved; not committed or exported in role SQL"
+}

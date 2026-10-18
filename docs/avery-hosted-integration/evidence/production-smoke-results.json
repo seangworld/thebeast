@@ -1,0 +1,78 @@
+{
+  "project": "grpyzwvgqiwtxadfdtni",
+  "origin": "https://thebeast.seangworld.com",
+  "paidModelCalls": 0,
+  "provenance": "Production smoke with one new synthetic account only; authored plan fixture, not AI competency evidence",
+  "events": [
+    {
+      "name": "production GoTrue authentication, anonymous denial and Sol High activation",
+      "status": "pass",
+      "modelConfiguration": {
+        "version": "sol-high-v1",
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "maxOutputTokens": 4800,
+        "timeoutMs": 80000,
+        "maxRequestBytes": 60000,
+        "reservedInputTokens": 65536,
+        "pricingDate": "2026-10-17",
+        "inputPerMillion": 2,
+        "cachedInputPerMillion": 0.1,
+        "cacheWritePerMillion": 2.5,
+        "outputPerMillion": 10,
+        "pricingSource": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+      },
+      "reasoningAvailable": true
+    },
+    {
+      "name": "explicit browser approval, ordered saved-record execution, duplicate prevention and accurate unfinished goal",
+      "status": "pass",
+      "latencyMs": [
+        1291,
+        1404
+      ],
+      "checkpoints": [
+        {
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1,
+          "revision": 2,
+          "hasResult": true
+        },
+        {
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1,
+          "revision": 2,
+          "hasResult": true
+        }
+      ]
+    },
+    {
+      "name": "foreign objective denied and owner-only role escalation prevented",
+      "status": "pass"
+    },
+    {
+      "name": "production Director/Money/Health desktop and mobile",
+      "status": "pass",
+      "widths": [
+        1440,
+        375
+      ],
+      "supabaseHosts": [
+        "grpyzwvgqiwtxadfdtni.supabase.co"
+      ],
+      "pageErrors": [],
+      "modelCalls": 0
+    },
+    {
+      "name": "production cancellation intent fences subsequent execution",
+      "status": "pass"
+    },
+    {
+      "name": "synthetic session revoked, login banned, goals archived and modules disabled; immutable audit retained",
+      "status": "pass"
+    }
+  ]
+}
