@@ -36,6 +36,7 @@ export function verifyMoneyCoachReasoning(context: RuntimeContext, reasoning: Mo
   }
   if (!["supported","conditional","insufficient_evidence"].includes(reasoning.status) || !Array.isArray(reasoning.claims) || reasoning.claims.length > 24 || !Array.isArray(reasoning.alternatives) || !Array.isArray(reasoning.uncertainties)) return ["Malformed financial evidence assessment."];
   for (const claim of reasoning.claims) {
+    if (!claim || typeof claim !== "object") { failures.push("Malformed financial numeric claim."); continue; }
     const parts = typeof claim.path === "string" ? claim.path.split(".") : [];
     let value: unknown = summary;
     if (!parts.length || parts.length>8 || parts.some(p=>!/^\w+$/.test(p)||["__proto__","constructor","prototype"].includes(p))) { failures.push("Rejected unsupported financial evidence path.");continue; }

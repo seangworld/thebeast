@@ -32,7 +32,7 @@ globalThis.fetch=async (url,init)=>{
  try{
   const response=await originalFetch(url,init),raw=await response.clone().text(),payload=responsePayload(raw,response.headers.get('content-type')||'');
   Object.assign(attempt,{latencyMs:Date.now()-started,httpStatus:response.status,originalProviderResponse:raw,actualModel:payload?.model??null,usage:payload?.usage??null});
-  attempt.estimatedUsd=moneyUsageCost(payload?.usage);if(attempt.estimatedUsd>attempt.reservedUsd||payload?.model!=='gpt-5.6-luna'||payload?.service_tier!=='default')throw Error('Unexpected billed model, tier or usage');
+  attempt.estimatedUsd=moneyUsageCost(payload?.usage);if(attempt.estimatedUsd>attempt.reservedUsd||payload?.usage?.output_tokens>attempt.outputTokens||payload?.model!=='gpt-5.6-luna'||payload?.service_tier!=='default')throw Error('Unexpected billed model, tier or usage');
   attempt.state=response.ok?'completed_with_usage':'failed_with_usage';save();return response;
  }catch(e){attempt.state='ambiguous_or_failed_attempt';attempt.latencyMs=Date.now()-started;attempt.failure='Provider request failed or usage/configuration could not be reconciled';fatal=e;save();throw e}
 };
