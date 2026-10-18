@@ -48,7 +48,7 @@ try{
   // Remove runtime-only correlation/deadline fields; never edit the original model output string.
   delete blinded.relevantEvidence.requestId;delete blinded.relevantEvidence.signal;
   writeFileSync(directory+'/'+prepared.scenarioId+'-'+prepared.turn+'-blinded.json',JSON.stringify(blinded,null,2)+'\n',{flag:'wx',mode:0o600});
-  outcomes.push({scenarioId:prepared.scenarioId,turn:prepared.turn,latencyMs:Date.now()-start,attempts:attempts.length,completed:Boolean(result),independentGrade:null});
+  outcomes.push({scenarioId:prepared.scenarioId,turn:prepared.turn,latencyMs:Date.now()-start,attempts:attempts.length,runtimeReturned:Boolean(result),operationallyAvailable:Boolean(result)&&!result.validationFailures.some(f=>/^semantic-verifier-(?:unavailable|timeout|malformed|inconsistent)$/.test(f)),objectiveCompleted:null,independentGrade:null});
   if(result){history=[...history,context.message,{id:randomUUID(),role:'assistant',text:result.response,createdAt:new Date().toISOString()}];state=result.state}
   else if(prepared.turn<packets.filter(p=>p.scenarioId===prepared.scenarioId).length)throw Error('No actual earlier response/state exists for the required follow-up; stop instead of inventing continuity');
  }
