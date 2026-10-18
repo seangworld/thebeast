@@ -1,10 +1,29 @@
 // No credential access or network transport. Paid execution remains unauthorized.
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {buildMoneyCoachStructuredRecords} from '../.test-dist/src/lib/digitalStaffRuntime/moneyContext.js';
 import {buildRuntimeInput,buildRuntimeInstructions,buildRuntimeResponseSchema} from '../.test-dist/src/lib/digitalStaffRuntime/prompt.js';
 import {requireProfessionalConfig} from '../.test-dist/src/lib/digitalStaffRuntime/config.js';
 import {executeSpecialist,verifySpecialistResult} from '../.test-dist/src/lib/directorAssignments.js';
+if(process.argv.includes('--freeze-final')||process.argv.includes('--verify-final')) {
+ const base='docs/money-coach-upgrade/evaluation/revision-2/';
+ const packets=JSON.parse(readFileSync(base+'blinded-scenario-packets.json')).packets;
+ const v1=JSON.parse(readFileSync('tests/fixtures/money-coach-competency.json'));
+ const v2=JSON.parse(readFileSync('tests/fixtures/money-coach-competency-v2.json'));
+ if(!v2.syntheticOnly||packets.length!==12||v2.scenarios.length!==9||JSON.stringify(v1.scenarios)!==JSON.stringify(v2.scenarios)||JSON.stringify(v1.baseline)!==JSON.stringify(v2.baseline)||v1.asOf!==v2.asOf)throw Error('Original scenarios or criteria changed');
+ const hash=v=>createHash('sha256').update(typeof v==='string'?v:JSON.stringify(v)).digest('hex');
+ const config=requireProfessionalConfig('beastmoney.money-coach');
+ const schemas=packets.map(p=>{const schema=buildRuntimeResponseSchema(config,p.context);schema.properties.financialAnalysis.anyOf[1].properties.snapshotId.enum=['CURRENT_REQUEST_SNAPSHOT_ID'];return schema});
+ const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+ const sourceTree=git('rev-parse','HEAD:src');
+ if(sourceTree!==git('rev-parse','0f7dd394:src'))throw Error('Approved application source changed');
+ for(const id of ['folio-67','folio-93']){const ps=packets.filter(p=>p.scenarioId===id);for(const [i,p]of ps.entries()){const summary=p.context.structuredRecords[0].record,raw=p.context.structuredRecords.find(r=>r.domain.endsWith(':income')).record;if(raw.amount!==(i?2400:3650)||summary.monthlyIncome!==raw.amount)throw Error('Fixture chronology inconsistent')}}
+ const manifest={assessmentVersion:'money-coach-competency-v2',ownerApprovalUrl:'https://github.com/seangworld/thebeast/issues/268#issuecomment-6256403158',independentReviewUrl:'https://github.com/seangworld/thebeast/issues/268#issuecomment-6256445275',approvedApplicationCommit:'0f7dd394cc72217782db7987813a537f92866954',applicationSourceTree:sourceTree,scenarioHash:hash(readFileSync('tests/fixtures/money-coach-competency-v2.json','utf8')),packetHash:hash(readFileSync(base+'blinded-scenario-packets.json','utf8')),instructionsHash:hash(buildRuntimeInstructions(config)),schemaHash:hash(schemas),scenarios:9,turns:12,maxCalls:36,maxUsd:1.60,model:'gpt-5.6-luna',planEffort:'medium',classifierEffort:'low',inputTokenReservation:80000,bodyBytesMaximum:40000,planOutputMaximum:4800,classifierOutputMaximum:1200,retries:0,tools:0,conservativeAllPlanMaximumUsd:1.50336,acceptance:'Original nine scenario criteria unchanged; zero critical failures, exact material numeric grounding, >=90% independent semantic criteria, <=1 unnecessary blocker, mean <=25s and worst <=60s; verified useful financial response must reach user. No automatic PASS.',snapshotPolicy:'Only request-specific snapshot ID enum varies; actual IDs and full schemas preserved in provider ledger.'};
+ const target=base+'final-manifest.json';
+ if(process.argv.includes('--verify-final')){if(JSON.stringify(JSON.parse(readFileSync(target)))!==JSON.stringify(manifest))throw Error('Frozen manifest mismatch')}else writeFileSync(target,JSON.stringify(manifest,null,2)+'\n');
+ console.log('Final v2 manifest verified; synthetic immutable scenarios and original criteria preserved. No credential or network access.');process.exit(0);
+}
 const revision2=process.argv.includes('--revision-2');
 if(process.argv.includes('--execute-paid'))throw Error('No paid Money Coach authorization is recorded. Preparation only.');
 const fixture=JSON.parse(readFileSync(revision2?'tests/fixtures/money-coach-competency-v2.json':'tests/fixtures/money-coach-competency.json','utf8'));

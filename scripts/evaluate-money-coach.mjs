@@ -3,18 +3,21 @@
 import {readFileSync,writeFileSync,openSync,closeSync,fsyncSync,renameSync,existsSync,lstatSync,mkdirSync,unlinkSync} from 'node:fs';
 import {dirname,resolve} from 'node:path';import {createHash,randomUUID} from 'node:crypto';import {execFileSync} from 'node:child_process';
 import {reserveMoneyAttempt,moneyUsageCost} from './money-coach-evaluation-budget.mjs';
-if(!process.argv.includes('--execute-paid')){await import('./prepare-money-coach-evaluation.mjs');process.exit(0);}
+if(!process.argv.includes('--execute-paid')){execFileSync(process.execPath,['scripts/prepare-money-coach-evaluation.mjs','--verify-final']);process.exit(0);}
 const arg=name=>{const i=process.argv.indexOf(name);if(i<0||!process.argv[i+1])throw Error(`Missing ${name}`);return resolve(process.argv[i+1]);};
 const readPrivate=path=>{const s=lstatSync(path);if(!s.isFile()||s.isSymbolicLink()||s.uid!==process.getuid()||(s.mode&0o077))throw Error('Owner-only private input required');return readFileSync(path,'utf8');};
 const authorization=JSON.parse(readPrivate(arg('--authorization-file')));
+if(authorization.assessmentVersion!=='money-coach-competency-v2')throw Error('Historical assessments are closed; fresh v2 authorization required');
+if(!/^https:\/\/github\.com\/seangworld\/thebeast\/issues\/268#issuecomment-\d+$/.test(authorization.reviewCommentUrl||''))throw Error('Independent revised-contract review evidence required');
 if(!authorization.ownerApproved||!authorization.independentNoveltyReviewCompleted)throw Error('Separate owner budget approval and independent novelty review are required');
 const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();if(authorization.commit!==head)throw Error('Owner-approved commit differs from current source');
-execFileSync('git',['diff','--quiet','HEAD','--','src','scripts','tests/fixtures/money-coach-competency.json']);
+execFileSync('git',['diff','--quiet','HEAD','--','src','scripts','tests/fixtures/money-coach-competency-v2.json','docs/money-coach-upgrade/evaluation/revision-2']);
 execFileSync('./node_modules/.bin/tsc',['-p','tsconfig.test.json']);
-execFileSync(process.execPath,['scripts/prepare-money-coach-evaluation.mjs']);
-const preflight=JSON.parse(readFileSync('docs/money-coach-upgrade/evaluation/preflight.json'));
-for(const key of ['scenarioHash','instructionsHash','schemaHash'])if(authorization[key]!==preflight[key])throw Error('Frozen assessment review hash mismatch');
-const packets=JSON.parse(readFileSync('docs/money-coach-upgrade/evaluation/blinded-scenario-packets.json')).packets;
+execFileSync(process.execPath,['scripts/prepare-money-coach-evaluation.mjs','--verify-final']);
+const preflight=JSON.parse(readFileSync('docs/money-coach-upgrade/evaluation/revision-2/final-manifest.json'));
+if(authorization.commentUrl!==preflight.ownerApprovalUrl||authorization.reviewCommentUrl!==preflight.independentReviewUrl)throw Error('Approval/review differ from frozen manifest');
+for(const key of ['scenarioHash','instructionsHash','schemaHash','packetHash','applicationSourceTree'])if(authorization[key]!==preflight[key])throw Error('Frozen assessment review hash mismatch');
+const packets=JSON.parse(readFileSync('docs/money-coach-upgrade/evaluation/revision-2/blinded-scenario-packets.json')).packets;
 const credential=readPrivate(arg('--credential-file'));const match=credential.match(/^OPENAI_API_KEY=(.+)$/m);if(!match)throw Error('Existing development credential is unavailable');
 const originalKey=process.env.OPENAI_API_KEY;process.env.OPENAI_API_KEY=match[1].trim().replace(/^['"]|['"]$/g,'');
 const directory=arg('--output-directory');if(directory.includes('/.git/')||directory.startsWith(process.cwd()+'/'))throw Error('Evaluation artifacts must remain private outside the repository');
@@ -28,16 +31,16 @@ const originalFetch=globalThis.fetch;let fatal=null,current=null;
 function responsePayload(raw,contentType){if(contentType.includes('event-stream')){for(const line of raw.split('\n').reverse())if(line.startsWith('data: ')&&line!=='data: [DONE]'){try{const x=JSON.parse(line.slice(6));if(x.response)return x.response}catch{}}return null}try{return JSON.parse(raw)}catch{return null}}
 globalThis.fetch=async (url,init)=>{
  if(String(url)!=='https://api.openai.com/v1/responses'||init?.method!=='POST')throw Error('No other endpoint is authorized');
- const body=JSON.parse(init.body);let attempt;try{attempt=reserveMoneyAttempt(ledger,body,authorization)}catch(e){fatal=e;throw e}Object.assign(attempt,{scenarioId:current.scenarioId,turn:current.turn,request:body});save();const started=Date.now();
+ const body=JSON.parse(init.body);let attempt;try{attempt=reserveMoneyAttempt(ledger,body,authorization)}catch(e){ledger.rejectedDispatch={scenarioId:current.scenarioId,turn:current.turn,bodyBytes:Buffer.byteLength(init.body),request:body};save();fatal=e;throw e}Object.assign(attempt,{requestBytes:Buffer.byteLength(init.body),scenarioId:current.scenarioId,turn:current.turn,request:body});save();const started=Date.now();
  try{
   const response=await originalFetch(url,init),raw=await response.clone().text(),payload=responsePayload(raw,response.headers.get('content-type')||'');
   Object.assign(attempt,{latencyMs:Date.now()-started,httpStatus:response.status,originalProviderResponse:raw,actualModel:payload?.model??null,usage:payload?.usage??null});
-  attempt.estimatedUsd=moneyUsageCost(payload?.usage);if(attempt.estimatedUsd>attempt.reservedUsd||payload?.usage?.output_tokens>attempt.outputTokens||payload?.model!=='gpt-5.6-luna'||payload?.service_tier!=='default')throw Error('Unexpected billed model, tier or usage');
+  attempt.estimatedUsd=moneyUsageCost(payload?.usage,authorization);if(attempt.estimatedUsd>attempt.reservedUsd||payload?.usage?.output_tokens>attempt.outputTokens||payload?.model!=='gpt-5.6-luna'||payload?.service_tier!=='default')throw Error('Unexpected billed model, tier or usage');
   attempt.state=response.ok?'completed_with_usage':'failed_with_usage';save();return response;
  }catch(e){attempt.state='ambiguous_or_failed_attempt';attempt.latencyMs=Date.now()-started;attempt.failure='Provider request failed or usage/configuration could not be reconciled';fatal=e;save();throw e}
 };
 try{
- save();const {runDigitalStaffRuntime}=await import('../.test-dist/src/lib/digitalStaffRuntime/runtime.js');let history=[],state=null,lastScenario=null;const outcomes=[];
+ save();const {runDigitalStaffRuntime}=await import('../.test-dist/src/lib/digitalStaffRuntime/runtime.js');let history=[],state=null,lastScenario=null;const outcomes=[];ledger.outcomes=outcomes;
  for(const prepared of packets){current=prepared;if(prepared.scenarioId!==lastScenario){history=prepared.context.recentMessages;state=prepared.context.state;lastScenario=prepared.scenarioId}
   const context={...prepared.context,recentMessages:history,state,requestId:'money-eval-'+randomUUID()},start=Date.now(),first=ledger.attempts.length;let result=null,failure=null;
   try{result=await runDigitalStaffRuntime(context,{}, {modelOverride:'gpt-5.6-luna'})}catch(e){failure='Runtime did not complete; see preserved private provider evidence'}
@@ -48,7 +51,10 @@ try{
   // Remove runtime-only correlation/deadline fields; never edit the original model output string.
   delete blinded.relevantEvidence.requestId;delete blinded.relevantEvidence.signal;
   writeFileSync(directory+'/'+prepared.scenarioId+'-'+prepared.turn+'-blinded.json',JSON.stringify(blinded,null,2)+'\n',{flag:'wx',mode:0o600});
-  outcomes.push({scenarioId:prepared.scenarioId,turn:prepared.turn,latencyMs:Date.now()-start,attempts:attempts.length,runtimeReturned:Boolean(result),operationallyAvailable:Boolean(result)&&!result.validationFailures.some(f=>/^semantic-verifier-(?:unavailable|timeout|malformed|inconsistent)$/.test(f)),objectiveCompleted:null,independentGrade:null});
+  outcomes.push({scenarioId:prepared.scenarioId,turn:prepared.turn,latencyMs:Date.now()-start,attempts:attempts.length,runtimeReturned:Boolean(result),financialAssessmentDelivered:Boolean(result?.financialAnalysis),validationFailures:result?.validationFailures??[],operationallyAvailable:Boolean(result)&&!result.validationFailures.some(f=>/^semantic-verifier-(?:unavailable|timeout|malformed|inconsistent)$/.test(f)),objectiveCompleted:null,independentGrade:null});
+  save();
+  const rawPlan=originalModelOutput?JSON.parse(originalModelOutput):null;
+  if(rawPlan && (rawPlan.responseContract?.consequentialAction==='completed'||rawPlan.responseContract?.providerConnection==='connected'||rawPlan.responseContract?.professionalAuthority==='licensed_or_official'||result?.validationFailures.includes('semantic-verifier-unsafe'))) {ledger.criticalStop='Potential critical model authorization/safety failure; independent review required';save();throw Error('Critical safety stop; no further paid dispatch');}
   if(result){history=[...history,context.message,{id:randomUUID(),role:'assistant',text:result.response,createdAt:new Date().toISOString()}];state=result.state}
   else if(prepared.turn<packets.filter(p=>p.scenarioId===prepared.scenarioId).length)throw Error('No actual earlier response/state exists for the required follow-up; stop instead of inventing continuity');
  }
