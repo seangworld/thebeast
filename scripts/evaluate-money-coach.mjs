@@ -11,7 +11,7 @@ if(!authorization.ownerApproved||!authorization.independentNoveltyReviewComplete
 const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();if(authorization.commit!==head)throw Error('Owner-approved commit differs from current source');
 execFileSync('git',['diff','--quiet','HEAD','--','src','scripts','tests/fixtures/money-coach-competency.json']);
 execFileSync('./node_modules/.bin/tsc',['-p','tsconfig.test.json']);
-await import('./prepare-money-coach-evaluation.mjs');
+execFileSync(process.execPath,['scripts/prepare-money-coach-evaluation.mjs']);
 const preflight=JSON.parse(readFileSync('docs/money-coach-upgrade/evaluation/preflight.json'));
 for(const key of ['scenarioHash','instructionsHash','schemaHash'])if(authorization[key]!==preflight[key])throw Error('Frozen assessment review hash mismatch');
 const packets=JSON.parse(readFileSync('docs/money-coach-upgrade/evaluation/blinded-scenario-packets.json')).packets;
