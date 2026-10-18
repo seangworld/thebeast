@@ -5,7 +5,7 @@ const cashKeys = ["safeToSpendToday","projectedAvailableCash","requiredCashNext3
 const factKeys = ["recurringIncomeExcludingDisputed","supportedExtraPayment","requestedExtraPayment"] as const;
 const strategyKeys = ["extraMonthly","totalInterest","totalPaid","monthsToPayoff"] as const;
 type Strategy = "minimum" | "snowball" | "avalanche";
-export type MoneyEvidenceSelector = typeof cashKeys[number] | `financialAssessment.facts.${typeof factKeys[number]}` | "financialAssessment.facts.lowestProjectedBalance.balance" | `financialAssessment.debtComparisons.${Strategy}.${typeof strategyKeys[number]}`;
+export type MoneyEvidenceSelector = typeof cashKeys[number] | `financialAssessment.facts.${typeof factKeys[number]}` | "financialAssessment.facts.lowestProjectedBalance.balance" | `financialAssessment.debtComparisons.${Strategy}.${typeof strategyKeys[number]}` | `source.${"income"|"bill"|"debt"}.${number}.${"amount"|"balance"|"minimum_payment"|"interest_rate"}`;
 export type MoneyEvidenceEntry = { selector: MoneyEvidenceSelector; value: number | null; canonicalPath?: string };
 export type MoneyEvidenceCatalog = { version: "money-evidence-v2"; snapshotId: string; entries: MoneyEvidenceEntry[]; conflicts: string[]; boundary: string };
 const snapshots = new WeakMap<RuntimeContext, { source: string; snapshotId: string }>();
@@ -28,6 +28,15 @@ export function moneyEvidenceCatalog(context: RuntimeContext): MoneyEvidenceCata
     const comparisons = assessment?.debtComparisons;
     const index = Array.isArray(comparisons) ? comparisons.findIndex(c=>c.strategy===strategy) : -1;
     if (Array.isArray(comparisons) && index >= 0) for (const key of strategyKeys) add(`financialAssessment.debtComparisons.${strategy}.${key}`,comparisons[index][key],`financialAssessment.debtComparisons.${index}.${key}`);
+  }
+  // A missing affordability total does not erase a known rent/minimum/APR source fact.
+  // These are row facts, not automatic recurring totals, payment capacity or new computations.
+  for (const kind of ["income","bill","debt"] as const) {
+    const raw=context.structuredRecords.filter(r=>r.domain===`beastmoney.money-coach:${kind}`);
+    raw.forEach((r,index)=>{const row=r.record as Record<string,unknown>;for(const field of kind==="debt"?["balance","minimum_payment","interest_rate"] as const:["amount"] as const){
+      const v=row[field];
+      if ((typeof v==="number" || typeof v==="string" && v.trim()!=="") && Number.isFinite(Number(v))) add(`source.${kind}.${index}.${field}`,Number(v),`${kind} source row ${String(row.id||index)}.${field}`);
+    }});
   }
   const conflicts: string[] = [];
   for (const [kind,count,key] of [["income","activeIncomeCount","monthlyIncome"],["bill","activeBillCount","monthlyBills"]] as const) {

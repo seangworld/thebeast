@@ -2,7 +2,7 @@
   "status": "REVISION 2 NO-COST CORRECTION FIXTURES ONLY; no new paid authorization",
   "scenarioHash": "37235d40d51c0fe3e267c005b8d2de855bdde52f298c451f86f5c3c631013c67",
   "instructionsHash": "8da9075dc5f93c668ef8fa775e87726198c5d53f49bd11166dac69ec389da27b",
-  "schemaHash": "60d81a7c68e7a64fef09af141fc14ac8260116e0f8139d8240d13ccf0b41a1d1",
+  "schemaHash": "b4589866733bffb8e7a71c2837444d0251e7e18b9901ad45c1c571ea24c46222",
   "scenarios": 9,
   "turns": 12,
   "modelCallsMaximum": 36,
@@ -40,62 +40,62 @@
     {
       "scenario": "folio-12",
       "turn": 1,
-      "initialBodyBytes": 24009
+      "initialBodyBytes": 25297
     },
     {
       "scenario": "folio-12",
       "turn": 2,
-      "initialBodyBytes": 28351
+      "initialBodyBytes": 29639
     },
     {
       "scenario": "folio-24",
       "turn": 1,
-      "initialBodyBytes": 28116
+      "initialBodyBytes": 29266
     },
     {
       "scenario": "folio-36",
       "turn": 1,
-      "initialBodyBytes": 24037
+      "initialBodyBytes": 25184
     },
     {
       "scenario": "folio-48",
       "turn": 1,
-      "initialBodyBytes": 28050
+      "initialBodyBytes": 29200
     },
     {
       "scenario": "folio-59",
       "turn": 1,
-      "initialBodyBytes": 28294
+      "initialBodyBytes": 29444
     },
     {
       "scenario": "folio-67",
       "turn": 1,
-      "initialBodyBytes": 28068
+      "initialBodyBytes": 29218
     },
     {
       "scenario": "folio-67",
       "turn": 2,
-      "initialBodyBytes": 28092
+      "initialBodyBytes": 29242
     },
     {
       "scenario": "folio-78",
       "turn": 1,
-      "initialBodyBytes": 24075
+      "initialBodyBytes": 25073
     },
     {
       "scenario": "folio-89",
       "turn": 1,
-      "initialBodyBytes": 28140
+      "initialBodyBytes": 29290
     },
     {
       "scenario": "folio-93",
       "turn": 1,
-      "initialBodyBytes": 33807
+      "initialBodyBytes": 34957
     },
     {
       "scenario": "folio-93",
       "turn": 2,
-      "initialBodyBytes": 33875
+      "initialBodyBytes": 35025
     }
   ],
   "priorPaidBodyLimitCompatible": false,
