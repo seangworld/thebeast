@@ -1,0 +1,375 @@
+
+> thebeast@3.2.0 build
+> npm run audit:ci && next build
+
+
+> thebeast@3.2.0 audit:ci
+> node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs && npm audit
+
+PASS private braces fork: archive/source/installed hashes and all four consumer paths verified; npm registry audit remains required.
+✔ parse rejects deep { patterns before recursive overflow (0.816625ms)
+✔ parse rejects deep ( patterns before recursive overflow (0.4465ms)
+✔ parse rejects deep {( patterns before recursive overflow (0.104375ms)
+✔ parse preserves escaped/quoted bracket text (0.559208ms)
+✔ compile rejects deep { patterns before recursive overflow (0.142917ms)
+✔ compile rejects deep ( patterns before recursive overflow (0.092292ms)
+✔ compile rejects deep {( patterns before recursive overflow (0.078292ms)
+✔ compile preserves escaped/quoted bracket text (0.800625ms)
+✔ expand rejects deep { patterns before recursive overflow (0.114125ms)
+✔ expand rejects deep ( patterns before recursive overflow (0.106ms)
+✔ expand rejects deep {( patterns before recursive overflow (0.068625ms)
+✔ expand preserves escaped/quoted bracket text (0.630208ms)
+✔ stringify rejects deep { patterns before recursive overflow (0.378083ms)
+✔ stringify rejects deep ( patterns before recursive overflow (0.080875ms)
+✔ stringify rejects deep {( patterns before recursive overflow (0.057334ms)
+✔ stringify preserves escaped/quoted bracket text (0.347667ms)
+✔ compile rejects externally supplied deep and cyclic ASTs (0.521708ms)
+✔ expand rejects externally supplied deep and cyclic ASTs (0.423042ms)
+✔ stringify rejects externally supplied deep and cyclic ASTs (0.158208ms)
+✔ ordinary expansions, options and preserved input limits (1.106542ms)
+✔ low-stack subprocess rejects the advisory payload deterministically (25.297833ms)
+✔ verification gate rejects modified installed fork code (31.145584ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.210875
+found 0 vulnerabilities
+   ▲ Next.js 15.5.27
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 6.0s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/221) ...
+   Generating static pages (55/221) 
+   Generating static pages (110/221) 
+   Generating static pages (165/221) 
+ ✓ Generating static pages (221/221)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                  Size  First Load JS
+┌ ○ /                                                     9.87 kB         182 kB
+├ ○ /_not-found                                              1 kB         103 kB
+├ ƒ /accept-invitation                                    4.39 kB         174 kB
+├ ƒ /admin/beastfusion-licenses                           1.12 kB         104 kB
+├ ○ /ads.txt                                                429 B         103 kB
+├ ○ /ai-development-staff                                   202 B         111 kB
+├ ● /ai-development-staff/[agentId]                         184 B         111 kB
+├   ├ /ai-development-staff/orchestrator-3
+├   ├ /ai-development-staff/observer-agent
+├   ├ /ai-development-staff/proposal-agent
+├   └ [+3 more paths]
+├ ○ /ai-development-staff/methodology                       184 B         106 kB
+├ ○ /ai-specialists                                         184 B         111 kB
+├ ● /ai-specialists/[specialistId]                          184 B         111 kB
+├   ├ /ai-specialists/money-coach
+├   ├ /ai-specialists/guidance-counselor
+├   ├ /ai-specialists/tutor
+├   └ /ai-specialists/health-advisor
+├ ○ /ai-specialists/methodology                             184 B         106 kB
+├ ƒ /api/admin/account-audit                                429 B         103 kB
+├ ƒ /api/admin/beast-hunter                                 429 B         103 kB
+├ ƒ /api/admin/beast-hunter/actions                         429 B         103 kB
+├ ƒ /api/admin/beast-marketing                              429 B         103 kB
+├ ƒ /api/admin/beast-marketing/growth-cycle                 429 B         103 kB
+├ ƒ /api/admin/beast-marketing/publishing                   429 B         103 kB
+├ ƒ /api/admin/beast-marketing/publishing/manuscript        429 B         103 kB
+├ ƒ /api/admin/beast-marketing/publishing/package           429 B         103 kB
+├ ƒ /api/admin/beast-marketing/search-campaign              429 B         103 kB
+├ ƒ /api/admin/beast-marketing/social                       429 B         103 kB
+├ ƒ /api/admin/beast-marketing/social/callback              429 B         103 kB
+├ ƒ /api/admin/beast-marketing/social/connect               429 B         103 kB
+├ ƒ /api/admin/beast-marketing/social/media                 429 B         103 kB
+├ ƒ /api/admin/beast-marketing/social/traffic               429 B         103 kB
+├ ƒ /api/admin/beast-marketing/video                        429 B         103 kB
+├ ƒ /api/admin/beast-marketing/video/render                 429 B         103 kB
+├ ƒ /api/admin/beast-marketing/video/render-credit-retry    429 B         103 kB
+├ ƒ /api/admin/beast-marketing/video/render-diagnostic      429 B         103 kB
+├ ƒ /api/admin/beast-marketing/youtube                      429 B         103 kB
+├ ƒ /api/admin/beast-marketing/youtube/callback             429 B         103 kB
+├ ƒ /api/admin/beast-marketing/youtube/connect              429 B         103 kB
+├ ƒ /api/admin/beast-marketing/youtube/upload               429 B         103 kB
+├ ƒ /api/admin/beastfusion-license-transfer                 429 B         103 kB
+├ ƒ /api/admin/beastfusion-projection                       429 B         103 kB
+├ ƒ /api/admin/beastfusion-projection/contract              429 B         103 kB
+├ ƒ /api/admin/beastfusion-release-integrity                429 B         103 kB
+├ ƒ /api/admin/ceo-mode                                     429 B         103 kB
+├ ƒ /api/admin/company-costs                                429 B         103 kB
+├ ƒ /api/admin/development-console                          429 B         103 kB
+├ ƒ /api/admin/digital-staff-model-evaluation               429 B         103 kB
+├ ƒ /api/admin/execution-history                            429 B         103 kB
+├ ƒ /api/admin/invitations                                  429 B         103 kB
+├ ƒ /api/admin/invitations/[invitationId]                   429 B         103 kB
+├ ƒ /api/admin/member-ai-production-evaluation              429 B         103 kB
+├ ƒ /api/admin/members/[memberId]                           429 B         103 kB
+├ ƒ /api/admin/members/[memberId]/access-history            429 B         103 kB
+├ ƒ /api/admin/members/[memberId]/email-verification        429 B         103 kB
+├ ƒ /api/admin/members/[memberId]/password-reset            429 B         103 kB
+├ ƒ /api/admin/members/[memberId]/verification-outreach     429 B         103 kB
+├ ƒ /api/admin/migration-sql-explorer                       429 B         103 kB
+├ ƒ /api/admin/migration-status                             429 B         103 kB
+├ ƒ /api/admin/platform-health                              429 B         103 kB
+├ ƒ /api/admin/production/client-jobs                       429 B         103 kB
+├ ƒ /api/admin/production/client-package                    429 B         103 kB
+├ ƒ /api/admin/production/code-audit                        429 B         103 kB
+├ ƒ /api/admin/repository-release-intelligence              429 B         103 kB
+├ ƒ /api/admin/revenue                                      429 B         103 kB
+├ ƒ /api/admin/revenue/google/callback                      429 B         103 kB
+├ ƒ /api/admin/revenue/google/connect                       429 B         103 kB
+├ ƒ /api/admin/revenue/google/disconnect                    429 B         103 kB
+├ ƒ /api/admin/revenue/google/status                        429 B         103 kB
+├ ƒ /api/admin/seangworld-intelligence                      429 B         103 kB
+├ ƒ /api/admin/staff-operations                             429 B         103 kB
+├ ƒ /api/admin/strategy-proposals                           429 B         103 kB
+├ ƒ /api/atlas/[action]                                     429 B         103 kB
+├ ƒ /api/auth/invitation/complete                           429 B         103 kB
+├ ƒ /api/auth/password-recovery/complete                    429 B         103 kB
+├ ƒ /api/beastfusion/activate                               429 B         103 kB
+├ ƒ /api/beastfusion/checkout                               429 B         103 kB
+├ ƒ /api/beastfusion/customer/download                      429 B         103 kB
+├ ƒ /api/beastfusion/customer/license                       429 B         103 kB
+├ ƒ /api/beastfusion/setup/help                             429 B         103 kB
+├ ƒ /api/beastfusion/setup/preflight                        429 B         103 kB
+├ ƒ /api/beastfusion/setup/state                            429 B         103 kB
+├ ƒ /api/beastfusion/setup/verify                           429 B         103 kB
+├ ƒ /api/beastfusion/support/diagnose                       429 B         103 kB
+├ ƒ /api/beastfusion/support/tickets                        429 B         103 kB
+├ ƒ /api/beastfusion/webhook                                429 B         103 kB
+├ ƒ /api/billing/checkout                                   429 B         103 kB
+├ ƒ /api/billing/portal                                     429 B         103 kB
+├ ƒ /api/calendar                                           429 B         103 kB
+├ ƒ /api/cron/atlas                                         429 B         103 kB
+├ ƒ /api/cron/marketing-growth                              429 B         103 kB
+├ ƒ /api/cron/marketing-social                              429 B         103 kB
+├ ƒ /api/cron/orchestrator-observation                      429 B         103 kB
+├ ƒ /api/digital-staff/reconciliation                       429 B         103 kB
+├ ƒ /api/digital-staff/runtime                              429 B         103 kB
+├ ƒ /api/director/assignments                               429 B         103 kB
+├ ƒ /api/director/conversations                             429 B         103 kB
+├ ƒ /api/education/documents/[documentId]/extract           429 B         103 kB
+├ ƒ /api/education/research                                 429 B         103 kB
+├ ƒ /api/health/advisor                                     429 B         103 kB
+├ ƒ /api/health/documents/[documentId]/extract              429 B         103 kB
+├ ƒ /api/health/reminders                                   429 B         103 kB
+├ ƒ /api/home/inventory/detect                              429 B         103 kB
+├ ƒ /api/home/studio/plan                                   429 B         103 kB
+├ ƒ /api/home/studio/projects                               429 B         103 kB
+├ ƒ /api/home/studio/render                                 429 B         103 kB
+├ ƒ /api/learning/ai                                        429 B         103 kB
+├ ƒ /api/learning/certificates/[certificateId]              429 B         103 kB
+├ ƒ /api/learning/feedback                                  429 B         103 kB
+├ ƒ /api/notifications/devices                              429 B         103 kB
+├ ƒ /api/notifications/dispatch                             429 B         103 kB
+├ ƒ /api/session/status                                     429 B         103 kB
+├ ƒ /api/stripe/webhook                                     429 B         103 kB
+├ ƒ /api/telemetry/events                                   429 B         103 kB
+├ ƒ /auth/callback                                          429 B         103 kB
+├ ƒ /auth/recovery                                          429 B         103 kB
+├ ○ /beastfusion                                          2.73 kB         109 kB
+├ ƒ /beastfusion/customer                                 1.97 kB         108 kB
+├ ○ /beastfusion/how-it-works                               184 B         106 kB
+├ ○ /beastfusion/setup                                    4.75 kB         111 kB
+├ ○ /beastfusion/support                                    991 B         103 kB
+├ ○ /beastfusion/terms                                      429 B         103 kB
+├ ○ /coming-soon                                            166 B         106 kB
+├ ● /coming-soon/[slug]                                     184 B         106 kB
+├   ├ /coming-soon/home-inventory
+├   ├ /coming-soon/home-sentinel
+├   ├ /coming-soon/home-shield
+├   └ [+5 more paths]
+├ ○ /dashboard                                            12.3 kB         203 kB
+├ ○ /dashboard/admin                                      1.74 kB         196 kB
+├ ○ /dashboard/admin/ads                                    194 B         189 kB
+├ ○ /dashboard/admin/analytics                            4.93 kB         188 kB
+├ ○ /dashboard/admin/beast                                  216 B         193 kB
+├ ○ /dashboard/admin/change-the-world                       216 B         193 kB
+├ ○ /dashboard/admin/company                                216 B         193 kB
+├ ○ /dashboard/admin/development                          8.72 kB         207 kB
+├ ● /dashboard/admin/development/agents/[agentId]         2.84 kB         201 kB
+├   ├ /dashboard/admin/development/agents/orchestrator-3
+├   ├ /dashboard/admin/development/agents/observer-agent
+├   ├ /dashboard/admin/development/agents/proposal-agent
+├   └ [+3 more paths]
+├ ○ /dashboard/admin/development/proposals                  192 B         187 kB
+├ ○ /dashboard/admin/digital-staff-model-evaluation       2.11 kB         105 kB
+├ ○ /dashboard/admin/ecosystem                            9.43 kB         192 kB
+├ ○ /dashboard/admin/empire                                 145 B         186 kB
+├ ○ /dashboard/admin/execution-history                    3.59 kB         187 kB
+├ ○ /dashboard/admin/feedback                             5.42 kB         188 kB
+├ ○ /dashboard/admin/flags                                6.34 kB         189 kB
+├ ○ /dashboard/admin/fusion                                 429 B         103 kB
+├ ○ /dashboard/admin/intelligence                           195 B         193 kB
+├ ○ /dashboard/admin/intelligence/hunter                    194 B         195 kB
+├ ○ /dashboard/admin/knowledge                            10.3 kB         193 kB
+├ ○ /dashboard/admin/marketing                            2.01 kB         185 kB
+├ ƒ /dashboard/admin/marketing/advertising                  201 B         193 kB
+├ ○ /dashboard/admin/marketing/analytics                  2.19 kB         185 kB
+├ ○ /dashboard/admin/marketing/email                        701 B         184 kB
+├ ○ /dashboard/admin/marketing/publishing                   195 B         190 kB
+├ ○ /dashboard/admin/marketing/social                       195 B         190 kB
+├ ○ /dashboard/admin/marketing/video-growth                 207 B         200 kB
+├ ○ /dashboard/admin/member-ai-production-evaluation       2.4 kB         105 kB
+├ ○ /dashboard/admin/members                              24.6 kB         208 kB
+├ ○ /dashboard/admin/messages                             8.03 kB         191 kB
+├ ○ /dashboard/admin/metrics                              6.99 kB         190 kB
+├ ○ /dashboard/admin/migrations                            7.1 kB         195 kB
+├ ○ /dashboard/admin/migrations/explorer                  4.61 kB         192 kB
+├ ○ /dashboard/admin/modules                              1.86 kB         185 kB
+├ ƒ /dashboard/admin/news                                   195 B         193 kB
+├ ○ /dashboard/admin/planned-workspaces                     198 B         183 kB
+├ ○ /dashboard/admin/platform-health                      4.86 kB         188 kB
+├ ○ /dashboard/admin/prompt-library                       8.73 kB         192 kB
+├ ○ /dashboard/admin/releases                             3.81 kB         187 kB
+├ ○ /dashboard/admin/releases/notes                          6 kB         189 kB
+├ ○ /dashboard/admin/roadmap                              3.88 kB         187 kB
+├ ○ /dashboard/admin/roadmap/intake                       5.33 kB         188 kB
+├ ○ /dashboard/admin/settings                               198 B         183 kB
+├ ○ /dashboard/admin/staff                                2.57 kB         197 kB
+├ ○ /dashboard/billing                                      429 B         103 kB
+├ ○ /dashboard/calendar                                   2.41 kB         108 kB
+├ ○ /dashboard/cashflow                                     429 B         103 kB
+├ ○ /dashboard/debts                                        429 B         103 kB
+├ ○ /dashboard/digital-staff                              5.15 kB         189 kB
+├ ● /dashboard/digital-staff/[professionalId]               178 B         111 kB
+├   ├ /dashboard/digital-staff/fusion-director
+├   ├ /dashboard/digital-staff/money-coach
+├   ├ /dashboard/digital-staff/guidance-counselor
+├   └ [+2 more paths]
+├ ƒ /dashboard/digital-staff/reconciliation                4.2 kB         110 kB
+├ ○ /dashboard/director                                   6.92 kB         123 kB
+├ ○ /dashboard/documents                                    429 B         103 kB
+├ ƒ /dashboard/education                                    158 B         256 kB
+├ ƒ /dashboard/education/[workspace]                        144 B         181 kB
+├ ○ /dashboard/education/about-you                          137 B         178 kB
+├ ○ /dashboard/education/activities                         429 B         103 kB
+├ ƒ /dashboard/education/activities/[activityId]            201 B         257 kB
+├ ○ /dashboard/education/career-planning                    137 B         178 kB
+├ ƒ /dashboard/education/documents                          216 B         185 kB
+├ ○ /dashboard/education/education-planning                 137 B         178 kB
+├ ƒ /dashboard/education/goals                              210 B         187 kB
+├ ƒ /dashboard/education/guidance-counselor                 158 B         256 kB
+├ ○ /dashboard/education/progress                           136 B         178 kB
+├ ƒ /dashboard/education/tutor                            3.73 kB         177 kB
+├ ƒ /dashboard/goals                                        210 B         187 kB
+├ ○ /dashboard/health                                       204 B         257 kB
+├ ƒ /dashboard/health/ai-advisor                          23.9 kB         279 kB
+├ ○ /dashboard/health/appointments                          225 B         257 kB
+├ ○ /dashboard/health/conditions                            225 B         257 kB
+├ ƒ /dashboard/health/documents                             216 B         185 kB
+├ ○ /dashboard/health/family-history                        225 B         257 kB
+├ ƒ /dashboard/health/goals                                 210 B         187 kB
+├ ○ /dashboard/health/lifestyle                             225 B         257 kB
+├ ○ /dashboard/health/medications                           225 B         257 kB
+├ ○ /dashboard/health/procedures                            225 B         257 kB
+├ ○ /dashboard/health/profile                               225 B         257 kB
+├ ○ /dashboard/health/provider-directory                    225 B         257 kB
+├ ○ /dashboard/health/timeline                              204 B         257 kB
+├ ○ /dashboard/health/vaccinations                        6.59 kB         194 kB
+├ ○ /dashboard/health/veterans                            9.73 kB         192 kB
+├ ○ /dashboard/health/vitals                                225 B         257 kB
+├ ○ /dashboard/home                                         197 B         183 kB
+├ ƒ /dashboard/home/documents                               221 B         193 kB
+├ ƒ /dashboard/home/goals                                   213 B         195 kB
+├ ○ /dashboard/home/inventory                             4.54 kB         188 kB
+├ ○ /dashboard/home/maintenance                             195 B         183 kB
+├ ○ /dashboard/home/property                                195 B         183 kB
+├ ○ /dashboard/home/security                                195 B         183 kB
+├ ○ /dashboard/home/settings                                195 B         183 kB
+├ ƒ /dashboard/home/studio                                14.8 kB         206 kB
+├ ○ /dashboard/home/vehicles                                195 B         183 kB
+├ ƒ /dashboard/learning                                     158 B         256 kB
+├ ƒ /dashboard/learning/[workspace]                         143 B         181 kB
+├ ○ /dashboard/learning/activities                          429 B         103 kB
+├ ƒ /dashboard/learning/activities/[activityId]             202 B         257 kB
+├ ƒ /dashboard/learning/goals                             6.72 kB         191 kB
+├ ○ /dashboard/messages                                   5.13 kB         181 kB
+├ ƒ /dashboard/money                                        429 B         103 kB
+├ ○ /dashboard/money/billing                               3.1 kB         208 kB
+├ ○ /dashboard/money/bills                                  192 B         221 kB
+├ ○ /dashboard/money/cashflow                               192 B         221 kB
+├ ○ /dashboard/money/coach                                  169 B         430 kB
+├ ○ /dashboard/money/connected-accounts                   3.85 kB         180 kB
+├ ○ /dashboard/money/dashboard                              169 B         430 kB
+├ ○ /dashboard/money/debts                                  197 B         226 kB
+├ ƒ /dashboard/money/documents                              216 B         185 kB
+├ ○ /dashboard/money/expenses                             1.34 kB         116 kB
+├ ○ /dashboard/money/financial-health                       169 B         430 kB
+├ ƒ /dashboard/money/goals                                  210 B         187 kB
+├ ○ /dashboard/money/import                               6.09 kB         190 kB
+├ ○ /dashboard/money/income                               3.88 kB         184 kB
+├ ○ /dashboard/money/observations                           429 B         103 kB
+├ ○ /dashboard/money/payoff-plan                            197 B         226 kB
+├ ○ /dashboard/money/reports                                169 B         430 kB
+├ ○ /dashboard/money/retirement                           7.33 kB         184 kB
+├ ○ /dashboard/money/settings                             7.11 kB         183 kB
+├ ○ /dashboard/money/velocity                             9.95 kB         204 kB
+├ ○ /dashboard/notifications                              8.15 kB         184 kB
+├ ○ /dashboard/onboarding                                 8.38 kB         185 kB
+├ ○ /dashboard/operations                                 2.35 kB         113 kB
+├ ○ /dashboard/operations/analytics                         202 B         193 kB
+├ ○ /dashboard/operations/atlas                           5.46 kB         111 kB
+├ ○ /dashboard/operations/beast                             210 B         193 kB
+├ ○ /dashboard/operations/briefing                        8.94 kB         139 kB
+├ ○ /dashboard/operations/change-the-world                  210 B         193 kB
+├ ○ /dashboard/operations/company                           210 B         193 kB
+├ ○ /dashboard/operations/finances                          144 B         186 kB
+├ ○ /dashboard/operations/fusion                            202 B         111 kB
+├ ○ /dashboard/operations/marketing                       2.08 kB         113 kB
+├ ƒ /dashboard/operations/marketing/advertising             687 B         126 kB
+├ ○ /dashboard/operations/marketing/analytics             2.27 kB         113 kB
+├ ○ /dashboard/operations/marketing/email                   775 B         112 kB
+├ ○ /dashboard/operations/marketing/social                  681 B         119 kB
+├ ○ /dashboard/operations/marketing/video-growth            698 B         132 kB
+├ ƒ /dashboard/operations/news                              211 B         193 kB
+├ ○ /dashboard/operations/opportunities                     589 B         127 kB
+├ ○ /dashboard/operations/production                      4.46 kB         115 kB
+├ ○ /dashboard/operations/production/client-package       2.78 kB         114 kB
+├ ○ /dashboard/operations/production/code-audit           3.11 kB         114 kB
+├ ○ /dashboard/operations/publishing                        189 B         119 kB
+├ ○ /dashboard/operations/revenue                         3.21 kB         186 kB
+├ ○ /dashboard/operations/staff                             597 B         123 kB
+├ ○ /dashboard/profile                                      429 B         103 kB
+├ ○ /dashboard/relationships                              7.71 kB         195 kB
+├ ○ /dashboard/releases                                     184 B         106 kB
+├ ○ /dashboard/roadmap                                      202 B         111 kB
+├ ● /dashboard/roadmap/[slug]                               184 B         106 kB
+├   ├ /dashboard/roadmap/home-inventory
+├   ├ /dashboard/roadmap/home-sentinel
+├   ├ /dashboard/roadmap/home-shield
+├   └ [+5 more paths]
+├ ƒ /dashboard/search                                     3.98 kB         119 kB
+├ ○ /dashboard/settings                                     202 B         111 kB
+├ ○ /dashboard/settings/notifications                     3.99 kB         110 kB
+├ ○ /dashboard/settings/profile                           9.79 kB         186 kB
+├ ƒ /dashboard/timeline                                     202 B         111 kB
+├ ○ /dashboard/today                                      14.9 kB         206 kB
+├ ƒ /dashboard/uploads                                      216 B         185 kB
+├ ○ /dashboard/velocity                                     429 B         103 kB
+├ ƒ /forgot-password                                      4.11 kB         177 kB
+├ ○ /home-studio/intake                                    1.6 kB         112 kB
+├ ○ /icon.png                                                 0 B            0 B
+├ ○ /login                                                9.06 kB         182 kB
+├ ○ /manifest.webmanifest                                   429 B         103 kB
+├ ƒ /public/news-traffic                                    429 B         103 kB
+├ ○ /release-notes                                        8.88 kB         115 kB
+├ ƒ /reset-password                                          5 kB         178 kB
+├ ○ /robots.txt                                             429 B         103 kB
+└ ○ /sitemap.xml                                            429 B         103 kB
++ First Load JS shared by all                              102 kB
+  ├ chunks/1255-8dc91b756d944555.js                       46.3 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js                   54.2 kB
+  └ other shared chunks (total)                           1.93 kB
+
+
+ƒ Middleware                                              90.3 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+

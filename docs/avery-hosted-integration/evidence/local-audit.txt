@@ -1,0 +1,36 @@
+
+> thebeast@3.2.0 audit:ci
+> node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs && npm audit
+
+PASS private braces fork: archive/source/installed hashes and all four consumer paths verified; npm registry audit remains required.
+✔ parse rejects deep { patterns before recursive overflow (0.759667ms)
+✔ parse rejects deep ( patterns before recursive overflow (0.411917ms)
+✔ parse rejects deep {( patterns before recursive overflow (0.101709ms)
+✔ parse preserves escaped/quoted bracket text (0.53725ms)
+✔ compile rejects deep { patterns before recursive overflow (0.136791ms)
+✔ compile rejects deep ( patterns before recursive overflow (0.086291ms)
+✔ compile rejects deep {( patterns before recursive overflow (0.080209ms)
+✔ compile preserves escaped/quoted bracket text (0.756875ms)
+✔ expand rejects deep { patterns before recursive overflow (0.087834ms)
+✔ expand rejects deep ( patterns before recursive overflow (0.091875ms)
+✔ expand rejects deep {( patterns before recursive overflow (0.067792ms)
+✔ expand preserves escaped/quoted bracket text (0.585125ms)
+✔ stringify rejects deep { patterns before recursive overflow (0.365917ms)
+✔ stringify rejects deep ( patterns before recursive overflow (0.064792ms)
+✔ stringify rejects deep {( patterns before recursive overflow (0.055416ms)
+✔ stringify preserves escaped/quoted bracket text (0.304292ms)
+✔ compile rejects externally supplied deep and cyclic ASTs (0.4815ms)
+✔ expand rejects externally supplied deep and cyclic ASTs (0.465375ms)
+✔ stringify rejects externally supplied deep and cyclic ASTs (0.140917ms)
+✔ ordinary expansions, options and preserved input limits (1.426167ms)
+✔ low-stack subprocess rejects the advisory payload deterministically (23.878208ms)
+✔ verification gate rejects modified installed fork code (35.01925ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 103.6045
+found 0 vulnerabilities

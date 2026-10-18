@@ -1,0 +1,370 @@
+{
+  "project": "zvzcojwjgnedrouilovc",
+  "beforeMigrationCount": 115,
+  "afterMigrationCount": 119,
+  "applied": [
+    {
+      "file": "20261017022337_avery_director_assignments.sql",
+      "sha256": "0812d557b7abca023ddab6446485a839012f2e55189bbd0026a74b2901e51af4",
+      "remote": {
+        "version": "20261018205310",
+        "name": "20261017022337_avery_director_assignments"
+      }
+    },
+    {
+      "file": "20261017025810_director_data_api_grants.sql",
+      "sha256": "e671201fb5e3402691aba079dff5c8f28b84c100c17d48efca632491ff115a4e",
+      "remote": {
+        "version": "20261018205316",
+        "name": "20261017025810_director_data_api_grants"
+      }
+    },
+    {
+      "file": "20261017215227_director_execution_contract.sql",
+      "sha256": "302b58a30ff11c5409eafa90b94a57d4b2f660d12a5ac719a49b57567e7f11d7",
+      "remote": {
+        "version": "20261018205321",
+        "name": "20261017215227_director_execution_contract"
+      }
+    },
+    {
+      "file": "20261017230022_director_cancellation_intent.sql",
+      "sha256": "b4d32d7af0af0084adcc9a8860bd02d7d3d96e8ef5fa22fdf329dc7af6708326",
+      "remote": {
+        "version": "20261018205330",
+        "name": "20261017230022_director_cancellation_intent"
+      }
+    }
+  ],
+  "unrelatedHistoryRepaired": false,
+  "production": {
+    "project": "grpyzwvgqiwtxadfdtni",
+    "columns": [
+      {
+        "table_name": "agent_conversation_messages",
+        "columns": [
+          "id",
+          "owner_id",
+          "conversation_id",
+          "sender",
+          "recipient",
+          "content",
+          "created_at"
+        ]
+      },
+      {
+        "table_name": "agent_conversations",
+        "columns": [
+          "id",
+          "owner_id",
+          "agent_id",
+          "title",
+          "pinned",
+          "archived",
+          "tags",
+          "summary",
+          "related_insight_ids",
+          "related_action_ids",
+          "message_count",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      {
+        "table_name": "beast_goals",
+        "columns": [
+          "id",
+          "owner_id",
+          "title",
+          "category",
+          "status",
+          "summary",
+          "target_date",
+          "current_step",
+          "source_module",
+          "created_at",
+          "updated_at",
+          "description",
+          "priority",
+          "timeline",
+          "progress",
+          "notes",
+          "tags",
+          "linked_professional",
+          "source_type",
+          "source_label",
+          "source_reference",
+          "custom_category",
+          "archived_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "table_name": "beast_health_records",
+        "columns": [
+          "id",
+          "owner_id",
+          "record_type",
+          "title",
+          "status",
+          "occurred_on",
+          "source",
+          "details",
+          "notes",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      {
+        "table_name": "bill_events",
+        "columns": [
+          "id",
+          "user_id",
+          "name",
+          "amount",
+          "due_date",
+          "is_debt",
+          "debt_id",
+          "created_at",
+          "frequency",
+          "assigned_paycheck",
+          "is_archived",
+          "assigned_income_date",
+          "funding_source_id",
+          "next_due_date_after_payment",
+          "auto_pay_enabled",
+          "reminder_enabled",
+          "payment_account_id",
+          "funding_account_type",
+          "funding_account_id",
+          "funding_strategy_id"
+        ]
+      },
+      {
+        "table_name": "cash_settings",
+        "columns": [
+          "user_id",
+          "checking_buffer",
+          "lookahead_days",
+          "created_at",
+          "starting_balance",
+          "ui_preferences",
+          "assignment_horizon_months"
+        ]
+      },
+      {
+        "table_name": "debt_settings",
+        "columns": [
+          "user_id",
+          "strategy",
+          "extra_payment",
+          "created_at",
+          "custom_debt_order"
+        ]
+      },
+      {
+        "table_name": "debts",
+        "columns": [
+          "id",
+          "user_id",
+          "name",
+          "balance",
+          "interest_rate",
+          "minimum_payment",
+          "custom_priority",
+          "created_at",
+          "updated_at",
+          "due_date",
+          "assigned_paycheck",
+          "is_archived",
+          "assigned_income_date",
+          "funding_source_id",
+          "payment_behavior",
+          "minimum_payment_rate",
+          "minimum_payment_floor",
+          "next_due_date_after_payment",
+          "credit_limit",
+          "available_credit",
+          "auto_pay_enabled",
+          "reminder_enabled",
+          "payment_account_id",
+          "funding_account_type",
+          "funding_account_id",
+          "funding_strategy_id",
+          "statement_balance",
+          "previous_interest_rate",
+          "interest_rate_updated_at",
+          "lifecycle_status",
+          "paid_off_at",
+          "closed_at",
+          "archived_at",
+          "lifecycle_auto_archived",
+          "reminder_enabled_before_payoff"
+        ]
+      },
+      {
+        "table_name": "funding_sources",
+        "columns": [
+          "id",
+          "user_id",
+          "name",
+          "type",
+          "current_balance",
+          "credit_limit",
+          "available_credit",
+          "interest_rate",
+          "is_active",
+          "created_at",
+          "linked_debt_id"
+        ]
+      },
+      {
+        "table_name": "income_events",
+        "columns": [
+          "id",
+          "user_id",
+          "name",
+          "amount",
+          "frequency",
+          "next_date",
+          "created_at",
+          "is_active",
+          "is_archived"
+        ]
+      },
+      {
+        "table_name": "profiles",
+        "columns": [
+          "id",
+          "role",
+          "onboarding_complete",
+          "stripe_customer_id",
+          "created_at",
+          "updated_at",
+          "preferred_name",
+          "display_name",
+          "full_name",
+          "username",
+          "birthday",
+          "location",
+          "timezone",
+          "household_context",
+          "bio",
+          "current_academic_level",
+          "career_interests",
+          "learning_preferences",
+          "learning_availability",
+          "learning_strengths",
+          "learning_help_areas",
+          "account_kind"
+        ]
+      },
+      {
+        "table_name": "retirement_scenarios",
+        "columns": [
+          "id",
+          "owner_id",
+          "name",
+          "assumptions",
+          "created_at",
+          "updated_at"
+        ]
+      }
+    ],
+    "constraint": [
+      {
+        "conname": "beast_admin_member_module_access_member_id_fkey",
+        "definition": "FOREIGN KEY (member_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      },
+      {
+        "conname": "beast_admin_member_module_access_module_check",
+        "definition": "CHECK ((module_id = ANY (ARRAY['money'::text, 'learning'::text, 'home'::text])))"
+      },
+      {
+        "conname": "beast_admin_member_module_access_pkey",
+        "definition": "PRIMARY KEY (member_id, module_id)"
+      },
+      {
+        "conname": "beast_admin_member_module_access_updated_by_fkey",
+        "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE RESTRICT"
+      }
+    ],
+    "directorFunctions": [],
+    "existingWriteGrants": [
+      {
+        "conversation_insert": true,
+        "conversation_update": true,
+        "message_insert": true,
+        "message_update": true,
+        "goal_insert": true,
+        "goal_update": true,
+        "birthday_update": true
+      }
+    ]
+  },
+  "devFunctions": [
+    {
+      "proname": "approve_director_review_plan",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "proname": "approve_director_scoped_plan",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "proname": "can_access_director_review",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "proname": "cancel_director_reviews",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "proname": "fence_cancelled_director_work",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "proname": "plan_director_reviews",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "proname": "record_director_cancellation",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    }
+  ]
+}

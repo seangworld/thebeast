@@ -1,0 +1,13 @@
+Vercel CLI 59.0.0 (Node.js 24.19.0)
+Retrieving project…
+Downloading `development` environment variables
+Loaded env from /private/tmp/avery-model-optimization/.env.local
+PASS real hosted GoTrue login/getUser and unauthenticated application denial
+PASS objective creation/retrieval, real Director dashboard and explicit browser approval with Health→Money dependency
+PASS actual specialist execution, independent result verification, dependency ordering, duplicate prevention and unfinished life goal
+PASS source correction invalidates old result and verifies same checkpoint recomputation
+PASS interruption, expired lease, explicit correction and same-checkpoint recovery
+PASS revoked direct reads, hidden-work cancellation, restored permission and stale-request fence
+PASS tenant isolation, minor/module boundaries and paid reasoning disabled
+PASS hosted desktop/mobile, current verified reporting, Money load and exclusive DEV resource requests
+PASS all hosted DEV integration checks. No AI model calls.

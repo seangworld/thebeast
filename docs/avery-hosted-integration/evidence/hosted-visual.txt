@@ -1,0 +1,5 @@
+Vercel CLI 59.0.0 (Node.js 24.19.0)
+Retrieving project…
+Downloading `development` environment variables
+Loaded env from /private/tmp/avery-model-optimization/.env.local
+PASS settled hosted Money/Health desktop and mobile views; actual synthetic checkpoint evidence captured.

@@ -1,0 +1,38 @@
+{
+  "status": "READY_FOR_PRODUCTION_APPROVAL",
+  "productionDeployed": false,
+  "productionChangesPerformed": false,
+  "productionReadOnlyInspection": true,
+  "verifiedApplicationCommit": "c5318138a6f5b6f32d6e533a83973373a1658ec2",
+  "primaryPr": 265,
+  "securityPr": 267,
+  "securityIntegratedIntoAvery": true,
+  "devProject": "zvzcojwjgnedrouilovc",
+  "devMigrationsApplied": 4,
+  "devDeployment": "dpl_BZu5ng2VYstsksESBF6usHBn4cCZ",
+  "preview": "https://thebeast-6vi46p30f-seangworld-3898s-projects.vercel.app",
+  "hostedEndToEnd": "PASS",
+  "hostedRoleEscalation": "DENIED; role unchanged",
+  "moneyHostedLoad": "PASS; local-only grant failure not reproduced",
+  "fullTests": {
+    "pass": 2425,
+    "fail": 0
+  },
+  "forkSecurityTests": {
+    "pass": 22,
+    "fail": 0
+  },
+  "fullAuditFindings": 0,
+  "requiredBuild": "PASS locally and remotely",
+  "typescript": "PASS",
+  "lint": "PASS",
+  "paidCalls": 0,
+  "lockedIndependentGrade": "23/24 PARTIAL-PASS unchanged",
+  "newDirectorAdvisorFindings": 0,
+  "codeIntegrationBlockers": [],
+  "productionExecutionGates": [
+    "Sean final authorization for exact source, four migrations, main merge/deployment and model activation choice",
+    "Confirm restorable backup before production DDL; read-only API currently lists no verifiable restore point"
+  ],
+  "backupRestorePointVerified": false
+}
