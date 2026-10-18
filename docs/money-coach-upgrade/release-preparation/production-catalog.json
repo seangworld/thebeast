@@ -1,0 +1,641 @@
+{
+  "tables": [
+    {
+      "rls": true,
+      "name": "agent_conversation_messages",
+      "columns": [
+        "id",
+        "owner_id",
+        "conversation_id",
+        "sender",
+        "recipient",
+        "content",
+        "created_at"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "agent_conversations",
+      "columns": [
+        "id",
+        "owner_id",
+        "agent_id",
+        "title",
+        "pinned",
+        "archived",
+        "tags",
+        "summary",
+        "related_insight_ids",
+        "related_action_ids",
+        "message_count",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "agent_memories",
+      "columns": [
+        "id",
+        "owner_id",
+        "agent_id",
+        "scope",
+        "memory_key",
+        "value",
+        "purpose",
+        "evidence",
+        "source_conversation_id",
+        "source_message_id",
+        "expires_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "beast_admin_member_module_access",
+      "columns": [
+        "member_id",
+        "module_id",
+        "enabled",
+        "updated_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "beast_director_assignments",
+      "columns": [
+        "id",
+        "owner_id",
+        "goal_id",
+        "capability",
+        "status",
+        "dependencies",
+        "revision",
+        "attempts",
+        "lease_id",
+        "lease_until",
+        "result",
+        "events",
+        "blocker",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "beast_goals",
+      "columns": [
+        "id",
+        "owner_id",
+        "title",
+        "category",
+        "status",
+        "summary",
+        "target_date",
+        "current_step",
+        "source_module",
+        "created_at",
+        "updated_at",
+        "description",
+        "priority",
+        "timeline",
+        "progress",
+        "notes",
+        "tags",
+        "linked_professional",
+        "source_type",
+        "source_label",
+        "source_reference",
+        "custom_category",
+        "archived_at",
+        "deleted_at"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "bill_events",
+      "columns": [
+        "id",
+        "user_id",
+        "name",
+        "amount",
+        "due_date",
+        "is_debt",
+        "debt_id",
+        "created_at",
+        "frequency",
+        "assigned_paycheck",
+        "is_archived",
+        "assigned_income_date",
+        "funding_source_id",
+        "next_due_date_after_payment",
+        "auto_pay_enabled",
+        "reminder_enabled",
+        "payment_account_id",
+        "funding_account_type",
+        "funding_account_id",
+        "funding_strategy_id"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "cash_settings",
+      "columns": [
+        "user_id",
+        "checking_buffer",
+        "lookahead_days",
+        "created_at",
+        "starting_balance",
+        "ui_preferences",
+        "assignment_horizon_months"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "debt_settings",
+      "columns": [
+        "user_id",
+        "strategy",
+        "extra_payment",
+        "created_at",
+        "custom_debt_order"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "debts",
+      "columns": [
+        "id",
+        "user_id",
+        "name",
+        "balance",
+        "interest_rate",
+        "minimum_payment",
+        "custom_priority",
+        "created_at",
+        "updated_at",
+        "due_date",
+        "assigned_paycheck",
+        "is_archived",
+        "assigned_income_date",
+        "funding_source_id",
+        "payment_behavior",
+        "minimum_payment_rate",
+        "minimum_payment_floor",
+        "next_due_date_after_payment",
+        "credit_limit",
+        "available_credit",
+        "auto_pay_enabled",
+        "reminder_enabled",
+        "payment_account_id",
+        "funding_account_type",
+        "funding_account_id",
+        "funding_strategy_id",
+        "statement_balance",
+        "previous_interest_rate",
+        "interest_rate_updated_at",
+        "lifecycle_status",
+        "paid_off_at",
+        "closed_at",
+        "archived_at",
+        "lifecycle_auto_archived",
+        "reminder_enabled_before_payoff"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "funding_sources",
+      "columns": [
+        "id",
+        "user_id",
+        "name",
+        "type",
+        "current_balance",
+        "credit_limit",
+        "available_credit",
+        "interest_rate",
+        "is_active",
+        "created_at",
+        "linked_debt_id"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "income_events",
+      "columns": [
+        "id",
+        "user_id",
+        "name",
+        "amount",
+        "frequency",
+        "next_date",
+        "created_at",
+        "is_active",
+        "is_archived"
+      ]
+    },
+    {
+      "rls": true,
+      "name": "retirement_scenarios",
+      "columns": [
+        "id",
+        "owner_id",
+        "name",
+        "assumptions",
+        "created_at",
+        "updated_at"
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "ALL",
+      "qual": "((auth.uid() = owner_id) AND (EXISTS ( SELECT 1\n   FROM agent_conversations conversation\n  WHERE ((conversation.id = agent_conversation_messages.conversation_id) AND (conversation.owner_id = auth.uid())))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "agent_conversation_messages",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners manage their agent conversation messages",
+      "with_check": "((auth.uid() = owner_id) AND (EXISTS ( SELECT 1\n   FROM agent_conversations conversation\n  WHERE ((conversation.id = agent_conversation_messages.conversation_id) AND (conversation.owner_id = auth.uid())))))"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = owner_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "agent_conversations",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners manage their agent conversations",
+      "with_check": "(auth.uid() = owner_id)"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = owner_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "agent_memories",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners manage their agent memories",
+      "with_check": "(auth.uid() = owner_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(auth.uid() = member_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "beast_admin_member_module_access",
+      "permissive": "PERMISSIVE",
+      "policyname": "Members read own module access",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "is_profile_admin()",
+      "roles": [
+        "public"
+      ],
+      "tablename": "beast_admin_member_module_access",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners read all member module access",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "beast_director_assignments",
+      "permissive": "PERMISSIVE",
+      "policyname": "director_assignments_insert",
+      "with_check": "((owner_id = ( SELECT auth.uid() AS uid)) AND can_access_director_review(capability) AND (EXISTS ( SELECT 1\n   FROM beast_goals g\n  WHERE ((g.id = beast_director_assignments.goal_id) AND (g.owner_id = ( SELECT auth.uid() AS uid)) AND (g.deleted_at IS NULL) AND (g.archived_at IS NULL)))))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((owner_id = ( SELECT auth.uid() AS uid)) AND can_access_director_review(capability) AND (EXISTS ( SELECT 1\n   FROM beast_goals g\n  WHERE ((g.id = beast_director_assignments.goal_id) AND (g.owner_id = ( SELECT auth.uid() AS uid)) AND (g.deleted_at IS NULL) AND (g.archived_at IS NULL)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "beast_director_assignments",
+      "permissive": "PERMISSIVE",
+      "policyname": "director_assignments_read",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "((owner_id = ( SELECT auth.uid() AS uid)) AND can_access_director_review(capability))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "beast_director_assignments",
+      "permissive": "PERMISSIVE",
+      "policyname": "director_assignments_update",
+      "with_check": "((owner_id = ( SELECT auth.uid() AS uid)) AND can_access_director_review(capability) AND (EXISTS ( SELECT 1\n   FROM beast_goals g\n  WHERE ((g.id = beast_director_assignments.goal_id) AND (g.owner_id = ( SELECT auth.uid() AS uid)) AND (g.deleted_at IS NULL) AND (g.archived_at IS NULL)))))"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = owner_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "beast_goals",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users manage own BeastOS goals",
+      "with_check": "(auth.uid() = owner_id)"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "bill_events",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can only access their own bill_events",
+      "with_check": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "can_access_director_review('money.cash-review'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "bill_events",
+      "permissive": "RESTRICTIVE",
+      "policyname": "director_dependency_money_access",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "cash_settings",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can only access their own cash_settings",
+      "with_check": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "can_access_director_review('money.cash-review'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "cash_settings",
+      "permissive": "RESTRICTIVE",
+      "policyname": "director_dependency_money_access",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "debt_settings",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can only access their own debt_settings",
+      "with_check": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "can_access_director_review('money.cash-review'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "debt_settings",
+      "permissive": "RESTRICTIVE",
+      "policyname": "director_dependency_money_access",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "debts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can delete own debts",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "debts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can insert own debts",
+      "with_check": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "debts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can only access their own debts",
+      "with_check": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "debts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can update own debts",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "debts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can view own debts",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "can_access_director_review('money.cash-review'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "debts",
+      "permissive": "RESTRICTIVE",
+      "policyname": "director_dependency_money_access",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "funding_sources",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can delete own funding sources",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "funding_sources",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can insert own funding sources",
+      "with_check": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "funding_sources",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can update own funding sources",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "funding_sources",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can view own funding sources",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "can_access_director_review('money.cash-review'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "funding_sources",
+      "permissive": "RESTRICTIVE",
+      "policyname": "director_dependency_money_access",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "income_events",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can only access their own income_events",
+      "with_check": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "can_access_director_review('money.cash-review'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "income_events",
+      "permissive": "RESTRICTIVE",
+      "policyname": "director_dependency_money_access",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "can_access_director_review('money.cash-review'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "retirement_scenarios",
+      "permissive": "RESTRICTIVE",
+      "policyname": "director_dependency_money_access",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(auth.uid() = owner_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "retirement_scenarios",
+      "permissive": "PERMISSIVE",
+      "policyname": "owners manage retirement scenarios",
+      "with_check": "(auth.uid() = owner_id)"
+    }
+  ],
+  "recentMigrations": [
+    {
+      "name": "20261017230022_director_cancellation_intent",
+      "version": "20261018214616"
+    },
+    {
+      "name": "20261017215227_director_execution_contract",
+      "version": "20261018214604"
+    },
+    {
+      "name": "20261017025810_director_data_api_grants",
+      "version": "20261018214553"
+    },
+    {
+      "name": "20261017022337_avery_director_assignments",
+      "version": "20261018214541"
+    },
+    {
+      "name": "beastfusion_internal_test_license",
+      "version": "20261010235901"
+    },
+    {
+      "name": "beastfusion_private_release_bucket",
+      "version": "20261010195948"
+    },
+    {
+      "name": "beastfusion_block_revoked_installation_reuse",
+      "version": "20261010194511"
+    },
+    {
+      "name": "beastfusion_purchase_acceptance",
+      "version": "20261010193251"
+    }
+  ],
+  "directorFunctions": [
+    {
+      "proname": "approve_director_review_plan",
+      "arguments": "p_goal_id uuid, p_goal_updated_at timestamp with time zone, p_capabilities text[]",
+      "security_definer": false
+    },
+    {
+      "proname": "approve_director_scoped_plan",
+      "arguments": "p_goal_id uuid, p_goal_updated_at timestamp with time zone, p_steps jsonb",
+      "security_definer": false
+    },
+    {
+      "proname": "can_access_director_review",
+      "arguments": "p_capability text",
+      "security_definer": false
+    },
+    {
+      "proname": "plan_director_reviews",
+      "arguments": "p_goal_id uuid, p_capabilities text[]",
+      "security_definer": false
+    }
+  ]
+}
