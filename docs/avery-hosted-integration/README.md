@@ -47,7 +47,7 @@ One test-harness correction was needed: its first run expected HTTP 200 after ow
 - Source ownership, cancellation, explicit approval, clinical/financial limits and unfinished objective reporting remain unchanged.
 - Independent **23/24 PARTIAL-PASS remains locked**. Hosted mechanics do not certify fresh AI judgment or make it FULL PASS.
 
-[Actual sanitized checkpoint/history projection](evidence/actual-checkpoints.json), [hosted assertions](evidence/hosted-results.json), [browser/module results](evidence/module-visual.json), [test run](evidence/hosted-run.txt), [remote build](evidence/remote-build.txt). Screenshots use only newly created synthetic data. After evidence capture, sessions were revoked and only the three task-created synthetic accounts/overrides were removed; DEV schema remains installed. Credentials, tokens, private account/password files, raw configuration and source snapshots are excluded.
+[Actual sanitized checkpoint/history projection](evidence/actual-checkpoints.json), [hosted assertions](evidence/hosted-results.json), [browser/module results](evidence/module-visual.json), [test run](evidence/hosted-run.txt), [remote build](evidence/remote-build.txt). Screenshots use only newly created synthetic data. After evidence capture, all three task-created synthetic accounts had sessions revoked and login banned; their goals were archived and Money/Health permissions revoked. Hard deletion was rejected by existing retained account-audit references (three immutable account-audit events); no audit record or constraint was removed. DEV schema remains installed. Credentials, tokens, private account/password files, raw configuration and source snapshots are excluded.
 
 ## Production preparation and remaining gate
 

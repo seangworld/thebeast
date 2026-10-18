@@ -34,5 +34,6 @@
     "Sean final authorization for exact source, four migrations, main merge/deployment and model activation choice",
     "Confirm restorable backup before production DDL; read-only API currently lists no verifiable restore point"
   ],
-  "backupRestorePointVerified": false
+  "backupRestorePointVerified": false,
+  "syntheticFixtureCleanup": "Sessions revoked; three synthetic accounts banned with login denial verified; goals archived and module permissions revoked; audit history retained, no constraint weakened"
 }
