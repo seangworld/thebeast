@@ -1,0 +1,36 @@
+{
+  "interpretation": "Review your saved health preparation information to inform your care paperwork, then review your saved cash position for consideration of a training placement. These reviews support your decisions; they do not complete paperwork, enroll you, or authorize submission.",
+  "steps": [
+    {
+      "capability": "health.preparation-review",
+      "dependsOn": [],
+      "purpose": "Review your saved health preparation information to support preparing your own care paperwork.",
+      "acceptance": "Recompute the Health Advisor preparation model from current permitted records. Verification establishes consistency with those saved records, not clinical correctness or completed paperwork."
+    },
+    {
+      "capability": "money.cash-review",
+      "dependsOn": [],
+      "purpose": "Review your saved cash position to inform your consideration of the training placement.",
+      "acceptance": "Recompute canonical cash intelligence from a complete current snapshot. Verification establishes saved-record consistency, not live funds, placement affordability, or future financial outcomes."
+    }
+  ],
+  "planningNotes": [
+    "Both reviews are useful now. List health first and cash second for the sequential foreground runner; your requested order is not a data dependency.",
+    "Each specialist checks the records required for its review; you do not need to re-supply tool-loaded records before approval.",
+    "This is a proposed plan only. No execution has occurred, and ready steps require member approval.",
+    "Your decision about what to submit remains separate and follows your review of the results."
+  ],
+  "evidenceClaims": [],
+  "alternatives": [
+    "A health-only review would support care preparation but leave your explicitly requested saved cash review unfinished. Neither review needs to wait for findings from the other."
+  ],
+  "contradictions": [],
+  "missingInformation": [],
+  "ownerDecisions": [],
+  "unsupportedWork": [
+    "Producing or submitting official care or placement paperwork, enrollment, and external verification are outside the available saved-record reviews."
+  ],
+  "assessments": [],
+  "contractVersion": 2,
+  "requirements": []
+}

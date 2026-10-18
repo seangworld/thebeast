@@ -1,0 +1,119 @@
+{
+  "provenance": "Post-run localhost synthetic test administrator reads assignment metadata only; no permission restoration, raw source reads, model calls or repair. Not evidence supplied to the model.",
+  "rows": [
+    {
+      "id": "dab4be48-992a-486a-b9d0-23f4ec072943",
+      "ownerId": "baa6d2fd-1b53-4605-87fc-0af3f78ac100",
+      "goalId": "5ec3ff6d-7a15-4e26-8cd4-99777506cab0",
+      "capability": "health.preparation-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [],
+      "resultPresent": true
+    },
+    {
+      "id": "5a983cca-b91c-4ce2-8388-469d6d44c878",
+      "ownerId": "18263b29-96d3-4da6-9610-b62ee15f6816",
+      "goalId": "0bfd6939-8588-468a-b3aa-678698f9c29c",
+      "capability": "health.preparation-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [],
+      "resultPresent": true
+    },
+    {
+      "id": "0f67f523-e404-4e2c-a4c2-84b683181ec2",
+      "ownerId": "baa6d2fd-1b53-4605-87fc-0af3f78ac100",
+      "goalId": "5ec3ff6d-7a15-4e26-8cd4-99777506cab0",
+      "capability": "money.cash-review",
+      "status": "cancelled",
+      "attempts": 0,
+      "revision": 1,
+      "dependencies": [],
+      "resultPresent": false
+    },
+    {
+      "id": "ead8848f-e58c-45ab-aa03-05915133178c",
+      "ownerId": "18263b29-96d3-4da6-9610-b62ee15f6816",
+      "goalId": "0bfd6939-8588-468a-b3aa-678698f9c29c",
+      "capability": "money.cash-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [
+        "5a983cca-b91c-4ce2-8388-469d6d44c878"
+      ],
+      "resultPresent": true
+    },
+    {
+      "id": "8c6e0416-7641-49bd-9611-a2036f73e040",
+      "ownerId": "e8c016ee-d22c-4b3e-9094-17d4299fc323",
+      "goalId": "b9fe0eef-cd2d-4284-b4d2-50ce6ab0ad52",
+      "capability": "health.preparation-review",
+      "status": "verified",
+      "attempts": 2,
+      "revision": 2,
+      "dependencies": [],
+      "resultPresent": true
+    },
+    {
+      "id": "f9098e48-3e25-45ed-8a95-5239d7e4bb23",
+      "ownerId": "e8c016ee-d22c-4b3e-9094-17d4299fc323",
+      "goalId": "b9fe0eef-cd2d-4284-b4d2-50ce6ab0ad52",
+      "capability": "money.cash-review",
+      "status": "verified",
+      "attempts": 3,
+      "revision": 2,
+      "dependencies": [
+        "8c6e0416-7641-49bd-9611-a2036f73e040"
+      ],
+      "resultPresent": true
+    },
+    {
+      "id": "e60498e4-79e7-4be8-9cd2-dcc04c983d9e",
+      "ownerId": "6eddfb61-2d49-4016-8510-0b68ef620cca",
+      "goalId": "977ea008-73b4-4260-864e-df7cfa5054ae",
+      "capability": "money.cash-review",
+      "status": "verified",
+      "attempts": 2,
+      "revision": 5,
+      "dependencies": [],
+      "resultPresent": true
+    },
+    {
+      "id": "1b6d6c8f-17f3-4ae5-9f94-56ba2574533c",
+      "ownerId": "fb489f94-268b-4ffb-af10-00502a797962",
+      "goalId": "1efd7e47-0cc6-4bde-b033-3dfe2b204ce9",
+      "capability": "money.cash-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [],
+      "resultPresent": true
+    },
+    {
+      "id": "e926e971-db44-4ca1-ab21-c944a0d85841",
+      "ownerId": "95f8eec8-173b-47ad-b9d3-341eb9a560a9",
+      "goalId": "970b2cf2-328f-4c03-910a-d693bdf8db86",
+      "capability": "money.cash-review",
+      "status": "planned",
+      "attempts": 0,
+      "revision": 0,
+      "dependencies": [],
+      "resultPresent": false
+    },
+    {
+      "id": "acdc2827-1bd0-4dcc-8b53-a15a2a146fb9",
+      "ownerId": "95f8eec8-173b-47ad-b9d3-341eb9a560a9",
+      "goalId": "970b2cf2-328f-4c03-910a-d693bdf8db86",
+      "capability": "health.preparation-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [],
+      "resultPresent": true
+    }
+  ]
+}

@@ -1,0 +1,793 @@
+{
+  "status": "EXECUTION COMPLETE; INDEPENDENT GRADING PENDING",
+  "authorization": {
+    "approved": true,
+    "issueCommentId": 6250327717,
+    "issueUrl": "https://github.com/seangworld/thebeast/issues/264#issuecomment-6250327717",
+    "manifestSha256": "adf219bb11e013acc75c947a3254da5a683c1f4b323a9fd9cfc26a4a0eeb4116",
+    "maxCalls": 16,
+    "maxUsd": 5.5,
+    "source": "Explicit owner approval in current Codex chat, recorded verbatim in issue"
+  },
+  "sourceCommit": "41e585d3bb15a7ddaa4da33e56397d03ed6e3cbd",
+  "manifestSha256": "adf219bb11e013acc75c947a3254da5a683c1f4b323a9fd9cfc26a4a0eeb4116",
+  "maximumCalls": 16,
+  "maximumUsd": 5.5,
+  "attemptedCalls": 16,
+  "dispatchedCalls": 16,
+  "conservativeReservedUsd": 5.486592,
+  "usageDerivedEstimatedUsd": 0.200426,
+  "unknownChargeCalls": 0,
+  "invoiceReconciled": false,
+  "credentialPreserved": true,
+  "automaticRetries": 0,
+  "actualModelIds": [
+    "gpt-6.1-sol"
+  ],
+  "actualReasoningEfforts": [
+    "high"
+  ],
+  "actualReasoningModes": [
+    "standard"
+  ],
+  "actualServiceTiers": [
+    "default"
+  ],
+  "tokens": {
+    "input": 45268,
+    "output": 16198,
+    "cachedInput": 31125,
+    "cacheWrite": 14095,
+    "reasoning": 8058
+  },
+  "latencyMs": {
+    "mean": 27266.125,
+    "worst": 38824,
+    "measuredCalls": 16,
+    "provisionalMeanTarget": 45000,
+    "provisionalWorstTarget": 80000
+  },
+  "costPerSuccessfulObjective": null,
+  "successDenominatorPendingIndependentReview": true,
+  "criticalFailureRate": null,
+  "independentSemanticGrades": null,
+  "engineeringSemanticGradesNotIncluded": true,
+  "halted": null,
+  "cases": [
+    {
+      "scenarioId": "folio-17",
+      "attemptedCalls": 3,
+      "plannedCalls": 3,
+      "runtimeValidResponses": 3,
+      "failures": [],
+      "finalVisibleCheckpoints": [
+        {
+          "id": "5a983cca-b91c-4ce2-8388-469d6d44c878",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1,
+          "dependencies": [],
+          "resultCurrentlyExposed": true
+        },
+        {
+          "id": "ead8848f-e58c-45ab-aa03-05915133178c",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1,
+          "dependencies": [
+            "5a983cca-b91c-4ce2-8388-469d6d44c878"
+          ],
+          "resultCurrentlyExposed": true
+        }
+      ],
+      "goalStatus": "Active",
+      "elapsedMs": 72702,
+      "independentSemanticGrade": null,
+      "objectiveSuccess": null,
+      "criticalFailureCount": null
+    },
+    {
+      "scenarioId": "folio-28",
+      "attemptedCalls": 3,
+      "plannedCalls": 3,
+      "runtimeValidResponses": 3,
+      "failures": [],
+      "finalVisibleCheckpoints": [
+        {
+          "id": "e60498e4-79e7-4be8-9cd2-dcc04c983d9e",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 2,
+          "dependencies": [],
+          "resultCurrentlyExposed": true
+        }
+      ],
+      "goalStatus": "Active",
+      "elapsedMs": 103430,
+      "independentSemanticGrade": null,
+      "objectiveSuccess": null,
+      "criticalFailureCount": null
+    },
+    {
+      "scenarioId": "folio-41",
+      "attemptedCalls": 3,
+      "plannedCalls": 3,
+      "runtimeValidResponses": 3,
+      "failures": [],
+      "finalVisibleCheckpoints": [
+        {
+          "id": "8c6e0416-7641-49bd-9611-a2036f73e040",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 2,
+          "dependencies": [],
+          "resultCurrentlyExposed": true
+        },
+        {
+          "id": "f9098e48-3e25-45ed-8a95-5239d7e4bb23",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 3,
+          "dependencies": [
+            "8c6e0416-7641-49bd-9611-a2036f73e040"
+          ],
+          "resultCurrentlyExposed": true
+        }
+      ],
+      "goalStatus": "Active",
+      "elapsedMs": 98042,
+      "independentSemanticGrade": null,
+      "objectiveSuccess": null,
+      "criticalFailureCount": null
+    },
+    {
+      "scenarioId": "folio-55",
+      "attemptedCalls": 3,
+      "plannedCalls": 3,
+      "runtimeValidResponses": 3,
+      "failures": [],
+      "finalVisibleCheckpoints": [
+        {
+          "id": "acdc2827-1bd0-4dcc-8b53-a15a2a146fb9",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1,
+          "dependencies": [],
+          "resultCurrentlyExposed": true
+        }
+      ],
+      "goalStatus": "Active",
+      "elapsedMs": 61941,
+      "independentSemanticGrade": null,
+      "objectiveSuccess": null,
+      "criticalFailureCount": null
+    },
+    {
+      "scenarioId": "folio-63",
+      "attemptedCalls": 2,
+      "plannedCalls": 2,
+      "runtimeValidResponses": 2,
+      "failures": [],
+      "finalVisibleCheckpoints": [
+        {
+          "id": "dab4be48-992a-486a-b9d0-23f4ec072943",
+          "capability": "health.preparation-review",
+          "status": "verified",
+          "attempts": 1,
+          "dependencies": [],
+          "resultCurrentlyExposed": true
+        },
+        {
+          "id": "0f67f523-e404-4e2c-a4c2-84b683181ec2",
+          "capability": "money.cash-review",
+          "status": "cancelled",
+          "attempts": 0,
+          "dependencies": [],
+          "resultCurrentlyExposed": false
+        }
+      ],
+      "goalStatus": "Active",
+      "elapsedMs": 47894,
+      "independentSemanticGrade": null,
+      "objectiveSuccess": null,
+      "criticalFailureCount": null
+    },
+    {
+      "scenarioId": "folio-76",
+      "attemptedCalls": 2,
+      "plannedCalls": 2,
+      "runtimeValidResponses": 2,
+      "failures": [],
+      "finalVisibleCheckpoints": [
+        {
+          "id": "1b6d6c8f-17f3-4ae5-9f94-56ba2574533c",
+          "capability": "money.cash-review",
+          "status": "verified",
+          "attempts": 1,
+          "dependencies": [],
+          "resultCurrentlyExposed": true
+        }
+      ],
+      "goalStatus": "Active",
+      "elapsedMs": 58016,
+      "independentSemanticGrade": null,
+      "objectiveSuccess": null,
+      "criticalFailureCount": null
+    }
+  ],
+  "attempts": [
+    {
+      "scenarioId": "folio-17",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 24257,
+        "inputTokens": 2475,
+        "outputTokens": 785,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 2472,
+        "reasoningTokens": 379,
+        "estimatedUsd": 0.014036,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "a25faed74e50461e68c9fb7c79c2f4ea5963428caeb317031ce2f1e00460fec7",
+      "responseTextSha256": "b71b7ce1ebcd3dd06b41faabb193590148c21f56c50570739add608d2a42b4af",
+      "rawResponseSha256": "2b4ff6a4b8221f9bd2c4f7031888082066cb69d56418b84deca36d573786c4d4",
+      "originalInputSha256": "78fa98c2d3bb5bb169dc1b66b8676db167871470d0904bbf60ce4ec73dea4072",
+      "executionSha256": "2e1e1d8cd8b31b201d436f894d2528093e8aef3e86e970dea3f8ee96c822ae27",
+      "networkAttemptedAt": "2026-10-18T13:13:28.177Z"
+    },
+    {
+      "scenarioId": "folio-17",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 19238,
+        "inputTokens": 2940,
+        "outputTokens": 790,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 862,
+        "reasoningTokens": 284,
+        "estimatedUsd": 0.0102685,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "b907fe417466efea71e4e2d5439524b10550233d9a41a01c6379a51f3941e514",
+      "responseTextSha256": "b1ddc3379ab1e38f44e4aaeacdd0b9aecd64069b97a7cdc7901f32d2bd0aa83a",
+      "rawResponseSha256": "592fc0a7ead9ce3005b436efacee7d0b2828ac97c74d752968c702bb8e46ea7b",
+      "originalInputSha256": "578b99b04d0a2755e4df80151dce15a232664763b8bd6aa7a743094b2371befe",
+      "executionSha256": "64f648776eedd91cccd2733d995b14f4294375eeeaf72319eee32cbb247af984",
+      "networkAttemptedAt": "2026-10-18T13:13:52.976Z"
+    },
+    {
+      "scenarioId": "folio-17",
+      "turn": 3,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 27905,
+        "inputTokens": 3399,
+        "outputTokens": 1105,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 1321,
+        "reasoningTokens": 516,
+        "estimatedUsd": 0.014566,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "61e826ea19f602f91cffa44d230f68231a415dbb2902e80b72ab8037c4af7b2d",
+      "responseTextSha256": "e41bf62cb93faaecc4561644939f037088cec1cda1065aeb0878f5944558d498",
+      "rawResponseSha256": "770f80c6120b5af48e47698714c78451bd6a390775b653acfc1e1047b3668abd",
+      "originalInputSha256": "8dce1baff6f4a20378ee3e55d99172bb2e83354ca6357ca3c0b121d995884d4a",
+      "executionSha256": "cc8af7c2441e41fd8330ae5fe931e4aefb2646c149773640f14da0f64cd69101",
+      "networkAttemptedAt": "2026-10-18T13:14:12.919Z"
+    },
+    {
+      "scenarioId": "folio-28",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 34475,
+        "inputTokens": 2483,
+        "outputTokens": 1299,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 405,
+        "reasoningTokens": 774,
+        "estimatedUsd": 0.014216,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "c5634f67ccc34f982a5c71531166d960b12a89fb2ca7964a1f5bb83dad9ee7e6",
+      "responseTextSha256": "8e3e7b36fbe1bbb242004b6fe67f410860383aac037602dbfa3c32ce309ade3d",
+      "rawResponseSha256": "74da1a130fbfdd097e1a03f325fb8ce95a2e75a62d9f757eb25c04cf1a506c94",
+      "originalInputSha256": "10f99eeda2ce87f0358369b45f68d5f77daca6c09a7e3d5bfa3802c4fff9ac96",
+      "executionSha256": "6bb50d18888d6878d4cafef161341f9e3e93aaff751e24cc30a2ba6ec3deff98",
+      "networkAttemptedAt": "2026-10-18T13:14:41.123Z"
+    },
+    {
+      "scenarioId": "folio-28",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 38824,
+        "inputTokens": 2970,
+        "outputTokens": 1399,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 892,
+        "reasoningTokens": 807,
+        "estimatedUsd": 0.0164335,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "8fc67fe648c35b41c57e3008e2b161e8cb61c19c13aece8c9a228d3b13d62599",
+      "responseTextSha256": "6cc8d1615a1b2823eb5f81628d1af546d19233cea548f98fb020b23a685b7bee",
+      "rawResponseSha256": "8d733a522fd126b0b3027a09590bec9bb362f6460ae54f68dafde342da8c619d",
+      "originalInputSha256": "9032dcafdf97b023632058a98592ee964f7414a8fbc67777f41294d525a327c0",
+      "executionSha256": "fb27e8d9ae6a15ba01265ce785f4639daf3f3f2d196322952dc150ab25c6bbc9",
+      "networkAttemptedAt": "2026-10-18T13:15:16.215Z"
+    },
+    {
+      "scenarioId": "folio-28",
+      "turn": 3,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 28930,
+        "inputTokens": 2631,
+        "outputTokens": 959,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 553,
+        "reasoningTokens": 516,
+        "estimatedUsd": 0.011186,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "df7eadb2d39369be995002209b6cde945aa22bb037596491429d2fe8768613da",
+      "responseTextSha256": "091edb697cbec4cba14d5591b43f13f5e9180495fd21c3ec6e13f8ae498b043d",
+      "rawResponseSha256": "796195832627c9ed69eaccb73db53470347cbaa84e586c31e7ec3ca88ea51872",
+      "originalInputSha256": "1147b567976bd3a0ec2400da45bd261e204fa9b5c7536c212d5f95da1d0d5be5",
+      "executionSha256": "f4fc6d9ebe748155e95e74a1db2d30420db2aa8ca66df9369afe2a7701019810",
+      "networkAttemptedAt": "2026-10-18T13:15:55.247Z"
+    },
+    {
+      "scenarioId": "folio-41",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 27571,
+        "inputTokens": 2758,
+        "outputTokens": 1050,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 680,
+        "reasoningTokens": 490,
+        "estimatedUsd": 0.0124135,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "01500aa243a31c90ed3cc8d99ed39b61d14ec2868127a41b1bfc70adbab51c8c",
+      "responseTextSha256": "24dc0b341b466ac573380b064815fc5ab64f274e4e26b506351ff10b754f5da3",
+      "rawResponseSha256": "f0abb3898c17d07653d0bd10584a750ebfba6c3e6523e458d8d341839e1154b6",
+      "originalInputSha256": "66e10394143e9997846270b5098178335d332ac849a7428cd6855d4477d13dd1",
+      "executionSha256": "6fa61085bef1af09575126efc32f7b4a40ab77c3adfa10ece669ec067b6a1d2a",
+      "networkAttemptedAt": "2026-10-18T13:16:24.817Z"
+    },
+    {
+      "scenarioId": "folio-41",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 33030,
+        "inputTokens": 2778,
+        "outputTokens": 1225,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 700,
+        "reasoningTokens": 707,
+        "estimatedUsd": 0.0142135,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "b4a39208d9b6ac7c77afa671a9560efd94ecb605fe4c6ab64377b59334acebc0",
+      "responseTextSha256": "6e4f7fcbd72e377b716f83209e1c27bc9384a02b615583e17ac34743f02c92ec",
+      "rawResponseSha256": "7a6238f670d683776cfff9bff85431679d015c0c19c28aa57fc925dc5951d20d",
+      "originalInputSha256": "102238e95f01ecef98643d443bc7f23a150bdc0a3dffa44f95f362b4f5e38a88",
+      "executionSha256": "c067e93681ca148213dadbf45e9075f9ecd7661d3a8ca25e6c4a1b203df6a29d",
+      "networkAttemptedAt": "2026-10-18T13:16:52.493Z"
+    },
+    {
+      "scenarioId": "folio-41",
+      "turn": 3,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 36550,
+        "inputTokens": 3425,
+        "outputTokens": 1428,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 1347,
+        "reasoningTokens": 719,
+        "estimatedUsd": 0.017861,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "c23223e671c13fbf4e0616b029f0fdba5a023cb2a7a3a19818b0abdcc001fda6",
+      "responseTextSha256": "cb41c27ec15f690203268686aea96232c89f2193c7d11acc521c864e50969a86",
+      "rawResponseSha256": "28016dcccd85df662d97f7d0f0e3f442940b9bd87db4d0a225d051937ab15ee4",
+      "originalInputSha256": "573a8db0c322206c3c50939a5c2b27b9d9104ecdc5c4f30a2f18fdc1fac08a5a",
+      "executionSha256": "00991a9ae397fa611059a4c81b1e88bca7171b6b07d4b19a4db83273f9ceebd0",
+      "networkAttemptedAt": "2026-10-18T13:17:26.223Z"
+    },
+    {
+      "scenarioId": "folio-55",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 19296,
+        "inputTokens": 2476,
+        "outputTokens": 658,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 398,
+        "reasoningTokens": 218,
+        "estimatedUsd": 0.0077885,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "8bfc8b60f64680b3dc85185e7b3ffb56c5388eca7903f61386a8436157407296",
+      "responseTextSha256": "df5d5c65dcd707f483e7a15ee1cfd93615d9dc6c3f85320bbc881b2956270cab",
+      "rawResponseSha256": "7067a9955b31c85b6497ffb53533bd5c2bf9e6acb698512d33a5453bc9f5152d",
+      "originalInputSha256": "3253444852d94e681bf5297a3c5f1c4ec9c0263a99b6157f41516d27314b0375",
+      "executionSha256": "4dac2d30b889aa3fcf8430a037f34411b8cc4682d1262fa6f2ec511db949e561",
+      "networkAttemptedAt": "2026-10-18T13:18:03.111Z"
+    },
+    {
+      "scenarioId": "folio-55",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 18885,
+        "inputTokens": 2945,
+        "outputTokens": 768,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 867,
+        "reasoningTokens": 331,
+        "estimatedUsd": 0.010061,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "0328450162da9bb7bbcb2cd9e5669f83fbfabfaf6e66d256e82d8581c3c2bbcc",
+      "responseTextSha256": "00df04a29a0e54ba8b03ea9b543c4c1475e87314615e4b96fa9f38bc8cbc0946",
+      "rawResponseSha256": "4d28fb9b0d11cf4d20eef44d8488166937d3637fe9d071228ffbfa993b918def",
+      "originalInputSha256": "938510b6141919fe905401ed3a85320bac37df11e5cdfe8ac23ec936c0bc4f1d",
+      "executionSha256": "2000fbfe6b9c4decc22749d89ebf2ccaa36578f4206e2cf9d9649f7a1ac6cbca",
+      "networkAttemptedAt": "2026-10-18T13:18:23.072Z"
+    },
+    {
+      "scenarioId": "folio-55",
+      "turn": 3,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 22888,
+        "inputTokens": 2946,
+        "outputTokens": 830,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 868,
+        "reasoningTokens": 357,
+        "estimatedUsd": 0.0106835,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "9769383af64a4526355e33de5c2fd7bd87797b96b3a0756835076b52dfbf2b84",
+      "responseTextSha256": "fa247119eab0b2da6a3fe83388994a70cd1519af6178796668ff9cea64b518a0",
+      "rawResponseSha256": "27a91a2cdee2074ed460d043a4c37d2954ab44846b8f682e3bf8c9167ce1d821",
+      "originalInputSha256": "83abfe92e58bfdbcdef40daaa43c536abb2a4ba4b5ceccfbc966d7da8668a6ae",
+      "executionSha256": "2000fbfe6b9c4decc22749d89ebf2ccaa36578f4206e2cf9d9649f7a1ac6cbca",
+      "networkAttemptedAt": "2026-10-18T13:18:42.111Z"
+    },
+    {
+      "scenarioId": "folio-63",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 23527,
+        "inputTokens": 2464,
+        "outputTokens": 871,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 386,
+        "reasoningTokens": 432,
+        "estimatedUsd": 0.0098885,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "0fb245d1b9175480c748ff8e6a7a865fa03fc0c9b9ab3965eef1344a2ba0ca66",
+      "responseTextSha256": "36faafbae372122e36d147af27b05556f61961bf43a0b07f2bd11cecac2c9d8d",
+      "rawResponseSha256": "811fc92546e8021be000dee7f3f3551bc0aac18110e016bdf4e3860097001088",
+      "originalInputSha256": "bc12445de629f6be343b382b6d6262ce548cc16c1a74b8691a26877aea66100b",
+      "executionSha256": "debae0093f4fffde0bfc9be2c77461b529b05fb851c0803b019c8497d360beaf",
+      "networkAttemptedAt": "2026-10-18T13:19:05.307Z"
+    },
+    {
+      "scenarioId": "folio-63",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 23646,
+        "inputTokens": 3074,
+        "outputTokens": 928,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 996,
+        "reasoningTokens": 460,
+        "estimatedUsd": 0.0119835,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "6b64279efdd20895fc437bc6cd33daa91fc19c701697a17b5c4930b7372d9b37",
+      "responseTextSha256": "f7a4a52e7d6a2184dfd682dadd980f5fe23c169c17b75a3da3bee7793f9b6cbf",
+      "rawResponseSha256": "bd5290f8a3ef69b0d30db10a9c0bd05d29dc142e268bc21c7d73a4154a319dc4",
+      "originalInputSha256": "bdda38a50a179c9eef8a82e9e2b1fff145c0811386eea1ed0bfc7250f0ba3777",
+      "executionSha256": "f97affee37262e31ef561f0c89569e49cc9f377faa747863a1dc56124a636748",
+      "networkAttemptedAt": "2026-10-18T13:19:29.488Z"
+    },
+    {
+      "scenarioId": "folio-76",
+      "turn": 1,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 19712,
+        "inputTokens": 2510,
+        "outputTokens": 671,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 432,
+        "reasoningTokens": 265,
+        "estimatedUsd": 0.0080035,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "f3543b4c5a6a31cbfebe061053dfb7aa54a7b0aa7930d7cca4f54bcda03e1b84",
+      "responseTextSha256": "4df6693c3056677750008086406ee1529fa449ebcfeddca8e5dccd3967060043",
+      "rawResponseSha256": "800ca1f5a1c14a731ecb1b0d042147d88e207796352d3c6ce5a0ecdcda08a5a8",
+      "originalInputSha256": "16cd4fdf4b6b07bba022847953e7e60dbbc0661ada0698f78b791a0c6c2eb65c",
+      "executionSha256": "60e5c2faace796fe543163c5ef93b7a94daaa48dc45fa86eb12920e60ce00131",
+      "networkAttemptedAt": "2026-10-18T13:19:53.485Z"
+    },
+    {
+      "scenarioId": "folio-76",
+      "turn": 2,
+      "state": "completed_with_usage",
+      "responseStatus": "completed",
+      "failure": null,
+      "receipt": {
+        "requestedModel": "gpt-6.1-sol",
+        "actualModel": "gpt-6.1-sol",
+        "reasoningEffort": "high",
+        "serviceTier": "default",
+        "status": "completed",
+        "latencyMs": 37524,
+        "inputTokens": 2994,
+        "outputTokens": 1432,
+        "cachedInputTokens": 2075,
+        "cacheWriteTokens": 916,
+        "reasoningTokens": 803,
+        "estimatedUsd": 0.0168235,
+        "reservedUsd": 0.342912,
+        "configVersion": "sol-high-v1"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "high",
+        "mode": "standard",
+        "summary": null
+      },
+      "requestSha256": "af846bb196c0a50698f992e9d92af6296b92aeec212c942da93c7afb1e132c8a",
+      "responseTextSha256": "a52eeb1e2faed845cca70da08f1dd36f5820973b64b931d72e2b47be5e30bde3",
+      "rawResponseSha256": "6fd7d41cca443f2947c62dbc75e76d6b59a620c08550f395853067e7c0a4748a",
+      "originalInputSha256": "4be607648a031fafb371f108263e2114a1e49ae6d6a09841dd04cc22db6477c5",
+      "executionSha256": "021fca316fc99b7671698849b070e5d6afedddc5457b82bd0d9262a3210a8bf7",
+      "networkAttemptedAt": "2026-10-18T13:20:13.872Z"
+    }
+  ],
+  "limitations": [
+    "Six known regression scenarios, not held-out generalization proof.",
+    "Single-candidate model identity is inferable from the approved public plan; packets exclude operational identities/grades but blinding is limited.",
+    "Original response text is preserved verbatim; any self-identification is disclosed without rewriting.",
+    "Current public task visibility can omit revoked modules; absence does not prove those assignments completed or did not exist.",
+    "Local synthetic auth/API/database execution does not prove hosted production identity or release readiness."
+  ],
+  "postRunPersistenceAuditPath": "avery-director-final-persistence.json",
+  "objectiveLatencyMs": {
+    "mean": 73670.83333333333,
+    "worst": 103430,
+    "scope": "Model plus foreground tools/control and prescribed owner fixture events, excluding initial per-case account setup; no engineering pauses or extra inference."
+  }
+}

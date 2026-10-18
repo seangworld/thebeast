@@ -1,0 +1,37 @@
+{
+  "interpretation": "Determine the next permitted recovery action from the current saved checkpoints. Neither device display nor an earlier continue request establishes completion. Both supplied checkpoints lack results.",
+  "steps": [],
+  "planningNotes": [
+    "The running statuses and expired leases are compatible with interrupted execution; they are not a contradiction.",
+    "The existing foreground runner may recover the health checkpoint using its existing authorization and lease mechanism. No replacement assignment or reset is needed.",
+    "The cash checkpoint must remain behind its recorded health dependency. Execution is sequential, not parallel or background.",
+    "The records do not establish whether earlier continue requests remain queued or have run. Such requests do not authorize duplicate assignments or resets.",
+    "Attempt counts alone do not establish exhausted retry budgets. The supplied guidance does not call for correction authorization.",
+    "This response performs no execution. No verified financial, clinical, or document-completion conclusion is available."
+  ],
+  "evidenceClaims": [],
+  "alternatives": [
+    "Recover the existing health checkpoint through the authorized foreground runner, then reassess the dependent cash checkpoint.",
+    "Leave both checkpoints unchanged if no foreground continuation is initiated; returning this plan does not advance them."
+  ],
+  "contradictions": [],
+  "missingInformation": [],
+  "ownerDecisions": [],
+  "unsupportedWork": [
+    "The available capabilities cannot inspect or synchronize device displays, verify the document file itself, or establish the state of queued requests."
+  ],
+  "assessments": [
+    {
+      "taskId": "8c6e0416-7641-49bd-9611-a2036f73e040",
+      "finding": "Running with an expired lease and no result. Server guidance permits recovery of this same checkpoint. Resume through the existing foreground runner; do not create replacement work or treat this row as completed evidence.",
+      "disposition": "resume_existing"
+    },
+    {
+      "taskId": "f9098e48-3e25-45ed-8a95-5239d7e4bb23",
+      "finding": "Server guidance is wait_for_dependencies. The prerequisite health checkpoint has no verified result, so hold this existing cash checkpoint and reassess eligibility after that prerequisite is verified. Its expired lease does not bypass the dependency, and no current result supports completion.",
+      "disposition": "investigate"
+    }
+  ],
+  "contractVersion": 2,
+  "requirements": []
+}

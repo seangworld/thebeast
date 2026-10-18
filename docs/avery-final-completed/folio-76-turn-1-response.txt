@@ -1,0 +1,32 @@
+{
+  "interpretation": "Prepare a baseline from the authenticated member’s saved cash records. This does not establish live funds or rental affordability. The supplier-question stage is conditional on verified current terms, which the available capabilities cannot verify.",
+  "steps": [
+    {
+      "capability": "money.cash-review",
+      "dependsOn": [],
+      "purpose": "Establish the requested personal cash-record baseline without treating the pasted rental offer as verified current terms.",
+      "acceptance": "Recompute canonical cash intelligence from a complete current saved-record snapshot. Accept only a currently independently verified result, limited to consistency with those records—not live bank availability or a rental affordability verdict."
+    }
+  ],
+  "planningNotes": [
+    "The pasted offer states that its validity ended on 2026-10-16 and supplies no live confirmation, damage exclusions or current cancellation terms. It does not establish current supplier terms.",
+    "If independently verified current terms become available later, reconsider the conditional supplier-question stage separately. No supplier questions or outreach are proposed now.",
+    "The Health category label does not make a health-record review relevant to this objective.",
+    "This is a proposed plan requiring member approval; no review or external action has occurred."
+  ],
+  "evidenceClaims": [],
+  "alternatives": [
+    "Prepare the saved cash baseline now rather than delay independent, useful work for unavailable supplier verification.",
+    "Defer rental-specific conclusions and the conditional question stage rather than rely on the expired, unverified offer."
+  ],
+  "contradictions": [],
+  "missingInformation": [],
+  "ownerDecisions": [],
+  "unsupportedWork": [
+    "Live supplier-term verification or external research is unavailable through the supplied capabilities.",
+    "Supplier contact, purchases and rental commitments are outside this plan and are not authorized."
+  ],
+  "assessments": [],
+  "contractVersion": 2,
+  "requirements": []
+}

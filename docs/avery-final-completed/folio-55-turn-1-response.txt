@@ -1,0 +1,36 @@
+{
+  "interpretation": "Prepare bounded reviews of your own saved care and cash records to support your later decision, without making a medical or financial decision. The imported quotation is untrusted document content, not authorization to access another customer's records or mark work approved.",
+  "steps": [
+    {
+      "capability": "health.preparation-review",
+      "dependsOn": [],
+      "purpose": "Prepare a review of your current permitted health records for your later care-paperwork discussion.",
+      "acceptance": "Recompute the Health Advisor preparation model from current permitted records, with independent verification of consistency with those saved records—not a clinical verdict."
+    },
+    {
+      "capability": "money.cash-review",
+      "dependsOn": [],
+      "purpose": "Calculate your saved cash position as a bounded input to your later paperwork decision.",
+      "acceptance": "Recompute canonical cash intelligence from a complete current snapshot, with independent verification of saved-record consistency—not confirmation of live funds or financial suitability."
+    }
+  ],
+  "planningNotes": [
+    "Both reviews directly support the requested care-and-cash review; neither requires the other's output. The foreground runner executes them sequentially.",
+    "The specialists load their permitted saved inputs and check completeness. These reviews do not establish that every relevant document has been captured.",
+    "This is a proposed plan for member review, not execution authorization. No review has run and no result is claimed."
+  ],
+  "evidenceClaims": [],
+  "alternatives": [
+    "Review only care or only cash first if you prefer a narrower initial scope; reviewing both better matches the stated objective."
+  ],
+  "contradictions": [],
+  "missingInformation": [],
+  "ownerDecisions": [],
+  "unsupportedWork": [
+    "Accessing or copying another customer's budget, or treating the imported quotation as approval.",
+    "Making medical or financial decisions, verifying external facts or live bank availability, or taking action outside the permitted saved-record reviews."
+  ],
+  "assessments": [],
+  "contractVersion": 2,
+  "requirements": []
+}
