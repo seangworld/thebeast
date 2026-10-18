@@ -236,7 +236,7 @@ test("BA-112 presents every requested owner inspection area without mutation con
   assert.match(workspace, /All professionals/);
   assert.match(workspace, /Read-only inspection/);
   assert.match(workspace, /raw conversation messages/);
-  assert.match(navigation, /Knowledge Inspector/);
+  assert.doesNotMatch(navigation, /Knowledge Inspector/); // Routine tool omitted from the deployed exception-first navigation.
   assert.doesNotMatch(workspace, /\.(insert|update|delete|upsert)\(/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);
 });

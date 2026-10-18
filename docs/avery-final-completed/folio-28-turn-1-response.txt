@@ -1,0 +1,34 @@
+{
+  "interpretation": "Prepare a saved-budget cash review for repeated monthly commitments, distinguishing correct arithmetic from whether the income is genuinely recurring. The financial objective, rather than the Health category label, determines the relevant review.",
+  "steps": [
+    {
+      "capability": "money.cash-review",
+      "dependsOn": [],
+      "purpose": "Calculate the cash position represented by the current saved budget, providing a bounded arithmetic baseline for the commitment decision.",
+      "acceptance": "Recompute canonical cash intelligence from a complete current snapshot of permitted member-owned saved records, with server verification. Acceptance establishes saved-record consistency only—not recurring-income eligibility, live funds, or future affordability."
+    }
+  ],
+  "planningNotes": [
+    "The supplied pay-advice-17 description reports a 4,800 deposit comprising 2,800 base monthly pay and a 2,000 one-time relocation reimbursement, while the full deposit is saved as monthly. These are supplied claims, not independently verified income.",
+    "If that reported classification remains, the unadjusted review would not support treating the full 4,800 as income available every month. A verified calculation cannot make the one-time component recurring or establish that repeated commitments are affordable.",
+    "Independent pay documentation supporting the recurring component, together with appropriately classified saved records, would be needed before relying on a review for recurring-income decisions. This limits the proposed calculation's use; it does not prevent the bounded saved-record review.",
+    "The cash-review capability does not promise automatic source reconciliation, classification correction, or comparison of adjusted scenarios. No health review currently contributes to this objective.",
+    "This is a proposed review requiring member approval; no calculation or other execution has occurred."
+  ],
+  "evidenceClaims": [],
+  "alternatives": [
+    "Proceed with the bounded cash review now, retaining the explicit restriction against using the reported full deposit as recurring income.",
+    "Defer the review until the income classification has been independently checked and corrected outside these capabilities, making a later saved-record calculation more useful for recurring commitments."
+  ],
+  "contradictions": [],
+  "missingInformation": [],
+  "ownerDecisions": [],
+  "unsupportedWork": [
+    "Editing the saved budget or correcting its income classification.",
+    "Externally verifying pay documentation, recurring-income eligibility, or bank availability.",
+    "Guaranteeing affordability or making commitments on the member's behalf."
+  ],
+  "assessments": [],
+  "contractVersion": 2,
+  "requirements": []
+}

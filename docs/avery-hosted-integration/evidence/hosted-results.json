@@ -1,0 +1,51 @@
+{
+  "commit": "c5318138a6f5b6f32d6e533a83973373a1658ec2",
+  "environment": "hosted DEV only",
+  "deployment": "https://thebeast-6vi46p30f-seangworld-3898s-projects.vercel.app",
+  "project": "zvzcojwjgnedrouilovc",
+  "paidCalls": 0,
+  "proposalProvenance": "Authored synthetic fixture, not an AI response; no competency grade changed",
+  "events": [
+    {
+      "name": "real hosted GoTrue login/getUser and unauthenticated application denial",
+      "status": "pass"
+    },
+    {
+      "name": "objective creation/retrieval, real Director dashboard and explicit browser approval with Health→Money dependency",
+      "status": "pass"
+    },
+    {
+      "name": "actual specialist execution, independent result verification, dependency ordering, duplicate prevention and unfinished life goal",
+      "status": "pass"
+    },
+    {
+      "name": "source correction invalidates old result and verifies same checkpoint recomputation",
+      "status": "pass",
+      "monthlyIncome": 2800
+    },
+    {
+      "name": "interruption, expired lease, explicit correction and same-checkpoint recovery",
+      "status": "pass"
+    },
+    {
+      "name": "revoked direct reads, hidden-work cancellation, restored permission and stale-request fence",
+      "status": "pass"
+    },
+    {
+      "name": "tenant isolation, minor/module boundaries and paid reasoning disabled",
+      "status": "pass"
+    },
+    {
+      "name": "hosted desktop/mobile, current verified reporting, Money load and exclusive DEV resource requests",
+      "status": "pass",
+      "widths": [
+        1440,
+        390,
+        375
+      ],
+      "supabaseHosts": [
+        "zvzcojwjgnedrouilovc.supabase.co"
+      ]
+    }
+  ]
+}

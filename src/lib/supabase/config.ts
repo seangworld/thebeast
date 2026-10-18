@@ -20,6 +20,7 @@ const placeholderPattern = /(?:example|placeholder|changeme|your[-_ ]?(?:project
 export function resolveSupabasePublicConfiguration(input: {
   url?: string;
   publicKey?: string;
+  allowInsecureLoopback?: boolean;
 }): SupabaseConfigurationResult {
   const url = input.url?.trim();
   const publicKey = input.publicKey?.trim();
@@ -33,7 +34,7 @@ export function resolveSupabasePublicConfiguration(input: {
     return { ok: false, reason: "invalid_url" };
   }
   if (
-    parsed.protocol !== "https:" ||
+    (parsed.protocol !== "https:" && !(input.allowInsecureLoopback && parsed.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname))) ||
     !parsed.hostname ||
     placeholderPattern.test(url) ||
     parsed.username ||
@@ -49,6 +50,7 @@ export function resolveSupabasePublicConfiguration(input: {
 
 export function requireSupabasePublicConfiguration(): SupabasePublicConfiguration {
   const result = resolveSupabasePublicConfiguration({
+    allowInsecureLoopback: process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test",
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,
     publicKey:
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||

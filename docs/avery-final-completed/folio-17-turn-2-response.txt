@@ -1,0 +1,43 @@
+{
+  "interpretation": "The verified care review includes a saved note stating that transport paperwork has not yet been arranged. This meets your saved-record condition for reviewing cash paperwork. It does not establish the real-world transport situation or complete your employer reassignment file.",
+  "steps": [
+    {
+      "capability": "money.cash-review",
+      "dependsOn": [
+        "health.preparation-review"
+      ],
+      "purpose": "Review your saved cash position now that the care paperwork identifies an outstanding transport arrangement.",
+      "acceptance": "Recompute canonical cash intelligence from a complete current snapshot. Verification establishes consistency with saved records, not live funds, transport affordability or employer acceptance."
+    }
+  ],
+  "planningNotes": [
+    "No additional owner decision is needed before the proposed bounded cash review, apart from the normal plan approval.",
+    "Keep the existing verified care review; repeating it is unnecessary.",
+    "The selected care excerpt does not establish that your entire reassignment file is complete. Employer requirements and whether or how to arrange transport remain matters for you to confirm outside these reviews.",
+    "This is a proposed next step only; no cash review or external action has occurred."
+  ],
+  "evidenceClaims": [
+    {
+      "taskId": "5a983cca-b91c-4ce2-8388-469d6d44c878",
+      "scope": "saved_record_consistency_only"
+    }
+  ],
+  "alternatives": [
+    "You may defer the cash review, but that would leave the conditional review requested in your original objective unfinished."
+  ],
+  "contradictions": [],
+  "missingInformation": [],
+  "ownerDecisions": [],
+  "unsupportedWork": [
+    "Arranging transport, confirming employer reassignment requirements, and assembling or submitting an employer-ready file are outside the available saved-record review capabilities."
+  ],
+  "assessments": [
+    {
+      "taskId": "5a983cca-b91c-4ce2-8388-469d6d44c878",
+      "finding": "The care review is currently server-verified. Its shared saved appointment excerpt states that transport paperwork has not yet been arranged, supplying the trigger for the requested cash review without proving external circumstances.",
+      "disposition": "accept_verified_evidence"
+    }
+  ],
+  "contractVersion": 2,
+  "requirements": []
+}

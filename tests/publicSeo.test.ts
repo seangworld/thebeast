@@ -29,11 +29,13 @@ test("public footer links use canonical production destinations", () => {
 });
 
 test("public SEO inventory contains only real indexable application routes", () => {
-  assert.deepEqual(beastOSPublicRoutes, ["/", "/release-notes", "/ai-development-staff", "/ai-development-staff/methodology", "/ai-development-staff/orchestrator-3", "/ai-development-staff/observer-agent", "/ai-development-staff/proposal-agent", "/ai-development-staff/developer-agent", "/ai-development-staff/reviewer-agent", "/ai-development-staff/outcome-agent", "/ai-specialists", "/ai-specialists/methodology", "/ai-specialists/money-coach", "/ai-specialists/guidance-counselor", "/ai-specialists/tutor", "/ai-specialists/health-advisor"]);
+  assert.deepEqual(beastOSPublicRoutes, ["/", "/beastfusion", "/beastfusion/how-it-works", "/release-notes", "/ai-development-staff", "/ai-development-staff/methodology", "/ai-development-staff/orchestrator-3", "/ai-development-staff/observer-agent", "/ai-development-staff/proposal-agent", "/ai-development-staff/developer-agent", "/ai-development-staff/reviewer-agent", "/ai-development-staff/outcome-agent", "/ai-specialists", "/ai-specialists/methodology", "/ai-specialists/money-coach", "/ai-specialists/guidance-counselor", "/ai-specialists/tutor", "/ai-specialists/health-advisor"]);
   assert.deepEqual(
     sitemap().map((entry) => entry.url),
     [
       beastOSProductionOrigin,
+      `${beastOSProductionOrigin}/beastfusion`,
+      `${beastOSProductionOrigin}/beastfusion/how-it-works`,
       `${beastOSProductionOrigin}/release-notes`,
       `${beastOSProductionOrigin}/ai-development-staff`,
       `${beastOSProductionOrigin}/ai-development-staff/methodology`,

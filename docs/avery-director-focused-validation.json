@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-17",
+  "phase": "Focused Sol High preparation only",
+  "paidCalls": 0,
+  "credentialAccess": false,
+  "targeted": {
+    "total": 112,
+    "passed": 112,
+    "newFocusedChecks": 8,
+    "prior104Preserved": true
+  },
+  "lint": "pass",
+  "applicationTypeScript": "pass",
+  "fullSuite": {
+    "total": 2406,
+    "passed": 2388,
+    "failed": 18,
+    "failureNamesUnchangedFromBaseline": true,
+    "trackedIn": 266,
+    "failureNames": [
+      "\u2716 BA-106 recovery paths preserve only safe BeastOS destinations",
+      "\u2716 BA-107 presents central management, release history, and future rollback",
+      "\u2716 BA-107 validates a new email and keeps callback destinations internal",
+      "\u2716 BA-112 presents every requested owner inspection area without mutation controls",
+      "\u2716 BA-126 keeps deferred work separate from the operational Revenue Center",
+      "\u2716 BA-IA-101 defines one grouped persistent BeastAdmin workspace switcher",
+      "\u2716 BM-37 renders Dashboard Immediate Attention and durably tracks rate changes",
+      "\u2716 BM-42D debt actions retain the selected-debt canonical edit workflow",
+      "\u2716 BP-230 exposes only the approved workspace hierarchy",
+      "\u2716 BP-230 keeps the record-backed Daily Briefing in Dashboard",
+      "\u2716 BP-230 navigation follows the approved workspace hierarchy",
+      "\u2716 BeastAdmin foundation registers modules and protects owner-only navigation",
+      "\u2716 Money Settings retains saved cash and debt controls in standard Money surfaces",
+      "\u2716 debt management keeps open zero-balance revolving accounts active and exposes explicit restore",
+      "\u2716 module navigation centralizes expandable child items",
+      "\u2716 owner-only roster and profiles preserve the established BeastAdmin surface",
+      "\u2716 public SEO inventory contains only real indexable application routes",
+      "\u2716 sitemap includes public routes and excludes private application routes"
+    ]
+  },
+  "build": "fails unchanged full audit gate, 7 high; Next compilation not reached",
+  "productionOnlyAuditHigh": 0,
+  "fullAuditHigh": 7,
+  "dependenciesChanged": false,
+  "productionPromptChanged": false,
+  "stageOneArtifactsChanged": false,
+  "fileSha256": {
+    "scripts/director-focused-fixtures.mjs": "f3e0ff479c3ad4195d131f7275f43e09e97c59e9ff9669ae4f67c7928ab7bd40",
+    "scripts/prepare-director-focused.mjs": "e73d1af5571adf352e09315ea76536ae33562bf3cb7e8d9aea1bb0b507b91db9",
+    "scripts/test-director-focused-preparation.mjs": "ed6cbb6132520d21682b1c5bd9a3547a75b265ce12c087f5a7e6fe807dba6f45",
+    "tests/fixtures/avery-focused/scenarios.json": "aaf47e6e4e7a99dc29e840b47815652a5482026b4eb098e5d133d7f89ae5c5cc",
+    "docs/avery-director-focused-plan.json": "bac781140a15722d8d0c6ab55b40f0d11f5be04d83429178a9e05fb15f0faf78",
+    "docs/avery-director-focused-blinded-template.json": "42a87b06531fe7413c540ddf6b56e6a8db49ae3fa61f0add491c02d4df119c84",
+    "docs/avery-focused-review/folio-17.json": "d6d4b98113683c0cd90d52f555f19a47c664119a5fd2243ff60ad86deec6cb06",
+    "docs/avery-focused-review/folio-28.json": "3fd7bbf2afe2863a08ddcfb8edb5c7b38cdfab245446f3f8b56ce72f20f9c9de",
+    "docs/avery-focused-review/folio-41.json": "2ba9f6beee8cf2d05e893a67e5ec963f4ce3b71600a3049cd49d1b1bec3bb632",
+    "docs/avery-focused-review/folio-55.json": "e3da7a9f2fd23fdbe28ef7056e2346665674565e8ce6717284444e110ce1d92a",
+    "docs/avery-focused-review/folio-63.json": "f27d72b6144e83c777704d64880f7cf2b56b60af1a1810b127f5788a2aa15294",
+    "docs/avery-focused-review/folio-76.json": "3dad5c4ad05696624d6c81d53e3bc6b9b2e689694226afedbd8928c44cef56b6"
+  }
+}

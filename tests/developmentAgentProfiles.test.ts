@@ -53,7 +53,8 @@ test("owner-only roster and profiles preserve the established BeastAdmin surface
   const directory = readFileSync("src/app/dashboard/admin/development/agents/DevelopmentAgentDirectory.tsx", "utf8");
   const profile = readFileSync("src/app/dashboard/admin/development/agents/DevelopmentAgentProfileWorkspace.tsx", "utf8");
   const page = readFileSync("src/app/dashboard/admin/development/agents/[agentId]/page.tsx", "utf8");
-  assert.match(directory, /Orchestrator coordinates, Observer detects, Proposal Agent researches and recommends, Developer builds, Reviewer independently checks, Outcome Agent measures, and the owner authorizes/);
+  assert.match(directory, /Manager view of every BeastFusion development professional/);
+  assert.match(directory, /getDevelopmentAgentCapabilityAssessment/);
   assert.match(profile, /profile.authorityBoundary/);
   assert.match(directory + profile, /AgentAvatar/);
   assert.match(readFileSync("src/lib/developmentAgentProfiles.ts", "utf8"), /PASS does not equal owner release authorization/);

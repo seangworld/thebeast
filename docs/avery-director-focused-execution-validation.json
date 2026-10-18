@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-17",
+  "phase": "Focused authorized execution",
+  "runtimeChecks": {
+    "passed": 67,
+    "total": 67
+  },
+  "focusedAndBudgetDispatchChecks": {
+    "passed": 31,
+    "total": 31,
+    "definition": "19 focused harness/preparation checks plus12 preserved Stage1 budget/dispatch checks"
+  },
+  "allDirectorScriptDiscovery": {
+    "passed": 69,
+    "total": 74,
+    "fixtureDependentUnavailable": [
+      "browser",
+      "database",
+      "local-auth",
+      "plan-approval",
+      "recovery-local"
+    ],
+    "reason": "Disposable browser/PostgREST/Supabase fixture files were absent; no hosted fallback or production access attempted. These are unavailable integration reruns, separate from test regressions."
+  },
+  "lint": "PASS",
+  "applicationTypeScript": "PASS",
+  "testCompilation": "PASS",
+  "fullSuite": {
+    "total": 2409,
+    "passed": 2391,
+    "failed": 18,
+    "failureNamesUnchanged": false,
+    "trackedIn": 266
+  },
+  "audit": {
+    "officialRegistry": "https://registry.npmjs.org",
+    "full": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 7,
+      "critical": 0,
+      "total": 7
+    },
+    "production": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencyChanges": false,
+    "gateWeakened": false,
+    "requiredBuild": "BLOCKED at npm audit before Next compilation",
+    "latestRootBraces": "3.0.3, still affected",
+    "latestNextEslintPlugin": "16.4.2 still depends on fast-glob3.3.1",
+    "remediation": "Await patched root package, or separately review Tailwind4 migration and removal/replacement of every vulnerable lint path; no compatible patch confirmed."
+  },
+  "productionAccess": false,
+  "merge": false,
+  "deployment": false,
+  "offlineDirectorScripts": {
+    "passed": 76,
+    "total": 76
+  },
+  "targetedTotal": {
+    "passed": 143,
+    "total": 143,
+    "definition": "67 compiled Director/security checks plus76 offline Director script checks; fixture-dependent integrations separately unavailable"
+  },
+  "verifiedNoCostCorrections": [
+    "Known-usage incomplete response consumes its slot; reconciled continuation never retries or replays attempted turns. Unknown usage still halts.",
+    "Independent owner permission withdrawal occurs even if preceding plan approval is blocked.",
+    "Denied first specialist no longer starves independent permitted approved work; denied source reads and attempts remain zero; dependency and CAS contention safeguards tested."
+  ],
+  "modelVerifiedAfterCorrections": false,
+  "modelVerificationQualification": "All16 original requests retained. Evaluator continuation and independent revocation were no-cost checked before remaining prescribed calls. Production scheduler correction occurred only after all16 calls; no fresh paid verification."
+}

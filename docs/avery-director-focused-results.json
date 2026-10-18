@@ -1,0 +1,631 @@
+{
+  "authorizationId": 6241324460,
+  "preRunReview": 6239722752,
+  "sourceCommit": "85547ea5673318294c82071dd7367b0ef79046e4",
+  "calls": 16,
+  "retries": 0,
+  "maxCalls": 16,
+  "maxUsd": 5.25,
+  "reservedUsd": 5.102592,
+  "usageDerivedEstimatedUsd": 0.21527849999999998,
+  "invoiceVerified": false,
+  "credentialPreserved": true,
+  "inputTokens": 14785,
+  "outputTokens": 18270,
+  "reasoningTokens": 9073,
+  "cachedTokens": 0,
+  "cacheWriteTokens": 6017,
+  "meanCallLatencyMs": 25798.184273375,
+  "worstCallLatencyMs": 56447.91645800002,
+  "meanObjectiveLatencyMs": 68800.18050716667,
+  "worstObjectiveLatencyMs": 121124.27595800003,
+  "independentGradingStatus": "PENDING; no competency certification",
+  "costPerIndependentlyPassedObjective": null,
+  "objectives": [
+    {
+      "id": "folio-17",
+      "calls": 3,
+      "elapsedMs": 73785.67854100002,
+      "estimatedUsd": 0.039882,
+      "finalRows": [],
+      "independentGrade": null
+    },
+    {
+      "id": "folio-28",
+      "calls": 3,
+      "elapsedMs": 83737.64850100002,
+      "estimatedUsd": 0.0434915,
+      "finalRows": [],
+      "independentGrade": null
+    },
+    {
+      "id": "folio-41",
+      "calls": 3,
+      "elapsedMs": 121124.27595800003,
+      "estimatedUsd": 0.0596655,
+      "finalRows": [
+        {
+          "id": "care-row",
+          "capability": "health.preparation-review",
+          "status": "running",
+          "attempts": 1
+        },
+        {
+          "id": "cash-row",
+          "capability": "money.cash-review",
+          "status": "running",
+          "attempts": 2
+        }
+      ],
+      "independentGrade": null
+    },
+    {
+      "id": "folio-55",
+      "calls": 3,
+      "elapsedMs": 50268.571834,
+      "estimatedUsd": 0.029725500000000002,
+      "finalRows": [],
+      "independentGrade": null
+    },
+    {
+      "id": "folio-63",
+      "calls": 2,
+      "elapsedMs": 33452.45137600001,
+      "estimatedUsd": 0.017534,
+      "finalRows": [],
+      "independentGrade": null
+    },
+    {
+      "id": "folio-76",
+      "calls": 2,
+      "elapsedMs": 50432.45683299999,
+      "estimatedUsd": 0.02498,
+      "finalRows": [],
+      "independentGrade": null
+    }
+  ],
+  "requests": [
+    {
+      "scenario": "folio-17",
+      "turn": 1,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 22638.26125,
+      "toolElapsedMs": 12.176541000000725,
+      "usage": {
+        "input_tokens": 636,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1009,
+        "output_tokens_details": {
+          "reasoning_tokens": 424
+        },
+        "total_tokens": 1645
+      },
+      "usageDerivedEstimatedUsd": 0.011362,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [],
+      "requestSha256": "ef8c73e342e2da8b67e5f43011942f7756e3bf33043ad86dac931800da5c6a86",
+      "originalResponseSha256": "1ad338d2140e5e5aaceeb5be4e32381ef90a4b777ce6342612f0bd2c49d54bbc",
+      "rawResponseSha256": "18d6f5125283fc733ac20690fd1ce39e189418391471719a947653b6e4c6e894"
+    },
+    {
+      "scenario": "folio-17",
+      "turn": 2,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 24428.609041000003,
+      "toolElapsedMs": 0.8514170000053127,
+      "usage": {
+        "input_tokens": 932,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1149,
+        "output_tokens_details": {
+          "reasoning_tokens": 479
+        },
+        "total_tokens": 2081
+      },
+      "usageDerivedEstimatedUsd": 0.013354,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [
+        true
+      ],
+      "requestSha256": "02c832c55ae482f8a060e3623733141def2d9412319a930aae21345aa3234913",
+      "originalResponseSha256": "fabcd09a64c4fef0cbb24ce1bcdd7dffe350c8c4cbdd38052ebfb00821081637",
+      "rawResponseSha256": "07c237784ad0b2fd3d22aa183bfe2bb2e6a114bf4d39c6daad36ef41069fbd75"
+    },
+    {
+      "scenario": "folio-17",
+      "turn": 3,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 26705.090374999992,
+      "toolElapsedMs": 0.6899170000106096,
+      "usage": {
+        "input_tokens": 1179,
+        "input_tokens_details": {
+          "cache_write_tokens": 1176,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1222,
+        "output_tokens_details": {
+          "reasoning_tokens": 463
+        },
+        "total_tokens": 2401
+      },
+      "usageDerivedEstimatedUsd": 0.015166,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [
+        true,
+        true
+      ],
+      "requestSha256": "47d20352a863aa8af03ec93f502bdb05cb7cc74667f37f321277fba98d2f3cdc",
+      "originalResponseSha256": "18b50551b4b10235ec8ac72543e19e5129acd8e7c2f20b9893959fd81d02307b",
+      "rawResponseSha256": "09390e512f85ab742f7dbf7adf97334968d84b0a7d9e28460ede6033a371dfa3"
+    },
+    {
+      "scenario": "folio-28",
+      "turn": 1,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 25804.308000000005,
+      "toolElapsedMs": 0.6127500000002328,
+      "usage": {
+        "input_tokens": 644,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1123,
+        "output_tokens_details": {
+          "reasoning_tokens": 516
+        },
+        "total_tokens": 1767
+      },
+      "usageDerivedEstimatedUsd": 0.012518,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [],
+      "requestSha256": "895bb0c1a382e82b4e6d97d3daf34f27384db66784a49b42aee83d0515083c9d",
+      "originalResponseSha256": "6b7c2b8764ce95cf2cc9846b2e2c49a169a076497e43b2a200efd3a46e3f40e7",
+      "rawResponseSha256": "e2c37225391b89b5b333e9c2d6ee00c8d43b2063bc699ab86ecd58aa714e73a6"
+    },
+    {
+      "scenario": "folio-28",
+      "turn": 2,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 24001.22475000001,
+      "toolElapsedMs": 0.609375,
+      "usage": {
+        "input_tokens": 950,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1101,
+        "output_tokens_details": {
+          "reasoning_tokens": 455
+        },
+        "total_tokens": 2051
+      },
+      "usageDerivedEstimatedUsd": 0.01291,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [
+        true
+      ],
+      "requestSha256": "a058f8288f94d8d0be3dac79ce70c16231b8f58c0b995fded0acafeb01bfdf42",
+      "originalResponseSha256": "6bbdd59bcd9c861f8f1ac1926251f51990107db97416e95464f9817725e7ace2",
+      "rawResponseSha256": "befd0847411934a63d496b923ae5325a76384fa66b94d3a42cb3ee32d7513ede"
+    },
+    {
+      "scenario": "folio-28",
+      "turn": 3,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 33930.699834,
+      "toolElapsedMs": 0.19379200000548735,
+      "usage": {
+        "input_tokens": 1234,
+        "input_tokens_details": {
+          "cache_write_tokens": 1231,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1498,
+        "output_tokens_details": {
+          "reasoning_tokens": 852
+        },
+        "total_tokens": 2732
+      },
+      "usageDerivedEstimatedUsd": 0.0180635,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [
+        true,
+        true
+      ],
+      "requestSha256": "9a372efd071f3fb865d89f62b204a6f5d851992789ef588d5051558517880db4",
+      "originalResponseSha256": "9273cd2df0ffa29120057bad4b4e685e6cc73a1d555b71c22423c43525528aba",
+      "rawResponseSha256": "0dbd7875f92db989b8d798e8d8c9b4a787e366b4d6c9e143eacc1a206620d072"
+    },
+    {
+      "scenario": "folio-41",
+      "turn": 1,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 39643.83500000002,
+      "toolElapsedMs": 0.280624999984866,
+      "usage": {
+        "input_tokens": 743,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1712,
+        "output_tokens_details": {
+          "reasoning_tokens": 1034
+        },
+        "total_tokens": 2455
+      },
+      "usageDerivedEstimatedUsd": 0.018606,
+      "validated": true,
+      "toolRefusal": "No valid active-lease/dependency decision; reference recovery not substituted",
+      "validationFeedback": null,
+      "historyTruncated": [],
+      "requestSha256": "b251b2a3a261f7db525800d535b963c8994217b946a8395c21d096c68a652e5b",
+      "originalResponseSha256": "be970ca798c9de3d39ed65f10a781914c4e43343302485f85eaf0ecfa6df38af",
+      "rawResponseSha256": "bd5137ce97c7478e07e6e3db4537d9df3adf1aa76c8c828d9008208918ac5523"
+    },
+    {
+      "scenario": "folio-41",
+      "turn": 2,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "incomplete",
+      "responseElapsedMs": 56447.91645800002,
+      "toolElapsedMs": 0,
+      "usage": {
+        "input_tokens": 1076,
+        "input_tokens_details": {
+          "cache_write_tokens": 1073,
+          "cached_tokens": 0
+        },
+        "output_tokens": 2400,
+        "output_tokens_details": {
+          "reasoning_tokens": 1845
+        },
+        "total_tokens": 3476
+      },
+      "usageDerivedEstimatedUsd": 0.0266885,
+      "validated": false,
+      "toolRefusal": null,
+      "validationFeedback": null,
+      "historyTruncated": [
+        true
+      ],
+      "requestSha256": "f104812f8d8a29f3b0ac7adf383a0348b0dbe3bc355c7b14f3d96c0881ff9bb1",
+      "originalResponseSha256": "d2ddbab680da9629a722d2245eea3d3d03814792e4bda6243f7217d77a59af45",
+      "rawResponseSha256": "a86b6bd715f88a35258403cf34f64004371f3d2ccbb6a76d1a55e7d6a756f741"
+    },
+    {
+      "scenario": "folio-41",
+      "turn": 3,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 25031.483708,
+      "toolElapsedMs": 0.7601670000003651,
+      "usage": {
+        "input_tokens": 1333,
+        "input_tokens_details": {
+          "cache_write_tokens": 1330,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1104,
+        "output_tokens_details": {
+          "reasoning_tokens": 411
+        },
+        "total_tokens": 2437
+      },
+      "usageDerivedEstimatedUsd": 0.014371,
+      "validated": true,
+      "toolRefusal": null,
+      "validationFeedback": null,
+      "historyTruncated": [
+        true,
+        true
+      ],
+      "requestSha256": "19308d9781170034177f78ba343ebce8d9113a8d11df9b237ee5a1181837cedd",
+      "originalResponseSha256": "7352c17b52f409912a1178606d076787bc657fc4f0f282b8621ffa8a23fffad3",
+      "rawResponseSha256": "ba45cecd1ab5894340cfd3ba07a763827e5052795f0b1b6f445fe14502e61da5"
+    },
+    {
+      "scenario": "folio-55",
+      "turn": 1,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 15268.036417,
+      "toolElapsedMs": 10.660250000000815,
+      "usage": {
+        "input_tokens": 636,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 729,
+        "output_tokens_details": {
+          "reasoning_tokens": 232
+        },
+        "total_tokens": 1365
+      },
+      "usageDerivedEstimatedUsd": 0.008562,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [],
+      "requestSha256": "8617eb122de115acc620a04c4cad6738b945c94b9c2aa651716386fd7810eedd",
+      "originalResponseSha256": "73d2eb6de5a0d324217dd84f7c4a963f46c9d3ceb62a04739b99a66eb692937b",
+      "rawResponseSha256": "19539b3ef49f5761ad4c809babf0d49ce1373eb8efc7f599511556ec4b462594"
+    },
+    {
+      "scenario": "folio-55",
+      "turn": 2,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 16591.872875,
+      "toolElapsedMs": 0.440374999998312,
+      "usage": {
+        "input_tokens": 950,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 737,
+        "output_tokens_details": {
+          "reasoning_tokens": 346
+        },
+        "total_tokens": 1687
+      },
+      "usageDerivedEstimatedUsd": 0.00927,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [
+        true
+      ],
+      "requestSha256": "ed502a77a56d5efb4deb63a4fe14bc26b29fb81cf8486101f47225beb1475bdc",
+      "originalResponseSha256": "bd8a4b6178646c25a6351e6689be16589276a6bd1abae2a5cd3fb956d8b6f5e1",
+      "rawResponseSha256": "a534332ee729f768c18c0d1f65f064e0d2e997d8fc89648f8632dbfdb16db297"
+    },
+    {
+      "scenario": "folio-55",
+      "turn": 3,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 18397.127541999995,
+      "toolElapsedMs": 0.43437500001164153,
+      "usage": {
+        "input_tokens": 1210,
+        "input_tokens_details": {
+          "cache_write_tokens": 1207,
+          "cached_tokens": 0
+        },
+        "output_tokens": 887,
+        "output_tokens_details": {
+          "reasoning_tokens": 334
+        },
+        "total_tokens": 2097
+      },
+      "usageDerivedEstimatedUsd": 0.0118935,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [
+        true,
+        true
+      ],
+      "requestSha256": "60b57354897459ed25f2af69c32148b464e12c25f934fd0c664b9190e9c1c66e",
+      "originalResponseSha256": "d6e32f0328f1b3c13216a66676b8f2a6a47a8a357ae62c89ad341149e77524f2",
+      "rawResponseSha256": "6854bd07006bb6929d3fb2a54a2b130e21ace39d9246f3525a285deed75e6ccb"
+    },
+    {
+      "scenario": "folio-63",
+      "turn": 1,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 18277.012791,
+      "toolElapsedMs": 1.1302920000016456,
+      "usage": {
+        "input_tokens": 622,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 786,
+        "output_tokens_details": {
+          "reasoning_tokens": 291
+        },
+        "total_tokens": 1408
+      },
+      "usageDerivedEstimatedUsd": 0.009104,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [],
+      "requestSha256": "2958fa5300a9a424b5343bb417de02f10eb6d59cdcc199d1e12a35f7d3fddfed",
+      "originalResponseSha256": "0072f91f80e81c7e3c9b333217c26cae433eab25840d8eb4125255e50078cfb0",
+      "rawResponseSha256": "0d3841e95bd2e137117d254bd7dfa5fd8b6b6c9c1e677f562cd3cbaab2dc990e"
+    },
+    {
+      "scenario": "folio-63",
+      "turn": 2,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 15174.113834000003,
+      "toolElapsedMs": 0.19445900000573602,
+      "usage": {
+        "input_tokens": 970,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 649,
+        "output_tokens_details": {
+          "reasoning_tokens": 359
+        },
+        "total_tokens": 1619
+      },
+      "usageDerivedEstimatedUsd": 0.00843,
+      "validated": true,
+      "toolRefusal": null,
+      "validationFeedback": null,
+      "historyTruncated": [
+        true
+      ],
+      "requestSha256": "ee5ba208b57413415bf58fa40b120082be806ed46cb2d0a88f01f88c9f9150a2",
+      "originalResponseSha256": "025131a3672cfc290cfe3b8141d0c0e5520edf443fac1dc1df7dd84e56e5bae2",
+      "rawResponseSha256": "a551483edde2c8860a41d2e002ddb44dd83884ed5c3cd6e1a2f286f06f4140c9"
+    },
+    {
+      "scenario": "folio-76",
+      "turn": 1,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 21789.405916000003,
+      "toolElapsedMs": 0.34883399997488596,
+      "usage": {
+        "input_tokens": 668,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 965,
+        "output_tokens_details": {
+          "reasoning_tokens": 516
+        },
+        "total_tokens": 1633
+      },
+      "usageDerivedEstimatedUsd": 0.010986,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [],
+      "requestSha256": "b0f93fef47b5d9b87532fbec301346f6a1b597c6489613917afb323e96f229b6",
+      "originalResponseSha256": "ff3069fe69c7f603eb0f8c5da7546e12b82a7f551af700755751160aac688016",
+      "rawResponseSha256": "6ec0b26c58f367613bde66aa83508ab860ba9ed1df96b49bce140374acd4ab6d"
+    },
+    {
+      "scenario": "folio-76",
+      "turn": 2,
+      "actualModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "serviceTier": "default",
+      "status": "completed",
+      "responseElapsedMs": 28641.950582999998,
+      "toolElapsedMs": 0.7515000000130385,
+      "usage": {
+        "input_tokens": 1002,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1199,
+        "output_tokens_details": {
+          "reasoning_tokens": 516
+        },
+        "total_tokens": 2201
+      },
+      "usageDerivedEstimatedUsd": 0.013994,
+      "validated": true,
+      "toolRefusal": "Resolve the plan's approval decisions, contradictions and material missing information before authorizing it.",
+      "validationFeedback": null,
+      "historyTruncated": [
+        true
+      ],
+      "requestSha256": "ebdc690e1ec70f8de2699c7e36d01265d77893304653784eb692868e9fb0150f",
+      "originalResponseSha256": "7ec2bfa159b76f8fa9cbc5e586f80d437307fd746fb2759cd4b3f1edc2c2a10c",
+      "rawResponseSha256": "3405780e877284fbf39d6628f0a091f09f650a02fbfe416bc1e0e59f6226a373"
+    }
+  ],
+  "packets": [
+    {
+      "id": "folio-17",
+      "path": "docs/avery-focused-completed/folio-17.json",
+      "sha256": "057dcaf490c189e3faf1005f30b0d82336f26e79ed2e2e2d2738ae8c596db215",
+      "turns": 3
+    },
+    {
+      "id": "folio-28",
+      "path": "docs/avery-focused-completed/folio-28.json",
+      "sha256": "82e77cd155ffc59334d14f1a750e62606b0b1849aeae3daa7b57bceeb6004ff5",
+      "turns": 3
+    },
+    {
+      "id": "folio-41",
+      "path": "docs/avery-focused-completed/folio-41.json",
+      "sha256": "73f4afcb16b55d37345f2f2116c3d8bbc2ba124f888a4fdb6834b7b189af8452",
+      "turns": 3
+    },
+    {
+      "id": "folio-55",
+      "path": "docs/avery-focused-completed/folio-55.json",
+      "sha256": "a7230da42fb3d40e32cc24bf8f5b8d477b2099aec71b46fa7fcdbdfbc7a2b7bb",
+      "turns": 3
+    },
+    {
+      "id": "folio-63",
+      "path": "docs/avery-focused-completed/folio-63.json",
+      "sha256": "2d50283cf17ba0ea08596769314eb71dfadd0ac9475f891ded4b6dff1f78f8fc",
+      "turns": 2
+    },
+    {
+      "id": "folio-76",
+      "path": "docs/avery-focused-completed/folio-76.json",
+      "sha256": "a621ff89c2f894de0651c45beb998fe9455634c8d88ac2024e68ca5af7f4f86f",
+      "turns": 2
+    }
+  ]
+}

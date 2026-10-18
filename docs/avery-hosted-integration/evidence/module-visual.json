@@ -1,0 +1,30 @@
+[
+  {
+    "module": "money",
+    "width": 1440,
+    "status": "pass",
+    "noOverflow": true,
+    "noDataLoadError": true
+  },
+  {
+    "module": "health",
+    "width": 1440,
+    "status": "pass",
+    "noOverflow": true,
+    "noDataLoadError": true
+  },
+  {
+    "module": "money",
+    "width": 375,
+    "status": "pass",
+    "noOverflow": true,
+    "noDataLoadError": true
+  },
+  {
+    "module": "health",
+    "width": 375,
+    "status": "pass",
+    "noOverflow": true,
+    "noDataLoadError": true
+  }
+]

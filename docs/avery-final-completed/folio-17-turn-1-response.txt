@@ -1,0 +1,32 @@
+{
+  "interpretation": "Review your own saved care records first to inform preparation for employer reassignment. Cash review is conditional: propose it only if actual care-review findings document an outstanding transport arrangement.",
+  "steps": [
+    {
+      "capability": "health.preparation-review",
+      "dependsOn": [],
+      "purpose": "Begin with the available care records. The returned preparation findings may establish whether your condition for a later cash review is met.",
+      "acceptance": "Recompute the Health Advisor preparation model from current permitted records and obtain current server verification of consistency with those saved records."
+    }
+  ],
+  "planningNotes": [
+    "Do not schedule cash review yet. If the care findings document an outstanding transport arrangement, propose money.cash-review afterward for separate member approval.",
+    "If the preparation findings do not address transport, treat the condition as unresolved—not as evidence that transport is arranged or outstanding. Identify the specific clarification needed at that point.",
+    "No additional owner decision or source submission is needed to propose the initial care review; the specialist checks its required saved-record inputs.",
+    "A verified preparation review establishes saved-record consistency, not that transport is actually secured or that an employer reassignment file is complete.",
+    "This is a proposal only. No review has run."
+  ],
+  "evidenceClaims": [],
+  "alternatives": [
+    "Reviewing cash immediately would disregard your explicit condition.",
+    "Scheduling both reviews with a dependency would encode order, not the required condition; propose only the care review now."
+  ],
+  "contradictions": [],
+  "missingInformation": [],
+  "ownerDecisions": [],
+  "unsupportedWork": [
+    "Producing or submitting an employer reassignment file, determining employer requirements, and arranging transport are outside the available saved-record review capabilities."
+  ],
+  "assessments": [],
+  "contractVersion": 2,
+  "requirements": []
+}

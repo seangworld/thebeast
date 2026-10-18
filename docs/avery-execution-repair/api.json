@@ -1,0 +1,999 @@
+{
+  "provenance": "AUTHORED API INTEGRATION INPUTS; synthetic session/entitlement adapter, real PostgREST JWT/RLS and DB; no paid model",
+  "paidCalls": 0,
+  "credentialFileAccess": false,
+  "requests": [
+    {
+      "action": "approve_reasoned_plan",
+      "status": 200,
+      "payload": {
+        "assignments": [
+          {
+            "id": "1c7e4a42-eab2-4cf0-8712-e6fe8c63e2ec",
+            "owner_id": "00000000-0000-4000-8000-000000000001",
+            "goal_id": "f69c84dd-9657-4bde-9940-a1f394ae0555",
+            "capability": "health.preparation-review",
+            "status": "planned",
+            "dependencies": [],
+            "revision": 0,
+            "attempts": 0,
+            "lease_id": null,
+            "lease_until": null,
+            "result": null,
+            "events": [
+              {
+                "at": "2026-10-17T22:07:48.920189+00:00",
+                "detail": "Member explicitly approved this ready saved-record review.",
+                "status": "planned"
+              }
+            ],
+            "blocker": null,
+            "created_at": "2026-10-17T22:07:48.920189+00:00",
+            "updated_at": "2026-10-17T22:07:48.920189+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "action": "resume",
+      "status": 200,
+      "payload": {
+        "outcome": {
+          "state": "verified",
+          "taskId": "1c7e4a42-eab2-4cf0-8712-e6fe8c63e2ec",
+          "detail": "Specialist result recomputed and source snapshot verified."
+        },
+        "assignments": [
+          {
+            "id": "1c7e4a42-eab2-4cf0-8712-e6fe8c63e2ec",
+            "owner_id": "00000000-0000-4000-8000-000000000001",
+            "goal_id": "f69c84dd-9657-4bde-9940-a1f394ae0555",
+            "capability": "health.preparation-review",
+            "status": "verified",
+            "dependencies": [],
+            "revision": 2,
+            "attempts": 1,
+            "lease_id": null,
+            "lease_until": null,
+            "result": {
+              "asOf": "2026-10-17T22:07:48.936Z",
+              "output": {
+                "safety": [
+                  "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                  "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                  "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                  "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                ],
+                "outcomeLearning": [],
+                "recommendations": [
+                  {
+                    "href": "/dashboard/health/profile",
+                    "title": "Build a current health profile",
+                    "confidence": {
+                      "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                      "label": "insufficient",
+                      "score": 0
+                    },
+                    "limitations": [
+                      "This is a record-completeness suggestion, not a medical recommendation.",
+                      "Do not add information you do not want stored in BeastHealth."
+                    ],
+                    "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beasthealth",
+                        "profileRecordCount": 0
+                      }
+                    ],
+                    "sourceRecommendationId": "health-profile-review"
+                  },
+                  {
+                    "href": "/dashboard/health/medications",
+                    "title": "Verify the saved medication list",
+                    "confidence": {
+                      "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                      "label": "moderate",
+                      "score": 70
+                    },
+                    "limitations": [
+                      "Do not start, stop, or change medication based on BeastHealth.",
+                      "BeastHealth does not check interactions, dosing, or clinical appropriateness."
+                    ],
+                    "recommendation": "Review names, doses, schedules, dates, and prescribers with a qualified clinician or pharmacist. Update the record only after you confirm it.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beast_health_records",
+                        "healthRecordId": "20000000-0000-4000-8000-000000000001",
+                        "sourceRecommendationId": "medication-list-verification"
+                      }
+                    ],
+                    "sourceRecommendationId": "medication-list-verification"
+                  },
+                  {
+                    "href": "/dashboard/health/appointments",
+                    "title": "Prepare for Corrected synthetic medication",
+                    "confidence": {
+                      "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                      "label": "moderate",
+                      "score": 70
+                    },
+                    "limitations": [
+                      "Appointment preparation is organizational support and does not determine clinical priorities.",
+                      "Confirm the appointment time, location, and instructions with the provider."
+                    ],
+                    "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beast_health_records",
+                        "healthRecordId": "20000000-0000-4000-8000-000000000017",
+                        "sourceRecommendationId": "appointment-preparation:20000000-0000-4000-8000-000000000017"
+                      }
+                    ],
+                    "sourceRecommendationId": "appointment-preparation:20000000-0000-4000-8000-000000000017"
+                  }
+                ],
+                "timelineSummary": {
+                  "byType": [
+                    {
+                      "kind": "medication",
+                      "count": 1
+                    },
+                    {
+                      "kind": "appointment",
+                      "count": 1
+                    }
+                  ],
+                  "totalEvents": 2,
+                  "recentEvents": [
+                    {
+                      "id": "20000000-0000-4000-8000-000000000017",
+                      "date": "2026-10-17T21:57:21.156353+00:00",
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "recordType": "appointment"
+                    },
+                    {
+                      "id": "20000000-0000-4000-8000-000000000001",
+                      "date": "2026-10-17T21:55:07.995537+00:00",
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "recordType": "medication"
+                    }
+                  ]
+                },
+                "medicationReview": [
+                  {
+                    "id": "20000000-0000-4000-8000-000000000001",
+                    "date": null,
+                    "title": "Corrected synthetic medication",
+                    "source": "synthetic",
+                    "status": "active",
+                    "context": null
+                  }
+                ],
+                "executiveBriefing": {
+                  "title": "Your saved health context is ready for review",
+                  "summary": "2 active records across 2 health areas. This briefing describes record coverage only.",
+                  "totalRecords": 2,
+                  "documentCount": 0,
+                  "lastUpdatedAt": "2026-10-17T22:03:04.152+00:00",
+                  "populatedAreas": 2
+                },
+                "documentUnderstanding": [],
+                "appointmentPreparation": {
+                  "questions": [
+                    "What should I understand or prepare for \"Corrected synthetic medication\"?",
+                    "Is my saved medication, dose, and schedule list accurate, and what should I verify after this visit?"
+                  ],
+                  "nextAppointment": {
+                    "id": "20000000-0000-4000-8000-000000000017",
+                    "notes": "Transport paperwork has not yet been arranged.",
+                    "title": "Corrected synthetic medication",
+                    "source": "synthetic",
+                    "status": "active",
+                    "details": {},
+                    "ownerId": "00000000-0000-4000-8000-000000000001",
+                    "createdAt": "2026-10-17T21:57:21.156353+00:00",
+                    "updatedAt": "2026-10-17T22:03:04.152+00:00",
+                    "occurredOn": null,
+                    "recordType": "appointment"
+                  },
+                  "recordsToReview": [
+                    {
+                      "id": "20000000-0000-4000-8000-000000000001",
+                      "notes": null,
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "details": {},
+                      "ownerId": "00000000-0000-4000-8000-000000000001",
+                      "createdAt": "2026-10-17T21:55:07.995537+00:00",
+                      "updatedAt": "2026-10-17T22:03:04.152+00:00",
+                      "occurredOn": null,
+                      "recordType": "medication"
+                    }
+                  ],
+                  "documentsToReview": []
+                }
+              },
+              "capability": "health.preparation-review",
+              "specialist": "beasthealth.health-advisor",
+              "limitations": [
+                "Saved-record review only; this does not complete the underlying life goal.",
+                "No external research, medical judgment, transaction, publication or production action was performed."
+              ]
+            },
+            "events": [
+              {
+                "at": "2026-10-17T22:07:48.920189+00:00",
+                "detail": "Member explicitly approved this ready saved-record review.",
+                "status": "planned"
+              },
+              {
+                "at": "2026-10-17T22:07:48.936Z",
+                "detail": "Specialist checkpoint claimed.",
+                "status": "running"
+              },
+              {
+                "at": "2026-10-17T22:07:48.936Z",
+                "detail": "Specialist result recomputed and source snapshot verified.",
+                "status": "verified"
+              }
+            ],
+            "blocker": null,
+            "created_at": "2026-10-17T22:07:48.920189+00:00",
+            "updated_at": "2026-10-17T22:07:48.936+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "action": "approve_reasoned_plan",
+      "status": 409,
+      "payload": {
+        "error": "Objective, permissions or checkpoint evidence changed. Ask Avery for a current plan."
+      }
+    },
+    {
+      "action": "approve_reasoned_plan",
+      "status": 404,
+      "payload": {
+        "error": "Objective not found."
+      }
+    },
+    {
+      "action": "approve_reasoned_plan",
+      "status": 200,
+      "payload": {
+        "assignments": [
+          {
+            "id": "1c7e4a42-eab2-4cf0-8712-e6fe8c63e2ec",
+            "owner_id": "00000000-0000-4000-8000-000000000001",
+            "goal_id": "f69c84dd-9657-4bde-9940-a1f394ae0555",
+            "capability": "health.preparation-review",
+            "status": "verified",
+            "dependencies": [],
+            "revision": 2,
+            "attempts": 1,
+            "lease_id": null,
+            "lease_until": null,
+            "result": {
+              "asOf": "2026-10-17T22:07:48.936Z",
+              "output": {
+                "safety": [
+                  "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                  "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                  "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                  "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                ],
+                "outcomeLearning": [],
+                "recommendations": [
+                  {
+                    "href": "/dashboard/health/profile",
+                    "title": "Build a current health profile",
+                    "confidence": {
+                      "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                      "label": "insufficient",
+                      "score": 0
+                    },
+                    "limitations": [
+                      "This is a record-completeness suggestion, not a medical recommendation.",
+                      "Do not add information you do not want stored in BeastHealth."
+                    ],
+                    "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beasthealth",
+                        "profileRecordCount": 0
+                      }
+                    ],
+                    "sourceRecommendationId": "health-profile-review"
+                  },
+                  {
+                    "href": "/dashboard/health/medications",
+                    "title": "Verify the saved medication list",
+                    "confidence": {
+                      "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                      "label": "moderate",
+                      "score": 70
+                    },
+                    "limitations": [
+                      "Do not start, stop, or change medication based on BeastHealth.",
+                      "BeastHealth does not check interactions, dosing, or clinical appropriateness."
+                    ],
+                    "recommendation": "Review names, doses, schedules, dates, and prescribers with a qualified clinician or pharmacist. Update the record only after you confirm it.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beast_health_records",
+                        "healthRecordId": "20000000-0000-4000-8000-000000000001",
+                        "sourceRecommendationId": "medication-list-verification"
+                      }
+                    ],
+                    "sourceRecommendationId": "medication-list-verification"
+                  },
+                  {
+                    "href": "/dashboard/health/appointments",
+                    "title": "Prepare for Corrected synthetic medication",
+                    "confidence": {
+                      "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                      "label": "moderate",
+                      "score": 70
+                    },
+                    "limitations": [
+                      "Appointment preparation is organizational support and does not determine clinical priorities.",
+                      "Confirm the appointment time, location, and instructions with the provider."
+                    ],
+                    "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beast_health_records",
+                        "healthRecordId": "20000000-0000-4000-8000-000000000017",
+                        "sourceRecommendationId": "appointment-preparation:20000000-0000-4000-8000-000000000017"
+                      }
+                    ],
+                    "sourceRecommendationId": "appointment-preparation:20000000-0000-4000-8000-000000000017"
+                  }
+                ],
+                "timelineSummary": {
+                  "byType": [
+                    {
+                      "kind": "medication",
+                      "count": 1
+                    },
+                    {
+                      "kind": "appointment",
+                      "count": 1
+                    }
+                  ],
+                  "totalEvents": 2,
+                  "recentEvents": [
+                    {
+                      "id": "20000000-0000-4000-8000-000000000017",
+                      "date": "2026-10-17T21:57:21.156353+00:00",
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "recordType": "appointment"
+                    },
+                    {
+                      "id": "20000000-0000-4000-8000-000000000001",
+                      "date": "2026-10-17T21:55:07.995537+00:00",
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "recordType": "medication"
+                    }
+                  ]
+                },
+                "medicationReview": [
+                  {
+                    "id": "20000000-0000-4000-8000-000000000001",
+                    "date": null,
+                    "title": "Corrected synthetic medication",
+                    "source": "synthetic",
+                    "status": "active",
+                    "context": null
+                  }
+                ],
+                "executiveBriefing": {
+                  "title": "Your saved health context is ready for review",
+                  "summary": "2 active records across 2 health areas. This briefing describes record coverage only.",
+                  "totalRecords": 2,
+                  "documentCount": 0,
+                  "lastUpdatedAt": "2026-10-17T22:03:04.152+00:00",
+                  "populatedAreas": 2
+                },
+                "documentUnderstanding": [],
+                "appointmentPreparation": {
+                  "questions": [
+                    "What should I understand or prepare for \"Corrected synthetic medication\"?",
+                    "Is my saved medication, dose, and schedule list accurate, and what should I verify after this visit?"
+                  ],
+                  "nextAppointment": {
+                    "id": "20000000-0000-4000-8000-000000000017",
+                    "notes": "Transport paperwork has not yet been arranged.",
+                    "title": "Corrected synthetic medication",
+                    "source": "synthetic",
+                    "status": "active",
+                    "details": {},
+                    "ownerId": "00000000-0000-4000-8000-000000000001",
+                    "createdAt": "2026-10-17T21:57:21.156353+00:00",
+                    "updatedAt": "2026-10-17T22:03:04.152+00:00",
+                    "occurredOn": null,
+                    "recordType": "appointment"
+                  },
+                  "recordsToReview": [
+                    {
+                      "id": "20000000-0000-4000-8000-000000000001",
+                      "notes": null,
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "details": {},
+                      "ownerId": "00000000-0000-4000-8000-000000000001",
+                      "createdAt": "2026-10-17T21:55:07.995537+00:00",
+                      "updatedAt": "2026-10-17T22:03:04.152+00:00",
+                      "occurredOn": null,
+                      "recordType": "medication"
+                    }
+                  ],
+                  "documentsToReview": []
+                }
+              },
+              "capability": "health.preparation-review",
+              "specialist": "beasthealth.health-advisor",
+              "limitations": [
+                "Saved-record review only; this does not complete the underlying life goal.",
+                "No external research, medical judgment, transaction, publication or production action was performed."
+              ]
+            },
+            "events": [
+              {
+                "at": "2026-10-17T22:07:48.920189+00:00",
+                "detail": "Member explicitly approved this ready saved-record review.",
+                "status": "planned"
+              },
+              {
+                "at": "2026-10-17T22:07:48.936Z",
+                "detail": "Specialist checkpoint claimed.",
+                "status": "running"
+              },
+              {
+                "at": "2026-10-17T22:07:48.936Z",
+                "detail": "Specialist result recomputed and source snapshot verified.",
+                "status": "verified"
+              }
+            ],
+            "blocker": null,
+            "created_at": "2026-10-17T22:07:48.920189+00:00",
+            "updated_at": "2026-10-17T22:07:48.936+00:00"
+          },
+          {
+            "id": "e4710094-2be2-4d82-b5a9-815d178c4572",
+            "owner_id": "00000000-0000-4000-8000-000000000001",
+            "goal_id": "f69c84dd-9657-4bde-9940-a1f394ae0555",
+            "capability": "money.cash-review",
+            "status": "planned",
+            "dependencies": [],
+            "revision": 0,
+            "attempts": 0,
+            "lease_id": null,
+            "lease_until": null,
+            "result": null,
+            "events": [
+              {
+                "at": "2026-10-17T22:07:49.032449+00:00",
+                "detail": "Member explicitly approved this ready saved-record review.",
+                "status": "planned"
+              }
+            ],
+            "blocker": null,
+            "created_at": "2026-10-17T22:07:49.032449+00:00",
+            "updated_at": "2026-10-17T22:07:49.032449+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "action": "cancel",
+      "status": 200,
+      "payload": {
+        "assignments": [
+          {
+            "id": "1c7e4a42-eab2-4cf0-8712-e6fe8c63e2ec",
+            "owner_id": "00000000-0000-4000-8000-000000000001",
+            "goal_id": "f69c84dd-9657-4bde-9940-a1f394ae0555",
+            "capability": "health.preparation-review",
+            "status": "verified",
+            "dependencies": [],
+            "revision": 2,
+            "attempts": 1,
+            "lease_id": null,
+            "lease_until": null,
+            "result": {
+              "asOf": "2026-10-17T22:07:48.936Z",
+              "output": {
+                "safety": [
+                  "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                  "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                  "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                  "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                ],
+                "outcomeLearning": [],
+                "recommendations": [
+                  {
+                    "href": "/dashboard/health/profile",
+                    "title": "Build a current health profile",
+                    "confidence": {
+                      "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                      "label": "insufficient",
+                      "score": 0
+                    },
+                    "limitations": [
+                      "This is a record-completeness suggestion, not a medical recommendation.",
+                      "Do not add information you do not want stored in BeastHealth."
+                    ],
+                    "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beasthealth",
+                        "profileRecordCount": 0
+                      }
+                    ],
+                    "sourceRecommendationId": "health-profile-review"
+                  },
+                  {
+                    "href": "/dashboard/health/medications",
+                    "title": "Verify the saved medication list",
+                    "confidence": {
+                      "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                      "label": "moderate",
+                      "score": 70
+                    },
+                    "limitations": [
+                      "Do not start, stop, or change medication based on BeastHealth.",
+                      "BeastHealth does not check interactions, dosing, or clinical appropriateness."
+                    ],
+                    "recommendation": "Review names, doses, schedules, dates, and prescribers with a qualified clinician or pharmacist. Update the record only after you confirm it.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beast_health_records",
+                        "healthRecordId": "20000000-0000-4000-8000-000000000001",
+                        "sourceRecommendationId": "medication-list-verification"
+                      }
+                    ],
+                    "sourceRecommendationId": "medication-list-verification"
+                  },
+                  {
+                    "href": "/dashboard/health/appointments",
+                    "title": "Prepare for Corrected synthetic medication",
+                    "confidence": {
+                      "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                      "label": "moderate",
+                      "score": 70
+                    },
+                    "limitations": [
+                      "Appointment preparation is organizational support and does not determine clinical priorities.",
+                      "Confirm the appointment time, location, and instructions with the provider."
+                    ],
+                    "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beast_health_records",
+                        "healthRecordId": "20000000-0000-4000-8000-000000000017",
+                        "sourceRecommendationId": "appointment-preparation:20000000-0000-4000-8000-000000000017"
+                      }
+                    ],
+                    "sourceRecommendationId": "appointment-preparation:20000000-0000-4000-8000-000000000017"
+                  }
+                ],
+                "timelineSummary": {
+                  "byType": [
+                    {
+                      "kind": "medication",
+                      "count": 1
+                    },
+                    {
+                      "kind": "appointment",
+                      "count": 1
+                    }
+                  ],
+                  "totalEvents": 2,
+                  "recentEvents": [
+                    {
+                      "id": "20000000-0000-4000-8000-000000000017",
+                      "date": "2026-10-17T21:57:21.156353+00:00",
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "recordType": "appointment"
+                    },
+                    {
+                      "id": "20000000-0000-4000-8000-000000000001",
+                      "date": "2026-10-17T21:55:07.995537+00:00",
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "recordType": "medication"
+                    }
+                  ]
+                },
+                "medicationReview": [
+                  {
+                    "id": "20000000-0000-4000-8000-000000000001",
+                    "date": null,
+                    "title": "Corrected synthetic medication",
+                    "source": "synthetic",
+                    "status": "active",
+                    "context": null
+                  }
+                ],
+                "executiveBriefing": {
+                  "title": "Your saved health context is ready for review",
+                  "summary": "2 active records across 2 health areas. This briefing describes record coverage only.",
+                  "totalRecords": 2,
+                  "documentCount": 0,
+                  "lastUpdatedAt": "2026-10-17T22:03:04.152+00:00",
+                  "populatedAreas": 2
+                },
+                "documentUnderstanding": [],
+                "appointmentPreparation": {
+                  "questions": [
+                    "What should I understand or prepare for \"Corrected synthetic medication\"?",
+                    "Is my saved medication, dose, and schedule list accurate, and what should I verify after this visit?"
+                  ],
+                  "nextAppointment": {
+                    "id": "20000000-0000-4000-8000-000000000017",
+                    "notes": "Transport paperwork has not yet been arranged.",
+                    "title": "Corrected synthetic medication",
+                    "source": "synthetic",
+                    "status": "active",
+                    "details": {},
+                    "ownerId": "00000000-0000-4000-8000-000000000001",
+                    "createdAt": "2026-10-17T21:57:21.156353+00:00",
+                    "updatedAt": "2026-10-17T22:03:04.152+00:00",
+                    "occurredOn": null,
+                    "recordType": "appointment"
+                  },
+                  "recordsToReview": [
+                    {
+                      "id": "20000000-0000-4000-8000-000000000001",
+                      "notes": null,
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "details": {},
+                      "ownerId": "00000000-0000-4000-8000-000000000001",
+                      "createdAt": "2026-10-17T21:55:07.995537+00:00",
+                      "updatedAt": "2026-10-17T22:03:04.152+00:00",
+                      "occurredOn": null,
+                      "recordType": "medication"
+                    }
+                  ],
+                  "documentsToReview": []
+                }
+              },
+              "capability": "health.preparation-review",
+              "specialist": "beasthealth.health-advisor",
+              "limitations": [
+                "Saved-record review only; this does not complete the underlying life goal.",
+                "No external research, medical judgment, transaction, publication or production action was performed."
+              ]
+            },
+            "events": [
+              {
+                "at": "2026-10-17T22:07:48.920189+00:00",
+                "detail": "Member explicitly approved this ready saved-record review.",
+                "status": "planned"
+              },
+              {
+                "at": "2026-10-17T22:07:48.936Z",
+                "detail": "Specialist checkpoint claimed.",
+                "status": "running"
+              },
+              {
+                "at": "2026-10-17T22:07:48.936Z",
+                "detail": "Specialist result recomputed and source snapshot verified.",
+                "status": "verified"
+              }
+            ],
+            "blocker": null,
+            "created_at": "2026-10-17T22:07:48.920189+00:00",
+            "updated_at": "2026-10-17T22:07:48.936+00:00"
+          },
+          {
+            "id": "e4710094-2be2-4d82-b5a9-815d178c4572",
+            "owner_id": "00000000-0000-4000-8000-000000000001",
+            "goal_id": "f69c84dd-9657-4bde-9940-a1f394ae0555",
+            "capability": "money.cash-review",
+            "status": "cancelled",
+            "dependencies": [],
+            "revision": 1,
+            "attempts": 0,
+            "lease_id": null,
+            "lease_until": null,
+            "result": null,
+            "events": [
+              {
+                "at": "2026-10-17T22:07:49.032449+00:00",
+                "detail": "Member explicitly approved this ready saved-record review.",
+                "status": "planned"
+              },
+              {
+                "at": "2026-10-17T22:07:49.05769+00:00",
+                "detail": "Current member instruction cancelled remaining work. Prior verified reviews retained.",
+                "status": "cancelled"
+              }
+            ],
+            "blocker": "Current member instruction cancelled remaining work.",
+            "created_at": "2026-10-17T22:07:49.032449+00:00",
+            "updated_at": "2026-10-17T22:07:49.05769+00:00"
+          }
+        ],
+        "notice": "Remaining visible reviews cancelled. Verified reviews retained. Revoked modules remain inaccessible."
+      }
+    },
+    {
+      "action": "resume",
+      "status": 200,
+      "payload": {
+        "outcome": {
+          "state": "cancelled",
+          "detail": "Remaining reviews cancelled by the member. Previously verified reviews retained; the underlying goal is not complete."
+        },
+        "assignments": [
+          {
+            "id": "1c7e4a42-eab2-4cf0-8712-e6fe8c63e2ec",
+            "owner_id": "00000000-0000-4000-8000-000000000001",
+            "goal_id": "f69c84dd-9657-4bde-9940-a1f394ae0555",
+            "capability": "health.preparation-review",
+            "status": "verified",
+            "dependencies": [],
+            "revision": 2,
+            "attempts": 1,
+            "lease_id": null,
+            "lease_until": null,
+            "result": {
+              "asOf": "2026-10-17T22:07:48.936Z",
+              "output": {
+                "safety": [
+                  "Health Advisor organizes owner-authorized records and appointment questions; it never diagnoses.",
+                  "Health Advisor does not prescribe, change medication, interpret vitals, or replace a qualified clinician.",
+                  "Urgent or emergency concerns require appropriate local emergency or qualified clinical care, not BeastHealth.",
+                  "Confidence describes record support for an organizational suggestion, not certainty about health or treatment."
+                ],
+                "outcomeLearning": [],
+                "recommendations": [
+                  {
+                    "href": "/dashboard/health/profile",
+                    "title": "Build a current health profile",
+                    "confidence": {
+                      "basis": "Confidence is insufficient because the available evidence quality is insufficient. No evidence item directly supports the claim. No probability is stated because no supported probability model was supplied.",
+                      "label": "insufficient",
+                      "score": 0
+                    },
+                    "limitations": [
+                      "This is a record-completeness suggestion, not a medical recommendation.",
+                      "Do not add information you do not want stored in BeastHealth."
+                    ],
+                    "recommendation": "Add only the health background and care preferences you want available for future appointment preparation.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beasthealth",
+                        "profileRecordCount": 0
+                      }
+                    ],
+                    "sourceRecommendationId": "health-profile-review"
+                  },
+                  {
+                    "href": "/dashboard/health/medications",
+                    "title": "Verify the saved medication list",
+                    "confidence": {
+                      "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                      "label": "moderate",
+                      "score": 70
+                    },
+                    "limitations": [
+                      "Do not start, stop, or change medication based on BeastHealth.",
+                      "BeastHealth does not check interactions, dosing, or clinical appropriateness."
+                    ],
+                    "recommendation": "Review names, doses, schedules, dates, and prescribers with a qualified clinician or pharmacist. Update the record only after you confirm it.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beast_health_records",
+                        "healthRecordId": "20000000-0000-4000-8000-000000000001",
+                        "sourceRecommendationId": "medication-list-verification"
+                      }
+                    ],
+                    "sourceRecommendationId": "medication-list-verification"
+                  },
+                  {
+                    "href": "/dashboard/health/appointments",
+                    "title": "Prepare for Corrected synthetic medication",
+                    "confidence": {
+                      "basis": "Confidence is moderate because the available evidence quality is moderate. 1 evidence item support the claim. The record is owner-maintained and has not been independently verified by BeastHealth. No probability is stated because no supported probability model was supplied.",
+                      "label": "moderate",
+                      "score": 70
+                    },
+                    "limitations": [
+                      "Appointment preparation is organizational support and does not determine clinical priorities.",
+                      "Confirm the appointment time, location, and instructions with the provider."
+                    ],
+                    "recommendation": "Review the saved appointment context, medication list, condition list, questions, and permissioned medical documents before the visit.",
+                    "supportingEvidence": [
+                      {
+                        "source": "beast_health_records",
+                        "healthRecordId": "20000000-0000-4000-8000-000000000017",
+                        "sourceRecommendationId": "appointment-preparation:20000000-0000-4000-8000-000000000017"
+                      }
+                    ],
+                    "sourceRecommendationId": "appointment-preparation:20000000-0000-4000-8000-000000000017"
+                  }
+                ],
+                "timelineSummary": {
+                  "byType": [
+                    {
+                      "kind": "medication",
+                      "count": 1
+                    },
+                    {
+                      "kind": "appointment",
+                      "count": 1
+                    }
+                  ],
+                  "totalEvents": 2,
+                  "recentEvents": [
+                    {
+                      "id": "20000000-0000-4000-8000-000000000017",
+                      "date": "2026-10-17T21:57:21.156353+00:00",
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "recordType": "appointment"
+                    },
+                    {
+                      "id": "20000000-0000-4000-8000-000000000001",
+                      "date": "2026-10-17T21:55:07.995537+00:00",
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "recordType": "medication"
+                    }
+                  ]
+                },
+                "medicationReview": [
+                  {
+                    "id": "20000000-0000-4000-8000-000000000001",
+                    "date": null,
+                    "title": "Corrected synthetic medication",
+                    "source": "synthetic",
+                    "status": "active",
+                    "context": null
+                  }
+                ],
+                "executiveBriefing": {
+                  "title": "Your saved health context is ready for review",
+                  "summary": "2 active records across 2 health areas. This briefing describes record coverage only.",
+                  "totalRecords": 2,
+                  "documentCount": 0,
+                  "lastUpdatedAt": "2026-10-17T22:03:04.152+00:00",
+                  "populatedAreas": 2
+                },
+                "documentUnderstanding": [],
+                "appointmentPreparation": {
+                  "questions": [
+                    "What should I understand or prepare for \"Corrected synthetic medication\"?",
+                    "Is my saved medication, dose, and schedule list accurate, and what should I verify after this visit?"
+                  ],
+                  "nextAppointment": {
+                    "id": "20000000-0000-4000-8000-000000000017",
+                    "notes": "Transport paperwork has not yet been arranged.",
+                    "title": "Corrected synthetic medication",
+                    "source": "synthetic",
+                    "status": "active",
+                    "details": {},
+                    "ownerId": "00000000-0000-4000-8000-000000000001",
+                    "createdAt": "2026-10-17T21:57:21.156353+00:00",
+                    "updatedAt": "2026-10-17T22:03:04.152+00:00",
+                    "occurredOn": null,
+                    "recordType": "appointment"
+                  },
+                  "recordsToReview": [
+                    {
+                      "id": "20000000-0000-4000-8000-000000000001",
+                      "notes": null,
+                      "title": "Corrected synthetic medication",
+                      "source": "synthetic",
+                      "status": "active",
+                      "details": {},
+                      "ownerId": "00000000-0000-4000-8000-000000000001",
+                      "createdAt": "2026-10-17T21:55:07.995537+00:00",
+                      "updatedAt": "2026-10-17T22:03:04.152+00:00",
+                      "occurredOn": null,
+                      "recordType": "medication"
+                    }
+                  ],
+                  "documentsToReview": []
+                }
+              },
+              "capability": "health.preparation-review",
+              "specialist": "beasthealth.health-advisor",
+              "limitations": [
+                "Saved-record review only; this does not complete the underlying life goal.",
+                "No external research, medical judgment, transaction, publication or production action was performed."
+              ]
+            },
+            "events": [
+              {
+                "at": "2026-10-17T22:07:48.920189+00:00",
+                "detail": "Member explicitly approved this ready saved-record review.",
+                "status": "planned"
+              },
+              {
+                "at": "2026-10-17T22:07:48.936Z",
+                "detail": "Specialist checkpoint claimed.",
+                "status": "running"
+              },
+              {
+                "at": "2026-10-17T22:07:48.936Z",
+                "detail": "Specialist result recomputed and source snapshot verified.",
+                "status": "verified"
+              }
+            ],
+            "blocker": null,
+            "created_at": "2026-10-17T22:07:48.920189+00:00",
+            "updated_at": "2026-10-17T22:07:48.936+00:00"
+          },
+          {
+            "id": "e4710094-2be2-4d82-b5a9-815d178c4572",
+            "owner_id": "00000000-0000-4000-8000-000000000001",
+            "goal_id": "f69c84dd-9657-4bde-9940-a1f394ae0555",
+            "capability": "money.cash-review",
+            "status": "cancelled",
+            "dependencies": [],
+            "revision": 1,
+            "attempts": 0,
+            "lease_id": null,
+            "lease_until": null,
+            "result": null,
+            "events": [
+              {
+                "at": "2026-10-17T22:07:49.032449+00:00",
+                "detail": "Member explicitly approved this ready saved-record review.",
+                "status": "planned"
+              },
+              {
+                "at": "2026-10-17T22:07:49.05769+00:00",
+                "detail": "Current member instruction cancelled remaining work. Prior verified reviews retained.",
+                "status": "cancelled"
+              }
+            ],
+            "blocker": "Current member instruction cancelled remaining work.",
+            "created_at": "2026-10-17T22:07:49.032449+00:00",
+            "updated_at": "2026-10-17T22:07:49.05769+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "action": "external_research",
+      "status": 400,
+      "payload": {
+        "error": "Unsupported action. Spending, publication, record changes and production operations cannot be delegated here."
+      }
+    }
+  ],
+  "guards": [
+    "scoped ready approval",
+    "fresh persisted context",
+    "no client capability injection",
+    "current cancellation",
+    "stale approval rejection",
+    "foreign owner404/RLS denial",
+    "raw dependency/capability/field validation",
+    "transaction rollback",
+    "cancelled resume no execution"
+  ]
+}

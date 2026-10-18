@@ -1,0 +1,44 @@
+[
+  {
+    "route": "/dashboard/money",
+    "width": 1440,
+    "overflow": false,
+    "localFinancialLoadUnavailable": true,
+    "syntheticOnly": true
+  },
+  {
+    "route": "/dashboard/health",
+    "width": 1440,
+    "overflow": false,
+    "localFinancialLoadUnavailable": false,
+    "syntheticOnly": true
+  },
+  {
+    "route": "/dashboard/money/settings",
+    "width": 1440,
+    "overflow": false,
+    "localFinancialLoadUnavailable": false,
+    "syntheticOnly": true
+  },
+  {
+    "route": "/dashboard/money",
+    "width": 390,
+    "overflow": false,
+    "localFinancialLoadUnavailable": true,
+    "syntheticOnly": true
+  },
+  {
+    "route": "/dashboard/health",
+    "width": 390,
+    "overflow": false,
+    "localFinancialLoadUnavailable": false,
+    "syntheticOnly": true
+  },
+  {
+    "route": "/dashboard/money/settings",
+    "width": 390,
+    "overflow": false,
+    "localFinancialLoadUnavailable": false,
+    "syntheticOnly": true
+  }
+]

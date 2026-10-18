@@ -66,7 +66,7 @@ test("BP-230 keeps the record-backed Daily Briefing in Dashboard", () => {
   assert.match(briefing, /data-money-morning-briefing="true"/);
   assert.match(briefing, /Since your last review/);
   assert.match(briefing, /Daily Briefing/);
-  assert.match(briefing, /sm:grid-cols-2/);
+  assert.match(briefing, /lg:grid-cols-3/);
   assert.match(briefing, /briefing\.items/);
   assert.match(briefing, /briefing\.recommendedFocus/);
   assert.match(briefing, /briefing\.freshness/);

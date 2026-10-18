@@ -31,6 +31,7 @@ test("BP-230 navigation follows the approved workspace hierarchy", () => {
     "Dashboard",
     "Money Coach",
     "Cash Flow",
+    "Funding Sources",
     "Income",
     "Expenses",
     "Bills",
@@ -39,16 +40,18 @@ test("BP-230 navigation follows the approved workspace hierarchy", () => {
     "Strategies",
     "Timeline",
     "Velocity Banking",
+    "Connected Accounts",
     "Retirement",
     "Financial Goals",
     "Financial Documents",
     "Reports",
+    "Settings",
   ]);
   assert.deepEqual(
     beastMoneyCoreNavigation
       .filter((item) => item.parent === "Cash Flow")
       .map((item) => item.label),
-    ["Income", "Expenses"]
+    ["Funding Sources", "Income", "Expenses"]
   );
   assert.deepEqual(
     beastMoneyCoreNavigation

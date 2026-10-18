@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-18",
+  "independentScore": "23/24 unchanged",
+  "newPaidCalls": 0,
+  "newPaidCostUsd": 0,
+  "fullSuite": {
+    "pass": 2425,
+    "fail": 0
+  },
+  "directorSecurity": {
+    "pass": 83,
+    "fail": 0
+  },
+  "offlineScriptFiles": {
+    "pass": 17,
+    "fail": 0
+  },
+  "lint": "pass",
+  "typescript": "pass",
+  "requiredBuild": "FAIL: unmodified npm audit gate, seven high advisories",
+  "productionDependencyAudit": {
+    "total": 0
+  },
+  "hostedDev": {
+    "project": "zvzcojwjgnedrouilovc",
+    "reachable": true,
+    "directorAssignmentsTable": false,
+    "directorCancellationsTable": false,
+    "requiredDirectorRpcs": false,
+    "migrationApplied": false,
+    "deployed": false
+  },
+  "releaseCandidate": false,
+  "freshModelVerificationOfCorrections": false
+}

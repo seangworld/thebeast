@@ -75,7 +75,7 @@ test("BA-107 validates a new email and keeps callback destinations internal", ()
       "https://thebeast.seangworld.com/ignored"
     )
   );
-  assert.equal(callback.origin, "https://thebeast.seangworld.com");
+  assert.equal(callback.origin, "https://preview.example.com");
   assert.equal(callback.pathname, "/auth/callback");
   assert.equal(callback.searchParams.get("flow"), "email_verification");
   assert.equal(

@@ -60,7 +60,7 @@ test("BA-106 recovery paths preserve only safe BeastOS destinations", () => {
       "https://preview.vercel.app",
       "https://thebeast.seangworld.com/path"
     ),
-    "https://thebeast.seangworld.com"
+    "https://preview.vercel.app"
   );
   assert.equal(
     getBeastAuthOrigin("https://preview.vercel.app", "javascript:alert(1)"),

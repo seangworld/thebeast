@@ -1,0 +1,259 @@
+test-director-evaluation-budget.mjs exit 0
+✔ every attempt including failed/unknown calls consumes a permanent reservation; ninth fails (0.448333ms)
+✔ spending limit, oversized input and paid tool/model changes stop before a request (0.106583ms)
+✔ usage accounts for cached and reasoning output; unknown/excess usage fails closed (0.073541ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2.955375
+ 
+test-director-final-completed.mjs exit 0
+✔ one completed approved run stays within calls/spend and records actual identity/usage without grading itself (0.543125ms)
+✔ six blinded packets retain every exact original response and full model input, with no operational identities or engineering grades (7.960667ms)
+✔ original reviewed cases and acceptance rubrics remain intact in every completed packet (1.786ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12.383042
+ 
+test-director-final-preparation.mjs exit 0
+✔ final proposal uses exact live contract, unchanged six cases, 16 calls and conservative bound (6.580125ms)
+✔ no retries or extra calls, modified contracts, oversized input, wrong sequence or fabricated spend ledger (2.61525ms)
+✔ final driver refuses exhausted or missing approval before transport/fixtures and packets preserve verbatim responses (5.710208ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17.229416
+ 
+test-director-focused-execution.mjs exit 0
+{"scenario":"folio-17","turn":1,"calls":1,"reservedUsd":0.318912,"validated":false,"halted":false}
+{"scenario":"folio-17","turn":2,"calls":2,"reservedUsd":0.637824,"validated":false,"halted":false}
+{"scenario":"folio-17","turn":3,"calls":3,"reservedUsd":0.956736,"validated":false,"halted":true}
+{"scenario":"folio-17","turn":1,"calls":1,"reservedUsd":0.318912,"validated":false,"halted":false}
+{"scenario":"folio-17","turn":2,"calls":2,"reservedUsd":0.637824,"validated":false,"halted":false}
+{"scenario":"folio-17","turn":3,"calls":3,"reservedUsd":0.956736,"validated":false,"halted":true}
+✔ live mode starts without rehearsal authorization and exact initial reviewed requests (3.151042ms)
+✔ conditional cash cannot be approved ahead of real care result (11.039583ms)
+✔ revocation between approval and execution preserves permitted work, cash reads never occur (2.104625ms)
+✔ cancellation stops approved remaining work and does not erase completed care (1.353208ms)
+✔ controlled clock validates active wait then real same-row recovery without Date.now drift (2.595458ms)
+✔ wrong preceding decision cannot inject reference result into followup (3.727417ms)
+✔ full frozen scope reserves exactly16 failure-inclusive attempts; tamper/duplicate/config rejected (0.550625ms)
+✔ exclusive ledger saves reservations before dispatch, rejects concurrent lock and consumed restart (23.058917ms)
+✔ known incomplete usage consumes a slot and continues without execution or retry (1.422084ms)
+✔ reconciled partial response resumes next unconsumed turn from actual recorded state (9.54325ms)
+✔ independent owner revocation occurs even when initial plan approval is blocked (0.756917ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 64.606041
+ 
+test-director-focused-packets.mjs exit 0
+✔ all sixteen frozen turns appear once with unchanged review hashes and no extra funding (0.771292ms)
+✔ independent packets preserve response bytes/input and conceal metrics/implementer judgment (2.25075ms)
+✔ actual cost includes failures, cache writes and reasoning exactly once; independent success cost stays ungraded (0.093542ms)
+✔ no reference trace replaced failed model execution in review evidence (0.594417ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5.839834
+ 
+test-director-focused-preparation.mjs exit 0
+✔ six paired objectives include post-result turns, exact 16-call maximum and no generated answers (26.587042ms)
+✔ model payload excludes case labels, scoring, solution protocols and production answer hints (0.296625ms)
+✔ proposal reserves all turns including failures and rejects extra/duplicate/unreviewed calls before transport (0.770792ms)
+✔ valid arithmetic is not recurring-income suitability; actual same-row correction re-verifies after owner edit (1.688125ms)
+✔ active lease blocks expired dependent work until actual clock-driven prerequisite completion (1.936375ms)
+✔ permission narrowing and foreign access denial never expose another owner source (1.65425ms)
+✔ owner cancellation preserves completed evidence but withholds remaining execution (1.646334ms)
+✔ owner-conditional extra task cannot exist in initial fixture and no duplicate can be created (1.456458ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38.55975
+ 
+test-director-model-benchmark.mjs exit 0
+✔ offline plan stays unexecuted, fully paired and conservatively bounded (4.710584ms)
+✔ only model and effort vary; rubric never reaches model request (0.513625ms)
+✔ oversized initial and follow-up contexts fail before a possible future dispatch (0.225875ms)
+✔ all critical failure categories reject a configuration even with nominal perfect scores (0.271958ms)
+✔ independent grading and complete unique coverage are required (0.070333ms)
+✔ failed attempts remain in cost, latency and completion denominators (0.086625ms)
+✔ missing usage and hidden reasoning double counting cannot pass scoring (0.100292ms)
+✔ reservation includes full output and cache-write contingency; slow runs cannot pass (0.062792ms)
+✔ screening is exactly three configurations times eight single calls (3.749875ms)
+✔ all possible finalist pairs fit separate and combined caps (3.8295ms)
+✔ screening never establishes final competency; reasoning grading and single-call cap are mandatory (0.401ms)
+✔ unsafe or fabricated screening output disqualifies even if execution was guarded (0.240834ms)
+✔ finalists depend on real complete screening grades, not model reputation or price alone (5.291958ms)
+✔ final acceptance cannot skip held-out follow-ups or replace screening evidence (0.367042ms)
+✔ early critical stop records unattempted cases without fabricated usage or forced promotion (0.294ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22.836
+ 
+test-director-observed-model-regressions.mjs exit 0
+✔ actual model replacement proposal is rejected by strengthened checkpoint guard (0.525375ms)
+✔ actual model unnecessary blockers cannot silently authorize work (4.874417ms)
+✔ actual model accepted narrow completed work without proposing duplicate tools (0.130709ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7.654625
+ 
+test-director-recovery-reproduction.mjs exit 0
+✔ old code reproduces exhausted expired lease stuck running and refusing correction (0.603167ms)
+✔ new code retains same id/history and opens the existing explicit correction path (0.254083ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2.916375
+ 
+test-director-second-budget.mjs exit 0
+✔ second authorization permits at most 16 permanently reserved attempts below $2 (0.49ms)
+✔ second batch cannot overwrite first-batch cap or use an invented authorization profile (0.084875ms)
+✔ second batch refuses overdraft, corrupt ledger and oversized follow-up before dispatch (0.08975ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3.154917
+ 
+test-director-second-followups.mjs exit 0
+✔ actual synthetic correction and dependent recovery retain identity and verify without duplicate execution (10.673375ms)
+✔ adapter cannot silently fix a rejected or blocked model action or invent external payment proof (0.102792ms)
+✔ rejected-output follow-up retains bounded visible decision and exact safe validation feedback without executing (0.102417ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13.122291
+ 
+test-director-second-observed-regressions.mjs exit 0
+✔ actual unverified positive citation remains rejected; valid same-checkpoint retry needs no extra owner reset (7.941792ms)
+✔ actual dependent-resume duplicated as a new step remains rejected; corrected contract reuses persisted row (2.072125ms)
+✔ second batch contains only 16 charged attempts and preserves the credential by recorded read-only check (0.080458ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12.368166
+ 
+test-director-stage-one-budget.mjs exit 0
+✔ all 24 reservations including failed attempts fit $3; a 25th never dispatches (1.699208ms)
+✔ a reserved pair is never reused after restart or unknown-charge failure (0.220916ms)
+✔ other efforts, held-out cases, tools, history, premiums and oversized payloads are rejected (0.352333ms)
+✔ ledger totals, duplicate cases and unknown configurations fail closed (0.144916ms)
+✔ cached and cache-write usage are accounted; reasoning is not billed twice (0.070375ms)
+✔ exclusive ledger rejects concurrent execution before any possible dispatch (12.62375ms)
+✔ fsynced pre-dispatch reservation survives failure and ambiguous restart refuses another call (17.912875ms)
+✔ known settled usage resumes without reusing a case; stale crash lock fails closed (25.129ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60.777541
+ 
+test-director-stage-one-comparison.mjs exit 0
+✔ locked independent grades remain exact; any post-unblind rewrite is rejected (0.757167ms)
+✔ published comparison accounts for failed attempts, costs and separate action completion (0.577375ms)
+✔ private identity-to-response association and frozen packets cannot be silently changed (7.388166ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11.013583
+ 
+test-director-stage-one-completed-packets.mjs exit 0
+✔ all 24 actual responses are present, complete and hashed verbatim (0.534292ms)
+✔ per-scenario files retain identical evidence without identity, costs or grading leaks (4.407084ms)
+✔ local private originals match published response bytes while the identity map stays private (0.433875ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7.480542
+ 
+test-director-stage-one-dispatch.mjs exit 0
+✔ dispatcher persists reservation before transport and invokes only existing approved synthetic action (8.817292ms)
+✔ unknown usage halts with full reservation and never invokes execution (0.26275ms)
+✔ wrong request hash stops before reservation/transport and invalid output withholds execution (0.45125ms)
+✔ real synthetic correction and recovery preserve existing IDs, attempts and history (3.465541ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15.155125
+ 
+test-director-stage-one-review.mjs exit 0
+✔ novelty packet preserves every exact model-visible screening input and evidence (0.74525ms)
+✔ blinded packets preserve three anonymous slots and actual response states without identity or grades (1.169708ms)
+✔ novelty reference retains all prior sent contexts without grade or identity metadata (0.184542ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4.352833
+ 
+FILES 17 FAILED 0

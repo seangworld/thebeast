@@ -1,0 +1,89 @@
+--- a/lib/parse.js
++++ b/lib/parse.js
+@@ -1,6 +1,7 @@
+ 'use strict';
+ 
+ const stringify = require('./stringify');
++const assertDepth = require('./assert-depth');
+ 
+ /**
+  * Constants
+@@ -143,6 +144,7 @@
+      */
+ 
+     if (value === CHAR_LEFT_PARENTHESES) {
++      assertDepth.beforePush(stack);
+       block = push({ type: 'paren', nodes: [] });
+       stack.push(block);
+       push({ type: 'text', value });
+@@ -195,6 +197,7 @@
+      */
+ 
+     if (value === CHAR_LEFT_CURLY_BRACE) {
++      assertDepth.beforePush(stack);
+       depth++;
+ 
+       const dollar = prev.value && prev.value.slice(-1) === '$' || block.dollar === true;
+--- a/lib/compile.js
++++ b/lib/compile.js
+@@ -4,6 +4,7 @@
+ const utils = require('./utils');
+ 
+ const compile = (ast, options = {}) => {
++  require('./assert-depth')(ast);
+   const walk = (node, parent = {}) => {
+     const invalidBlock = utils.isInvalidBrace(parent);
+     const invalidNode = node.invalid === true && options.escapeInvalid === true;
+--- a/lib/expand.js
++++ b/lib/expand.js
+@@ -31,6 +31,7 @@
+ };
+ 
+ const expand = (ast, options = {}) => {
++  require('./assert-depth')(ast);
+   const rangeLimit = options.rangeLimit === undefined ? 1000 : options.rangeLimit;
+ 
+   const walk = (node, parent = {}) => {
+--- a/lib/stringify.js
++++ b/lib/stringify.js
+@@ -3,6 +3,7 @@
+ const utils = require('./utils');
+ 
+ module.exports = (ast, options = {}) => {
++  require('./assert-depth')(ast);
+   const stringify = (node, parent = {}) => {
+     const invalidBlock = options.escapeInvalid && utils.isInvalidBrace(parent);
+     const invalidNode = node.invalid === true && options.escapeInvalid === true;
+--- /dev/null
++++ b/lib/assert-depth.js
+@@ -0,0 +1,30 @@
++'use strict';
++
++// Fixed safety ceiling; callers cannot opt back into stack-exhausting trees.
++const MAX_DEPTH = 128;
++const fail = message => {
++  const error = new SyntaxError(message);
++  error.code = 'ERR_BRACES_DEPTH';
++  throw error;
++};
++
++const assertDepth = ast => {
++  const pending = [[ast, 0, false]];
++  const ancestors = new WeakSet();
++  while (pending.length) {
++    const [node, depth, exiting] = pending.pop();
++    if (exiting) { ancestors.delete(node); continue; }
++    if (depth > MAX_DEPTH) fail('Brace AST exceeds safe depth of 128');
++    if (ancestors.has(node)) fail('Brace AST must be acyclic');
++    ancestors.add(node);
++    pending.push([node, depth, true]);
++    if (node.nodes) {
++      for (const child of node.nodes) pending.push([child, depth + 1, false]);
++    }
++  }
++};
++assertDepth.beforePush = stack => {
++  // Root occupies depth zero; leave space for a leaf within MAX_DEPTH.
++  if (stack.length >= MAX_DEPTH) fail('Brace AST exceeds safe depth of 128');
++};
++module.exports = assertDepth;

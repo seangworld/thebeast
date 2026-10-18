@@ -1,0 +1,34 @@
+// Authored no-cost evidence-path check, not fresh model competency evidence.
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {createClient} from '@supabase/supabase-js';
+import {directorAssignmentStore,directorAssignmentAccess,publicAssignments} from '../.test-dist/src/lib/directorAssignmentStore.js';
+import {loadDirectorReasoningContext} from '../.test-dist/src/lib/directorReasoningContext.js';
+import {advanceDirectorObjective} from '../.test-dist/src/lib/directorAssignments.js';
+const c=JSON.parse(readFileSync('/private/tmp/avery-local-supabase-status.json')),f=JSON.parse(readFileSync('/private/tmp/avery-local-fixture.json'));
+assert.equal(c.API_URL,'http://127.0.0.1:54321');
+const client=createClient(c.API_URL,c.ANON_KEY,{auth:{persistSession:false}}),ok=r=>{assert.equal(r.error,null,r.error?.message);return r.data;};
+ok(await client.auth.signInWithPassword(f.accounts[0]));const user={id:f.accounts[0].id};
+const goal=ok(await client.from('beast_goals').insert({owner_id:user.id,title:'Synthetic explicit correction context test',status:'Active',category:'Money'}).select('*').single());
+// Synthetic fixture writes via the local database owner; runtime member grants stay unchanged.
+const sql=q=>execFileSync('docker',['exec','-i','supabase_db_thebeast','psql','-U','postgres','-v','ON_ERROR_STOP=1'],{input:q,encoding:'utf8'});
+const income={id:crypto.randomUUID()};
+sql(`insert into public.income_events(id,user_id,name,amount,frequency,next_date,is_active) values ('${income.id}','${user.id}','Synthetic correction comparison',4800,'monthly','2026-10-20',true);`);
+ok(await client.rpc('plan_director_reviews',{p_goal_id:goal.id,p_capabilities:['money.cash-review']}));
+const store=directorAssignmentStore(client),access=directorAssignmentAccess(client,user,goal.id,async()=>true),ctx={client,user,goal,store,access};
+const run=()=>advanceDirectorObjective({store,access,ownerId:user.id,goalId:goal.id,now:new Date().toISOString(),leaseId:crypto.randomUUID()});
+assert.equal((await run()).state,'verified');const task=(await publicAssignments(store,access,user.id,goal.id))[0],selection=[{taskId:task.id,recordIds:[income.id]}];
+const old=await loadDirectorReasoningContext(ctx,selection),oldMonthly=old.sharedEvidence.findings[0].findings.monthlyIncome;
+const conversationId=`director-objective-${goal.id}`;
+ok(await client.from('agent_conversations').insert({id:conversationId,owner_id:user.id,agent_id:'beastfusion.fusion-director',title:goal.title}));
+ok(await client.from('agent_conversation_messages').insert({id:crypto.randomUUID(),owner_id:user.id,conversation_id:conversationId,sender:{kind:'agent',id:'beastfusion.fusion-director'},recipient:{kind:'user',id:user.id},content:{text:'Authored prior evidence fixture',directorPlan:{version:2,context:old}}}));
+sql(`update public.income_events set amount=2800 where id='${income.id}' and user_id='${user.id}';`);
+assert.equal((await run()).state,'needs_correction');assert.equal((await run()).state,'verified');
+const current=await loadDirectorReasoningContext(ctx,selection),finding=current.sharedEvidence.findings[0];
+assert.equal(finding.correctionComparison.earlierRecordedReview.selectedIncome[0].amount,4800);
+assert.equal(finding.correctionComparison.earlierRecordedReview.monthlyIncome,oldMonthly);
+assert.equal(finding.records[0].amount,2800);assert.equal(finding.findings.monthlyIncome,oldMonthly-2000);
+assert.equal((await loadDirectorReasoningContext(ctx,[])).sharedEvidence,undefined);
+assert.equal((await publicAssignments(store,access,user.id,goal.id))[0].id,task.id);
+console.log('PASS: actual local auth/RLS, saved prior conversation, source correction, same-checkpoint recomputation, and production context loader expose prior selected 4800, current source 2800, newly verified reduced total; no selection means no shared history. No AI call or new narrative verified.');

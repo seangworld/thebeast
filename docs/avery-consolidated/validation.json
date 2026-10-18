@@ -1,0 +1,114 @@
+{
+  "phase": "Consolidated no-cost engineering and final assessment preparation",
+  "paidCalls": 0,
+  "developmentCredentialFileAccess": false,
+  "modelCompetencyVerified": false,
+  "releaseCandidate": false,
+  "targeted": {
+    "runtime": 81,
+    "offline": 79,
+    "total": 160,
+    "failed": 0
+  },
+  "fullSuite": {
+    "total": 2423,
+    "passed": 2405,
+    "failed": 18,
+    "baselineFailureNamesUnchanged": true,
+    "baselineTrackingIssue": 266,
+    "failureNames": [
+      "✖ BA-106 recovery paths preserve only safe BeastOS destinations",
+      "✖ BA-107 presents central management, release history, and future rollback",
+      "✖ BA-107 validates a new email and keeps callback destinations internal",
+      "✖ BA-112 presents every requested owner inspection area without mutation controls",
+      "✖ BA-126 keeps deferred work separate from the operational Revenue Center",
+      "✖ BA-IA-101 defines one grouped persistent BeastAdmin workspace switcher",
+      "✖ BM-37 renders Dashboard Immediate Attention and durably tracks rate changes",
+      "✖ BM-42D debt actions retain the selected-debt canonical edit workflow",
+      "✖ BP-230 exposes only the approved workspace hierarchy",
+      "✖ BP-230 keeps the record-backed Daily Briefing in Dashboard",
+      "✖ BP-230 navigation follows the approved workspace hierarchy",
+      "✖ BeastAdmin foundation registers modules and protects owner-only navigation",
+      "✖ Money Settings retains saved cash and debt controls in standard Money surfaces",
+      "✖ debt management keeps open zero-balance revolving accounts active and exposes explicit restore",
+      "✖ module navigation centralizes expandable child items",
+      "✖ owner-only roster and profiles preserve the established BeastAdmin surface",
+      "✖ public SEO inventory contains only real indexable application routes",
+      "✖ sitemap includes public routes and excludes private application routes"
+    ]
+  },
+  "lint": "PASS",
+  "applicationTypeScript": "PASS",
+  "integration": {
+    "fullCanonicalLocalMigrationChain": 127,
+    "realLocalGoTrue": "PASS",
+    "realBrowserCookies": "PASS",
+    "persistedApprovalViaNextApi": "PASS",
+    "selectedVerifiedEvidence": "PASS",
+    "revocationCancellationRestorationLateResultFence": "PASS",
+    "finalDriver": {
+      "cases": 6,
+      "turns": 16,
+      "paidCalls": 0,
+      "decisions": "AUTHORED fixture responses, not Avery intelligence"
+    },
+    "responsiveBrowserWidths": [
+      1440,
+      390,
+      375
+    ],
+    "hostedProductionAuthentication": "NOT ACCESSED OR VERIFIED",
+    "disposableServicesRemoved": true
+  },
+  "security": {
+    "fullAudit": {
+      "high": 7,
+      "critical": 0
+    },
+    "productionAudit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "requiredBuild": "BLOCKED at unchanged npm audit before Next compilation; not bypassed",
+    "localDatabaseAdvisor": {
+      "warn": 4,
+      "error": 0,
+      "directorFindings": 0,
+      "preexistingWarnings": [
+        "set_velocity_settings_updated_at",
+        "set_debts_updated_at",
+        "set_profiles_updated_at",
+        "set_subscriptions_updated_at"
+      ]
+    },
+    "newDirectorSql": {
+      "securityInvoker": true,
+      "emptySearchPath": true,
+      "anonymousExecute": false,
+      "cancellationRls": true
+    }
+  },
+  "originalEvidenceFileSha256": {
+    "tests/fixtures/avery-focused/scenarios.json": "aaf47e6e4e7a99dc29e840b47815652a5482026b4eb098e5d133d7f89ae5c5cc",
+    "docs/avery-director-focused-plan.json": "bac781140a15722d8d0c6ab55b40f0d11f5be04d83429178a9e05fb15f0faf78",
+    "docs/avery-director-focused-results.json": "f163f6f929f63f0a0f526fec3d9038fc210d952a34b5ed6e7c4eb34f2bf2e3b0",
+    "docs/avery-director-focused-report.md": "e073e7fdac30849a8cd3102e5d2801fde8d7eda71e042be019caea14e31aa093"
+  },
+  "proposal": {
+    "maxCalls": 16,
+    "maxUsd": 5.5,
+    "worstCaseReservedUsd": 5.486592,
+    "authorized": false
+  },
+  "limitations": [
+    "Authored integration inputs do not update independent model grades.",
+    "Six known regression scenarios do not prove broad Director generalization or production reliability.",
+    "Four preexisting full-schema search_path warnings remain outside Director scope.",
+    "Full build remains blocked by seven high development advisories; 18 unrelated baseline failures remain in #266.",
+    "Hosted migrations/identity/access and production deployment remain unverified and unauthorized."
+  ]
+}

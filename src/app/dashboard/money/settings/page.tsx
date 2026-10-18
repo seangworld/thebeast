@@ -226,7 +226,7 @@ export default function SettingsPage() {
 
           <div className="money-field-grid mt-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
-              <label className="money-field-label">
+              <label htmlFor="money-starting-balance" className="money-field-label">
                 Starting Balance
               </label>
               <input
@@ -256,7 +256,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="money-field-label">
+              <label htmlFor="money-lookahead" className="money-field-label">
                 Lookahead Days (Dashboard)
               </label>
               <select
@@ -275,7 +275,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="money-field-label">
+              <label htmlFor="money-assignment-horizon" className="money-field-label">
                 Assignment Horizon
               </label>
               <select
@@ -331,7 +331,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="money-field-label">
+              <label htmlFor="money-extra-attack" className="money-field-label">
                 Monthly Extra Attack
               </label>
               <input
@@ -356,7 +356,7 @@ export default function SettingsPage() {
 
         <section className="money-section-card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-400">Changes take effect when you save. Existing money records remain intact.</p>
-          <button onClick={saveAll} className="beast-button w-full sm:w-auto">
+          <button onClick={saveAll} disabled={loading || saving || Boolean(loadError)} className="beast-button w-full sm:w-auto">
             Save All Settings
           </button>
         </section>

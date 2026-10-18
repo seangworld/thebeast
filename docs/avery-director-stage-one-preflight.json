@@ -1,0 +1,25 @@
+{
+  "authorization": "Issue #264 owner approval 6236922578: Stage 1 only, max 24 inference calls/$3",
+  "checkedAt": "2026-10-17T16:46:14.496Z",
+  "paidModelCalls": 0,
+  "metadataRequests": 2,
+  "credentialPreserved": true,
+  "models": [
+    {
+      "requested": "gpt-6-luna",
+      "httpStatus": 200,
+      "available": true,
+      "returnedId": "gpt-6-luna",
+      "errorCode": null
+    },
+    {
+      "requested": "gpt-6.1-sol",
+      "httpStatus": 200,
+      "available": true,
+      "returnedId": "gpt-6.1-sol",
+      "errorCode": null
+    }
+  ],
+  "scope": "Only exact prepared model IDs; no substitution or generation",
+  "allAvailable": true
+}

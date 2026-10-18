@@ -1,0 +1,5 @@
+Local authentication verified
+Synthetic objective saved
+Stale objective version rejected
+Synthetic proposal persisted; opening browser
+PASS: synthetic model proposal -> persisted conversation -> real authenticated UI approval -> version-locked transaction -> two actual specialist tools -> independently verified evidence. Repeated stale approval rejected; history retained; life goal stays Active. No real-model competence claim or paid call.

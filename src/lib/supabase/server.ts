@@ -2,12 +2,8 @@ import { cookies, type UnsafeUnwrappedCookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { requireSupabasePublicConfiguration } from "./config";
 
-export function createRouteClient() {
+function clientWithCookies(cookieStore: UnsafeUnwrappedCookies) {
   const configuration = requireSupabasePublicConfiguration();
-
-  // Supabase's client factory must remain synchronous for its existing callers.
-  // Next 15 retains this compatibility path while async request APIs are adopted.
-  const cookieStore = cookies() as unknown as UnsafeUnwrappedCookies;
 
   return createServerClient(configuration.url, configuration.publicKey, {
     cookies: {
@@ -22,4 +18,13 @@ export function createRouteClient() {
       },
     },
   });
+}
+
+// Preserve existing synchronous callers; migrated routes use the async entry point.
+export function createRouteClient() {
+  return clientWithCookies(cookies() as unknown as UnsafeUnwrappedCookies);
+}
+
+export async function createAsyncRouteClient() {
+  return clientWithCookies(await cookies());
 }

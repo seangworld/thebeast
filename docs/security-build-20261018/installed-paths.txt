@@ -1,0 +1,13 @@
+thebeast@3.2.0 /private/tmp/avery-model-optimization
+├─┬ eslint-config-next@15.5.27
+│ └─┬ @next/eslint-plugin-next@15.5.27
+│   └─┬ fast-glob@3.3.1
+│     └── micromatch@4.0.8 deduped
+└─┬ tailwindcss@3.4.19
+  ├─┬ chokidar@3.6.0
+  │ └── braces@3.0.3
+  ├─┬ fast-glob@3.3.3
+  │ └── micromatch@4.0.8 deduped
+  └─┬ micromatch@4.0.8
+    └── braces@3.0.3 deduped
+

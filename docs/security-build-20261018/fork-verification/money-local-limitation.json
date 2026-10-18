@@ -1,0 +1,65 @@
+{
+  "syntheticLocal": true,
+  "failures": [
+    {
+      "path": "/rest/v1/learning_profiles",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table learning_profiles"
+    },
+    {
+      "path": "/rest/v1/subscriptions",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table subscriptions"
+    },
+    {
+      "path": "/rest/v1/subscriptions",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table subscriptions"
+    },
+    {
+      "path": "/rest/v1/subscriptions",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table subscriptions"
+    },
+    {
+      "path": "/rest/v1/subscriptions",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table subscriptions"
+    },
+    {
+      "path": "/rest/v1/bill_payments",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table bill_payments"
+    },
+    {
+      "path": "/rest/v1/debt_payments",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table debt_payments"
+    },
+    {
+      "path": "/rest/v1/learning_profiles",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table learning_profiles"
+    },
+    {
+      "path": "/rest/v1/bill_payments",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table bill_payments"
+    },
+    {
+      "path": "/rest/v1/debt_payments",
+      "status": 403,
+      "code": "42501",
+      "message": "permission denied for table debt_payments"
+    }
+  ]
+}

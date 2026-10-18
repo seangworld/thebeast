@@ -1,0 +1,34 @@
+{
+  "upstream": {
+    "name": "braces",
+    "version": "3.0.3",
+    "tagCommit": "483836c3484f6bd0ff6db6e00d1dc35505efda15",
+    "registryIntegrity": "sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA=="
+  },
+  "fork": {
+    "name": "@seangworld/braces",
+    "version": "3.0.3-beast.1",
+    "private": true
+  },
+  "inspiration": {
+    "pullRequest": "https://github.com/micromatch/braces/pull/88",
+    "commit": "a795ee83ecd011131b2d618fe754ac5a8e124dae",
+    "status": "unmerged; local adaptation, not upstream-supported"
+  },
+  "advisory": "GHSA-vfj7-8cjw-p6xm",
+  "maxAstDepth": 128,
+  "tarball": "vendor/seangworld-braces-3.0.3-beast.1.tgz",
+  "tarballSha256": "0ab424762a34bbce9caaed1491a1980f653ca98322dbdc64b4401f2cf81f1e96",
+  "files": {
+    "LICENSE": "35bdd8a44339719441900fb50fbefc5e2dca1ca662cbaed7a687de842c8b70f2",
+    "index.js": "332ea07c7b006361aad12aa994ca75dc1db8e8382b884909e2f38f10b85c88a4",
+    "lib/assert-depth.js": "d50f06ebe0f6003e3d955e899f00f9d66ea27909b98b9fca035569eb4c05a6f7",
+    "lib/compile.js": "0527119921a3117bfbb7a3a86d400bcaf26c3988628688301ee17c5cc0003719",
+    "lib/constants.js": "c18ac5adb57308f1ce42a28552da3a31f5d83709743ebd9a636336813a744d4b",
+    "lib/expand.js": "bdcde9b36e94d248c5035ab8f98f4a20189c973fa44ee68cd576ba7ebf28022b",
+    "lib/parse.js": "b835eac993d1e03d79101706ba60d9130736aa6308e97acce93051950532b7e2",
+    "lib/stringify.js": "056ab10d759e5d2ca81fc888b122acf450c692b5e409dc19a41aca06aba8f2ef",
+    "lib/utils.js": "b5a7596aa67730412b3c029ef09e84e6b67b8e445cffd35d1d295549c89066c7",
+    "package.json": "5f1d59a136c131668c453fbe09a13c38da4c161d029d6bb2ecb82337938fed91"
+  }
+}

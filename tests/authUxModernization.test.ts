@@ -22,7 +22,7 @@ test("AUTH-UX keeps localhost Preview and Production callback origins environmen
       "https://thebeast-random.vercel.app",
       "https://thebeast.seangworld.com"
     ),
-    "https://thebeast.seangworld.com"
+    "https://thebeast-random.vercel.app"
   );
 });
 

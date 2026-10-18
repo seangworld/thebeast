@@ -1,0 +1,1 @@
+PASS: actual local auth/RLS, saved prior conversation, source correction, same-checkpoint recomputation, and production context loader expose prior selected 4800, current source 2800, newly verified reduced total; no selection means no shared history. No AI call or new narrative verified.

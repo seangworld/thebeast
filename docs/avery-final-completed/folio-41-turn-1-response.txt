@@ -1,0 +1,36 @@
+{
+  "interpretation": "Determine what the persisted checkpoints allow next after interrupted continue requests. These records describe health and cash reviews, not document-file progress. Neither checkpoint has a verified result, and the records do not establish whether a continue request remains queued.",
+  "steps": [],
+  "planningNotes": [
+    "For the health checkpoint, honor the server's wait_for_lease guidance. A persisted running status does not prove that execution is currently active; do not race the existing lease.",
+    "The cash checkpoint must wait for the health dependency despite its expired recorded lease. After the dependency is satisfied, the existing foreground runner must re-evaluate recovery eligibility and reuse the same checkpoint when permitted.",
+    "Two continue presses do not establish two executions or authorize replacement work or a reset. The supplied attempt counts do not establish that a retry budget is exhausted.",
+    "Any eligible continuation uses the existing authorization and checkpoints. This report starts no execution, and the runner does not operate in parallel or in the background.",
+    "Different device displays are not evidence of contradictory server results. Neither supplied checkpoint establishes completion of the underlying document objective."
+  ],
+  "evidenceClaims": [],
+  "alternatives": [
+    "Honor the current lease and dependency gates, then reuse eligible existing checkpoints through the foreground runner.",
+    "Do not create duplicate assignments, force a reset, or reclaim the cash checkpoint solely because its lease is expired."
+  ],
+  "contradictions": [],
+  "missingInformation": [],
+  "ownerDecisions": [],
+  "unsupportedWork": [
+    "The available capabilities cannot inspect the document file, reconcile device displays, or determine the live queue state of earlier continue requests."
+  ],
+  "assessments": [
+    {
+      "taskId": "8c6e0416-7641-49bd-9611-a2036f73e040",
+      "finding": "Persisted status is running with no result. Server guidance is wait_for_lease, so do not race or reclaim this attempt. No verified health-review completion is established.",
+      "disposition": "await_active_execution"
+    },
+    {
+      "taskId": "f9098e48-3e25-45ed-8a95-5239d7e4bb23",
+      "finding": "Persisted status is running with no result and an expired recorded lease, but server guidance is wait_for_dependencies on the health checkpoint. Keep this checkpoint gated; reassess recovery eligibility after that prerequisite is satisfied. Neither completion nor retry-budget exhaustion is established.",
+      "disposition": "investigate"
+    }
+  ],
+  "contractVersion": 2,
+  "requirements": []
+}

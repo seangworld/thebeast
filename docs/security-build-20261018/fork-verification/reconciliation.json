@@ -1,0 +1,94 @@
+{
+  "observedAt": "2026-10-18T14:52:52.281Z",
+  "beforePatch": [
+    {
+      "ref": "origin/main",
+      "sha": "13005e948e78483bf917aab9c110bd478b846247",
+      "declaredTailwind": "^3",
+      "lockedTailwind": "3.4.19",
+      "lockedBraces": "3.0.3",
+      "next": "15.5.27",
+      "eslintNext": "15.5.27"
+    },
+    {
+      "ref": "origin/codex/avery-director-capability",
+      "sha": "58c6f4a330d8878f8d415191c0ef2bf1749d6b63",
+      "declaredTailwind": "^3",
+      "lockedTailwind": "3.4.19",
+      "lockedBraces": "3.0.3",
+      "next": "15.5.27",
+      "eslintNext": "15.5.27"
+    },
+    {
+      "ref": "origin/codex/security-build-remediation",
+      "sha": "f19ffbcb7fd3723d87dbc6d99bf1a837f973c6e8",
+      "declaredTailwind": "^3",
+      "lockedTailwind": "3.4.19",
+      "lockedBraces": "3.0.3",
+      "next": "15.5.27",
+      "eslintNext": "15.5.27"
+    }
+  ],
+  "installedAfterPatch": {
+    "tailwind": "3.4.19",
+    "next": "15.5.27",
+    "braces": {
+      "name": "@seangworld/braces",
+      "description": "Repository-owned braces 3.0.3 depth-safety fork for The Beast build tooling",
+      "version": "3.0.3-beast.1",
+      "homepage": "https://github.com/micromatch/braces",
+      "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
+      "contributors": [
+        "Brian Woodward (https://twitter.com/doowb)",
+        "Elan Shanker (https://github.com/es128)",
+        "Eugene Sharygin (https://github.com/eush77)",
+        "hemanth.hm (http://h3manth.com)",
+        "Jon Schlinkert (http://twitter.com/jonschlinkert)"
+      ],
+      "repository": "micromatch/braces",
+      "bugs": {
+        "url": "https://github.com/micromatch/braces/issues"
+      },
+      "license": "MIT",
+      "files": [
+        "index.js",
+        "lib"
+      ],
+      "main": "index.js",
+      "engines": {
+        "node": ">=8"
+      },
+      "dependencies": {
+        "fill-range": "^7.1.1"
+      },
+      "keywords": [
+        "alpha",
+        "alphabetical",
+        "bash",
+        "brace",
+        "braces",
+        "expand",
+        "expansion",
+        "filepath",
+        "fill",
+        "fs",
+        "glob",
+        "globbing",
+        "letter",
+        "match",
+        "matches",
+        "matching",
+        "number",
+        "numerical",
+        "path",
+        "range",
+        "ranges",
+        "sh"
+      ],
+      "private": true
+    }
+  },
+  "history": [
+    "ebd039cd 2026-05-04 Initial Beast beta"
+  ]
+}

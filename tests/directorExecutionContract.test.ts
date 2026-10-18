@@ -1,0 +1,31 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { approveDirectorReasoning, validateDirectorReasoning, type DirectorReasonedPlan, type DirectorReasoningContext } from "../src/lib/directorReasoning";
+import { checkpointGuidance } from "../src/lib/directorReasoningEvidence";
+import { readyDirectorSteps } from "../src/lib/directorPlanReadiness";
+const health = "health.preparation-review" as const, money = "money.cash-review" as const;
+const context: DirectorReasoningContext = { goal: { id: "own-goal", title: "Own saved reviews", updated_at: "version1" }, availableCapabilities: [health, money], checkpoints: [] };
+function plan(): DirectorReasonedPlan { return { contractVersion: 2, requirements: [], interpretation: "Review own permitted saved records", steps: [health,money].map(capability=>({ capability, purpose: "Review saved records", acceptance: "Verified saved-record consistency", dependsOn: [] })), assessments: [], alternatives: [], contradictions: [], missingInformation: [], ownerDecisions: [], unsupportedWork: [], planningNotes: ["Ordinary approval is the separate member control; optional supplier questions do not gate the saved review."] }; }
+test("scoped prerequisite withholds only affected new work, never grants implicit approval",()=>{const p=plan();p.requirements=[{scope:money,kind:"required_information",detail:"Owner must resolve source needed for this action"}];assert.deepEqual(readyDirectorSteps(validateDirectorReasoning(p,context),context).map(s=>s.capability),[health]);assert.deepEqual(approveDirectorReasoning(p,context,context),[health]);assert.equal(context.checkpoints.length,0,"Approval selection is not assignment execution");});
+test("global authority requirement and affected dependencies remain blocking",()=>{const p=plan();p.requirements=[{scope:"all_new_work",kind:"owner_decision",detail:"Resolve authority dispute"}];assert.throws(()=>approveDirectorReasoning(p,context,context),/No ready/);p.requirements=[{scope:health,kind:"required_information",detail:"Required source unavailable"}];p.steps[1].dependsOn=[health];assert.throws(()=>approveDirectorReasoning(p,context,context),/No ready/);});
+test("legacy blockers, malformed requirements, unavailable tools and changed context never silently disappear",()=>{const p=plan();p.ownerDecisions=["Unresolved authority"];assert.throws(()=>approveDirectorReasoning(p,context,context),/Ambiguous/);delete p.contractVersion;delete p.requirements;assert.throws(()=>approveDirectorReasoning(p,context,context),/Resolve the plan/);const q=plan();assert.throws(()=>approveDirectorReasoning(q,context,{...context,availableCapabilities:[health]}),/changed/);assert.throws(()=>validateDirectorReasoning({...q,requirements:[{scope:"other-owner",kind:"owner_decision",detail:"Access foreign data"}]},context),/Invalid scoped/);assert.throws(()=>validateDirectorReasoning({...q,requirements:[{scope:money,kind:"optional",detail:"Unsafely drop decision"}]},context),/Invalid scoped/);});
+test("existing correction limits dependent work without blocking a new independent permitted review",()=>{const p=plan();p.steps=[p.steps[0]];p.assessments=[{taskId:"cash",finding:"Source classification needs owner correction",disposition:"request_correction"}];const ctx={...context,checkpoints:[{id:"cash",capability:money,status:"verified",blocker:null,attempts:1,result:{asOf:"synthetic"},dependencies:[]}]};assert.deepEqual(approveDirectorReasoning(p,ctx,ctx),[health]);});
+
+test("cancellation is explicit checkpoint guidance and cannot be relabeled as resumable work",()=>{
+  const ctx={...context,checkpoints:[{id:"cancelled-cash",capability:money,status:"cancelled",blocker:"Owner cancelled",attempts:0,result:null,dependencies:[]}]};
+  assert.equal(checkpointGuidance(ctx.checkpoints,ctx.availableCapabilities)[0].action,"retain_cancelled");
+  const p=plan();p.steps=[];p.assessments=[{taskId:"cancelled-cash",finding:"Old queued approval should continue",disposition:"resume_existing"}];
+  assert.throws(()=>validateDirectorReasoning(p,ctx),/cannot resume|retain_cancelled/);
+});
+test("current owner cancellation retains permitted verified evidence but forbids new work and old resume intents",()=>{
+ const ctx={...context,cancelledAt:"2026-10-17T21:00:00Z",checkpoints:[{id:"care",capability:health,status:"verified",result:{asOf:"synthetic"},blocker:null,attempts:1,dependencies:[]},{id:"cash",capability:money,status:"planned",result:null,blocker:null,attempts:0,dependencies:[]}]};
+ const p=plan();p.steps=[];p.assessments=[{taskId:"care",finding:"Retain the verified saved review",disposition:"accept_verified_evidence"}];p.evidenceClaims=[{taskId:"care",scope:"saved_record_consistency_only"}];assert.doesNotThrow(()=>validateDirectorReasoning(p,ctx));
+ p.assessments=[{taskId:"cash",finding:"Old queued continue request",disposition:"resume_existing"}];assert.throws(()=>validateDirectorReasoning(p,ctx),/cancellation|retain_cancelled/);
+ p.assessments=[];p.steps=[plan().steps[0]];assert.throws(()=>validateDirectorReasoning(p,ctx),/cancelled/);
+});
+test("live schema explicitly retains terminal cancellation and rejects pointless investigation",()=>{
+ const ctx={...context,checkpoints:[{id:"cancelled",capability:money,status:"cancelled",result:null,blocker:"Owner cancelled",attempts:0,dependencies:[]}]};
+ const p=plan();p.steps=[];p.assessments=[{taskId:"cancelled",finding:"Retain cancelled work without execution",disposition:"retain_cancelled"}];assert.doesNotThrow(()=>validateDirectorReasoning(p,ctx));
+ p.assessments[0].disposition="investigate";assert.throws(()=>validateDirectorReasoning(p,ctx),/retain_cancelled/);
+ p.assessments[0].disposition="retain_cancelled";assert.throws(()=>validateDirectorReasoning(p,{...ctx,checkpoints:[{...ctx.checkpoints[0],status:"planned"}]}),/uncancelled/);
+});

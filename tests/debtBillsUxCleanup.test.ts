@@ -23,8 +23,8 @@ test("BM-42D debt actions retain the selected-debt canonical edit workflow", () 
     "utf8"
   );
 
-  assert.match(automation, />Auto Pay</);
-  assert.match(automation, />Reminder</);
+  assert.match(automation, />Auto Pay at provider</);
+  assert.match(automation, />BeastMoney reminder</);
   for (const label of ["Edit", "Archive", "Delete"]) {
     assert.match(source, new RegExp(`>${label}<`));
   }

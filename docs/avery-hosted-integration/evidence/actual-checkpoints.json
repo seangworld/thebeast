@@ -1,0 +1,425 @@
+{
+  "provenance": "Actual hosted DEV PostgreSQL, only newly created synthetic accounts, sanitized projection",
+  "goals": [
+    {
+      "id": "3b1a9e2b-c14b-4150-a11c-90b492080adc",
+      "title": "Synthetic DEV explicit scoped approval",
+      "status": "Active",
+      "actor": 0
+    },
+    {
+      "id": "3075df75-6f8d-48b0-a95e-3fd18fe92f5a",
+      "title": "Synthetic DEV interrupted recovery",
+      "status": "Active",
+      "actor": 0
+    },
+    {
+      "id": "9bb41c24-2617-46b5-a119-6e9faee8d1f4",
+      "title": "Synthetic DEV owner cancellation",
+      "status": "Active",
+      "actor": 0
+    },
+    {
+      "id": "09d6e748-a65b-4ae9-ac46-61a6c5b90967",
+      "title": "Synthetic DEV explicit scoped approval",
+      "status": "Active",
+      "actor": 0
+    },
+    {
+      "id": "bdc69e92-e4cc-4fb1-bdc0-4f30ca30a41c",
+      "title": "Synthetic DEV interrupted recovery",
+      "status": "Active",
+      "actor": 0
+    },
+    {
+      "id": "bd7dc049-a738-43fd-9d43-811f2e87ae4d",
+      "title": "Synthetic DEV owner cancellation",
+      "status": "Active",
+      "actor": 0
+    },
+    {
+      "id": "e6f3e8cd-51c2-45df-bc42-cc53679df880",
+      "title": "Synthetic DEV other synthetic owner",
+      "status": "Active",
+      "actor": 1
+    },
+    {
+      "id": "0de9a149-754e-42c5-ac68-0b0185326202",
+      "title": "Synthetic DEV synthetic minor denied",
+      "status": "Active",
+      "actor": 2
+    }
+  ],
+  "assignments": [
+    {
+      "id": "2bb38f19-aaaa-4629-a59b-1cfaede511ce",
+      "goalId": "3b1a9e2b-c14b-4150-a11c-90b492080adc",
+      "capability": "health.preparation-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [],
+      "history": [
+        {
+          "at": "2026-10-18T20:59:25.361617+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T20:59:27.031Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T20:59:27.031Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        }
+      ],
+      "hasResult": true,
+      "resultAsOf": "2026-10-18T20:59:27.031Z",
+      "specialist": "beasthealth.health-advisor",
+      "limitations": [
+        "Saved-record review only; this does not complete the underlying life goal.",
+        "No external research, medical judgment, transaction, publication or production action was performed."
+      ]
+    },
+    {
+      "id": "b42ddd6e-c67f-4b54-8347-abc5493c6005",
+      "goalId": "3b1a9e2b-c14b-4150-a11c-90b492080adc",
+      "capability": "money.cash-review",
+      "status": "verified",
+      "attempts": 2,
+      "revision": 5,
+      "dependencies": [
+        "2bb38f19-aaaa-4629-a59b-1cfaede511ce"
+      ],
+      "history": [
+        {
+          "at": "2026-10-18T20:59:25.361617+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T20:59:28.453Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T20:59:28.453Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        },
+        {
+          "at": "2026-10-18T20:59:31.310Z",
+          "detail": "Source records changed; request correction using current records.",
+          "status": "needs_correction"
+        },
+        {
+          "at": "2026-10-18T20:59:32.386Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T20:59:32.386Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        }
+      ],
+      "hasResult": true,
+      "resultAsOf": "2026-10-18T20:59:32.386Z",
+      "monthlyIncome": 2800,
+      "specialist": "beastmoney.money-coach",
+      "limitations": [
+        "Saved-record review only; this does not complete the underlying life goal.",
+        "No external research, medical judgment, transaction, publication or production action was performed."
+      ]
+    },
+    {
+      "id": "c8408de6-6fba-4fa2-b3ed-367aac079061",
+      "goalId": "3075df75-6f8d-48b0-a95e-3fd18fe92f5a",
+      "capability": "money.cash-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 4,
+      "dependencies": [],
+      "history": [
+        {
+          "at": "2026-10-18T20:59:33.686388+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T20:59:34.250Z",
+          "detail": "Retry limit reached. Authorize a correction cycle on this existing checkpoint after resolving its blocker; do not create replacement work.",
+          "status": "blocked"
+        },
+        {
+          "at": "2026-10-18T20:59:34.814Z",
+          "detail": "Member explicitly authorized a new correction cycle. Prior checkpoint history retained.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T20:59:35.292Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T20:59:35.292Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        }
+      ],
+      "hasResult": true,
+      "resultAsOf": "2026-10-18T20:59:35.292Z",
+      "monthlyIncome": 2800,
+      "specialist": "beastmoney.money-coach",
+      "limitations": [
+        "Saved-record review only; this does not complete the underlying life goal.",
+        "No external research, medical judgment, transaction, publication or production action was performed."
+      ]
+    },
+    {
+      "id": "36128df5-b13e-470a-9366-427b0ae2574a",
+      "goalId": "09d6e748-a65b-4ae9-ac46-61a6c5b90967",
+      "capability": "health.preparation-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [],
+      "history": [
+        {
+          "at": "2026-10-18T21:01:03.225723+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T21:01:06.004Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T21:01:06.004Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        }
+      ],
+      "hasResult": true,
+      "resultAsOf": "2026-10-18T21:01:06.004Z",
+      "specialist": "beasthealth.health-advisor",
+      "limitations": [
+        "Saved-record review only; this does not complete the underlying life goal.",
+        "No external research, medical judgment, transaction, publication or production action was performed."
+      ]
+    },
+    {
+      "id": "2c9c1346-c36a-47a0-8e36-0e85ad540d1f",
+      "goalId": "09d6e748-a65b-4ae9-ac46-61a6c5b90967",
+      "capability": "money.cash-review",
+      "status": "verified",
+      "attempts": 2,
+      "revision": 5,
+      "dependencies": [
+        "36128df5-b13e-470a-9366-427b0ae2574a"
+      ],
+      "history": [
+        {
+          "at": "2026-10-18T21:01:03.225723+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T21:01:08.224Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T21:01:08.224Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        },
+        {
+          "at": "2026-10-18T21:01:12.217Z",
+          "detail": "Source records changed; request correction using current records.",
+          "status": "needs_correction"
+        },
+        {
+          "at": "2026-10-18T21:01:13.587Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T21:01:13.587Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        }
+      ],
+      "hasResult": true,
+      "resultAsOf": "2026-10-18T21:01:13.587Z",
+      "monthlyIncome": 2800,
+      "specialist": "beastmoney.money-coach",
+      "limitations": [
+        "Saved-record review only; this does not complete the underlying life goal.",
+        "No external research, medical judgment, transaction, publication or production action was performed."
+      ]
+    },
+    {
+      "id": "4d9a5f6c-7f15-4e25-9093-89d6593cbaa1",
+      "goalId": "bd7dc049-a738-43fd-9d43-811f2e87ae4d",
+      "capability": "health.preparation-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [],
+      "history": [
+        {
+          "at": "2026-10-18T21:01:19.655356+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T21:01:19.984Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T21:01:19.984Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        }
+      ],
+      "hasResult": true,
+      "resultAsOf": "2026-10-18T21:01:19.984Z",
+      "specialist": "beasthealth.health-advisor",
+      "limitations": [
+        "Saved-record review only; this does not complete the underlying life goal.",
+        "No external research, medical judgment, transaction, publication or production action was performed."
+      ]
+    },
+    {
+      "id": "41c08a38-ce0b-4dec-ac37-f8cb7c6b7a59",
+      "goalId": "9bb41c24-2617-46b5-a119-6e9faee8d1f4",
+      "capability": "health.preparation-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 2,
+      "dependencies": [],
+      "history": [
+        {
+          "at": "2026-10-18T20:59:36.41651+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T20:59:36.658Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T20:59:36.658Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        }
+      ],
+      "hasResult": true,
+      "resultAsOf": "2026-10-18T20:59:36.658Z",
+      "specialist": "beasthealth.health-advisor",
+      "limitations": [
+        "Saved-record review only; this does not complete the underlying life goal.",
+        "No external research, medical judgment, transaction, publication or production action was performed."
+      ]
+    },
+    {
+      "id": "282dc5a8-4452-4c83-a6ee-33d71bb9dca4",
+      "goalId": "9bb41c24-2617-46b5-a119-6e9faee8d1f4",
+      "capability": "money.cash-review",
+      "status": "planned",
+      "attempts": 0,
+      "revision": 0,
+      "dependencies": [
+        "41c08a38-ce0b-4dec-ac37-f8cb7c6b7a59"
+      ],
+      "history": [
+        {
+          "at": "2026-10-18T20:59:36.41651+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        }
+      ],
+      "hasResult": false
+    },
+    {
+      "id": "48729bca-8aaa-43e2-acff-38d99d8f5ad7",
+      "goalId": "bdc69e92-e4cc-4fb1-bdc0-4f30ca30a41c",
+      "capability": "money.cash-review",
+      "status": "verified",
+      "attempts": 1,
+      "revision": 4,
+      "dependencies": [],
+      "history": [
+        {
+          "at": "2026-10-18T21:01:15.696777+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T21:01:16.407Z",
+          "detail": "Retry limit reached. Authorize a correction cycle on this existing checkpoint after resolving its blocker; do not create replacement work.",
+          "status": "blocked"
+        },
+        {
+          "at": "2026-10-18T21:01:17.219Z",
+          "detail": "Member explicitly authorized a new correction cycle. Prior checkpoint history retained.",
+          "status": "planned"
+        },
+        {
+          "at": "2026-10-18T21:01:17.984Z",
+          "detail": "Specialist checkpoint claimed.",
+          "status": "running"
+        },
+        {
+          "at": "2026-10-18T21:01:17.984Z",
+          "detail": "Specialist result recomputed and source snapshot verified.",
+          "status": "verified"
+        }
+      ],
+      "hasResult": true,
+      "resultAsOf": "2026-10-18T21:01:17.984Z",
+      "monthlyIncome": 2800,
+      "specialist": "beastmoney.money-coach",
+      "limitations": [
+        "Saved-record review only; this does not complete the underlying life goal.",
+        "No external research, medical judgment, transaction, publication or production action was performed."
+      ]
+    },
+    {
+      "id": "66af069d-1bdf-4172-95d3-f2a87d833748",
+      "goalId": "bd7dc049-a738-43fd-9d43-811f2e87ae4d",
+      "capability": "money.cash-review",
+      "status": "planned",
+      "attempts": 0,
+      "revision": 0,
+      "dependencies": [
+        "4d9a5f6c-7f15-4e25-9093-89d6593cbaa1"
+      ],
+      "history": [
+        {
+          "at": "2026-10-18T21:01:19.655356+00:00",
+          "detail": "Member explicitly approved this ready saved-record review.",
+          "status": "planned"
+        }
+      ],
+      "hasResult": false
+    }
+  ],
+  "cancellations": [
+    {
+      "goal_id": "9bb41c24-2617-46b5-a119-6e9faee8d1f4",
+      "cancelled_at": "2026-10-18T20:59:37.861409+00:00"
+    },
+    {
+      "goal_id": "bd7dc049-a738-43fd-9d43-811f2e87ae4d",
+      "cancelled_at": "2026-10-18T21:01:21.375705+00:00"
+    }
+  ]
+}

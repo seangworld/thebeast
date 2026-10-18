@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-17",
+  "phase": "Stage 1 comparison complete after locked independent grading",
+  "authorization": {
+    "issue": 264,
+    "commentId": 6236922578,
+    "stage": 1,
+    "maxCalls": 24,
+    "maxUsd": 3
+  },
+  "paidCalls": 24,
+  "generationMeasurements": "Aggregate metrics in avery-director-stage-one-results-summary.json; identities/per-config metrics retained privately",
+  "recommendedConfiguration": "gpt-6.1-sol:high",
+  "independentReview": {
+    "reviewer": "ChatGPT",
+    "noveltyStatus": "regression-screening review approved",
+    "semanticStatus": "locked before unblinding",
+    "gradeCommentId": 6237688638
+  },
+  "targeted": {
+    "total": 104,
+    "pass": 104,
+    "fail": 0,
+    "priorPreserved": 101,
+    "additionalLockedGradeAndAssociationChecks": 3
+  },
+  "fullSuite": {
+    "total": 2406,
+    "pass": 2388,
+    "fail": 18,
+    "sameBaselineNames": true,
+    "baselineIssue": 266
+  },
+  "lint": "pass",
+  "applicationTypeScript": "pass",
+  "freeMetadataRequests": 2,
+  "credentialPreserved": true,
+  "stageTwoAuthorized": false,
+  "frozenHashes": {
+    "promptSha256": "55e31473b4ec1addfaace65585cfcdd4646923da83b81d543f14835aec0c1d9f",
+    "schemaSha256": "c4d21982ca409bb5b0281006670ef9dbba451525feea27f8870e4b7580cd5596",
+    "casesSha256": "0e20d529f0bef217a933adf859376879dd3708ec55442080cd095c39cef8a446"
+  },
+  "resumption": "Comparison complete. No further calls or Stage 2 authorized; production unchanged.",
+  "inferenceSpendUsdEstimated": 0.06797005,
+  "newPaidCallsThisPhase": 0,
+  "credentialAccessThisPhase": false,
+  "comparison": "avery-director-stage-one-comparison.json"
+}
