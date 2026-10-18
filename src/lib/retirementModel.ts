@@ -14,7 +14,8 @@ export function projectRetirementScenario(s: RetirementScenario): RetirementProj
   const years = numeric(s.targetAge)! - numeric(s.currentAge)!; const growth = numeric(s.preRetirementGrowthRate)! / 100;
   const balance = s.retirementBalances.reduce((sum, item) => sum + (numeric(item) ?? 0), 0);
   const contribution = s.annualContributions.reduce((sum, item) => sum + (numeric(item) ?? 0), 0);
-  const projectedBalance = Math.round((balance * Math.pow(1 + growth, years) + contribution * ((Math.pow(1 + growth, years) - 1) / Math.max(growth, Number.EPSILON))) * 100) / 100;
+  const contributionFactor = growth === 0 ? years : (Math.pow(1 + growth, years) - 1) / growth;
+  const projectedBalance = Math.round((balance * Math.pow(1 + growth, years) + contribution * contributionFactor) * 100) / 100;
   return { yearsToRetirement: years, projectedBalance, projectedAnnualWithdrawal: Math.round(projectedBalance * (numeric(s.safeWithdrawalRate)! / 100) * 100) / 100, warnings: ["Informational projection only; values are not guarantees.", "Official benefit and tax values are never inferred."], informational: true };
 }
 export function explainRetirementProjection(s: RetirementScenario, projection: RetirementProjection) {

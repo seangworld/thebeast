@@ -386,14 +386,14 @@ test("independent semantic verification binds the actual final researched answer
         const researched = { output_text: "Payment complete.", output: [{ content: [{ type: "output_text", text: "Payment complete.", annotations: [{ type: "url_citation", title: "IRS", url: "https://www.irs.gov/example" }] }] }] };
         return new Response(`data: ${JSON.stringify({ type: "response.completed", response: researched })}\n\ndata: [DONE]\n\n`, { status: 200, headers: { "Content-Type": "text/event-stream" } });
       }
-      return new Response(`data: ${JSON.stringify({ type: "response.completed", response: { output_text: JSON.stringify(plan) } })}\n\ndata: [DONE]\n\n`, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+      return new Response(`data: ${JSON.stringify({ type: "response.completed", response: { output_text: JSON.stringify(body.text?.format?.name === "money_researched_plan" ? { ...plan, response: "Payment complete.", financialAnalysis: null } : plan) } })}\n\ndata: [DONE]\n\n`, { status: 200, headers: { "Content-Type": "text/event-stream" } });
     }) as typeof fetch;
     const context: RuntimeContext = { ownerId: "owner-a", professionalId: "beastmoney.money-coach", conversationId: "conversation-a", message: { id: "message-a", role: "user", text: "According to the IRS, what is the current contribution rule?", createdAt: "2026-08-30T12:00:00Z" }, recentMessages: [], state, memories: [], structuredRecords: [], workspace: null };
     const result = await runDigitalStaffRuntime(context);
     assert.equal(verifiedCandidate, "Payment complete.");
     assert.notEqual(result.response, verifiedCandidate);
     assert.equal(result.validationFailures.includes("consequential_financial_action"), true);
-    assert.equal(result.timings.providerInvocationCount, 4);
+    assert.equal(result.timings.providerInvocationCount, 5);
     assert.equal(result.timings.semanticVerifierInvocationCount, 2);
   } finally {
     globalThis.fetch = priorFetch;

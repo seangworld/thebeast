@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {reserveMoneyAttempt,moneyUsageCost,moneyAttemptReservation} from './money-coach-evaluation-budget.mjs';
+const auth={ownerApproved:true,issue:268,commentUrl:'https://github.com/seangworld/thebeast/issues/268#issuecomment-123',maxCalls:36,maxUsd:1.50,model:'gpt-5.6-luna'};
+const body=()=>({model:'gpt-5.6-luna',store:false,reasoning:{effort:'medium'},max_output_tokens:4800,service_tier:'default',instructions:'synthetic',input:'test',text:{format:{name:'digital_staff_runtime_plan',type:'json_schema',strict:true,schema:{}}}});
+const ledger=()=>({attempts:[],reservedUsd:0});
+test('unapproved paid assessment is denied before dispatch',()=>assert.throws(()=>reserveMoneyAttempt(ledger(),body(),null),/approval/));
+test('failed attempts and retries retain reservations and count against 36',()=>{const l=ledger();for(let i=0;i<36;i++)reserveMoneyAttempt(l,body(),auth).state='failed';assert.throws(()=>reserveMoneyAttempt(l,body(),auth),/cap/);assert.ok(l.reservedUsd<1.50);assert.ok(Math.abs(l.reservedUsd-36*moneyAttemptReservation(4800))<1e-8)});
+test('oversized body, research, wrong model, tier or effort cannot bypass budget',()=>{for(const b of [{...body(),input:'x'.repeat(32768)},{...body(),tools:[{type:'web_search'}]},{...body(),model:'gpt-6.1-sol'},{...body(),service_tier:'priority'},{...body(),reasoning:{effort:'high'}}])assert.throws(()=>reserveMoneyAttempt(ledger(),b,auth))});
+test('tampered ledger or a narrower mismatched owner ceiling is rejected',()=>{assert.throws(()=>reserveMoneyAttempt({...ledger(),reservedUsd:.01},body(),auth),/integrity/);assert.throws(()=>reserveMoneyAttempt(ledger(),body(),{...auth,maxUsd:1}),/scope/)});
+test('usage prices cache writes only once and unknown usage halts',()=>{assert.equal(moneyUsageCost({input_tokens:1000,output_tokens:100,input_tokens_details:{cached_tokens:100,cache_write_tokens:200}}),(700*.2+100*.02+200*.25+100*1.2)/1e6);assert.throws(()=>moneyUsageCost(null),/halt/)});

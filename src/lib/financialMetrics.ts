@@ -20,11 +20,20 @@ export function numberValue(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+export function isOneTimeFrequency(frequency: RecurringFrequency) {
+  return /^(?:once|one[\s_-]?(?:time|off)|non[\s_-]?recurring)$/i.test(String(frequency || "").trim());
+}
+
 export function getMonthlyFrequencyMultiplier(frequency: RecurringFrequency) {
+  if (isOneTimeFrequency(frequency)) return 0;
   const normalizedFrequency = String(frequency || "monthly")
     .toLowerCase()
     .replace(/_/g, "-")
     .trim();
+
+  const interval = /^every-([236])-months$/.exec(normalizedFrequency);
+  if (interval) return 1 / Number(interval[1]);
+  if (normalizedFrequency === "quarterly") return 1 / 3;
 
   if (
     normalizedFrequency === "weekly" ||
