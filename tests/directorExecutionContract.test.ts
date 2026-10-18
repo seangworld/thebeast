@@ -15,11 +15,17 @@ test("cancellation is explicit checkpoint guidance and cannot be relabeled as re
   const ctx={...context,checkpoints:[{id:"cancelled-cash",capability:money,status:"cancelled",blocker:"Owner cancelled",attempts:0,result:null,dependencies:[]}]};
   assert.equal(checkpointGuidance(ctx.checkpoints,ctx.availableCapabilities)[0].action,"retain_cancelled");
   const p=plan();p.steps=[];p.assessments=[{taskId:"cancelled-cash",finding:"Old queued approval should continue",disposition:"resume_existing"}];
-  assert.throws(()=>validateDirectorReasoning(p,ctx),/cannot resume/);
+  assert.throws(()=>validateDirectorReasoning(p,ctx),/cannot resume|retain_cancelled/);
 });
 test("current owner cancellation retains permitted verified evidence but forbids new work and old resume intents",()=>{
  const ctx={...context,cancelledAt:"2026-10-17T21:00:00Z",checkpoints:[{id:"care",capability:health,status:"verified",result:{asOf:"synthetic"},blocker:null,attempts:1,dependencies:[]},{id:"cash",capability:money,status:"planned",result:null,blocker:null,attempts:0,dependencies:[]}]};
  const p=plan();p.steps=[];p.assessments=[{taskId:"care",finding:"Retain the verified saved review",disposition:"accept_verified_evidence"}];p.evidenceClaims=[{taskId:"care",scope:"saved_record_consistency_only"}];assert.doesNotThrow(()=>validateDirectorReasoning(p,ctx));
- p.assessments=[{taskId:"cash",finding:"Old queued continue request",disposition:"resume_existing"}];assert.throws(()=>validateDirectorReasoning(p,ctx),/cancellation/);
+ p.assessments=[{taskId:"cash",finding:"Old queued continue request",disposition:"resume_existing"}];assert.throws(()=>validateDirectorReasoning(p,ctx),/cancellation|retain_cancelled/);
  p.assessments=[];p.steps=[plan().steps[0]];assert.throws(()=>validateDirectorReasoning(p,ctx),/cancelled/);
+});
+test("live schema explicitly retains terminal cancellation and rejects pointless investigation",()=>{
+ const ctx={...context,checkpoints:[{id:"cancelled",capability:money,status:"cancelled",result:null,blocker:"Owner cancelled",attempts:0,dependencies:[]}]};
+ const p=plan();p.steps=[];p.assessments=[{taskId:"cancelled",finding:"Retain cancelled work without execution",disposition:"retain_cancelled"}];assert.doesNotThrow(()=>validateDirectorReasoning(p,ctx));
+ p.assessments[0].disposition="investigate";assert.throws(()=>validateDirectorReasoning(p,ctx),/retain_cancelled/);
+ p.assessments[0].disposition="retain_cancelled";assert.throws(()=>validateDirectorReasoning(p,{...ctx,checkpoints:[{...ctx.checkpoints[0],status:"planned"}]}),/uncancelled/);
 });

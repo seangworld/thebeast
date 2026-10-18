@@ -1,0 +1,1 @@
+PASS: complete canonical-migration PostgreSQL 17 local stack; real GoTrue creation, password login, getUser, canonical goal creation, duplicate-plan prevention, cross-user RPC/read denial, minor and disabled-module denial. Local synthetic fixtures only; hosted verification not established.

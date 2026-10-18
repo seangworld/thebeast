@@ -1,0 +1,1 @@
+PASS: real local auth/RLS/API/database exhausted-lease recovery -> explicit same-checkpoint correction -> actual specialist recomputation -> retained history -> repeat without duplication; live lease, foreign goal and disabled AI boundaries preserved. Paid calls: 0.

@@ -13,7 +13,7 @@ try{
   const add=(cap,dependsOn=[])=>p.steps.push({capability:cap,purpose:'Review own permitted saved records',acceptance:'Independently verified consistency',dependsOn});
   if(turn===1&&id!=='folio-41'){if(['folio-17','folio-55','folio-63'].includes(id))add(health);if(['folio-28','folio-55','folio-63','folio-76'].includes(id))add(money,id==='folio-63'?[health]:[]);}
   if(id==='folio-17'&&turn===2)add(money,[health]);
-  for(const task of context.checkpoints){let disposition='investigate';if(task.status==='verified'&&task.result)disposition=id==='folio-28'&&turn===2?'request_correction':'accept_verified_evidence';if(id==='folio-41'&&task.capability===health)disposition=turn===1?'await_active_execution':turn===2?'resume_existing':disposition;p.assessments.push({taskId:task.id,finding:'Authored fixture interpretation; no model judgment measured.',disposition});}
+  for(const task of context.checkpoints){let disposition=task.status==='cancelled'?'retain_cancelled':'investigate';if(task.status==='verified'&&task.result)disposition=id==='folio-28'&&turn===2?'request_correction':'accept_verified_evidence';if(id==='folio-41'&&task.capability===health)disposition=turn===1?'await_active_execution':turn===2?'resume_existing':disposition;p.assessments.push({taskId:task.id,finding:'Authored fixture interpretation; no model judgment measured.',disposition});}
   return{status:'completed',model:'gpt-6.1-sol',service_tier:'default',usage:{input_tokens:100,output_tokens:100,input_tokens_details:{cached_tokens:0,cache_write_tokens:0},output_tokens_details:{reasoning_tokens:0}},output_text:JSON.stringify(p)};
  }});
  writeFileSync('/private/tmp/avery-consolidated-driver-private.json',JSON.stringify(ledger,null,2),{mode:0o600});
