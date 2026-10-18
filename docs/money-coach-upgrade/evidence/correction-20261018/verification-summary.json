@@ -1,0 +1,79 @@
+{
+  "applicationCommit": "8cb4ccf254b4f6f1efba7dbab894782aa8a107c4",
+  "deploymentId": "dpl_CZAkzUBYwmJtzBwuZs6BeptNT2PV",
+  "deploymentState": "READY",
+  "environment": "hosted DEV only",
+  "project": "zvzcojwjgnedrouilovc",
+  "paidCalls": 0,
+  "historicalIndependentVerdict": "FAIL for release, preserved",
+  "newModelReasoningVerified": false,
+  "tests": {
+    "regression": {
+      "passed": 2465,
+      "total": 2465
+    },
+    "newContract": {
+      "passed": 13,
+      "total": 13
+    },
+    "budget": {
+      "passed": 5,
+      "total": 5
+    },
+    "typescript": "PASS",
+    "lint": "PASS",
+    "requiredProductionBuild": "PASS local; no deployment to production",
+    "npmAudit": {
+      "vulnerabilities": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "forkChecks": {
+      "passed": 22,
+      "total": 22
+    }
+  },
+  "remoteBuild": {
+    "zeroVulnerabilities": true,
+    "fork22Passed": true,
+    "compiled": true
+  },
+  "hostedEvents": 12,
+  "browserWidths": {
+    "director": [
+      1440,
+      390,
+      375
+    ],
+    "moneyCoach": [
+      1440,
+      375
+    ]
+  },
+  "visualInspection": "Screenshots inspected; no horizontal overflow; existing styling retained. Scripted welcome/cards are not AI judgment.",
+  "historicalArtifacts": "git diff --exit-code 3c477e19 for original v1 fixture, frozen packets/preflight and executed-20261018 artifacts passed",
+  "replay": {
+    "historicalOutputs": 11,
+    "verbatimStillRejected": 11,
+    "authoredSelectorAdaptationDelivered": true,
+    "fullRuntimeMockDelivery": "PASS with three locally intercepted authored provider phases; no network or real credential"
+  },
+  "cleanup": {
+    "project": "zvzcojwjgnedrouilovc",
+    "syntheticAccounts": 3,
+    "loginBanned": true,
+    "loginDenialVerified": true,
+    "goalsArchived": true,
+    "moduleAccessDisabled": true,
+    "immutableAuditRetained": true,
+    "noCustomerRecordsTouched": true
+  },
+  "screenshots": {
+    "money-coach-375.png": "38d7443336ae5826dfe36d2a9382b062af7aaedd0420f4ec1dd051daa7e3f521",
+    "director-1440.png": "6bf9805c8f05273fd7a9bb303a611bdec9bf84db6764590a18059e34af28eaa6",
+    "money-coach-1440.png": "1654a58e5ed75e9d198dd49c4aabb91d78d26ad185a504999e50c99c5915a99d",
+    "director-375.png": "99008a08757ed7a0b08da157694a02b82465419f8cac6d176dbb1e4151303372"
+  },
+  "releaseReady": false,
+  "remainingBlocker": "Actual Luna compliance and independently graded financial judgment under the corrected contract remain unverified; new capped owner approval required before inference."
+}

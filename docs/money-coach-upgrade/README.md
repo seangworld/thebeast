@@ -1,3 +1,5 @@
+> Correction pass complete, October 18: **2,465/2,465** regressions, thirteen new contract tests, strict typed evidence/priority-only writes, immutable v2 fixtures, and twelve exact-candidate hosted DEV checks pass. Historical independent verdict remains **FAIL for release**; revised AI contract has not been model-tested. [Consolidated correction and release-readiness report](CORRECTION-READINESS.md). No new paid calls or production changes.
+
 > October 18 approved evaluation executed: 34 attempted calls, $0.0270182 usage-derived estimated cost; independent grading pending. All 11 financial plans were blocked by evidence validation. See [execution report](evaluation/executed-20261018/REPORT.md) and provide only the [completed blinded packets](evaluation/executed-20261018/blinded-completed-packets.json) to the independent reviewer. No release verdict or additional paid cycle. Earlier preparation status below is historical.
 
 # Money Coach consolidated intelligence upgrade

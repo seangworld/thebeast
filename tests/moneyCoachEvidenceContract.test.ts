@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { moneyEvidenceCatalog, supportedMoneyProposal } from "../src/lib/moneyCoachEvidence";
 import { moneyCoachReasoningSchemaFor, verifyMoneyCoachReasoning, type MoneyCoachReasoning } from "../src/lib/moneyCoachReasoning";
 import { buildMoneyCoachStructuredRecords } from "../src/lib/digitalStaffRuntime/moneyContext";
-import { validateRuntimePlan } from "../src/lib/digitalStaffRuntime/runtime";
+import { runDigitalStaffRuntime, validateRuntimePlan } from "../src/lib/digitalStaffRuntime/runtime";
 import { applyApprovedKnowledgeProposal } from "../src/lib/digitalStaffRuntime/persistence";
 import { executeSpecialist, verifySpecialistResult } from "../src/lib/directorAssignments";
 import type { RuntimeContext, RuntimePlan, StructuredKnowledgeProposal } from "../src/lib/digitalStaffRuntime/types";
@@ -27,3 +27,19 @@ test("promotional fields never become writable while useful explanation survives
 test("unknown values cannot be promoted to zero or unconditional affordability",()=>{const c=structuredClone(revised.find((p:{scenarioId:string})=>p.scenarioId==="folio-78").context),a=grounded(c);a.status="supported";assert.ok(verifyMoneyCoachReasoning(c,a).length);const entry=moneyEvidenceCatalog(c).entries.find(e=>e.selector==="currentCash")!;assert.equal(entry.value,null);a.status="conditional";a.claims=[{path:entry.selector,value:0,meaning:"Invented zero"}];assert.ok(verifyMoneyCoachReasoning(c,a).length)});
 test("Avery canonical receipts are deterministic and stale source corrections retain historical receipt",()=>{const f=read("tests/fixtures/money-coach-competency-v2.json"),s={ownerId:"synthetic-owner",capability:"money.cash-review" as const,complete:true,money:structuredClone(f.baseline)},receipt=executeSpecialist(s,f.asOf),before=JSON.stringify(receipt);assert.equal(verifySpecialistResult(receipt,s,f.asOf),null);s.money.incomes[0].amount=2400;assert.match(verifySpecialistResult(receipt,s,f.asOf)!,/changed/);assert.equal(JSON.stringify(receipt),before);const corrected=executeSpecialist(s,f.asOf);assert.equal((corrected.output as {monthlyIncome:number}).monthlyIncome,2400);assert.equal(verifySpecialistResult(corrected,s,f.asOf),null)});
 test("known source amounts remain citable when affordability is unknown, without certifying totals",()=>{const c=structuredClone(revised.find((p:{scenarioId:string;turn:number})=>p.scenarioId==="folio-12"&&p.turn===1).context),a=grounded(c),catalog=moneyEvidenceCatalog(c);assert.equal(catalog.entries.find(e=>e.selector==="monthlyBills")!.value,null);const rent=catalog.entries.find(e=>e.selector==="source.bill.0.amount")!;assert.equal(rent.value,1850);a.status="insufficient_evidence";a.claims=[{path:rent.selector,value:rent.value,meaning:"Known saved rent, not verified total affordability"}];assert.deepEqual(verifyMoneyCoachReasoning(c,a),[]);a.claims[0].value=0;assert.ok(verifyMoneyCoachReasoning(c,a).length)});
+
+test("full runtime request/parse/safety/delivery accepts an authored current-catalog plan without network",async()=>{
+  const c=context(),originalFetch=globalThis.fetch,originalKey=process.env.OPENAI_API_KEY;let calls=0;
+  process.env.OPENAI_API_KEY="sk-synthetic-no-network-placeholder";
+  globalThis.fetch=async(_url,init)=>{
+    calls++;const body=JSON.parse(String(init?.body));
+    if(body.text.format.name!=="digital_staff_runtime_plan")return new Response(JSON.stringify({output_text:JSON.stringify({verdict:"safe",categories:[]})}),{headers:{"content-type":"application/json"}});
+    const input=JSON.parse(body.input),evidence=input.financialEvidence;
+    assert.equal(body.text.format.schema.properties.financialAnalysis.anyOf[1].properties.snapshotId.enum[0],evidence.snapshotId);
+    assert.deepEqual(body.text.format.schema.properties.proposals.items.properties.entityType.enum,["priority","goal","preference"]);
+    const authored=plan(c);authored.financialAnalysis={...authored.financialAnalysis!,snapshotId:evidence.snapshotId};
+    const payload={output:[{type:"message",content:[{type:"output_text",text:JSON.stringify(authored)}]}]};
+    return new Response(`event: response.completed\ndata: ${JSON.stringify({type:"response.completed",response:payload})}\n\n`,{headers:{"content-type":"text/event-stream"}});
+  };
+  try{const result=await runDigitalStaffRuntime(c,{}, {modelOverride:"gpt-5.6-luna"});assert.equal(result.response,plan(c).response);assert.ok(result.financialAnalysis);assert.deepEqual(result.validationFailures,[]);assert.equal(calls,3)}finally{globalThis.fetch=originalFetch;if(originalKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=originalKey;}
+});
