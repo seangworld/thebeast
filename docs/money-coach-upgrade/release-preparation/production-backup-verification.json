@@ -1,0 +1,33 @@
+{
+  "backupReceipt": "money-coach-pre-release-20261018",
+  "verifiedAt": "2026-10-18T23:50:11.948654+00:00",
+  "project": "grpyzwvgqiwtxadfdtni",
+  "sourceSnapshotConsistent": true,
+  "allTableCountsAndFullRowDigestsEqual": true,
+  "tablesVerified": 204,
+  "sequencesEqual": true,
+  "extensionsEqual": true,
+  "averyAssignmentsIncluded": true,
+  "rolesRestoreExit": 0,
+  "archiveRestoreExit": 0,
+  "extensionRuntimeRestoreExit": 0,
+  "restoreNetwork": "none",
+  "cronExecution": false,
+  "databaseImage": "public.ecr.aws/supabase/postgres:17.6.1.105",
+  "privateDirectoryMode": "0700",
+  "privateFileMode": "0600",
+  "sha256": {
+    "database.dump": "a20a9947750709364745be1489f5b17b2f5c9fb8726285e26ff70374513e0f8e",
+    "roles.sql": "5e647c4843871afbe2f628f6b8663e3450d0a94ee8bbc257cf6a3bd08b7de44d",
+    "net-http-response.copy": "2499a7a53c11b7e52967ab2bbc459bd87492e539580b035f3872ed7fa124ee89",
+    "net-http-request-queue.copy": "62a74fd0e2d1e3a59b88b5b71c06ca8d43662c6787430c516b8e0bc28bbbda02",
+    "net-sequence.sql": "c2026c2b38decc67ac74447c9e4090463d01371492639b4a5dbd2c3a2e1806bd"
+  },
+  "additionalSpending": 0,
+  "logicalBackupExclusions": [
+    "Storage object bytes",
+    "platform configuration",
+    "external encryption keys",
+    "existing role passwords"
+  ]
+}

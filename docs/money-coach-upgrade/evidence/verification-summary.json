@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-18",
+  "trackingIssue": 268,
+  "primaryPR": 269,
+  "fullRegression": {
+    "pass": 2452,
+    "fail": 0,
+    "existingTestsPreserved": 2425,
+    "newTests": 27
+  },
+  "evaluationBudgetGuards": {
+    "pass": 5,
+    "fail": 0
+  },
+  "typescript": "pass",
+  "lint": "pass",
+  "requiredProductionBuild": "pass",
+  "fullNpmAuditVulnerabilities": 0,
+  "securityForkChecks": {
+    "pass": 22,
+    "fail": 0
+  },
+  "hostedDev": {
+    "deployment": "dpl_CaKtQ44dQV1UF3T4HMAAfF2tn72q",
+    "sourceCommit": "6eec5a0a3823b62a9a07a95ff4829ac4b9f31e5d",
+    "project": "zvzcojwjgnedrouilovc",
+    "status": "verified deterministic integration; provider disabled"
+  },
+  "latestSourceReceiptReplay": {
+    "pass": 5,
+    "fail": 0
+  },
+  "paidModelCalls": 0,
+  "aiCompetency": "NOT EVALUATED; independent novelty review and paid authorization pending",
+  "productionUnchanged": true,
+  "productionDeployment": "dpl_B4S7WnXbsHsNGGGhDUNBrrwigVLR",
+  "proposedEvaluation": {
+    "scenarios": 9,
+    "turns": 12,
+    "maxAttemptedCalls": 36,
+    "maxUsd": 1.5,
+    "approved": false
+  },
+  "limitations": [
+    "Numeric guards and scripted checks do not establish independent financial judgment",
+    "Promotional expiry schedules and live bank/payment-history reconciliation are not supported by this packet",
+    "Latest generic-label false-positive refinement is regression-tested and preserves five actual hosted receipt outputs; no new API/UI contract"
+  ],
+  "sensitiveArtifacts": "Original credentials preserved; temporary exports removed; raw synthetic checkpoint export not committed"
+}

@@ -110,7 +110,7 @@ test("DS-PERF-01 aborts a stalled provider call at the configured bound without 
 
 test("DS-PERF-01 supplies canonical affordability context without starving supporting records", () => {
   const records = buildMoneyCoachStructuredRecords({
-    debts: [{ id: "debt", name: "Card", balance: 1_000, minimum_payment: 100, is_archived: false }],
+    debts: [{ id: "debt", name: "Card", balance: 1_000, minimum_payment: 100, due_date: 20, is_archived: false }],
     bills: [{ id: "bill", name: "Rent", amount: 1_000, frequency: "monthly", due_date: 20, is_archived: false }],
     incomes: [{ id: "income", name: "Pay", amount: 3_000, frequency: "monthly", next_date: "2026-08-20", is_active: true }],
     cashSettings: { starting_balance: 4_000, checking_buffer: 500 },

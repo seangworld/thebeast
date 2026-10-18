@@ -49,7 +49,9 @@ export function executeSpecialist(snapshot: SpecialistSnapshot, asOf: string): S
     if (![snapshot.money.cashSettings.starting_balance, snapshot.money.cashSettings.checking_buffer].every(numeric)
       || [...snapshot.money.incomes, ...snapshot.money.bills].some((row) => !numeric(row.amount))
       || snapshot.money.debts.some((row) => !numeric(row.balance) || !numeric(row.minimum_payment))) throw new AssignmentBlocked("Required saved financial amounts are missing or invalid; unknown values cannot be certified as zero.");
-    output = buildMoneyCoachStructuredRecords(snapshot.money, new Date(asOf))[0].record;
+    const review = buildMoneyCoachStructuredRecords(snapshot.money, new Date(asOf))[0].record;
+    if (!(review.financialAssessment as { cashVerified: boolean }).cashVerified) throw new AssignmentBlocked("Saved financial evidence requires correction or recurrence confirmation before affordability can be verified.");
+    output = review;
   } else if (snapshot.capability === "health.preparation-review" && snapshot.health) {
     if (!snapshot.health.length) throw new AssignmentBlocked("No permitted saved health records to review.");
     output = buildHealthAdvisorModel({ records: snapshot.health, asOf: asOf.slice(0, 10) });

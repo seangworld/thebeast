@@ -1,6 +1,7 @@
 import { buildCashIntelligence } from "../cashIntelligence";
 import { getDebtLifecycleStatus, isDebtPayoffEligible } from "../debtLifecycle";
 import { numberValue } from "../financialMetrics";
+import { moneyCoachFinancialAssessment } from "../moneyCoachAnalysis";
 
 type MoneyRow = Record<string, unknown>;
 
@@ -25,7 +26,7 @@ function active(rows: MoneyRow[]) {
 function structured(domain: string, rows: MoneyRow[], limit: number) {
   return rows.slice(0, limit).map((record) => ({
     domain,
-    record,
+    record: structuredClone(record),
     updatedAt: typeof record.updated_at === "string" ? record.updated_at : undefined,
   }));
 }
@@ -49,18 +50,17 @@ export function buildMoneyCoachStructuredRecords(
   const cash = buildCashIntelligence({
     asOfDate,
     income: incomes,
-    bills,
-    debtMinimums: payableDebts,
+    bills: bills.map(row => ({ ...row, nextDueDateOverride: typeof row.next_due_date_after_payment === "string" ? row.next_due_date_after_payment : undefined })),
+    debtMinimums: payableDebts.map(row => ({ ...row, nextDueDateOverride: typeof row.next_due_date_after_payment === "string" ? row.next_due_date_after_payment : undefined })),
     fundingSources,
     settings: { currentCash, cashBuffer, lookaheadDays: 30 },
   });
+  const financialAssessment = moneyCoachFinancialAssessment(rows, cash, asOfDate);
 
   const canonicalSummary = {
     domain: "beastmoney.money-coach:canonical-affordability",
     record: {
       asOf: asOfDate.toISOString(),
-      currentCash,
-      cashBuffer,
       safeToSpendToday: cash.currentAvailableCash,
       projectedAvailableCash: cash.projectedAvailableCash,
       requiredCashNext30Days: cash.requiredCash,
@@ -85,17 +85,23 @@ export function buildMoneyCoachStructuredRecords(
       retirementScenarioCount: rows.retirementScenarios?.length || 0,
       retirementDataAvailable: Boolean(rows.retirementScenarios?.length),
       calculation: "canonical BeastMoney Cash Intelligence; saved records only",
+      financialAssessment,
+      ...(!financialAssessment.cashVerified ? Object.fromEntries([
+        "safeToSpendToday", "projectedAvailableCash", "requiredCashNext30Days", "billsDueNext30Days", "incomeExpectedNext30Days", "monthlyIncome", "monthlyBills", "monthlyDebtMinimums", "monthlyAvailableCash", "projectedCashBalance",
+      ].map(key => [key, null])) : {}),
+      currentCash: financialAssessment.issues.some(issue => issue.source === "cash_settings:starting_balance") ? null : currentCash,
+      cashBuffer: financialAssessment.issues.some(issue => issue.source === "cash_settings:checking_buffer") ? null : cashBuffer,
     },
     updatedAt: asOfDate.toISOString(),
   };
 
   return [
     canonicalSummary,
-    ...structured("beastmoney.money-coach:debt", debts, 5),
-    ...structured("beastmoney.money-coach:bill", bills, 5),
-    ...structured("beastmoney.money-coach:income", incomes, 4),
+    ...structured("beastmoney.money-coach:debt", debts, 4),
+    ...structured("beastmoney.money-coach:bill", bills, 3),
+    ...structured("beastmoney.money-coach:income", incomes, 3),
     ...structured("beastmoney.money-coach:funding", fundingSources, 2),
-    ...structured("beastmoney.money-coach:goal", rows.goals.map(goal => ({ ...goal, context_note: "Member aspiration for advice, not actual income, an achieved fact, or permission to change records." })), 3),
+    ...structured("beastmoney.money-coach:goal", rows.goals.map(goal => ({ ...goal, context_note: "Member aspiration for advice, not actual income, an achieved fact, or permission to change records." })), 2),
     ...structured("beastmoney.money-coach:retirement-scenario", rows.retirementScenarios || [], 2),
   ].slice(0, 20);
 }

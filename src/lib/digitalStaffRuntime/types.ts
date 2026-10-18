@@ -70,6 +70,7 @@ export type RuntimeResearchRequest = {
 };
 
 export type RuntimePlan = {
+  financialAnalysis?: import("../moneyCoachReasoning").MoneyCoachReasoning | null;
   intent: "answer" | "answer_previous_question" | "clarification" | "correction" | "product_support" | "handoff";
   response: string;
   nextQuestion: string | null;

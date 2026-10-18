@@ -1,0 +1,101 @@
+{
+  "status": "PREPARED; NO PAID CALLS; independent novelty review and owner budget approval required",
+  "scenarioHash": "92fbbd48f82978344f36bb6fa0bdd5e31580b49260791c4cec7d202bbf60f7ab",
+  "instructionsHash": "46fcffbe2400f4caaad95fee3fbde69c92593fa1189d92e0cbced37b728b9935",
+  "schemaHash": "8f818ad9608cc668e8b0ba875f84ecbf44626df0bf85c782e833a18d26818f2e",
+  "scenarios": 9,
+  "turns": 12,
+  "modelCallsMaximum": 36,
+  "spendMaximumUsd": 1.5,
+  "proposedCandidate": {
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "medium",
+    "safetyVerifierEffort": "low",
+    "planMaxOutputTokens": 4800,
+    "verifierMaxOutputTokens": 1200,
+    "serviceTier": "default"
+  },
+  "callsPerTurnMaximum": 3,
+  "retries": 0,
+  "researchCallsAuthorized": 0,
+  "pricing": {
+    "date": "2026-10-18",
+    "inputPerMillion": 0.2,
+    "cachedInputPerMillion": 0.02,
+    "cacheWritePerMillion": 0.25,
+    "outputPerMillion": 1.2
+  },
+  "inputTokenReservation": 65536,
+  "requestBytesMaximum": 32768,
+  "conservativeReservationPerCallUsd": 0.0352512,
+  "conservativeMaximumUsd": 1.2690432,
+  "notes": [
+    "Failed and rejected provider attempts count; reserve and fsync before dispatch. Retain full reservation on missing usage and halt.",
+    "No web search or paid research is allowed in this assessment; prevent tools at the transport boundary.",
+    "Normal existing semantic input/plan/output calls are all counted; deterministic rejection may use fewer.",
+    "Store exact requested/actual model IDs, raw output, usage incl reasoning/cache, latency and estimated costs privately; blinded packets omit identity, prices and implementer grades.",
+    "Continuation must use actual previous messages and state; never use development examples as independent proof."
+  ],
+  "requestSizes": [
+    {
+      "scenario": "folio-12",
+      "turn": 1,
+      "initialBodyBytes": 21021
+    },
+    {
+      "scenario": "folio-12",
+      "turn": 2,
+      "initialBodyBytes": 22514
+    },
+    {
+      "scenario": "folio-24",
+      "turn": 1,
+      "initialBodyBytes": 22279
+    },
+    {
+      "scenario": "folio-36",
+      "turn": 1,
+      "initialBodyBytes": 20907
+    },
+    {
+      "scenario": "folio-48",
+      "turn": 1,
+      "initialBodyBytes": 22219
+    },
+    {
+      "scenario": "folio-59",
+      "turn": 1,
+      "initialBodyBytes": 22457
+    },
+    {
+      "scenario": "folio-67",
+      "turn": 1,
+      "initialBodyBytes": 22231
+    },
+    {
+      "scenario": "folio-67",
+      "turn": 2,
+      "initialBodyBytes": 22260
+    },
+    {
+      "scenario": "folio-78",
+      "turn": 1,
+      "initialBodyBytes": 21089
+    },
+    {
+      "scenario": "folio-89",
+      "turn": 1,
+      "initialBodyBytes": 22303
+    },
+    {
+      "scenario": "folio-93",
+      "turn": 1,
+      "initialBodyBytes": 27970
+    },
+    {
+      "scenario": "folio-93",
+      "turn": 2,
+      "initialBodyBytes": 28039
+    }
+  ]
+}

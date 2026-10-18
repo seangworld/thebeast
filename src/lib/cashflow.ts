@@ -1,4 +1,6 @@
 import { addDays } from "date-fns";
+import { addMonthsClamped } from "./formatters";
+import { isOneTimeFrequency } from "./financialMetrics";
 
 export type CashEvent = {
   date: Date;
@@ -14,23 +16,22 @@ export type SimulatedCashEvent = CashEvent & {
   belowBuffer: boolean;
 };
 
-function advanceByFrequency(date: Date, frequency?: string) {
+function advanceByFrequency(date: Date, frequency?: string, anchorDay = date.getDate()) {
   const next = new Date(date);
+  frequency = String(frequency || "monthly").toLowerCase().trim();
+  if (frequency === "annual" || frequency === "annually") frequency = "yearly";
+  if (frequency === "bi-weekly") frequency = "biweekly";
+  if (frequency === "quarterly") frequency = "every_3_months";
 
   if (frequency === "weekly") {
     next.setDate(next.getDate() + 7);
   } else if (frequency === "biweekly") {
     next.setDate(next.getDate() + 14);
-  } else if (frequency === "every_2_months") {
-    next.setMonth(next.getMonth() + 2);
-  } else if (frequency === "every_3_months") {
-    next.setMonth(next.getMonth() + 3);
-  } else if (frequency === "every_6_months") {
-    next.setMonth(next.getMonth() + 6);
-  } else if (frequency === "yearly") {
-    next.setFullYear(next.getFullYear() + 1);
   } else {
-    next.setMonth(next.getMonth() + 1);
+    const months = frequency === "every_2_months" ? 2 : frequency === "every_3_months" ? 3 : frequency === "every_6_months" ? 6 : frequency === "yearly" ? 12 : 1;
+    const shifted = addMonthsClamped(next, months);
+    shifted.setDate(Math.min(anchorDay, new Date(shifted.getFullYear(), shifted.getMonth()+1, 0).getDate()));
+    return shifted;
   }
 
   return next;
@@ -42,7 +43,7 @@ function getFirstDueDateFromDay(startDate: Date, dueDay: number) {
   let firstDue = new Date(
     startDate.getFullYear(),
     startDate.getMonth(),
-    safeDueDay
+    Math.min(safeDueDay, new Date(startDate.getFullYear(), startDate.getMonth()+1, 0).getDate())
   );
 
   const startOnly = new Date(
@@ -52,7 +53,8 @@ function getFirstDueDateFromDay(startDate: Date, dueDay: number) {
   );
 
   if (firstDue < startOnly) {
-    firstDue.setMonth(firstDue.getMonth() + 1);
+    firstDue = addMonthsClamped(firstDue, 1);
+    firstDue.setDate(Math.min(safeDueDay, new Date(firstDue.getFullYear(),firstDue.getMonth()+1,0).getDate()));
   }
 
   return firstDue;
@@ -83,10 +85,14 @@ export function buildCashTimeline({
     if (!inc?.next_date) return;
 
     let current = new Date(`${inc.next_date}T00:00:00`);
+    if (isOneTimeFrequency(inc.frequency)) {
+      if (current >= startOnly && current <= endDate) timeline.push({ date: current, type: "income", name: inc.name || "Income", amount: Number(inc.amount || 0) });
+      return;
+    }
     let safety = 0;
 
     while (current < startOnly && safety < 240) {
-      current = advanceByFrequency(current, inc.frequency);
+      current = advanceByFrequency(current, inc.frequency, Number(String(inc.next_date).slice(8,10)));
       safety += 1;
     }
 
@@ -98,7 +104,7 @@ export function buildCashTimeline({
         amount: Number(inc.amount || 0),
       });
 
-      current = advanceByFrequency(current, inc.frequency);
+      current = advanceByFrequency(current, inc.frequency, Number(String(inc.next_date).slice(8,10)));
       safety += 1;
     }
   });
@@ -120,7 +126,9 @@ export function buildCashTimeline({
         amount: -billAmount,
       });
 
-      current = advanceByFrequency(current, bill.frequency || "monthly");
+      if (isOneTimeFrequency(bill.frequency)) break;
+
+      current = advanceByFrequency(current, bill.frequency || "monthly", Number(bill.due_date || current.getDate()));
       safety += 1;
     }
   });
@@ -142,7 +150,7 @@ export function buildCashTimeline({
         amount: -minimumPayment,
       });
 
-      current = advanceByFrequency(current, "monthly");
+      current = advanceByFrequency(current, "monthly", Number(debt.due_date || current.getDate()));
       safety += 1;
     }
   });

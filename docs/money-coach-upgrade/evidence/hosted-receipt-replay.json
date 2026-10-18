@@ -1,0 +1,7 @@
+{
+  "environment": "DEV synthetic only",
+  "verifiedReceipts": 5,
+  "latestCodeOutputsMatchHostedReceipts": true,
+  "rawSourceSnapshots": "Retained in DEV owner-scoped checkpoint history; temporary raw export removed",
+  "note": "Final generic-label false-positive refinement changes no output for actual hosted tested cases. Its new generic-recurring-label case has a dedicated regression test."
+}
