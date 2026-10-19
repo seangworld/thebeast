@@ -5,6 +5,7 @@ import { navigationRegistry } from "./navigation";
 import type { RuntimeContext } from "./types";
 import { authoritativeProfessionalPrompt } from "./professionalPrompts";
 import { buildDigitalStaffInteractionPolicy } from "./interactionPolicy";
+import { buildHealthEvidenceQualityReview } from "../health/evidenceQuality";
 
 export function buildRuntimeInstructions(config: ProfessionalConfig) {
   return `You are ${config.name}, the member's ${config.role} in Beast.
@@ -40,13 +41,23 @@ ${authoritativeProfessionalPrompt(config.id)}`;
 
 export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeContext) {
   const productSupport = isProductSupportQuestion(context.message.text);
+  const structuredRecords = context.structuredRecords.slice(0, config.id === "beasthealth.health-advisor" ? 221 : config.id === "beasteducation.guidance-counselor" ? 40 : 20);
   return JSON.stringify({
     ...(config.id === "beastmoney.money-coach" ? { financialEvidence: moneyEvidenceCatalog(context), supportedFinancialProposals: { entityTypes: ["priority","goal","preference"], fields: moneyPriorityFields, destination: "Owner-approved Money priority only; no debt, income, bill, APR, payment or account edits." } } : {}),
     currentMessage: context.message,
     conversationState: context.state,
     recentConversation: context.recentMessages.slice(productSupport ? -4 : config.id === "beasthealth.health-advisor" ? -32 : -8),
     relevantMemory: productSupport ? [] : context.memories.slice(0, config.id === "beasthealth.health-advisor" ? 16 : 8),
-    structuredRecords: productSupport ? [] : context.structuredRecords.slice(0, config.id === "beasthealth.health-advisor" ? 221 : config.id === "beasteducation.guidance-counselor" ? 40 : 20),
+    structuredRecords: productSupport ? [] : structuredRecords,
+    ...(config.id === "beasthealth.health-advisor" && !productSupport
+      ? {
+          healthEvidenceQuality: buildHealthEvidenceQualityReview(
+            structuredRecords,
+            context.message.createdAt,
+          ),
+          healthEvidenceQualityBoundary: "This is deterministic metadata triage, not clinical reconciliation. Source labels are unverified; age since a record update does not establish whether a health fact is current or stale. Treat listed differences as possible discrepancies only, inspect the cited same-owner records, preserve both versions and uncertainty, and ask the member to verify with the source or clinician when needed. Member-reported VA claim context is kept out of clinical discrepancy checks.",
+        }
+      : {}),
     selectedDocuments: (context.documents || []).map(({id,title}) => ({id,title})),
     documentBoundary: "Only attached originals were supplied this turn. Metadata and previous summaries are not a fresh reading of an original. Report unreadable or missing pages; cite document title and page only when visible.",
     contextBoundary: context.contextBoundary || null,
