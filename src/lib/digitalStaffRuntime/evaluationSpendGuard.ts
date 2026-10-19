@@ -11,8 +11,8 @@ export const evaluationCapNanoUsd = 10 * usd;
 // Luna ceilings include long-context, cache-write and regional uplifts; these
 // deliberately over-account rather than claim exact invoice charges.
 export const evaluationPricing = {
-  reviewedAt: "2026-10-18",
-  expiresAt: "2026-10-19T04:00:00Z",
+  reviewedAt: "2026-10-19",
+  expiresAt: "2026-10-20T04:00:00Z",
   sources: ["https://developers.openai.com/api/docs/models/gpt-5", "https://developers.openai.com/api/docs/models/gpt-5.6-luna", "https://developers.openai.com/api/docs/pricing"],
   models: {
     "gpt-5": { inputNano: 1250, outputNano: 10000, context: 400000, output: 128000, returned: ["gpt-5", "gpt-5-2025-08-07"] },
