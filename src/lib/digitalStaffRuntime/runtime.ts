@@ -12,6 +12,7 @@ import type { RuntimeContext, RuntimeObserver, RuntimePlan, RuntimeResult } from
 import { isMemberSpecialistId } from "../memberAgentCapabilityFramework";
 import { enforceMemberAgentResponseSafety, filterMemberAgentContextItems, isMemberAgentResponseContract, memberAgentSafetyFallback, safeMemberAgentResponseContract, sanitizeUntrustedMemberText, screenMemberAgentInput } from "../memberAgentResponseSafety";
 import { verifyMemberAgentSemanticSafety } from "../memberAgentSemanticVerifier";
+import { guardUnrequestedVeteransSecondaryTheory } from "./veteransGrounding";
 
 type ResponsesPayload = { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; title?: string; url?: string }> }> }> };
 
@@ -397,9 +398,12 @@ export async function runDigitalStaffRuntime(
     if (!contextualAnswer?.trim()) throw new Error("Contextual evidence explanation did not complete.");
   }
   const unguardedResponse = contextualAnswer || research?.answer || validated.response;
-  let responseSafety = isMemberSpecialistId(context.professionalId)
-    ? enforceMemberAgentResponseSafety({ professionalId: context.professionalId, memberMessage: context.message.text, response: unguardedResponse, contract: validated.responseContract })
-    : { safe: true, response: unguardedResponse, failures: [] as readonly string[] };
+  const veteransGrounding = guardUnrequestedVeteransSecondaryTheory(executionContext, unguardedResponse);
+  let responseSafety = !veteransGrounding.safe
+    ? veteransGrounding
+    : isMemberSpecialistId(context.professionalId)
+      ? enforceMemberAgentResponseSafety({ professionalId: context.professionalId, memberMessage: context.message.text, response: unguardedResponse, contract: validated.responseContract })
+      : { safe: true, response: unguardedResponse, failures: [] as readonly string[] };
   if (isMemberSpecialistId(context.professionalId) && responseSafety.safe) {
     providerInvocationCount += 1;
     semanticVerifierInvocationCount += 1;
