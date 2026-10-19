@@ -51,6 +51,13 @@ test('VA decision review suppresses unrequested secondary theories even when pri
  assert.equal(result.safe,false);assert.deepEqual(result.failures,['unrequested-secondary-veterans-theory']);
  assert.doesNotMatch(result.response,/secondary|secondarily|aggravat/i);assert.match(result.response,/current condition.*in-service event.*connection/i);
 });
+test('an earlier user mention of secondary service connection does not authorize it in a later VA decision review',()=>{
+ const decisionContext:RuntimeContext={...context,message:{...context.message,text:'Using current official VA guidance, explain how the requirements relate to this decision.'},recentMessages:[{id:'prior-user',role:'user',text:'Could secondary service connection apply to a separate condition?',createdAt:'2026-10-19'},{id:'prior-assistant',role:'assistant',text:'I can explain the letter next.',createdAt:'2026-10-19'}],documents:[{id:'synthetic-letter',title:'Synthetic VA decision letter',content:{type:'input_file',filename:'synthetic-va-decision.pdf'}}]};
+ const candidate='The letter shows a direct evidence gap. Secondary service connection might also apply if another condition caused or aggravated the knee.';
+ const result=guardUnrequestedVeteransSecondaryTheory(decisionContext,candidate);
+ assert.equal(result.safe,false);assert.deepEqual(result.failures,['unrequested-secondary-veterans-theory']);
+ assert.doesNotMatch(result.response,/secondary|secondarily|aggravat/i);
+});
 test('VA secondary-service explanation is allowed when the member explicitly asks for it',()=>{
  const decisionContext:RuntimeContext={...context,message:{...context.message,text:'Explain what secondary service connection means under VA rules.'},documents:[{id:'synthetic-letter',title:'Synthetic VA decision letter',content:{type:'input_file',filename:'synthetic-va-decision.pdf'}}]};
  const candidate='A secondary service-connection claim concerns a new condition linked to one already service-connected.';

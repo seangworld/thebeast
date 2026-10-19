@@ -1,7 +1,8 @@
 import type { RuntimeContext } from "./types";
 
 const secondaryTheory = /\bsecondary(?:\s+(?:service[- ]?connection|service[- ]connected\s+(?:condition|disability)|condition|claim))\b|\bsecondarily\b.{0,120}\b(?:caus\w*|aggravat\w*)\b/i;
-const explicitSecondaryRequest = /\bsecondary\b/i;
+const explicitSecondaryRequest = /\b(?:explain|define|describe|compare|discuss|what\s+(?:is|does)|can|could|would|should)\b.{0,80}\bsecondary\b/i;
+const rejectsSecondaryDiscussion = /\b(?:do\s+not|don't|never|avoid|without)\b.{0,50}\bsecondary\b/i;
 
 const directServicePreparationFallback = "For a direct service-connection claim, VA generally looks for a current condition, an in-service event or injury, and a connection between them. To prepare, gather service records or first-hand statements relevant to the condition described in the decision, then ask a clinician to independently assess whether the available evidence supports a connection, including uncertainty and contrary evidence. See VA’s official evidence guidance: https://www.va.gov/disability/how-to-file-claim/evidence-needed/.";
 
@@ -24,8 +25,10 @@ export function guardUnrequestedVeteransSecondaryTheory(context: RuntimeContext,
   const isVaDecisionReview = /\b(?:decision(?:\s+letter)?|denial)\b/i.test(userText)
     && (/\b(?:VA|veteran|claim)\b/i.test(userText) || /\bVA\b/i.test(documentTitles))
     && /\b(?:requirements?|relat(?:e|es|ed)|apply|evidence|explain|prepar\w*)\b/i.test(userText);
+  const currentUserAskedAboutSecondary = explicitSecondaryRequest.test(context.message.text)
+    && !rejectsSecondaryDiscussion.test(context.message.text);
 
-  if (!isVaDecisionReview || explicitSecondaryRequest.test(userText) || !secondaryTheory.test(response)) {
+  if (!isVaDecisionReview || currentUserAskedAboutSecondary || !secondaryTheory.test(response)) {
     return { safe: true as const, response, failures: [] as string[] };
   }
 
