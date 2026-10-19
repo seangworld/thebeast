@@ -74,3 +74,38 @@ test("research deadline after partial stream retains tool-inclusive reservation 
   assert.equal(calls,1);assert.equal(JSON.parse(readFileSync(f.file,"utf8")).results[0].results[0].response,"Preserved prior synthetic response");
  }finally{f.close();}
 });
+
+test("new continuation conserves prior spending and stops BEFORE $6.58 including tools", async () => {
+ const { continuationBudget } = await import("../src/lib/digitalStaffRuntime/evaluationSpendGuard");
+ const dir=mkdtempSync(join(tmpdir(),"continuation-")); const file=join(dir,"run.json");
+ const g=new EvaluationSpendGuard(file,"new-run",continuationBudget); let dispatches=0;
+ try {
+  for(let i=0;i<3;i++)g.settle(g.reserve(body,String(i)),reply);
+  assert.equal(g.summary().accountedNanoUsd,5_340_000_000);
+  assert.equal(g.summary().priorAccountedNanoUsd,3_416_366_950);
+  assert.equal(g.summary().cumulativeCapNanoUsd,9_996_366_950);
+  await assert.rejects(()=>evaluationSpendScope.run(g,()=>requestOpenAIResponse(body,{apiKey:"sk-synthetic",requestId:"stop",fetchImpl:async()=>{dispatches++;return new Response();}})),/remaining/);
+  assert.equal(dispatches,0); assert.equal(g.summary().attemptedCalls,3);
+  g.close(); assert.throws(()=>new EvaluationSpendGuard(file,"new-run",continuationBudget),/halted/);
+  assert.throws(()=>new EvaluationSpendGuard(file,"new-run"),/mismatch/);
+ } finally {g.close();rmSync(dir,{recursive:true,force:true});}
+});
+test("continuation rejects a larger cap or reduced prior cost and retains missing-usage reservation", async()=>{
+ const {continuationBudget}=await import("../src/lib/digitalStaffRuntime/evaluationSpendGuard");
+ const dir=mkdtempSync(join(tmpdir(),"continuation-")); const file=join(dir,"run.json");
+ try {
+  assert.throws(()=>new EvaluationSpendGuard(file,"new-run",{...continuationBudget,capNanoUsd:10_000_000_000}),/authorization/);
+  assert.throws(()=>new EvaluationSpendGuard(file,"new-run",{...continuationBudget,priorAccountedNanoUsd:0}),/authorization/);
+  const g=new EvaluationSpendGuard(file,"new-run",continuationBudget);
+  try{const t=g.reserve({...body,tools:[{type:"web_search"}],max_tool_calls:3},"research");assert.throws(()=>g.settle(t,{model:"gpt-5",output:[]}),/Missing/);assert.equal(g.summary().accountedNanoUsd,3_310_000_000);assert.equal(g.summary().accountedNanoUsd+g.summary().priorAccountedNanoUsd,6_726_366_950);assert.throws(()=>g.reserve(body,"next"),/halted/);}finally{g.close();}
+ } finally{rmSync(dir,{recursive:true,force:true});}
+});
+test("new continuation rejects unknown pricing before dispatch without releasing prior spending",async()=>{
+ const {continuationBudget}=await import('../src/lib/digitalStaffRuntime/evaluationSpendGuard');
+ const dir=mkdtempSync(join(tmpdir(),'continuation-'));const g=new EvaluationSpendGuard(join(dir,'run.json'),'new-run',continuationBudget);let calls=0;
+ try{await assert.rejects(()=>evaluationSpendScope.run(g,()=>requestOpenAIResponse({model:'unknown-pricing'},{apiKey:'sk-synthetic',fetchImpl:async()=>{calls++;return new Response();}})),/Unknown/);assert.equal(calls,0);assert.equal(g.summary().attemptedCalls,0);assert.equal(g.summary().priorAccountedNanoUsd,3_416_366_950);assert.throws(()=>g.reserve(body,'next'),/halted/);}finally{g.close();rmSync(dir,{recursive:true,force:true});}
+});
+test("continuation loader refuses a copied prior ledger location",async()=>{
+ const {loadTaylorContinuation}=await import('../src/lib/digitalStaffRuntime/taylorContinuation');
+ assert.throws(()=>loadTaylorContinuation('/tmp/copied-prior.json','/tmp/new-ledger.json','another-run'),/Original prior ledger location/);
+});

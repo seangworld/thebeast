@@ -196,7 +196,7 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
     : navigation;
   const proposals = plan.intent === "clarification" || context.message.text.trim().endsWith("?")
     ? []
-    : plan.proposals.filter((proposal) => proposal.sourceMessageId === context.message.id && proposal.approvalStatus === "proposed" && (context.professionalId !== "beastmoney.money-coach" || supportedMoneyProposal(proposal)));
+    : plan.proposals.filter((proposal) => proposal.sourceMessageId === context.message.id && proposal.approvalStatus === "proposed" && (context.professionalId !== "beastmoney.money-coach" || supportedMoneyProposal(proposal)) && (context.professionalId !== "beasthealth.health-advisor" || proposal.entityType !== "symptom"));
   if (proposals.length !== plan.proposals.length) validationFailures.push("Rejected one or more unsafe structured proposals.");
   const explicitlyRequestsAuthoritativeResearch = config.researchDomains.length > 0
     && (requiresDeterministicResearch(context) || /\b(?:authoritative|according to|what does .{0,40} say)\b/i.test(context.message.text));

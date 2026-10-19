@@ -22,7 +22,9 @@ export const evaluationPricing = {
 } as const;
 
 type Entry = { requestId: string; model: string; maximumNanoUsd: number; status: "reserved" | "settled" | "unknown"; estimatedNanoUsd?: number; inputTokens?: number; outputTokens?: number; toolCalls?: number; returnedModel?: string; latencyMs?: number; request?: Record<string, unknown>; response?: unknown };
-type Ledger = { version: 1; runId: string; capNanoUsd: number; pricing: typeof evaluationPricing; halted: string | null; entries: Entry[]; results: unknown[]; scenariosStarted: string[] };
+type ContinuationBudget = Readonly<{capNanoUsd: number; priorAccountedNanoUsd: number; priorLedgerSha256: string}>;
+export const continuationBudget: ContinuationBudget = Object.freeze({ capNanoUsd: 6_580_000_000, priorAccountedNanoUsd: 3_416_366_950, priorLedgerSha256: "423f557b3fa56762ccbd70180aa8ee2ed528d2f9136370e1360a137cf1ec6939" });
+type Ledger = { budget?: typeof continuationBudget; version: 1; runId: string; capNanoUsd: number; pricing: typeof evaluationPricing; halted: string | null; entries: Entry[]; results: unknown[]; scenariosStarted: string[] };
 function integer(value: unknown): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= 0; }
 export function evaluationCallBound(body: Record<string, unknown>, now = Date.now()) {
   if (now >= Date.parse(evaluationPricing.expiresAt)) throw new Error("Evaluation pricing review expired");
@@ -48,7 +50,8 @@ export function evaluationCallBound(body: Record<string, unknown>, now = Date.no
 export class EvaluationSpendGuard {
   private state: Ledger;
   private closed = false;
-  constructor(private file: string, runId: string) {
+  constructor(private file: string, runId: string, private budget?: typeof continuationBudget) {
+    if (budget && JSON.stringify(budget) !== JSON.stringify(continuationBudget)) throw new Error("Unknown cumulative authorization");
     if (!isAbsolute(file) || !/^[a-zA-Z0-9_-]{1,100}$/.test(runId)) throw new Error("Private absolute ledger and fixed run ID required");
     const dir = lstatSync(dirname(file));
     if (!dir.isDirectory() || dir.isSymbolicLink() || (dir.mode & 0o077)) throw new Error("Ledger directory must be private (0700)");
@@ -58,12 +61,12 @@ export class EvaluationSpendGuard {
         const stat = lstatSync(file);
         if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o077)) throw new Error("Ledger must be private (0600)");
         this.state = JSON.parse(readFileSync(file, "utf8"));
-        if (this.state.version !== 1 || this.state.runId !== runId || this.state.capNanoUsd !== evaluationCapNanoUsd || JSON.stringify(this.state.pricing) !== JSON.stringify(evaluationPricing) || !Array.isArray(this.state.entries) || !Array.isArray(this.state.results) || !Array.isArray(this.state.scenariosStarted)) throw new Error("Ledger identity/pricing mismatch");
+        if (this.state.version !== 1 || this.state.runId !== runId || this.state.capNanoUsd !== (budget?.capNanoUsd ?? evaluationCapNanoUsd) || JSON.stringify(this.state.budget) !== JSON.stringify(budget) || JSON.stringify(this.state.pricing) !== JSON.stringify(evaluationPricing) || !Array.isArray(this.state.entries) || !Array.isArray(this.state.results) || !Array.isArray(this.state.scenariosStarted)) throw new Error("Ledger identity/pricing mismatch");
         for (const e of this.state.entries) {
           if (!integer(e.maximumNanoUsd) || !["reserved", "unknown", "settled"].includes(e.status) || (e.status === "settled" && (!integer(e.estimatedNanoUsd) || e.estimatedNanoUsd > e.maximumNanoUsd))) throw new Error("Corrupt ledger");
         }
       } else {
-        this.state = { version: 1, runId, capNanoUsd: evaluationCapNanoUsd, pricing: evaluationPricing, halted: null, entries: [], results: [], scenariosStarted: [] };
+        this.state = { version: 1, runId, capNanoUsd: budget?.capNanoUsd ?? evaluationCapNanoUsd, ...(budget ? {budget} : {}), pricing: evaluationPricing, halted: null, entries: [], results: [], scenariosStarted: [] };
         this.save();
       }
       this.assertReady();
@@ -78,17 +81,18 @@ export class EvaluationSpendGuard {
   }
   assertReady() {
     if (this.closed || this.state.halted || this.state.entries.some(e => e.status !== "settled")) throw new Error("Evaluation halted: unresolved cost or active reservation");
-    if (this.summary().accountedNanoUsd > evaluationCapNanoUsd) throw new Error("Ledger exceeds authorization");
+    if (this.summary().accountedNanoUsd > this.state.capNanoUsd || (this.budget && this.budget.priorAccountedNanoUsd + this.summary().accountedNanoUsd > evaluationCapNanoUsd)) throw new Error("Ledger exceeds authorization");
   }
   summary() {
-    return { runId: this.state.runId, capNanoUsd: this.state.capNanoUsd, accountedNanoUsd: this.state.entries.reduce((n,e) => n + (e.status === "settled" ? e.estimatedNanoUsd! : e.maximumNanoUsd), 0), attemptedCalls: this.state.entries.length, halted: this.state.halted, entries: structuredClone(this.state.entries) };
+    const accountedNanoUsd = this.state.entries.reduce((n,e) => n + (e.status === "settled" ? e.estimatedNanoUsd! : e.maximumNanoUsd), 0);
+    return { cumulativeAccountedNanoUsd: (this.budget?.priorAccountedNanoUsd ?? 0) + accountedNanoUsd, runId: this.state.runId, capNanoUsd: this.state.capNanoUsd, priorAccountedNanoUsd: this.budget?.priorAccountedNanoUsd ?? 0, cumulativeCapNanoUsd: (this.budget?.priorAccountedNanoUsd ?? 0) + this.state.capNanoUsd, accountedNanoUsd, attemptedCalls: this.state.entries.length, halted: this.state.halted, entries: structuredClone(this.state.entries) };
   }
   reserve(body: Record<string, unknown>, requestId: string) {
     this.assertReady();
     let bound: ReturnType<typeof evaluationCallBound>;
     try { bound = evaluationCallBound(body); }
     catch (error) { this.state.halted = "Call pricing/token/tool bounds unavailable"; this.save(); throw error; }
-    if (this.summary().accountedNanoUsd + bound.maximumNanoUsd > evaluationCapNanoUsd) {
+    if (this.summary().accountedNanoUsd + bound.maximumNanoUsd > this.state.capNanoUsd) {
       this.state.halted = "Next call worst-case cost exceeds remaining authorization"; this.save(); throw new Error(this.state.halted);
     }
     if (this.state.entries.some(e => e.requestId === requestId)) throw new Error("Duplicate provider dispatch/retry ID");
