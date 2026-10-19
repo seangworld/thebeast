@@ -63,3 +63,14 @@ test("all five provider phases consume the same run-wide ledger, including resea
 test("scenario replay cannot start a second paid evaluation cycle",()=>{
  const f=fixture();try{f.guard.startScenario("health-medication-discrepancy");f.guard.recordScenario({scenarioId:"health-medication-discrepancy",syntheticOnly:true});assert.throws(()=>f.guard.startScenario("health-medication-discrepancy"),/replay/);assert.throws(()=>f.guard.startScenario("money-adaptive-cashflow"),/Unapproved/);assert.equal(JSON.parse(readFileSync(f.file,"utf8")).results.length,1);}finally{f.close();}
 });
+test("research deadline after partial stream retains tool-inclusive reservation and partial scenario evidence",async()=>{
+ const f=fixture();let calls=0;
+ const fakeFetch:typeof fetch=async(_url,init)=>{calls++;return new Response(new ReadableStream({start(controller){controller.enqueue(new TextEncoder().encode('data: {"type":"response.created"}\n\n'));init?.signal?.addEventListener('abort',()=>controller.error(new DOMException('Synthetic timeout','AbortError')),{once:true});}}));};
+ try{
+  await assert.rejects(()=>evaluationSpendScope.run(f.guard,()=>requestOpenAIResponseStream({...body,tools:[{type:"web_search"}],max_tool_calls:3},{apiKey:"sk-synthetic",requestId:"research-timeout",fetchImpl:fakeFetch,timeoutMs:5})));
+  f.guard.recordScenario({completedTurns:1,results:[{response:"Preserved prior synthetic response"}],failure:{category:"provider_timeout"}});
+  assert.equal(f.guard.summary().accountedNanoUsd,3310000000);assert.equal(f.guard.summary().entries[0].status,"unknown");
+  await assert.rejects(()=>evaluationSpendScope.run(f.guard,()=>requestOpenAIResponse(body,{apiKey:"sk-synthetic",requestId:"next",fetchImpl:fakeFetch})));
+  assert.equal(calls,1);assert.equal(JSON.parse(readFileSync(f.file,"utf8")).results[0].results[0].response,"Preserved prior synthetic response");
+ }finally{f.close();}
+});
