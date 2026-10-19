@@ -85,7 +85,13 @@ function isClaimContext(record: HealthRecordView): boolean {
 }
 
 function isActive(record: HealthRecordView): boolean {
-  return !["archived", "deleted"].includes(String(record.status || "").toLocaleLowerCase());
+  return String(record.status || "").toLocaleLowerCase() === "active";
+}
+
+function isHealthRecordDomain(domain: string): boolean {
+  return domain === "health"
+    || domain.startsWith("health:")
+    || (domain.startsWith("beasthealth.health-advisor:") && !domain.endsWith(":goals"));
 }
 
 /**
@@ -99,6 +105,7 @@ export function buildHealthEvidenceQualityReview(
 ): HealthEvidenceQualityReview {
   const asOf = validDate(asOfValue);
   const records = structuredRecords.flatMap((item) => {
+    if (!isHealthRecordDomain(item.domain)) return [];
     const record = asRecord(item.record);
     if (!record || isClaimContext(record)) return [];
     return [{ record, domain: item.domain, kind: kindOf(record, item.domain) }];
