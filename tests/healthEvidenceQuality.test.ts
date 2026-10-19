@@ -84,7 +84,10 @@ const structuredRecords: RuntimeContext["structuredRecords"] = [
 ];
 
 test("Health evidence triage flags metadata gaps and possible same-record discrepancies without resolving them", () => {
-  const review = buildHealthEvidenceQualityReview(structuredRecords, "2026-10-18T12:00:00.000Z");
+  const review = buildHealthEvidenceQualityReview([
+    ...structuredRecords,
+    { domain: "beasthealth.health-advisor:goals", record: { id: "goal-1", title: "Review medications" } },
+  ], "2026-10-18T12:00:00.000Z");
   assert.equal(review.recordCount, 5);
   assert.equal(review.asOf, "2026-10-18");
   assert.ok(review.recordsWithQualityNotes.some((item) => item.recordId === "med-old" && item.missingEventDate && item.daysSinceRecordUpdate === 655));
@@ -99,6 +102,31 @@ test("Health evidence triage flags metadata gaps and possible same-record discre
   assert.equal(JSON.stringify(review).includes("138/88"), false);
   assert.equal(JSON.stringify(review).includes("claim-1"), false);
   assert.ok(review.potentialDiscrepancies.every((item) => item.interpretation.startsWith("Unresolved difference")));
+});
+
+test("Health evidence triage excludes non-active medication rows and Health goals", () => {
+  const nonActiveRows = ["historical", "resolved", "planned"].map((status) => ({
+    domain: "health:medication",
+    record: {
+      id: `med-${status}`,
+      record_type: "medication",
+      title: "Medication A",
+      status,
+      occurred_on: "2025-01-01",
+      source: "Old record",
+      details: { dose: "5 mg", frequency: "twice daily" },
+    },
+  }));
+  const review = buildHealthEvidenceQualityReview([
+    ...structuredRecords,
+    ...nonActiveRows,
+    { domain: "beasthealth.health-advisor:goals", record: { id: "goal-1", title: "Review medications" } },
+  ], "2026-10-18T12:00:00.000Z");
+
+  assert.equal(review.recordCount, 8);
+  assert.equal(review.potentialDiscrepancies.length, 2);
+  assert.ok(review.potentialDiscrepancies.every((item) => !item.recordIds.some((id) => id.startsWith("med-historical") || id.startsWith("med-resolved") || id.startsWith("med-planned"))));
+  assert.ok(review.recordsWithQualityNotes.every((item) => item.recordId !== "goal-1"));
 });
 
 test("Health runtime receives compact evidence-quality notes while other specialists do not", () => {
