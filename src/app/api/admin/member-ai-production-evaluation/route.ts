@@ -1,3 +1,4 @@
+import { EvaluationSpendGuard, evaluationSpendScope, evaluationCallBound, taylorEvaluationScenarioIds } from "@/lib/digitalStaffRuntime/evaluationSpendGuard";
 import { NextResponse } from "next/server";
 import {
   buildProductionHandoffEvaluationContext,
@@ -65,11 +66,46 @@ export async function GET() {
 export async function POST(request: Request) {
   const access = await requireOwner();
   if (access.response) return access.response;
+  // Durable local filesystem required: never use an ephemeral hosted ledger or
+  // production credentials/environment for this owner-authorized $10 run.
+  if (process.env.VERCEL || process.env.VERCEL_ENV === "production" || !process.env.TAYLOR_EVALUATION_LEDGER || !process.env.TAYLOR_EVALUATION_RUN_ID) {
+    return NextResponse.json({ error: "A private durable local evaluation ledger/run ID is required; paid execution disabled." }, { status: 503, headers: privateHeaders });
+  }
+  // Preflight every selected scenario model before the FIRST provider call.
+  try {
+    for (const scenario of productionEvaluationScenarios.filter(s => taylorEvaluationScenarioIds.includes(s.id))) {
+      scenario.turns.forEach((_, turnIndex) => {
+        const context = buildProductionEvaluationContext({ scenario, turnIndex, recentMessages: [], state: emptyProductionEvaluationState });
+        evaluationCallBound({ model: selectDigitalStaffModel(context), tools: [{ type: "web_search" }], max_tool_calls: 3 });
+      });
+    }
+  } catch { return NextResponse.json({ error: "Model/pricing/token/tool preflight failed; no paid call authorized for dispatch." }, { status: 503, headers: privateHeaders }); }
+  let guard: EvaluationSpendGuard;
+  try { guard = new EvaluationSpendGuard(process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID); }
+  catch { return NextResponse.json({ error: "Evaluation budget unavailable or halted; no call dispatched." }, { status: 409, headers: privateHeaders }); }
+  try {
+    const response = await evaluationSpendScope.run(guard, () => executeSyntheticScenario(request));
+    const payload = await response.json();
+    guard.recordScenario(payload);
+    guard.assertReady();
+    return NextResponse.json({ ...payload, spend: guard.summary() }, { status: response.status, headers: privateHeaders });
+  } catch {
+    return NextResponse.json({ error: "Evaluation stopped by spend guard; do not retry or reset the ledger.", spend: guard.summary() }, { status: 409, headers: privateHeaders });
+  } finally { guard.close(); }
+}
+
+async function executeSyntheticScenario(request: Request) {
   let body: { scenarioId?: unknown };
   try { body = await request.json() as typeof body; } catch { return NextResponse.json({ error: "A valid evaluation request is required." }, { status: 400, headers: privateHeaders }); }
   if (typeof body.scenarioId !== "string") return NextResponse.json({ error: "An approved scenario is required." }, { status: 400, headers: privateHeaders });
   let scenario;
   try { scenario = requireProductionEvaluationScenario(body.scenarioId); } catch { return NextResponse.json({ error: "Unknown evaluation scenario." }, { status: 400, headers: privateHeaders }); }
+
+  if (!taylorEvaluationScenarioIds.includes(scenario.id)) return NextResponse.json({ error: "Scenario outside this Taylor authorization." }, { status: 403, headers: privateHeaders });
+
+  const guard = evaluationSpendScope.getStore();
+  if (!guard) throw new Error("Evaluation spend scope required");
+  guard.startScenario(scenario.id);
 
   const recentMessages: RuntimeMessage[] = [];
   let state: ConversationState = { ...emptyProductionEvaluationState };

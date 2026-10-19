@@ -1,0 +1,121 @@
+{
+  "status": "BLOCKED: guarded local owner session unavailable; not executed",
+  "capUsd": 10,
+  "paidCalls": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "estimatedCostUsd": 0,
+  "scenarios": 4,
+  "turns": 11,
+  "fixtureSha256": "bcdb20cfe08a4b66463466dec56a9bc11a24594faaf8845195ced14da12598a6",
+  "turnConfigurations": [
+    {
+      "scenario": "health-veterans-original",
+      "turn": "read-original",
+      "model": "gpt-5",
+      "maximumPlainCallNanoUsd": 1780000000,
+      "maximumResearchCallNanoUsd": 3310000000
+    },
+    {
+      "scenario": "health-veterans-original",
+      "turn": "research-in-context",
+      "model": "gpt-5",
+      "maximumPlainCallNanoUsd": 1780000000,
+      "maximumResearchCallNanoUsd": 3310000000
+    },
+    {
+      "scenario": "health-medication-discrepancy",
+      "turn": "identify-conflict",
+      "model": "gpt-5.6-luna",
+      "maximumPlainCallNanoUsd": 830940000,
+      "maximumResearchCallNanoUsd": 2593440000
+    },
+    {
+      "scenario": "health-medication-discrepancy",
+      "turn": "member-correction",
+      "model": "gpt-5.6-luna",
+      "maximumPlainCallNanoUsd": 830940000,
+      "maximumResearchCallNanoUsd": 2593440000
+    },
+    {
+      "scenario": "health-medication-discrepancy",
+      "turn": "appointment-preparation",
+      "model": "gpt-5.6-luna",
+      "maximumPlainCallNanoUsd": 830940000,
+      "maximumResearchCallNanoUsd": 2593440000
+    },
+    {
+      "scenario": "health-longitudinal-escalation",
+      "turn": "trend",
+      "model": "gpt-5.6-luna",
+      "maximumPlainCallNanoUsd": 830940000,
+      "maximumResearchCallNanoUsd": 2593440000
+    },
+    {
+      "scenario": "health-longitudinal-escalation",
+      "turn": "new-symptom",
+      "model": "gpt-5.6-luna",
+      "maximumPlainCallNanoUsd": 830940000,
+      "maximumResearchCallNanoUsd": 2593440000
+    },
+    {
+      "scenario": "health-longitudinal-escalation",
+      "turn": "medication-change",
+      "model": "gpt-5.6-luna",
+      "maximumPlainCallNanoUsd": 830940000,
+      "maximumResearchCallNanoUsd": 2593440000
+    },
+    {
+      "scenario": "health-longitudinal-escalation",
+      "turn": "emergency",
+      "model": "gpt-5",
+      "maximumPlainCallNanoUsd": 1780000000,
+      "maximumResearchCallNanoUsd": 3310000000
+    },
+    {
+      "scenario": "health-injection-privacy",
+      "turn": "injected-record",
+      "model": "gpt-5.6-luna",
+      "maximumPlainCallNanoUsd": 830940000,
+      "maximumResearchCallNanoUsd": 2593440000
+    },
+    {
+      "scenario": "health-injection-privacy",
+      "turn": "professional-claim",
+      "model": "gpt-5.6-luna",
+      "maximumPlainCallNanoUsd": 830940000,
+      "maximumResearchCallNanoUsd": 2593440000
+    }
+  ],
+  "pricing": {
+    "reviewedAt": "2026-10-18",
+    "expiresAt": "2026-10-19T04:00:00Z",
+    "sources": [
+      "https://developers.openai.com/api/docs/models/gpt-5",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "https://developers.openai.com/api/docs/pricing"
+    ],
+    "models": {
+      "gpt-5": {
+        "inputNano": 1250,
+        "outputNano": 10000,
+        "context": 400000,
+        "output": 128000,
+        "returned": [
+          "gpt-5",
+          "gpt-5-2025-08-07"
+        ]
+      },
+      "gpt-5.6-luna": {
+        "inputNano": 550,
+        "outputNano": 1980,
+        "context": 1050000,
+        "output": 128000,
+        "returned": [
+          "gpt-5.6-luna"
+        ]
+      }
+    },
+    "searchNano": 10000000
+  }
+}

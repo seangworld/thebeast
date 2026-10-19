@@ -1,3 +1,4 @@
+import { prepareEvaluationCall } from "./evaluationProviderHook";
 import {
   classifyDigitalStaffFailure,
   DigitalStaffServiceError,
@@ -64,18 +65,23 @@ export async function requestOpenAIResponse<T>(
   } = {}
 ) {
   const requestId = options.requestId || crypto.randomUUID();
+  const reservation = prepareEvaluationCall(body, requestId);
+  const guardedBody = reservation?.body ?? body;
   try {
     const response = await (options.fetchImpl || fetch)(openAIResponsesEndpoint, {
       method: "POST",
       headers: createOpenAIRequestHeaders(requestId, options.apiKey),
-      body: JSON.stringify(body),
+      body: JSON.stringify(guardedBody),
       signal: options.signal,
     });
     if (!response.ok) {
       throw await openAIProviderStatusError(response);
     }
-    return (await response.json()) as T;
+    const payload = (await response.json()) as T;
+    reservation?.settle(payload);
+    return payload;
   } catch (error) {
+    reservation?.unknown();
     const category = classifyDigitalStaffFailure("openai-responses", error);
     reportDigitalStaffError("openai-responses", error, requestId);
     throw new DigitalStaffServiceError(requestId, category);
@@ -104,6 +110,8 @@ export async function requestOpenAIResponseStream<T>(
   } = {}
 ) {
   const requestId = options.requestId || crypto.randomUUID();
+  const reservation = prepareEvaluationCall(body, requestId);
+  const guardedBody = reservation?.body ?? body;
   const controller = new AbortController();
   const timeoutMs = options.timeoutMs ?? digitalStaffProviderTimeoutMs;
   let timedOut = false;
@@ -118,7 +126,7 @@ export async function requestOpenAIResponseStream<T>(
     const response = await (options.fetchImpl || fetch)(openAIResponsesEndpoint, {
       method: "POST",
       headers: createOpenAIRequestHeaders(requestId, options.apiKey),
-      body: JSON.stringify({ ...(body as Record<string, unknown>), stream: true }),
+      body: JSON.stringify({ ...(guardedBody as Record<string, unknown>), stream: true }),
       signal: controller.signal,
     });
     if (!response.ok || !response.body) {
@@ -157,9 +165,11 @@ export async function requestOpenAIResponseStream<T>(
       if (done) break;
     }
     if (!completed) throw new Error("OpenAI streaming response did not complete safely.");
+    reservation?.settle(completed);
     options.onComplete?.();
     return completed;
   } catch (error) {
+    reservation?.unknown();
     const reported = timedOut
       ? new Error(`OpenAI provider timed out after ${timeoutMs}ms.`)
       : options.signal?.aborted
