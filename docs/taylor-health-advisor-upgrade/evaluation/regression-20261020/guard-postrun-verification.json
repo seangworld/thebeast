@@ -1,0 +1,27 @@
+{
+  "priorReceipts": [
+    {
+      "runId": "taylor-20261018-pr271",
+      "sha256": "423f557b3fa56762ccbd70180aa8ee2ed528d2f9136370e1360a137cf1ec6939",
+      "accountedNanoUsd": 3416366950,
+      "byteIdentical": true
+    },
+    {
+      "runId": "taylor-20261019-continuation-pr271",
+      "sha256": "48bd39160a02d9a374fc3e916cd98a9335f9bfba38e455c34137a4c51cc2d744",
+      "accountedNanoUsd": 133460420,
+      "byteIdentical": true
+    }
+  ],
+  "newLedgerSha256": "4104e37f00f8a61eb4b15e9665391f84c1237bd48a1ca8fbe06466e46f4a47da",
+  "newAccountedNanoUsd": 166414870,
+  "cumulativeAccountedNanoUsd": 3716242240,
+  "all14ReservationsFitBothCaps": true,
+  "all14CallsSettled": true,
+  "retries": 0,
+  "newUnknownOutcomes": 0,
+  "completedTurns": 4,
+  "memberClinicalRecordsLoaded": false,
+  "memberClinicalRecordsWritten": false,
+  "freshHistory": true
+}
