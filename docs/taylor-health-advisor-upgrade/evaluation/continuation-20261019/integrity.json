@@ -1,0 +1,20 @@
+{
+  "privateLedgerSha256": "48bd39160a02d9a374fc3e916cd98a9335f9bfba38e455c34137a4c51cc2d744",
+  "files": {
+    "original-runtime-results.json": "9e8a72d7965f6dc71dd3646baf56f50ea21632dc6c6fd6370fcc80c44e5b0de6",
+    "call-accounting.json": "62253e23c982442eb062dcecbad6965c4b80ee84bc438d1af9fc0b76bedee89e",
+    "REPORT.md": "03f5c34a89aa13d832b7bc3c89943f6cc52feacc67e8f02316081b8fc741698f",
+    "blinded-readable-packets.md": "d0da23d1e3f0400f21fbaf4cab6e653ee73dd42e09570407200cd7e4696263b8",
+    "owner-dev-access.png": "6a6c4cffba05abd0203b3368a64d9bb3c7687b15c1d779f1838fc09f630c8a9e",
+    "guard-postrun-verification.json": "2f3e31b731a0241f343349ab6595ebbcb1aeb23482ae926a8841d1d6852e5404",
+    "execution-summary.json": "926ad0744185aea0e46c307241567a636ad0496ce60a1ec49d87027a0e7d5e42",
+    "execution-complete.png": "26224c5a5e9632b98101165268591b0ae36ea7bbff6fd6d716a0e1b66d3b8d06",
+    "model-availability.json": "9166b695e19a4c7b1ed59c35815259d927c591b74e60db39bd6588a6449dc96c",
+    "blinded-review-packets.json": "0c712123f0b906b9575c7ba440ac6d59f3ca1241f38cc123f51753684e53e082",
+    "execution-manifest.json": "c804128d402f4c042590b37dea09d51c41eb3f9dc2499c56e7e053377f5d4181",
+    "H-C-original-1.pdf": "f3aeb9d68a5ff9cb4c66ab8163389045e0f1b8e1ad33c6753469209980358623"
+  },
+  "blindingModelNameCheck": "passed",
+  "originalPdfUnchanged": true,
+  "allOutputDigestsVerified": true
+}

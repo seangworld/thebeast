@@ -1,5 +1,6 @@
 "use client";
 
+import { sourcesCitedInAnswer, withCitedHealthSources } from "@/lib/health/answerSources";
 import { advisorGoalFilters } from "@/lib/platform/goalConnections";
 import Link from "next/link";
 import { VaccinationReminders } from "./VaccinationReminders";
@@ -229,7 +230,7 @@ function restoreHealthAdvisorTurns(
         timestamp: responseMessage?.timestamp || message.timestamp,
         response: {
           kind: "external",
-          answer: content.answer as HealthAdvisorQuestionAnswer,
+          answer: withCitedHealthSources(content.answer as HealthAdvisorQuestionAnswer),
         },
       });
     } else if (
@@ -244,7 +245,7 @@ function restoreHealthAdvisorTurns(
       });
     } else if (typeof content?.text === "string") {
       const runtime = content.runtime && typeof content.runtime === "object" ? content.runtime as { model?: string; validationFailures?: string[]; proposals?: StructuredKnowledgeProposal[]; researchSources?: Array<{ title: string; url: string }> } : null;
-      turns.push({ id: message.id, question: message.content, timestamp: responseMessage?.timestamp || message.timestamp, proposals: runtime?.proposals, response: { kind: "external", answer: { status: "ready", answer: content.text, generalInformation: content.text, possibleExplanations: "", questionsForClinician: "", recordEvidence: [], documentEvidence: [], conversationEvidence: [], contextWarnings: runtime?.validationFailures || [], externalSources: (runtime?.researchSources || []).map((source) => ({ ...source, organization: new URL(source.url).hostname })), limitations: [], model: runtime?.model || "Digital Staff runtime" } } });
+      turns.push({ id: message.id, question: message.content, timestamp: responseMessage?.timestamp || message.timestamp, proposals: runtime?.proposals, response: { kind: "external", answer: { status: "ready", answer: content.text, generalInformation: content.text, possibleExplanations: "", questionsForClinician: "", recordEvidence: [], documentEvidence: [], conversationEvidence: [], contextWarnings: runtime?.validationFailures || [], externalSources: sourcesCitedInAnswer(content.text, runtime?.researchSources || []).map((source) => ({ ...source, organization: new URL(source.url).hostname })), limitations: [], model: runtime?.model || "Digital Staff runtime" } } });
     }
   }
   return turns;
@@ -920,7 +921,7 @@ export function HealthAdvisorWorkspace({ initialVeteransMode = false }: { initia
         onActivity: (activity) => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity } : turn)),
         onResponseDelta: (delta) => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, partialText: `${turn.partialText || ""}${delta}` } : turn)),
       });
-      const payload: HealthAdvisorQuestionAnswer = { status: "ready", answer: runtime.result.response, generalInformation: runtime.result.response, possibleExplanations: "", questionsForClinician: runtime.result.nextQuestion || "", recordEvidence: [], documentEvidence: [], conversationEvidence: [], contextWarnings: runtime.result.validationFailures, externalSources: runtime.result.researchSources.map((source) => ({ title: source.title, url: source.url, organization: new URL(source.url).hostname })), limitations: [], model: runtime.result.model };
+      const payload: HealthAdvisorQuestionAnswer = { status: "ready", answer: runtime.result.response, generalInformation: runtime.result.response, possibleExplanations: "", questionsForClinician: runtime.result.nextQuestion || "", recordEvidence: [], documentEvidence: [], conversationEvidence: [], contextWarnings: runtime.result.validationFailures, externalSources: sourcesCitedInAnswer(runtime.result.response, runtime.result.researchSources).map((source) => ({ title: source.title, url: source.url, organization: new URL(source.url).hostname })), limitations: [], model: runtime.result.model };
       const externalResponse = {
         kind: "external" as const,
         answer: payload,

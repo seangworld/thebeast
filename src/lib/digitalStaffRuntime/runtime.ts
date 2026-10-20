@@ -12,6 +12,8 @@ import type { RuntimeContext, RuntimeObserver, RuntimePlan, RuntimeResult } from
 import { isMemberSpecialistId } from "../memberAgentCapabilityFramework";
 import { enforceMemberAgentResponseSafety, filterMemberAgentContextItems, isMemberAgentResponseContract, memberAgentSafetyFallback, safeMemberAgentResponseContract, sanitizeUntrustedMemberText, screenMemberAgentInput } from "../memberAgentResponseSafety";
 import { verifyMemberAgentSemanticSafety } from "../memberAgentSemanticVerifier";
+import { sourcesCitedInAnswer } from "../health/answerSources";
+import { guardUnrequestedVeteransSecondaryTheory } from "./veteransGrounding";
 
 type ResponsesPayload = { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; title?: string; url?: string }> }> }> };
 
@@ -69,7 +71,7 @@ async function executeResearch(
   const content = payload.output?.flatMap((item) => item.content || []) || [];
   const answer = payload.output_text || content.find((item) => item.type === "output_text")?.text || "";
   const retrievedAt = new Date().toISOString();
-  const sources = Array.from(new Map(content.flatMap((item) => item.annotations || []).filter((item) => item.type === "url_citation" && item.url).map((item) => [item.url as string, { title: item.title || new URL(item.url as string).hostname, url: item.url as string, supportedClaim: "Supports the researched response.", retrievedAt }])).values());
+  const sources = Array.from(new Map(content.flatMap((item) => item.annotations || []).filter((item) => item.type === "url_citation" && item.url).map((item) => [item.url as string, { title: item.title || new URL(item.url as string).hostname, url: item.url as string, supportedClaim: healthEvidenceOnly ? "Retrieved during research; relevance not independently verified." : "Supports the researched response.", retrievedAt }])).values());
   if (!answer || sources.length === 0) throw new Error("Authoritative research returned no attributable evidence.");
   return { answer, sources };
 }
@@ -196,7 +198,7 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
     : navigation;
   const proposals = plan.intent === "clarification" || context.message.text.trim().endsWith("?")
     ? []
-    : plan.proposals.filter((proposal) => proposal.sourceMessageId === context.message.id && proposal.approvalStatus === "proposed" && (context.professionalId !== "beastmoney.money-coach" || supportedMoneyProposal(proposal)));
+    : plan.proposals.filter((proposal) => proposal.sourceMessageId === context.message.id && proposal.approvalStatus === "proposed" && (context.professionalId !== "beastmoney.money-coach" || supportedMoneyProposal(proposal)) && (context.professionalId !== "beasthealth.health-advisor" || proposal.entityType !== "symptom"));
   if (proposals.length !== plan.proposals.length) validationFailures.push("Rejected one or more unsafe structured proposals.");
   const explicitlyRequestsAuthoritativeResearch = config.researchDomains.length > 0
     && (requiresDeterministicResearch(context) || /\b(?:authoritative|according to|what does .{0,40} say)\b/i.test(context.message.text));
@@ -397,9 +399,13 @@ export async function runDigitalStaffRuntime(
     if (!contextualAnswer?.trim()) throw new Error("Contextual evidence explanation did not complete.");
   }
   const unguardedResponse = contextualAnswer || research?.answer || validated.response;
+  const veteransGrounding = guardUnrequestedVeteransSecondaryTheory(executionContext, unguardedResponse);
+  // A scope-filtered answer still contains model prose. Never let the
+  // grounding intervention bypass diagnosis/emergency or semantic checks.
+  const scopedResponse = veteransGrounding.response;
   let responseSafety = isMemberSpecialistId(context.professionalId)
-    ? enforceMemberAgentResponseSafety({ professionalId: context.professionalId, memberMessage: context.message.text, response: unguardedResponse, contract: validated.responseContract })
-    : { safe: true, response: unguardedResponse, failures: [] as readonly string[] };
+    ? enforceMemberAgentResponseSafety({ professionalId: context.professionalId, memberMessage: context.message.text, response: scopedResponse, contract: validated.responseContract })
+    : { safe: true, response: scopedResponse, failures: [] as readonly string[] };
   if (isMemberSpecialistId(context.professionalId) && responseSafety.safe) {
     providerInvocationCount += 1;
     semanticVerifierInvocationCount += 1;
@@ -408,7 +414,7 @@ export async function runDigitalStaffRuntime(
       professionalId: context.professionalId,
       phase: "output",
       memberMessage: context.message.text,
-      candidateResponse: unguardedResponse,
+      candidateResponse: responseSafety.response,
       model,
       requestId: context.requestId,
       signal: context.signal,
@@ -428,10 +434,12 @@ export async function runDigitalStaffRuntime(
   return {
     ...validated,
     response: responseSafety.response,
-    validationFailures: [...validated.validationFailures, ...(rejectedContextCount ? [`Rejected ${rejectedContextCount} untrusted context item(s) containing instruction-override content.`] : []), ...responseSafety.failures],
+    validationFailures: [...validated.validationFailures, ...(rejectedContextCount ? [`Rejected ${rejectedContextCount} untrusted context item(s) containing instruction-override content.`] : []), ...veteransGrounding.failures, ...responseSafety.failures],
     model,
     latencyMs: totalMs,
     timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptConstructionMs, promptCharacters: runtimeInput.length, providerInvocationCount, semanticVerifierInvocationCount, semanticVerifierMs, semanticVerifierFailureCount },
-    researchSources: research?.sources || [],
+    researchSources: context.professionalId === "beasthealth.health-advisor"
+      ? sourcesCitedInAnswer(responseSafety.response, research?.sources || []).map(source => ({ ...source, supportedClaim: "Cited in the delivered answer; relevance not independently verified." }))
+      : research?.sources || [],
   };
 }

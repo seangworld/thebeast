@@ -1,3 +1,6 @@
+import { taylorRegressionScenarioIds } from "@/lib/digitalStaffRuntime/taylorRegression";
+import { loadTaylorQualityRegression, taylorQualityRegressionTurns as taylorRegressionTurns } from "@/lib/digitalStaffRuntime/taylorQualityRegression";
+import { EvaluationSpendGuard, evaluationSpendScope, evaluationCallBound, taylorEvaluationScenarioIds } from "@/lib/digitalStaffRuntime/evaluationSpendGuard";
 import { NextResponse } from "next/server";
 import {
   buildProductionHandoffEvaluationContext,
@@ -65,14 +68,57 @@ export async function GET() {
 export async function POST(request: Request) {
   const access = await requireOwner();
   if (access.response) return access.response;
+  // Durable local filesystem required: never use an ephemeral hosted ledger or
+  // production credentials/environment for this owner-authorized $10 run.
+  if (process.env.VERCEL || process.env.VERCEL_ENV === "production" || !process.env.TAYLOR_EVALUATION_LEDGER || !process.env.TAYLOR_EVALUATION_RUN_ID) {
+    return NextResponse.json({ error: "A private durable local evaluation ledger/run ID is required; paid execution disabled." }, { status: 503, headers: privateHeaders });
+  }
+  // Preflight every selected scenario model before the FIRST provider call.
+  try {
+    for (const scenario of productionEvaluationScenarios.filter(s => taylorEvaluationScenarioIds.includes(s.id))) {
+      scenario.turns.forEach((_, turnIndex) => {
+        const context = buildProductionEvaluationContext({ scenario, turnIndex, recentMessages: [], state: emptyProductionEvaluationState });
+        evaluationCallBound({ model: selectDigitalStaffModel(context), tools: [{ type: "web_search" }], max_tool_calls: 3 });
+      });
+    }
+  } catch { return NextResponse.json({ error: "Model/pricing/token/tool preflight failed; no paid call authorized for dispatch." }, { status: 503, headers: privateHeaders }); }
+  let guard: EvaluationSpendGuard;
+  let continuation: ReturnType<typeof loadTaylorQualityRegression>;
+  try {
+    continuation = loadTaylorQualityRegression(process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID);
+    guard = new EvaluationSpendGuard(process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID, continuation.budget);
+  }
+  catch { return NextResponse.json({ error: "Evaluation budget unavailable or halted; no call dispatched." }, { status: 409, headers: privateHeaders }); }
+  try {
+    const response = await evaluationSpendScope.run(guard, () => executeSyntheticScenario(request, continuation));
+    const payload = await response.json();
+    guard.recordScenario(payload);
+    guard.assertReady();
+    return NextResponse.json({ ...payload, spend: guard.summary() }, { status: response.status, headers: privateHeaders });
+  } catch {
+    return NextResponse.json({ error: "Evaluation stopped by spend guard; do not retry or reset the ledger.", spend: guard.summary() }, { status: 409, headers: privateHeaders });
+  } finally { guard.close(); }
+}
+
+async function executeSyntheticScenario(request: Request, continuation: ReturnType<typeof loadTaylorQualityRegression>) {
   let body: { scenarioId?: unknown };
   try { body = await request.json() as typeof body; } catch { return NextResponse.json({ error: "A valid evaluation request is required." }, { status: 400, headers: privateHeaders }); }
   if (typeof body.scenarioId !== "string") return NextResponse.json({ error: "An approved scenario is required." }, { status: 400, headers: privateHeaders });
   let scenario;
   try { scenario = requireProductionEvaluationScenario(body.scenarioId); } catch { return NextResponse.json({ error: "Unknown evaluation scenario." }, { status: 400, headers: privateHeaders }); }
 
+  if (!(taylorRegressionScenarioIds as readonly string[]).includes(scenario.id)) return NextResponse.json({ error: "Scenario outside this Taylor authorization." }, { status: 403, headers: privateHeaders });
+
+  const approvedTurns = taylorRegressionTurns[scenario.id as keyof typeof taylorRegressionTurns];
+  if (!approvedTurns.every((id, index) => scenario.turns[index]?.id === id)) throw new Error("Frozen regression turns changed");
+
+  const guard = evaluationSpendScope.getStore();
+  if (!guard) throw new Error("Evaluation spend scope required");
+  guard.startScenario(scenario.id);
+
+  const firstTurnIndex = 0;
   const recentMessages: RuntimeMessage[] = [];
-  let state: ConversationState = { ...emptyProductionEvaluationState };
+  let state: ConversationState = structuredClone(emptyProductionEvaluationState);
   const results: Array<Record<string, unknown>> = [];
   const handoffExecutions: Array<Record<string, unknown>> = [];
   const evaluationRequestId = crypto.randomUUID();
@@ -81,7 +127,7 @@ export async function POST(request: Request) {
     if (!sourceEntitlement.allowed) {
       return NextResponse.json({ error: "The synthetic member is not entitled to this specialist.", entitlementReason: sourceEntitlement.reason }, { status: 403, headers: privateHeaders });
     }
-    for (let index = 0; index < scenario.turns.length; index += 1) {
+    for (let index = firstTurnIndex; index < 2; index += 1) {
       const context = { ...buildProductionEvaluationContext({ scenario, turnIndex: index, recentMessages, state }), requestId: `${evaluationRequestId}-${scenario.turns[index].id}` };
       const selectedModel = selectDigitalStaffModel(context);
       const result = await runDigitalStaffRuntime(context);
@@ -166,6 +212,11 @@ export async function POST(request: Request) {
       dimensions: scenario.dimensions,
       environment: process.env.VERCEL_ENV || "local",
       syntheticOnly: true,
+      evaluationScope: "Approved quality regression; fresh genuine history",
+      firstTurnIndex,
+      priorLedgerSha256: continuation.budget.priorLedgerSha256,
+      continuationLedgerSha256: continuation.budget.continuationLedgerSha256,
+      regressionLedgerSha256: continuation.budget.regressionLedgerSha256,
       memberRecordsLoaded: false,
       modelOverrideUsed: false,
       executionComplete: results.every(item => productionEvaluationTurnOperational(item.validationFailures as string[])) && (!scenario.handoffExercise || handoffExecutions.some((item) => item.status === "completed")),

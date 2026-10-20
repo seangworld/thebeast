@@ -1,0 +1,77 @@
+{
+  "status": "COMPLETE",
+  "candidateCommit": "e137ca52",
+  "runId": "taylor-20261020-quality-regression-pr271",
+  "capUsd": 6.28,
+  "priorRunsAccountedUsd": 3.71624224,
+  "cumulativeAccountedUsd": 3.88555147,
+  "cumulativeMaximumUsd": 9.99624224,
+  "attemptedInferenceCalls": 14,
+  "preflightMetadataCalls": 2,
+  "totalDirectProviderAttempts": 16,
+  "maximumDirectProviderAttempts": 20,
+  "settledCalls": 14,
+  "unknownOutcomeCalls": 0,
+  "retries": 0,
+  "callsByRequestedModel": {
+    "gpt-5.6-luna": 6,
+    "gpt-5": 8
+  },
+  "callsByPhase": {
+    "semantic-input": 4,
+    "plan": 4,
+    "semantic-output": 4,
+    "research": 1,
+    "synthesis": 1
+  },
+  "knownTokenUsage": {
+    "inputTokens": 49069,
+    "outputTokens": 9994,
+    "cachedInputTokens": 2946,
+    "cacheWriteTokens": 8610,
+    "reasoningTokens": 6377
+  },
+  "conservativeSettledUsd": 0.16930923,
+  "unknownCallMaximumRetainedUsd": 0.0,
+  "totalBudgetAccountedUsd": 0.16930923,
+  "knownUsageEstimateWithMaximumToolFeesUsd": 0.16342947,
+  "actualBilledCostUsd": null,
+  "billingNote": "Provider invoice not reconciled. New run has complete usage; conservative accounting includes maximum tool fees and conservative Luna rates without cache discounts. Prior unresolved $3.31 remains fully accounted separately.",
+  "observedCompletedToolActions": 3,
+  "completedTurnLatencyMs": {
+    "mean": 30686.75,
+    "maximum": 79632,
+    "count": 4
+  },
+  "configuredResearchDeadlineMs": 90000,
+  "scenarioResults": [
+    {
+      "label": "H-B",
+      "scenarioId": "health-longitudinal-escalation",
+      "turnsExpected": 2,
+      "turnsReturned": 2,
+      "attemptedProviderCalls": 6,
+      "operationallyComplete": true,
+      "validationFailures": [],
+      "failure": null,
+      "semanticGrade": "executor assessment recorded separately"
+    },
+    {
+      "label": "H-C",
+      "scenarioId": "health-veterans-original",
+      "turnsExpected": 2,
+      "turnsReturned": 2,
+      "attemptedProviderCalls": 8,
+      "operationallyComplete": true,
+      "validationFailures": [],
+      "failure": null,
+      "semanticGrade": "executor assessment recorded separately"
+    }
+  ],
+  "guardHalt": null,
+  "unknownCallReferences": [],
+  "paidCallsAfterHalt": 0,
+  "memberRecordsLoaded": false,
+  "productionChanges": false,
+  "semanticGrade": "Executor grading recorded separately; no independent/blinded certification"
+}

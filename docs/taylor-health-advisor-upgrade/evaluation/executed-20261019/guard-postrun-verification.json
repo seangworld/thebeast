@@ -1,0 +1,10 @@
+{
+  "haltPersistsAcrossReopen": true,
+  "ledgerUnchangedByReopen": true,
+  "everyPreDispatchMaximumFitsAggregateCap": true,
+  "oneUnknownOutcomeAtFinalAttempt": true,
+  "paidCallsAfterHalt": 0,
+  "fixtureHashUnchanged": true,
+  "accountedNanoUsd": 3416366950,
+  "capNanoUsd": 10000000000
+}

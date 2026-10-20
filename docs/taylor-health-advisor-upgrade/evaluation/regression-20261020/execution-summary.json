@@ -1,0 +1,110 @@
+{
+  "status": "COMPLETE",
+  "candidateCommit": "712a0e902ca281c166a2c06a0334f54b9301b9c1",
+  "runId": "taylor-20261020-regression-pr271",
+  "capUsd": 6.45,
+  "priorRunsAccountedUsd": 3.54982737,
+  "cumulativeAccountedUsd": 3.71624224,
+  "cumulativeMaximumUsd": 9.99982737,
+  "attemptedProviderCalls": 14,
+  "settledCalls": 14,
+  "unknownOutcomeCalls": 0,
+  "retries": 0,
+  "callsByRequestedModel": {
+    "gpt-5.6-luna": 6,
+    "gpt-5": 8
+  },
+  "callsByPhase": {
+    "semantic-input": 4,
+    "plan": 4,
+    "semantic-output": 4,
+    "research": 1,
+    "synthesis": 1
+  },
+  "knownTokenUsage": {
+    "inputTokens": 47767,
+    "outputTokens": 9903,
+    "cachedInputTokens": 2866,
+    "cacheWriteTokens": 8077,
+    "reasoningTokens": 6246
+  },
+  "conservativeSettledUsd": 0.16641487,
+  "unknownCallMaximumRetainedUsd": 0.0,
+  "totalBudgetAccountedUsd": 0.16641487,
+  "knownUsageEstimateWithMaximumToolFeesUsd": 0.16066097,
+  "actualBilledCostUsd": null,
+  "billingNote": "All 14 new receipts settled. Estimates are not reconciled invoices. Prior unresolved $3.31 remains fully accounted; both prior ledgers are unchanged. Conservative guard rates omit cache discounts and retain maximum search fees.",
+  "observedCompletedToolActions": 3,
+  "completedTurnLatencyMs": {
+    "mean": 35402.5,
+    "maximum": 88555,
+    "count": 4
+  },
+  "scenarioResults": [
+    {
+      "label": "H-B",
+      "scenarioId": "health-longitudinal-escalation",
+      "turnsExpected": 2,
+      "turnsReturned": 2,
+      "attemptedProviderCalls": 6,
+      "operationallyComplete": true,
+      "validationFailures": [],
+      "failure": null,
+      "semanticGrade": "executor assessment recorded separately"
+    },
+    {
+      "label": "H-C",
+      "scenarioId": "health-veterans-original",
+      "turnsExpected": 2,
+      "turnsReturned": 2,
+      "attemptedProviderCalls": 8,
+      "operationallyComplete": true,
+      "validationFailures": [],
+      "failure": null,
+      "semanticGrade": "executor assessment recorded separately"
+    }
+  ],
+  "guardHalt": null,
+  "unknownCallReferences": [],
+  "paidCallsAfterHalt": 0,
+  "memberRecordsLoaded": false,
+  "productionChanges": false,
+  "semanticGrade": "PARTIAL-PASS; executor assessment, not independent/blinded",
+  "applicationCandidate": "4fc0a4b6fe60a9ad8e565188ad97f2252be573c9",
+  "configuredResearchDeadlineMs": 90000,
+  "freeModelMetadataGets": 2,
+  "directProviderApiRequestsIncludingMetadata": 16,
+  "cumulativeAttemptedInferenceCalls": 52,
+  "cumulativeSettledCalls": 51,
+  "cumulativeUnknownCalls": 1,
+  "memberRecordsWritten": false,
+  "perTurnLatencyMs": [
+    {
+      "scenarioId": "health-longitudinal-escalation",
+      "turnId": "trend",
+      "latencyMs": 11728
+    },
+    {
+      "scenarioId": "health-longitudinal-escalation",
+      "turnId": "new-symptom",
+      "latencyMs": 9199
+    },
+    {
+      "scenarioId": "health-veterans-original",
+      "turnId": "read-original",
+      "latencyMs": 32128
+    },
+    {
+      "scenarioId": "health-veterans-original",
+      "turnId": "research-in-context",
+      "latencyMs": 88555
+    }
+  ],
+  "researchCallLatencyMs": 24534,
+  "criteriaGrades": {
+    "pass": 9,
+    "partial": 1,
+    "fail": 0,
+    "ungraded": 0
+  }
+}

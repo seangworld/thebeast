@@ -1,0 +1,33 @@
+{
+  "baseCommit": "bb3c8d4d2f37fe4d313c52e69b895194e9ee253c",
+  "guardTests": {
+    "passed": 13,
+    "failed": 0
+  },
+  "focusedTests": {
+    "passed": 25,
+    "failed": 0
+  },
+  "fullRegression": {
+    "passed": 2482,
+    "failed": 0
+  },
+  "typescript": "passed",
+  "lint": "passed",
+  "requiredBuild": "passed; isolated source-identical temporary build",
+  "npmAudit": {
+    "vulnerabilities": 0,
+    "forkChecksPassed": 22
+  },
+  "syntheticScenarioSourceChanged": false,
+  "paidInferenceAttempts": 0,
+  "estimatedApiSpendUsd": 0,
+  "ownerAccess": "production read-only catalog verified; local DEV redirects to normal sign-in",
+  "sourceSha256": {
+    "src/app/api/admin/member-ai-production-evaluation/route.ts": "bd532beb21bb067c3330e337de19d96d6140f57d9b30ca5a872357c7510a5e24",
+    "src/lib/digitalStaffRuntime/provider.ts": "2d0c882c948c0b5e91f778c64a5529c3375abdb3eb77b80e41a6d3b8dc585221",
+    "src/lib/digitalStaffRuntime/evaluationProviderHook.ts": "30f92cde525277c719d5e3b78bf014bb981cdf097d65be841645b54839e0be2d",
+    "src/lib/digitalStaffRuntime/evaluationSpendGuard.ts": "15222861a6c11bb1ecef10e8e23bacc0ba84ed559e546e9247ca679936dc9826",
+    "tests/evaluationSpendGuard.test.ts": "f3303776a23aa848e8d5857a2124848794f0b01b24f4aec58f9fac51b229b9e0"
+  }
+}

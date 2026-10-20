@@ -1,0 +1,756 @@
+{
+  "note": "Unblinded accounting: do not supply to semantic grader before grades lock",
+  "calls": [
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-identify-conflict-semantic-input",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00049225,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0002054,
+      "usage": {
+        "input_tokens": 697,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 55,
+        "output_tokens_details": {
+          "reasoning_tokens": 32
+        },
+        "total_tokens": 752
+      },
+      "latencyMs": 2642
+    },
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-identify-conflict-plan",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00338195,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0017081,
+      "usage": {
+        "input_tokens": 4097,
+        "input_tokens_details": {
+          "cache_write_tokens": 4094,
+          "cached_tokens": 0
+        },
+        "output_tokens": 570,
+        "output_tokens_details": {
+          "reasoning_tokens": 227
+        },
+        "total_tokens": 4667
+      },
+      "latencyMs": 5796
+    },
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-identify-conflict-semantic-output",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00062381,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0002542,
+      "usage": {
+        "input_tokens": 929,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 57,
+        "output_tokens_details": {
+          "reasoning_tokens": 34
+        },
+        "total_tokens": 986
+      },
+      "latencyMs": 1263
+    },
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-member-correction-semantic-input",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00048378,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0002004,
+      "usage": {
+        "input_tokens": 696,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 51,
+        "output_tokens_details": {
+          "reasoning_tokens": 28
+        },
+        "total_tokens": 747
+      },
+      "latencyMs": 1724
+    },
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-member-correction-plan",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00345521,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0010920799999999998,
+      "usage": {
+        "input_tokens": 4421,
+        "input_tokens_details": {
+          "cache_write_tokens": 1664,
+          "cached_tokens": 2754
+        },
+        "output_tokens": 517,
+        "output_tokens_details": {
+          "reasoning_tokens": 170
+        },
+        "total_tokens": 4938
+      },
+      "latencyMs": 4486
+    },
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-member-correction-semantic-output",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00059928,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0002448,
+      "usage": {
+        "input_tokens": 888,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 56,
+        "output_tokens_details": {
+          "reasoning_tokens": 33
+        },
+        "total_tokens": 944
+      },
+      "latencyMs": 1446
+    },
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-appointment-preparation-semantic-input",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00045782,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00018760000000000003,
+      "usage": {
+        "input_tokens": 674,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 44,
+        "output_tokens_details": {
+          "reasoning_tokens": 21
+        },
+        "total_tokens": 718
+      },
+      "latencyMs": 1096
+    },
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-appointment-preparation-plan",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00368225,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0012096799999999999,
+      "usage": {
+        "input_tokens": 4661,
+        "input_tokens_details": {
+          "cache_write_tokens": 1904,
+          "cached_tokens": 2754
+        },
+        "output_tokens": 565,
+        "output_tokens_details": {
+          "reasoning_tokens": 146
+        },
+        "total_tokens": 5226
+      },
+      "latencyMs": 5140
+    },
+    {
+      "requestId": "8e6d2e60-77cc-4eff-ada9-9d2ad0345269-appointment-preparation-semantic-output",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00066891,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0002802,
+      "usage": {
+        "input_tokens": 939,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 77,
+        "output_tokens_details": {
+          "reasoning_tokens": 54
+        },
+        "total_tokens": 1016
+      },
+      "latencyMs": 1527
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-trend-semantic-input",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00048323,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00020260000000000002,
+      "usage": {
+        "input_tokens": 677,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 56,
+        "output_tokens_details": {
+          "reasoning_tokens": 33
+        },
+        "total_tokens": 733
+      },
+      "latencyMs": 1336
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-trend-plan",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00390104,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00140003,
+      "usage": {
+        "input_tokens": 3968,
+        "input_tokens_details": {
+          "cache_write_tokens": 1211,
+          "cached_tokens": 2754
+        },
+        "output_tokens": 868,
+        "output_tokens_details": {
+          "reasoning_tokens": 219
+        },
+        "total_tokens": 4836
+      },
+      "latencyMs": 7520
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-trend-semantic-output",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00088264,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00043495000000000003,
+      "usage": {
+        "input_tokens": 1198,
+        "input_tokens_details": {
+          "cache_write_tokens": 1195,
+          "cached_tokens": 0
+        },
+        "output_tokens": 113,
+        "output_tokens_details": {
+          "reasoning_tokens": 90
+        },
+        "total_tokens": 1311
+      },
+      "latencyMs": 1965
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-new-symptom-semantic-input",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00046255,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0001898,
+      "usage": {
+        "input_tokens": 679,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 45,
+        "output_tokens_details": {
+          "reasoning_tokens": 22
+        },
+        "total_tokens": 724
+      },
+      "latencyMs": 1081
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-new-symptom-plan",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00465795,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00180768,
+      "usage": {
+        "input_tokens": 4581,
+        "input_tokens_details": {
+          "cache_write_tokens": 1824,
+          "cached_tokens": 2754
+        },
+        "output_tokens": 1080,
+        "output_tokens_details": {
+          "reasoning_tokens": 331
+        },
+        "total_tokens": 5661
+      },
+      "latencyMs": 9222
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-new-symptom-semantic-output",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00076989,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00037470000000000005,
+      "usage": {
+        "input_tokens": 1101,
+        "input_tokens_details": {
+          "cache_write_tokens": 1098,
+          "cached_tokens": 0
+        },
+        "output_tokens": 83,
+        "output_tokens_details": {
+          "reasoning_tokens": 60
+        },
+        "total_tokens": 1184
+      },
+      "latencyMs": 1315
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-medication-change-semantic-input",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00045793,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0001886,
+      "usage": {
+        "input_tokens": 667,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 46,
+        "output_tokens_details": {
+          "reasoning_tokens": 23
+        },
+        "total_tokens": 713
+      },
+      "latencyMs": 1157
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-medication-change-plan",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00381436,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00125983,
+      "usage": {
+        "input_tokens": 5020,
+        "input_tokens_details": {
+          "cache_write_tokens": 2263,
+          "cached_tokens": 2754
+        },
+        "output_tokens": 532,
+        "output_tokens_details": {
+          "reasoning_tokens": 126
+        },
+        "total_tokens": 5552
+      },
+      "latencyMs": 4498
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-medication-change-semantic-output",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00065835,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00027539999999999997,
+      "usage": {
+        "input_tokens": 927,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 75,
+        "output_tokens_details": {
+          "reasoning_tokens": 52
+        },
+        "total_tokens": 1002
+      },
+      "latencyMs": 1699
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-emergency-semantic-input",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.002205,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.002205,
+      "usage": {
+        "input_tokens": 676,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 136,
+        "output_tokens_details": {
+          "reasoning_tokens": 64
+        },
+        "total_tokens": 812
+      },
+      "latencyMs": 2530
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-emergency-plan",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "current_turn",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.0218575,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0218575,
+      "usage": {
+        "input_tokens": 5286,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1525,
+        "output_tokens_details": {
+          "reasoning_tokens": 1152
+        },
+        "total_tokens": 6811
+      },
+      "latencyMs": 13957
+    },
+    {
+      "requestId": "a17b687a-f7b5-4e2d-8923-9765ebbdcc3f-emergency-semantic-output",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.00256875,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00256875,
+      "usage": {
+        "input_tokens": 887,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 146,
+        "output_tokens_details": {
+          "reasoning_tokens": 64
+        },
+        "total_tokens": 1033
+      },
+      "latencyMs": 2858
+    },
+    {
+      "requestId": "bb0ebff0-82b3-4db0-932f-21e9335a2bec-read-original-semantic-input",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.00210625,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00210625,
+      "usage": {
+        "input_tokens": 693,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 124,
+        "output_tokens_details": {
+          "reasoning_tokens": 64
+        },
+        "total_tokens": 817
+      },
+      "latencyMs": 3437
+    },
+    {
+      "requestId": "bb0ebff0-82b3-4db0-932f-21e9335a2bec-read-original-plan",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "current_turn",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.0255925,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0225685,
+      "usage": {
+        "input_tokens": 3842,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 2688
+        },
+        "output_tokens": 2079,
+        "output_tokens_details": {
+          "reasoning_tokens": 1472
+        },
+        "total_tokens": 5921
+      },
+      "latencyMs": 22333
+    },
+    {
+      "requestId": "bb0ebff0-82b3-4db0-932f-21e9335a2bec-read-original-semantic-output",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.00351625,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00351625,
+      "usage": {
+        "input_tokens": 1221,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 199,
+        "output_tokens_details": {
+          "reasoning_tokens": 128
+        },
+        "total_tokens": 1420
+      },
+      "latencyMs": 4193
+    },
+    {
+      "requestId": "bb0ebff0-82b3-4db0-932f-21e9335a2bec-research-in-context-semantic-input",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.00298375,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00298375,
+      "usage": {
+        "input_tokens": 691,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 212,
+        "output_tokens_details": {
+          "reasoning_tokens": 128
+        },
+        "total_tokens": 903
+      },
+      "latencyMs": 2822
+    },
+    {
+      "requestId": "bb0ebff0-82b3-4db0-932f-21e9335a2bec-research-in-context-plan",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.01560375,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.01560375,
+      "usage": {
+        "input_tokens": 4451,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1004,
+        "output_tokens_details": {
+          "reasoning_tokens": 576
+        },
+        "total_tokens": 5455
+      },
+      "latencyMs": 21135
+    },
+    {
+      "requestId": "bb0ebff0-82b3-4db0-932f-21e9335a2bec-research-in-context-research",
+      "model": "gpt-5",
+      "returnedModel": null,
+      "phase": "research",
+      "status": "unknown",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 3.31,
+      "conservativeSettledUsd": null,
+      "usageBasedEstimateWithMaximumToolFeesUsd": null,
+      "usage": null,
+      "latencyMs": null
+    }
+  ]
+}

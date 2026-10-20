@@ -1,0 +1,14 @@
+{
+  "oldLedgerByteIdentical": true,
+  "oldLedgerSha256": "423f557b3fa56762ccbd70180aa8ee2ed528d2f9136370e1360a137cf1ec6939",
+  "newLedgerSha256": "48bd39160a02d9a374fc3e916cd98a9335f9bfba38e455c34137a4c51cc2d744",
+  "all11ReservationsFitRemainingAndOriginalCaps": true,
+  "all11CallsSettled": true,
+  "retries": 0,
+  "newUnknownOutcomes": 0,
+  "results": 2,
+  "completedRemainingTurns": 3,
+  "memberRecordsLoaded": false,
+  "memberRecordsWritten": false,
+  "criteriaSourceUnchanged": true
+}

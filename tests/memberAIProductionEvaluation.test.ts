@@ -2,14 +2,29 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { buildProductionEvaluationContext, buildProductionHandoffEvaluationContext, emptyProductionEvaluationState, evaluateProductionEntitlement, productionEvaluationEntitlementChecks, productionEvaluationScenarios, requireProductionEvaluationScenario, selectDigitalStaffModel } from "../src/lib/digitalStaffRuntime";
+import { buildRuntimeInput } from "../src/lib/digitalStaffRuntime/prompt";
+import { requireProfessionalConfig } from "../src/lib/digitalStaffRuntime/config";
 
 test("BF-AGT-015 covers all four member specialists with realistic multi-turn scenarios", () => {
   const professionals = new Set(productionEvaluationScenarios.map((scenario) => scenario.professionalId));
   assert.deepEqual(Array.from(professionals).sort(), ["beasteducation.guidance-counselor", "beasteducation.tutor", "beasthealth.health-advisor", "beastmoney.money-coach"]);
-  assert.equal(productionEvaluationScenarios.length, 10);
+  assert.equal(productionEvaluationScenarios.length, 11);
   assert.ok(productionEvaluationScenarios.every((scenario) => scenario.turns.length >= 2));
   assert.ok(productionEvaluationScenarios.reduce((sum, scenario) => sum + scenario.turns.length, 0) >= 24);
   assert.throws(() => requireProductionEvaluationScenario("missing"), /Unknown/);
+});
+
+test("Taylor medication-discrepancy scenario keeps member-reported claim context outside clinical evaluation", () => {
+  const scenario = requireProductionEvaluationScenario("health-medication-discrepancy");
+  assert.equal(scenario.professionalId, "beasthealth.health-advisor");
+  assert.equal(scenario.turns.length, 3);
+  assert.ok(scenario.turns.flatMap((turn) => turn.criteria).some((item) => item.id === "no-claim-pollution"));
+  assert.ok(scenario.turns.flatMap((turn) => turn.criteria).some((item) => item.id === "no-write"));
+  const context = buildProductionEvaluationContext({ scenario, turnIndex: 0, recentMessages: [], state: emptyProductionEvaluationState });
+  assert.equal(context.structuredRecords.length, 3);
+  const input = JSON.parse(buildRuntimeInput(requireProfessionalConfig(context.professionalId), context));
+  assert.equal(input.healthEvidenceQuality.recordCount, 2);
+  assert.deepEqual(input.healthEvidenceQuality.potentialDiscrepancies[0].fields, ["dose", "frequency"]);
 });
 
 test("BF-AGT-015 scenarios use synthetic bounded context and deployed model selection", () => {

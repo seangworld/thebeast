@@ -1,0 +1,61 @@
+{
+  "reviewDate": "2026-10-19",
+  "priorRunIdPreserved": "taylor-20261018-pr271",
+  "capUsd": 10,
+  "priorAttemptedCalls": 0,
+  "priorCostUsd": 0,
+  "fixtureSha256": "bcdb20cfe08a4b66463466dec56a9bc11a24594faaf8845195ced14da12598a6",
+  "pricing": {
+    "reviewedAt": "2026-10-19",
+    "expiresAt": "2026-10-20T04:00:00Z",
+    "sources": [
+      "https://developers.openai.com/api/docs/models/gpt-5",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "https://developers.openai.com/api/docs/pricing"
+    ],
+    "models": {
+      "gpt-5": {
+        "inputNano": 1250,
+        "outputNano": 10000,
+        "context": 400000,
+        "output": 128000,
+        "returned": [
+          "gpt-5",
+          "gpt-5-2025-08-07"
+        ]
+      },
+      "gpt-5.6-luna": {
+        "inputNano": 550,
+        "outputNano": 1980,
+        "context": 1050000,
+        "output": 128000,
+        "returned": [
+          "gpt-5.6-luna"
+        ]
+      }
+    },
+    "searchNano": 10000000
+  },
+  "availability": {
+    "inferenceCalls": 0,
+    "metadataChecks": [
+      {
+        "requested": "gpt-5",
+        "available": true,
+        "status": 200
+      },
+      {
+        "requested": "gpt-5.6-luna",
+        "available": true,
+        "status": 200
+      }
+    ]
+  },
+  "checks": {
+    "guardPassed": 13,
+    "regressionPassed": 2482,
+    "typescript": "passed",
+    "lint": "passed"
+  },
+  "ownerAccess": "Normal DEV owner session verified in Codex in-app browser; no credential transfer or authentication bypass"
+}

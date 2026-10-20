@@ -1,0 +1,121 @@
+{
+  "priorReceipts": [
+    {
+      "runId": "taylor-20261018-pr271",
+      "sha256": "423f557b3fa56762ccbd70180aa8ee2ed528d2f9136370e1360a137cf1ec6939",
+      "accountedNanoUsd": 3416366950,
+      "byteIdentical": true
+    },
+    {
+      "runId": "taylor-20261019-continuation-pr271",
+      "sha256": "48bd39160a02d9a374fc3e916cd98a9335f9bfba38e455c34137a4c51cc2d744",
+      "accountedNanoUsd": 133460420,
+      "byteIdentical": true
+    },
+    {
+      "runId": "taylor-20261020-regression-pr271",
+      "sha256": "4104e37f00f8a61eb4b15e9665391f84c1237bd48a1ca8fbe06466e46f4a47da",
+      "accountedNanoUsd": 166414870,
+      "byteIdentical": true
+    }
+  ],
+  "newLedgerSha256": "4cfd3c148574d449dba7ba8c12f93c846b1fd96f517a0c9eda745479f6244966",
+  "newAccountedNanoUsd": 169309230,
+  "cumulativeAccountedNanoUsd": 3885551470,
+  "allReservationsFitBothCaps": true,
+  "inferenceAttempts": 14,
+  "freeMetadataAttempts": 2,
+  "totalDirectProviderAttempts": 16,
+  "maximumDirectProviderAttempts": 20,
+  "retries": 0,
+  "newUnknownOutcomes": 0,
+  "reservations": [
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-trend-semantic-input",
+      "accountedBeforeNanoUsd": 0,
+      "reservedNanoUsd": 830940000,
+      "fits": true
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-trend-plan",
+      "accountedBeforeNanoUsd": 463430,
+      "reservedNanoUsd": 830940000,
+      "fits": true
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-trend-semantic-output",
+      "accountedBeforeNanoUsd": 4235330,
+      "reservedNanoUsd": 830940000,
+      "fits": true
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-new-symptom-semantic-input",
+      "accountedBeforeNanoUsd": 4980910,
+      "reservedNanoUsd": 830940000,
+      "fits": true
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-new-symptom-plan",
+      "accountedBeforeNanoUsd": 5441480,
+      "reservedNanoUsd": 830940000,
+      "fits": true
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-new-symptom-semantic-output",
+      "accountedBeforeNanoUsd": 9510050,
+      "reservedNanoUsd": 830940000,
+      "fits": true
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-read-original-semantic-input",
+      "accountedBeforeNanoUsd": 10297980,
+      "reservedNanoUsd": 1780000000,
+      "fits": true
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-read-original-plan",
+      "accountedBeforeNanoUsd": 12754230,
+      "reservedNanoUsd": 1780000000,
+      "fits": true
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-read-original-semantic-output",
+      "accountedBeforeNanoUsd": 37239230,
+      "reservedNanoUsd": 1780000000,
+      "fits": true
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-semantic-input",
+      "accountedBeforeNanoUsd": 40422980,
+      "reservedNanoUsd": 1780000000,
+      "fits": true
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-plan",
+      "accountedBeforeNanoUsd": 42946730,
+      "reservedNanoUsd": 1780000000,
+      "fits": true
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-research",
+      "accountedBeforeNanoUsd": 58965480,
+      "reservedNanoUsd": 3310000000,
+      "fits": true
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-synthesis",
+      "accountedBeforeNanoUsd": 139102980,
+      "reservedNanoUsd": 1780000000,
+      "fits": true
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-semantic-output",
+      "accountedBeforeNanoUsd": 166030480,
+      "reservedNanoUsd": 1780000000,
+      "fits": true
+    }
+  ],
+  "memberClinicalRecordsLoaded": false,
+  "memberClinicalRecordsWritten": false,
+  "freshHistory": true
+}
