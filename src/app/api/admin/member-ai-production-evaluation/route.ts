@@ -1,4 +1,5 @@
-import { loadTaylorRegression, taylorRegressionScenarioIds, taylorRegressionTurns } from "@/lib/digitalStaffRuntime/taylorRegression";
+import { taylorRegressionScenarioIds } from "@/lib/digitalStaffRuntime/taylorRegression";
+import { loadTaylorQualityRegression, taylorQualityRegressionTurns as taylorRegressionTurns } from "@/lib/digitalStaffRuntime/taylorQualityRegression";
 import { EvaluationSpendGuard, evaluationSpendScope, evaluationCallBound, taylorEvaluationScenarioIds } from "@/lib/digitalStaffRuntime/evaluationSpendGuard";
 import { NextResponse } from "next/server";
 import {
@@ -82,10 +83,9 @@ export async function POST(request: Request) {
     }
   } catch { return NextResponse.json({ error: "Model/pricing/token/tool preflight failed; no paid call authorized for dispatch." }, { status: 503, headers: privateHeaders }); }
   let guard: EvaluationSpendGuard;
-  let continuation: ReturnType<typeof loadTaylorRegression>;
+  let continuation: ReturnType<typeof loadTaylorQualityRegression>;
   try {
-    if (!process.env.TAYLOR_PRIOR_EVALUATION_LEDGER) throw new Error("Fixed cumulative authorization required");
-    continuation = loadTaylorRegression(process.env.TAYLOR_PRIOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID);
+    continuation = loadTaylorQualityRegression(process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID);
     guard = new EvaluationSpendGuard(process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID, continuation.budget);
   }
   catch { return NextResponse.json({ error: "Evaluation budget unavailable or halted; no call dispatched." }, { status: 409, headers: privateHeaders }); }
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
   } finally { guard.close(); }
 }
 
-async function executeSyntheticScenario(request: Request, continuation: ReturnType<typeof loadTaylorRegression>) {
+async function executeSyntheticScenario(request: Request, continuation: ReturnType<typeof loadTaylorQualityRegression>) {
   let body: { scenarioId?: unknown };
   try { body = await request.json() as typeof body; } catch { return NextResponse.json({ error: "A valid evaluation request is required." }, { status: 400, headers: privateHeaders }); }
   if (typeof body.scenarioId !== "string") return NextResponse.json({ error: "An approved scenario is required." }, { status: 400, headers: privateHeaders });
@@ -212,10 +212,11 @@ async function executeSyntheticScenario(request: Request, continuation: ReturnTy
       dimensions: scenario.dimensions,
       environment: process.env.VERCEL_ENV || "local",
       syntheticOnly: true,
-      evaluationScope: "October 20 targeted regression; fresh genuine history",
+      evaluationScope: "Approved quality regression; fresh genuine history",
       firstTurnIndex,
       priorLedgerSha256: continuation.budget.priorLedgerSha256,
       continuationLedgerSha256: continuation.budget.continuationLedgerSha256,
+      regressionLedgerSha256: continuation.budget.regressionLedgerSha256,
       memberRecordsLoaded: false,
       modelOverrideUsed: false,
       executionComplete: results.every(item => productionEvaluationTurnOperational(item.validationFailures as string[])) && (!scenario.handoffExercise || handoffExecutions.some((item) => item.status === "completed")),

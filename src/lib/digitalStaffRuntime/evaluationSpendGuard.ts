@@ -25,7 +25,7 @@ type Entry = { requestId: string; model: string; maximumNanoUsd: number; status:
 type ContinuationBudget = Readonly<{capNanoUsd: number; priorAccountedNanoUsd: number; priorLedgerSha256: string; continuationLedgerSha256?: string; regressionLedgerSha256?: string; maximumAttemptedCalls?: number}>;
 export const continuationBudget: ContinuationBudget = Object.freeze({ capNanoUsd: 6_580_000_000, priorAccountedNanoUsd: 3_416_366_950, priorLedgerSha256: "423f557b3fa56762ccbd70180aa8ee2ed528d2f9136370e1360a137cf1ec6939" });
 export const regressionBudget: ContinuationBudget = Object.freeze({capNanoUsd: 6_450_000_000, priorAccountedNanoUsd: 3_549_827_370, priorLedgerSha256: continuationBudget.priorLedgerSha256, continuationLedgerSha256: "48bd39160a02d9a374fc3e916cd98a9335f9bfba38e455c34137a4c51cc2d744"});
-/** Prepared proposal only: the live owner route does not select this profile. */
+/** Approved single quality regression; prior receipts remain fully accounted. */
 export const qualityRegressionBudget: ContinuationBudget = Object.freeze({capNanoUsd: 6_280_000_000, priorAccountedNanoUsd: 3_716_242_240, priorLedgerSha256: continuationBudget.priorLedgerSha256, continuationLedgerSha256: regressionBudget.continuationLedgerSha256, regressionLedgerSha256: "4104e37f00f8a61eb4b15e9665391f84c1237bd48a1ca8fbe06466e46f4a47da", maximumAttemptedCalls: 20});
 type Ledger = { budget?: typeof continuationBudget; version: 1; runId: string; capNanoUsd: number; pricing: typeof evaluationPricing; halted: string | null; entries: Entry[]; results: unknown[]; scenariosStarted: string[] };
 function integer(value: unknown): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= 0; }
@@ -53,6 +53,9 @@ export function evaluationCallBound(body: Record<string, unknown>, now = Date.no
 export class EvaluationSpendGuard {
   private state: Ledger;
   private closed = false;
+  // The approved quality run includes its two no-cost Models GET attempts in
+  // the 20-request ceiling, leaving at most 18 inference dispatches.
+  private get metadataCalls() { return this.budget?.regressionLedgerSha256 ? 2 : 0; }
   constructor(private file: string, runId: string, private budget?: typeof continuationBudget) {
     if (budget && ![continuationBudget, regressionBudget, qualityRegressionBudget].some(approved => JSON.stringify(budget) === JSON.stringify(approved))) throw new Error("Unknown cumulative authorization");
     if (!isAbsolute(file) || !/^[a-zA-Z0-9_-]{1,100}$/.test(runId)) throw new Error("Private absolute ledger and fixed run ID required");
@@ -88,11 +91,11 @@ export class EvaluationSpendGuard {
   }
   summary() {
     const accountedNanoUsd = this.state.entries.reduce((n,e) => n + (e.status === "settled" ? e.estimatedNanoUsd! : e.maximumNanoUsd), 0);
-    return { cumulativeAccountedNanoUsd: (this.budget?.priorAccountedNanoUsd ?? 0) + accountedNanoUsd, runId: this.state.runId, capNanoUsd: this.state.capNanoUsd, priorAccountedNanoUsd: this.budget?.priorAccountedNanoUsd ?? 0, cumulativeCapNanoUsd: (this.budget?.priorAccountedNanoUsd ?? 0) + this.state.capNanoUsd, accountedNanoUsd, attemptedCalls: this.state.entries.length, halted: this.state.halted, entries: structuredClone(this.state.entries) };
+    return { preflightMetadataCalls: this.metadataCalls, totalProviderAttempts: this.metadataCalls + this.state.entries.length, cumulativeAccountedNanoUsd: (this.budget?.priorAccountedNanoUsd ?? 0) + accountedNanoUsd, runId: this.state.runId, capNanoUsd: this.state.capNanoUsd, priorAccountedNanoUsd: this.budget?.priorAccountedNanoUsd ?? 0, cumulativeCapNanoUsd: (this.budget?.priorAccountedNanoUsd ?? 0) + this.state.capNanoUsd, accountedNanoUsd, attemptedCalls: this.state.entries.length, halted: this.state.halted, entries: structuredClone(this.state.entries) };
   }
   reserve(body: Record<string, unknown>, requestId: string) {
     this.assertReady();
-    if (this.budget?.maximumAttemptedCalls !== undefined && this.state.entries.length >= this.budget.maximumAttemptedCalls) {
+    if (this.budget?.maximumAttemptedCalls !== undefined && this.state.entries.length + this.metadataCalls >= this.budget.maximumAttemptedCalls) {
       this.state.halted = "Maximum attempted provider calls reached"; this.save(); throw new Error(this.state.halted);
     }
     let bound: ReturnType<typeof evaluationCallBound>;

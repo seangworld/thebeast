@@ -1,4 +1,4 @@
-/** Prepared only. No live route selects this proposal without fresh owner approval. */
+/** One owner-approved quality regression: 20 attempts / $6.28, no retries. */
 import { readFileSync, realpathSync, lstatSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";

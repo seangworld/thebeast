@@ -142,8 +142,8 @@ test("prepared quality regression keeps all three receipts spent and stops befor
 test("prepared quality regression stops before attempted call 21 even when cost is low",async()=>{
  const {qualityRegressionBudget}=await import('../src/lib/digitalStaffRuntime/evaluationSpendGuard');
  const dir=mkdtempSync(join(tmpdir(),'quality-regression-'));const g=new EvaluationSpendGuard(join(dir,'run.json'),'proposal',qualityRegressionBudget);let calls=0;
- try{for(let i=0;i<20;i++)g.settle(g.reserve({...body,max_output_tokens:1},String(i)),{...reply,usage:{input_tokens:0,output_tokens:1}});
- await assert.rejects(()=>evaluationSpendScope.run(g,()=>requestOpenAIResponse(body,{apiKey:'sk-synthetic',requestId:'21',fetchImpl:async()=>{calls++;return new Response();}})),/Maximum attempted/);assert.equal(calls,0);assert.equal(g.summary().attemptedCalls,20);assert.equal(g.summary().accountedNanoUsd,200000);
+ try{for(let i=0;i<18;i++)g.settle(g.reserve({...body,max_output_tokens:1},String(i)),{...reply,usage:{input_tokens:0,output_tokens:1}});
+ await assert.rejects(()=>evaluationSpendScope.run(g,()=>requestOpenAIResponse(body,{apiKey:'sk-synthetic',requestId:'21',fetchImpl:async()=>{calls++;return new Response();}})),/Maximum attempted/);assert.equal(calls,0);assert.equal(g.summary().attemptedCalls,18);assert.equal(g.summary().totalProviderAttempts,20);assert.equal(g.summary().accountedNanoUsd,180000);
  }finally{g.close();rmSync(dir,{recursive:true,force:true});}
 });
 test("prepared quality regression cannot refund uncertainty or change receipt identity",async()=>{
