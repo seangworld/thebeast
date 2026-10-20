@@ -11,8 +11,8 @@ export const evaluationCapNanoUsd = 10 * usd;
 // Luna ceilings include long-context, cache-write and regional uplifts; these
 // deliberately over-account rather than claim exact invoice charges.
 export const evaluationPricing = {
-  reviewedAt: "2026-10-19",
-  expiresAt: "2026-10-20T04:00:00Z",
+  reviewedAt: "2026-10-20",
+  expiresAt: "2026-10-21T04:00:00Z",
   sources: ["https://developers.openai.com/api/docs/models/gpt-5", "https://developers.openai.com/api/docs/models/gpt-5.6-luna", "https://developers.openai.com/api/docs/pricing"],
   models: {
     "gpt-5": { inputNano: 1250, outputNano: 10000, context: 400000, output: 128000, returned: ["gpt-5", "gpt-5-2025-08-07"] },
@@ -22,8 +22,9 @@ export const evaluationPricing = {
 } as const;
 
 type Entry = { requestId: string; model: string; maximumNanoUsd: number; status: "reserved" | "settled" | "unknown"; estimatedNanoUsd?: number; inputTokens?: number; outputTokens?: number; toolCalls?: number; returnedModel?: string; latencyMs?: number; request?: Record<string, unknown>; response?: unknown };
-type ContinuationBudget = Readonly<{capNanoUsd: number; priorAccountedNanoUsd: number; priorLedgerSha256: string}>;
+type ContinuationBudget = Readonly<{capNanoUsd: number; priorAccountedNanoUsd: number; priorLedgerSha256: string; continuationLedgerSha256?: string}>;
 export const continuationBudget: ContinuationBudget = Object.freeze({ capNanoUsd: 6_580_000_000, priorAccountedNanoUsd: 3_416_366_950, priorLedgerSha256: "423f557b3fa56762ccbd70180aa8ee2ed528d2f9136370e1360a137cf1ec6939" });
+export const regressionBudget: ContinuationBudget = Object.freeze({capNanoUsd: 6_450_000_000, priorAccountedNanoUsd: 3_549_827_370, priorLedgerSha256: continuationBudget.priorLedgerSha256, continuationLedgerSha256: "48bd39160a02d9a374fc3e916cd98a9335f9bfba38e455c34137a4c51cc2d744"});
 type Ledger = { budget?: typeof continuationBudget; version: 1; runId: string; capNanoUsd: number; pricing: typeof evaluationPricing; halted: string | null; entries: Entry[]; results: unknown[]; scenariosStarted: string[] };
 function integer(value: unknown): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= 0; }
 export function evaluationCallBound(body: Record<string, unknown>, now = Date.now()) {
@@ -51,7 +52,7 @@ export class EvaluationSpendGuard {
   private state: Ledger;
   private closed = false;
   constructor(private file: string, runId: string, private budget?: typeof continuationBudget) {
-    if (budget && JSON.stringify(budget) !== JSON.stringify(continuationBudget)) throw new Error("Unknown cumulative authorization");
+    if (budget && ![continuationBudget, regressionBudget].some(approved => JSON.stringify(budget) === JSON.stringify(approved))) throw new Error("Unknown cumulative authorization");
     if (!isAbsolute(file) || !/^[a-zA-Z0-9_-]{1,100}$/.test(runId)) throw new Error("Private absolute ledger and fixed run ID required");
     const dir = lstatSync(dirname(file));
     if (!dir.isDirectory() || dir.isSymbolicLink() || (dir.mode & 0o077)) throw new Error("Ledger directory must be private (0700)");

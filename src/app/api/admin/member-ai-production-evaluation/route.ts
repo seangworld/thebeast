@@ -1,4 +1,4 @@
-import { loadTaylorContinuation, taylorContinuationScenarios } from "@/lib/digitalStaffRuntime/taylorContinuation";
+import { loadTaylorRegression, taylorRegressionScenarioIds, taylorRegressionTurns } from "@/lib/digitalStaffRuntime/taylorRegression";
 import { EvaluationSpendGuard, evaluationSpendScope, evaluationCallBound, taylorEvaluationScenarioIds } from "@/lib/digitalStaffRuntime/evaluationSpendGuard";
 import { NextResponse } from "next/server";
 import {
@@ -82,10 +82,10 @@ export async function POST(request: Request) {
     }
   } catch { return NextResponse.json({ error: "Model/pricing/token/tool preflight failed; no paid call authorized for dispatch." }, { status: 503, headers: privateHeaders }); }
   let guard: EvaluationSpendGuard;
-  let continuation: ReturnType<typeof loadTaylorContinuation>;
+  let continuation: ReturnType<typeof loadTaylorRegression>;
   try {
     if (!process.env.TAYLOR_PRIOR_EVALUATION_LEDGER) throw new Error("Fixed cumulative authorization required");
-    continuation = loadTaylorContinuation(process.env.TAYLOR_PRIOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID);
+    continuation = loadTaylorRegression(process.env.TAYLOR_PRIOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID);
     guard = new EvaluationSpendGuard(process.env.TAYLOR_EVALUATION_LEDGER, process.env.TAYLOR_EVALUATION_RUN_ID, continuation.budget);
   }
   catch { return NextResponse.json({ error: "Evaluation budget unavailable or halted; no call dispatched." }, { status: 409, headers: privateHeaders }); }
@@ -100,23 +100,25 @@ export async function POST(request: Request) {
   } finally { guard.close(); }
 }
 
-async function executeSyntheticScenario(request: Request, continuation: ReturnType<typeof loadTaylorContinuation>) {
+async function executeSyntheticScenario(request: Request, continuation: ReturnType<typeof loadTaylorRegression>) {
   let body: { scenarioId?: unknown };
   try { body = await request.json() as typeof body; } catch { return NextResponse.json({ error: "A valid evaluation request is required." }, { status: 400, headers: privateHeaders }); }
   if (typeof body.scenarioId !== "string") return NextResponse.json({ error: "An approved scenario is required." }, { status: 400, headers: privateHeaders });
   let scenario;
   try { scenario = requireProductionEvaluationScenario(body.scenarioId); } catch { return NextResponse.json({ error: "Unknown evaluation scenario." }, { status: 400, headers: privateHeaders }); }
 
-  if (!(taylorContinuationScenarios as readonly string[]).includes(scenario.id)) return NextResponse.json({ error: "Scenario outside this Taylor authorization." }, { status: 403, headers: privateHeaders });
+  if (!(taylorRegressionScenarioIds as readonly string[]).includes(scenario.id)) return NextResponse.json({ error: "Scenario outside this Taylor authorization." }, { status: 403, headers: privateHeaders });
+
+  const approvedTurns = taylorRegressionTurns[scenario.id as keyof typeof taylorRegressionTurns];
+  if (!approvedTurns.every((id, index) => scenario.turns[index]?.id === id)) throw new Error("Frozen regression turns changed");
 
   const guard = evaluationSpendScope.getStore();
   if (!guard) throw new Error("Evaluation spend scope required");
   guard.startScenario(scenario.id);
 
-  const continuingHC = scenario.id === "health-veterans-original";
-  const firstTurnIndex = continuingHC ? 1 : 0;
-  const recentMessages: RuntimeMessage[] = continuingHC ? structuredClone(continuation.recentMessages) : [];
-  let state: ConversationState = continuingHC ? structuredClone(continuation.state) : { ...emptyProductionEvaluationState };
+  const firstTurnIndex = 0;
+  const recentMessages: RuntimeMessage[] = [];
+  let state: ConversationState = structuredClone(emptyProductionEvaluationState);
   const results: Array<Record<string, unknown>> = [];
   const handoffExecutions: Array<Record<string, unknown>> = [];
   const evaluationRequestId = crypto.randomUUID();
@@ -125,7 +127,7 @@ async function executeSyntheticScenario(request: Request, continuation: ReturnTy
     if (!sourceEntitlement.allowed) {
       return NextResponse.json({ error: "The synthetic member is not entitled to this specialist.", entitlementReason: sourceEntitlement.reason }, { status: 403, headers: privateHeaders });
     }
-    for (let index = firstTurnIndex; index < scenario.turns.length; index += 1) {
+    for (let index = firstTurnIndex; index < 2; index += 1) {
       const context = { ...buildProductionEvaluationContext({ scenario, turnIndex: index, recentMessages, state }), requestId: `${evaluationRequestId}-${scenario.turns[index].id}` };
       const selectedModel = selectDigitalStaffModel(context);
       const result = await runDigitalStaffRuntime(context);
@@ -210,9 +212,10 @@ async function executeSyntheticScenario(request: Request, continuation: ReturnTy
       dimensions: scenario.dimensions,
       environment: process.env.VERCEL_ENV || "local",
       syntheticOnly: true,
-      evaluationScope: "new authorized remaining-items run",
+      evaluationScope: "October 20 targeted regression; fresh genuine history",
       firstTurnIndex,
       priorLedgerSha256: continuation.budget.priorLedgerSha256,
+      continuationLedgerSha256: continuation.budget.continuationLedgerSha256,
       memberRecordsLoaded: false,
       modelOverrideUsed: false,
       executionComplete: results.every(item => productionEvaluationTurnOperational(item.validationFailures as string[])) && (!scenario.handoffExercise || handoffExecutions.some((item) => item.status === "completed")),

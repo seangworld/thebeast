@@ -15,7 +15,7 @@ test("stops BEFORE dispatch could exceed $10, aggregating all previous calls", (
  const f=fixture();try {for(let i=0;i<5;i++){const t=f.guard.reserve(body,String(i));f.guard.settle(t,reply);} assert.equal(f.guard.summary().accountedNanoUsd,8900000000);assert.throws(()=>f.guard.reserve(body,"next"),/remaining/);assert.equal(f.guard.summary().attemptedCalls,5);} finally{f.close();}
 });
 test("unknown pricing, tiers, outputs, tools, search bounds and expired prices fail before reservation",()=>{
- for(const b of [{model:"unpriced"},{...body,service_tier:"priority"},{...body,max_output_tokens:NaN},{...body,tools:[{type:"code_interpreter"}]},{...body,tools:[{type:"web_search"}]},{...body,previous_response_id:"hidden"}]){const f=fixture();try{assert.throws(()=>f.guard.reserve(b,"x"));assert.equal(f.guard.summary().attemptedCalls,0);assert.throws(()=>f.guard.reserve(body,"retry"),/halted/);}finally{f.close();}}assert.throws(()=>evaluationCallBound(body,Date.parse("2026-10-21")),/expired/);
+ for(const b of [{model:"unpriced"},{...body,service_tier:"priority"},{...body,max_output_tokens:NaN},{...body,tools:[{type:"code_interpreter"}]},{...body,tools:[{type:"web_search"}]},{...body,previous_response_id:"hidden"}]){const f=fixture();try{assert.throws(()=>f.guard.reserve(b,"x"));assert.equal(f.guard.summary().attemptedCalls,0);assert.throws(()=>f.guard.reserve(body,"retry"),/halted/);}finally{f.close();}}assert.throws(()=>evaluationCallBound(body,Date.parse("2026-10-22")),/expired/);
 });
 test("missing usage retains full reservation and prevents retry or reopen",()=>{
  const f=fixture();try{const t=f.guard.reserve(body,"input-verification");assert.throws(()=>f.guard.settle(t,{model:"gpt-5",output:[]}),/Missing/);assert.equal(f.guard.summary().accountedNanoUsd,t.bound.maximumNanoUsd);assert.throws(()=>f.guard.reserve(body,"retry"),/halted/);f.guard.close();assert.throws(()=>new EvaluationSpendGuard(f.file,"taylor-test"),/halted/);}finally{f.close();}
@@ -108,4 +108,26 @@ test("new continuation rejects unknown pricing before dispatch without releasing
 test("continuation loader refuses a copied prior ledger location",async()=>{
  const {loadTaylorContinuation}=await import('../src/lib/digitalStaffRuntime/taylorContinuation');
  assert.throws(()=>loadTaylorContinuation('/tmp/copied-prior.json','/tmp/new-ledger.json','another-run'),/Original prior ledger location/);
+});
+test("October 20 profile enforces both prior runs plus $6.45 before dispatch",async()=>{
+ const {regressionBudget}=await import('../src/lib/digitalStaffRuntime/evaluationSpendGuard');
+ const dir=mkdtempSync(join(tmpdir(),'regression-'));const file=join(dir,'run.json');const g=new EvaluationSpendGuard(file,'taylor-20261020-regression-pr271',regressionBudget);let calls=0;
+ try{for(let i=0;i<3;i++)g.settle(g.reserve(body,String(i)),reply);
+ assert.equal(g.summary().cumulativeCapNanoUsd,9_999_827_370);assert.equal(g.summary().priorAccountedNanoUsd,3_549_827_370);
+ await assert.rejects(()=>evaluationSpendScope.run(g,()=>requestOpenAIResponse(body,{apiKey:'sk-synthetic',requestId:'cap',fetchImpl:async()=>{calls++;return new Response();}})),/remaining/);assert.equal(calls,0);assert.equal(g.summary().attemptedCalls,3);g.close();assert.throws(()=>new EvaluationSpendGuard(file,'different-run',regressionBudget),/mismatch/);
+ }finally{g.close();rmSync(dir,{recursive:true,force:true});}
+});
+test("October 20 unknown pricing and missing research usage fail closed with full prior cost",async()=>{
+ const {regressionBudget}=await import('../src/lib/digitalStaffRuntime/evaluationSpendGuard');
+ for(const missing of [false,true]){const dir=mkdtempSync(join(tmpdir(),'regression-'));const g=new EvaluationSpendGuard(join(dir,'run.json'),'regression',regressionBudget);
+ try{if(missing){const t=g.reserve({...body,tools:[{type:'web_search'}],max_tool_calls:3},'research');assert.throws(()=>g.settle(t,{model:'gpt-5',output:[]}),/Missing/);assert.equal(g.summary().cumulativeAccountedNanoUsd,6_859_827_370);}else{assert.throws(()=>g.reserve({model:'unknown'},'unknown'),/Unknown/);assert.equal(g.summary().attemptedCalls,0);}assert.throws(()=>g.reserve(body,'retry'),/halted/);assert.equal(g.summary().priorAccountedNanoUsd,3_549_827_370);}finally{g.close();rmSync(dir,{recursive:true,force:true});}}
+});
+test("read-only receipt validation detects changed bytes, identity, spending or unresolved continuation",async()=>{
+ const {createHash}=await import('node:crypto');const {verifyTaylorPriorReceipt}=await import('../src/lib/digitalStaffRuntime/taylorRegression');
+ const bytes=Buffer.from(JSON.stringify({runId:'original',halted:'unknown',entries:[{status:'unknown',maximumNanoUsd:3_310_000_000}]}));const sha256=createHash('sha256').update(bytes).digest('hex');
+ assert.equal(verifyTaylorPriorReceipt(bytes,{sha256,runId:'original',accounted:3_310_000_000}),3_310_000_000);
+ assert.throws(()=>verifyTaylorPriorReceipt(Buffer.concat([bytes,Buffer.from(' ')]),{sha256,runId:'original',accounted:3_310_000_000}),/hash/);
+ assert.throws(()=>verifyTaylorPriorReceipt(bytes,{sha256,runId:'wrong',accounted:3_310_000_000}),/identity/);
+ assert.throws(()=>verifyTaylorPriorReceipt(bytes,{sha256,runId:'original',accounted:0}),/spending/);
+ assert.throws(()=>verifyTaylorPriorReceipt(bytes,{sha256,runId:'original',accounted:3_310_000_000,settledCalls:1}),/identity/);
 });
