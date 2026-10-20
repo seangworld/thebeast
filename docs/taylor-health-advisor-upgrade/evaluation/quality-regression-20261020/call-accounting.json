@@ -1,0 +1,393 @@
+{
+  "note": "Unblinded accounting: do not supply to semantic grader before grades lock",
+  "calls": [
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-trend-semantic-input",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00046343,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0001906,
+      "usage": {
+        "input_tokens": 677,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 46,
+        "output_tokens_details": {
+          "reasoning_tokens": 23
+        },
+        "total_tokens": 723
+      },
+      "latencyMs": 4903
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-trend-plan",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.0037719,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0019198499999999999,
+      "usage": {
+        "input_tokens": 4392,
+        "input_tokens_details": {
+          "cache_write_tokens": 4389,
+          "cached_tokens": 0
+        },
+        "output_tokens": 685,
+        "output_tokens_details": {
+          "reasoning_tokens": 142
+        },
+        "total_tokens": 5077
+      },
+      "latencyMs": 6809
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-trend-semantic-output",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00074558,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00035705000000000003,
+      "usage": {
+        "input_tokens": 1136,
+        "input_tokens_details": {
+          "cache_write_tokens": 1133,
+          "cached_tokens": 0
+        },
+        "output_tokens": 61,
+        "output_tokens_details": {
+          "reasoning_tokens": 38
+        },
+        "total_tokens": 1197
+      },
+      "latencyMs": 1696
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-new-symptom-semantic-input",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00046057,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00018860000000000003,
+      "usage": {
+        "input_tokens": 679,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 44,
+        "output_tokens_details": {
+          "reasoning_tokens": 21
+        },
+        "total_tokens": 723
+      },
+      "latencyMs": 1424
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-new-symptom-plan",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00406857,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00137982,
+      "usage": {
+        "input_tokens": 4899,
+        "input_tokens_details": {
+          "cache_write_tokens": 1950,
+          "cached_tokens": 2946
+        },
+        "output_tokens": 694,
+        "output_tokens_details": {
+          "reasoning_tokens": 143
+        },
+        "total_tokens": 5593
+      },
+      "latencyMs": 6398
+    },
+    {
+      "requestId": "ca92eb6b-bb77-440f-8304-f0ba7638f933-new-symptom-semantic-output",
+      "model": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 0.83094,
+      "conservativeSettledUsd": 0.00078793,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0003823,
+      "usage": {
+        "input_tokens": 1141,
+        "input_tokens_details": {
+          "cache_write_tokens": 1138,
+          "cached_tokens": 0
+        },
+        "output_tokens": 81,
+        "output_tokens_details": {
+          "reasoning_tokens": 58
+        },
+        "total_tokens": 1222
+      },
+      "latencyMs": 1447
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-read-original-semantic-input",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.00245625,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00245625,
+      "usage": {
+        "input_tokens": 693,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 159,
+        "output_tokens_details": {
+          "reasoning_tokens": 128
+        },
+        "total_tokens": 852
+      },
+      "latencyMs": 1997
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-read-original-plan",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "context": "current_turn",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.024485,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.024485,
+      "usage": {
+        "input_tokens": 4124,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1933,
+        "output_tokens_details": {
+          "reasoning_tokens": 1472
+        },
+        "total_tokens": 6057
+      },
+      "latencyMs": 15468
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-read-original-semantic-output",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.00318375,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00318375,
+      "usage": {
+        "input_tokens": 1043,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 188,
+        "output_tokens_details": {
+          "reasoning_tokens": 128
+        },
+        "total_tokens": 1231
+      },
+      "latencyMs": 2726
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-semantic-input",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-input",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.00252375,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00252375,
+      "usage": {
+        "input_tokens": 691,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 166,
+        "output_tokens_details": {
+          "reasoning_tokens": 128
+        },
+        "total_tokens": 857
+      },
+      "latencyMs": 2737
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-plan",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "plan",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.01601875,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.01601875,
+      "usage": {
+        "input_tokens": 4567,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 1031,
+        "output_tokens_details": {
+          "reasoning_tokens": 704
+        },
+        "total_tokens": 5598
+      },
+      "latencyMs": 19676
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-research",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "research",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 3.31,
+      "conservativeSettledUsd": 0.0801375,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0801375,
+      "usage": {
+        "input_tokens": 18374,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 2717,
+        "output_tokens_details": {
+          "reasoning_tokens": 1984
+        },
+        "total_tokens": 21091
+      },
+      "latencyMs": 29451
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-synthesis",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "synthesis",
+      "status": "settled",
+      "reasoning": {
+        "context": "current_turn",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.0269275,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0269275,
+      "usage": {
+        "input_tokens": 5182,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 2045,
+        "output_tokens_details": {
+          "reasoning_tokens": 1344
+        },
+        "total_tokens": 7227
+      },
+      "latencyMs": 25298
+    },
+    {
+      "requestId": "7b77d4fd-3c0d-4ae4-8472-cfa3ef84dfc6-research-in-context-semantic-output",
+      "model": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "phase": "semantic-output",
+      "status": "settled",
+      "reasoning": {
+        "effort": "low"
+      },
+      "maximumReservedUsd": 1.78,
+      "conservativeSettledUsd": 0.00327875,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00327875,
+      "usage": {
+        "input_tokens": 1471,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 144,
+        "output_tokens_details": {
+          "reasoning_tokens": 64
+        },
+        "total_tokens": 1615
+      },
+      "latencyMs": 2324
+    }
+  ]
+}
