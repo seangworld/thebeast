@@ -76,16 +76,18 @@ test('researched health answer is synthesized with private context, never passed
       assert.doesNotMatch(request.instructions, /Return JSON matching|You are Health Advisor/);
       assert.match(request.instructions, /separate private step/);
       assert.match(new Headers(init?.headers).get('X-Client-Request-Id') || '', /-research$/);
-      return stream({output:[{content:[{type:'output_text',text:'General official guidance.',annotations:[{type:'url_citation',title:'VA',url:'https://www.va.gov/disability/'}]}]}]});
+      return stream({output:[{content:[{type:'output_text',text:'General official guidance.',annotations:[{type:'url_citation',title:'VA',url:'https://www.va.gov/disability/'},{type:'url_citation',title:'Unrelated',url:'https://www.ecfr.gov/current/title-38/section-21.86'}]}]}]});
     }
     assert.match(JSON.stringify(request.input),/Private member history/);
     assert.match(JSON.stringify(request.input),/General official guidance/);
-    return stream({output_text:'Your records identify an issue to discuss. The supplied evidence does not establish a medical nexus. Here is the next question to prepare.'});
+    return stream({output_text:'Your records identify an issue to discuss. The supplied evidence does not establish a medical nexus. Here is the next question to prepare. Source: https://www.va.gov/disability/.'});
   };
   try {
     const result=await runDigitalStaffRuntime({...ctx,requestId:'health-depth-test'});
     assert.match(result.response,/Your records identify/);
     assert.equal(result.researchSources.length,1);
+    assert.equal(result.researchSources[0].url, "https://www.va.gov/disability/");
+    assert.match(result.researchSources[0].supportedClaim, /not independently verified/);
     assert.equal(calls.filter(call=>call.tools).length,1);
     assert.doesNotMatch(JSON.stringify(calls.find(call=>call.tools)?.input),/Private member history/);
     assert.equal(result.timings.providerInvocationCount,5);

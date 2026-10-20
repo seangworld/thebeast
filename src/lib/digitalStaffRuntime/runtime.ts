@@ -12,6 +12,7 @@ import type { RuntimeContext, RuntimeObserver, RuntimePlan, RuntimeResult } from
 import { isMemberSpecialistId } from "../memberAgentCapabilityFramework";
 import { enforceMemberAgentResponseSafety, filterMemberAgentContextItems, isMemberAgentResponseContract, memberAgentSafetyFallback, safeMemberAgentResponseContract, sanitizeUntrustedMemberText, screenMemberAgentInput } from "../memberAgentResponseSafety";
 import { verifyMemberAgentSemanticSafety } from "../memberAgentSemanticVerifier";
+import { sourcesCitedInAnswer } from "../health/answerSources";
 import { guardUnrequestedVeteransSecondaryTheory } from "./veteransGrounding";
 
 type ResponsesPayload = { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; title?: string; url?: string }> }> }> };
@@ -70,7 +71,7 @@ async function executeResearch(
   const content = payload.output?.flatMap((item) => item.content || []) || [];
   const answer = payload.output_text || content.find((item) => item.type === "output_text")?.text || "";
   const retrievedAt = new Date().toISOString();
-  const sources = Array.from(new Map(content.flatMap((item) => item.annotations || []).filter((item) => item.type === "url_citation" && item.url).map((item) => [item.url as string, { title: item.title || new URL(item.url as string).hostname, url: item.url as string, supportedClaim: "Supports the researched response.", retrievedAt }])).values());
+  const sources = Array.from(new Map(content.flatMap((item) => item.annotations || []).filter((item) => item.type === "url_citation" && item.url).map((item) => [item.url as string, { title: item.title || new URL(item.url as string).hostname, url: item.url as string, supportedClaim: healthEvidenceOnly ? "Retrieved during research; relevance not independently verified." : "Supports the researched response.", retrievedAt }])).values());
   if (!answer || sources.length === 0) throw new Error("Authoritative research returned no attributable evidence.");
   return { answer, sources };
 }
@@ -437,6 +438,8 @@ export async function runDigitalStaffRuntime(
     model,
     latencyMs: totalMs,
     timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptConstructionMs, promptCharacters: runtimeInput.length, providerInvocationCount, semanticVerifierInvocationCount, semanticVerifierMs, semanticVerifierFailureCount },
-    researchSources: research?.sources || [],
+    researchSources: context.professionalId === "beasthealth.health-advisor"
+      ? sourcesCitedInAnswer(responseSafety.response, research?.sources || []).map(source => ({ ...source, supportedClaim: "Cited in the delivered answer; relevance not independently verified." }))
+      : research?.sources || [],
   };
 }
