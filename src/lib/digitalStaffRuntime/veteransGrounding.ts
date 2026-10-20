@@ -4,7 +4,28 @@ const secondaryTheory = /\bsecondary(?:\s+(?:service[- ]?connection|service[- ]c
 const explicitSecondaryRequest = /\b(?:explain|define|describe|compare|discuss|what\s+(?:is|does)|can|could|would|should)\b.{0,80}\bsecondary\b/i;
 const rejectsSecondaryDiscussion = /\b(?:do\s+not|don't|never|avoid|without)\b.{0,50}\bsecondary\b/i;
 
-const directServicePreparationFallback = "For a direct service-connection claim, VA generally looks for a current condition, an in-service event or injury, and a connection between them. To prepare, gather service records or first-hand statements relevant to the condition described in the decision, then ask a clinician to independently assess whether the available evidence supports a connection, including uncertainty and contrary evidence. See VA’s official evidence guidance: https://www.va.gov/disability/how-to-file-claim/evidence-needed/.";
+const theoryDetail = /\bsecondary\b|\bsecondarily\b|\baltered[- ]gait\b|\b(?:another|other|existing|already)[ -]+service[- ]connected\b/i;
+const withheldNotice = "I withheld part of this answer because it introduced a claim theory outside your request. The remaining text may be incomplete; it is not a complete review of the decision.";
+
+/**
+ * Remove whole contaminated paragraphs/list blocks, never splice fragments
+ * into a new medical assertion. A contaminated heading removes its section,
+ * including dependent prose, until a peer or higher-level heading. Retained
+ * text is still model output and MUST pass the normal output safety checks.
+ * This is not a source-verification or complete-answer certification.
+ */
+function retainScopedContent(response: string): string {
+  let withheldSectionLevel: number | null = null;
+  const retained: string[] = [];
+  for (const block of response.split(/\n\s*\n/)) {
+    const heading = /^(#{1,6})\s+([^\n]+)/.exec(block.trim());
+    if (heading && withheldSectionLevel !== null && heading[1].length <= withheldSectionLevel) withheldSectionLevel = null;
+    if (theoryDetail.test(block)) withheldSectionLevel = Math.min(withheldSectionLevel ?? 6, heading?.[1].length ?? 6);
+    if (withheldSectionLevel !== null) continue;
+    if (block.trim()) retained.push(block.trim());
+  }
+  return retained.length ? `${retained.join("\n\n")}\n\n${withheldNotice}` : withheldNotice;
+}
 
 /**
  * Keep decision-letter answers scoped to the user's request. The model must not
@@ -34,7 +55,7 @@ export function guardUnrequestedVeteransSecondaryTheory(context: RuntimeContext,
 
   return {
     safe: false as const,
-    response: directServicePreparationFallback,
+    response: retainScopedContent(response),
     failures: ["unrequested-secondary-veterans-theory"],
   };
 }

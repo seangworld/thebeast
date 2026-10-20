@@ -5,6 +5,7 @@ import { navigationRegistry } from "./navigation";
 import type { RuntimeContext } from "./types";
 import { authoritativeProfessionalPrompt } from "./professionalPrompts";
 import { buildDigitalStaffInteractionPolicy } from "./interactionPolicy";
+import { buildBloodPressureRangeComparisons } from "../health/rangeComparisons";
 import { buildHealthEvidenceQualityReview } from "../health/evidenceQuality";
 
 export function buildRuntimeInstructions(config: ProfessionalConfig) {
@@ -51,6 +52,8 @@ export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeCo
     structuredRecords: productSupport ? [] : structuredRecords,
     ...(config.id === "beasthealth.health-advisor" && !productSupport
       ? {
+          healthRangeComparisons: buildBloodPressureRangeComparisons(structuredRecords),
+          healthRangeComparisonBoundary: "These are arithmetic comparisons of explicitly dated saved blood-pressure range endpoints, not paired readings, averages, diagnoses or clinical significance. Use the supplied lower-to-lower and upper-to-upper differences only; never mix endpoints or invent a per-reading change. No comparison means the dates, units or ranges were insufficient or ambiguous; quote the available records without deriving an increase. Updated-at timestamps are not measurement dates.",
           healthEvidenceQuality: buildHealthEvidenceQualityReview(
             structuredRecords,
             context.message.createdAt,

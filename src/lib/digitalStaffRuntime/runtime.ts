@@ -399,11 +399,12 @@ export async function runDigitalStaffRuntime(
   }
   const unguardedResponse = contextualAnswer || research?.answer || validated.response;
   const veteransGrounding = guardUnrequestedVeteransSecondaryTheory(executionContext, unguardedResponse);
-  let responseSafety = !veteransGrounding.safe
-    ? veteransGrounding
-    : isMemberSpecialistId(context.professionalId)
-      ? enforceMemberAgentResponseSafety({ professionalId: context.professionalId, memberMessage: context.message.text, response: unguardedResponse, contract: validated.responseContract })
-      : { safe: true, response: unguardedResponse, failures: [] as readonly string[] };
+  // A scope-filtered answer still contains model prose. Never let the
+  // grounding intervention bypass diagnosis/emergency or semantic checks.
+  const scopedResponse = veteransGrounding.response;
+  let responseSafety = isMemberSpecialistId(context.professionalId)
+    ? enforceMemberAgentResponseSafety({ professionalId: context.professionalId, memberMessage: context.message.text, response: scopedResponse, contract: validated.responseContract })
+    : { safe: true, response: scopedResponse, failures: [] as readonly string[] };
   if (isMemberSpecialistId(context.professionalId) && responseSafety.safe) {
     providerInvocationCount += 1;
     semanticVerifierInvocationCount += 1;
@@ -412,7 +413,7 @@ export async function runDigitalStaffRuntime(
       professionalId: context.professionalId,
       phase: "output",
       memberMessage: context.message.text,
-      candidateResponse: unguardedResponse,
+      candidateResponse: responseSafety.response,
       model,
       requestId: context.requestId,
       signal: context.signal,
@@ -432,7 +433,7 @@ export async function runDigitalStaffRuntime(
   return {
     ...validated,
     response: responseSafety.response,
-    validationFailures: [...validated.validationFailures, ...(rejectedContextCount ? [`Rejected ${rejectedContextCount} untrusted context item(s) containing instruction-override content.`] : []), ...responseSafety.failures],
+    validationFailures: [...validated.validationFailures, ...(rejectedContextCount ? [`Rejected ${rejectedContextCount} untrusted context item(s) containing instruction-override content.`] : []), ...veteransGrounding.failures, ...responseSafety.failures],
     model,
     latencyMs: totalMs,
     timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptConstructionMs, promptCharacters: runtimeInput.length, providerInvocationCount, semanticVerifierInvocationCount, semanticVerifierMs, semanticVerifierFailureCount },
