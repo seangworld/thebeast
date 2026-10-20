@@ -22,9 +22,11 @@ export const evaluationPricing = {
 } as const;
 
 type Entry = { requestId: string; model: string; maximumNanoUsd: number; status: "reserved" | "settled" | "unknown"; estimatedNanoUsd?: number; inputTokens?: number; outputTokens?: number; toolCalls?: number; returnedModel?: string; latencyMs?: number; request?: Record<string, unknown>; response?: unknown };
-type ContinuationBudget = Readonly<{capNanoUsd: number; priorAccountedNanoUsd: number; priorLedgerSha256: string; continuationLedgerSha256?: string}>;
+type ContinuationBudget = Readonly<{capNanoUsd: number; priorAccountedNanoUsd: number; priorLedgerSha256: string; continuationLedgerSha256?: string; regressionLedgerSha256?: string; maximumAttemptedCalls?: number}>;
 export const continuationBudget: ContinuationBudget = Object.freeze({ capNanoUsd: 6_580_000_000, priorAccountedNanoUsd: 3_416_366_950, priorLedgerSha256: "423f557b3fa56762ccbd70180aa8ee2ed528d2f9136370e1360a137cf1ec6939" });
 export const regressionBudget: ContinuationBudget = Object.freeze({capNanoUsd: 6_450_000_000, priorAccountedNanoUsd: 3_549_827_370, priorLedgerSha256: continuationBudget.priorLedgerSha256, continuationLedgerSha256: "48bd39160a02d9a374fc3e916cd98a9335f9bfba38e455c34137a4c51cc2d744"});
+/** Prepared proposal only: the live owner route does not select this profile. */
+export const qualityRegressionBudget: ContinuationBudget = Object.freeze({capNanoUsd: 6_280_000_000, priorAccountedNanoUsd: 3_716_242_240, priorLedgerSha256: continuationBudget.priorLedgerSha256, continuationLedgerSha256: regressionBudget.continuationLedgerSha256, regressionLedgerSha256: "4104e37f00f8a61eb4b15e9665391f84c1237bd48a1ca8fbe06466e46f4a47da", maximumAttemptedCalls: 20});
 type Ledger = { budget?: typeof continuationBudget; version: 1; runId: string; capNanoUsd: number; pricing: typeof evaluationPricing; halted: string | null; entries: Entry[]; results: unknown[]; scenariosStarted: string[] };
 function integer(value: unknown): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= 0; }
 export function evaluationCallBound(body: Record<string, unknown>, now = Date.now()) {
@@ -52,7 +54,7 @@ export class EvaluationSpendGuard {
   private state: Ledger;
   private closed = false;
   constructor(private file: string, runId: string, private budget?: typeof continuationBudget) {
-    if (budget && ![continuationBudget, regressionBudget].some(approved => JSON.stringify(budget) === JSON.stringify(approved))) throw new Error("Unknown cumulative authorization");
+    if (budget && ![continuationBudget, regressionBudget, qualityRegressionBudget].some(approved => JSON.stringify(budget) === JSON.stringify(approved))) throw new Error("Unknown cumulative authorization");
     if (!isAbsolute(file) || !/^[a-zA-Z0-9_-]{1,100}$/.test(runId)) throw new Error("Private absolute ledger and fixed run ID required");
     const dir = lstatSync(dirname(file));
     if (!dir.isDirectory() || dir.isSymbolicLink() || (dir.mode & 0o077)) throw new Error("Ledger directory must be private (0700)");
@@ -90,6 +92,9 @@ export class EvaluationSpendGuard {
   }
   reserve(body: Record<string, unknown>, requestId: string) {
     this.assertReady();
+    if (this.budget?.maximumAttemptedCalls !== undefined && this.state.entries.length >= this.budget.maximumAttemptedCalls) {
+      this.state.halted = "Maximum attempted provider calls reached"; this.save(); throw new Error(this.state.halted);
+    }
     let bound: ReturnType<typeof evaluationCallBound>;
     try { bound = evaluationCallBound(body); }
     catch (error) { this.state.halted = "Call pricing/token/tool bounds unavailable"; this.save(); throw error; }

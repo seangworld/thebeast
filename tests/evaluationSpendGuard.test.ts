@@ -131,3 +131,23 @@ test("read-only receipt validation detects changed bytes, identity, spending or 
  assert.throws(()=>verifyTaylorPriorReceipt(bytes,{sha256,runId:'original',accounted:0}),/spending/);
  assert.throws(()=>verifyTaylorPriorReceipt(bytes,{sha256,runId:'original',accounted:3_310_000_000,settledCalls:1}),/identity/);
 });
+test("prepared quality regression keeps all three receipts spent and stops before $6.28",async()=>{
+ const {qualityRegressionBudget}=await import('../src/lib/digitalStaffRuntime/evaluationSpendGuard');
+ const dir=mkdtempSync(join(tmpdir(),'quality-regression-'));const g=new EvaluationSpendGuard(join(dir,'run.json'),'proposal',qualityRegressionBudget);let calls=0;
+ try{for(let i=0;i<3;i++)g.settle(g.reserve(body,String(i)),reply);
+ assert.equal(g.summary().priorAccountedNanoUsd,3_716_242_240);assert.equal(g.summary().cumulativeCapNanoUsd,9_996_242_240);
+ await assert.rejects(()=>evaluationSpendScope.run(g,()=>requestOpenAIResponse(body,{apiKey:'sk-synthetic',requestId:'stop',fetchImpl:async()=>{calls++;return new Response();}})),/remaining/);assert.equal(calls,0);assert.equal(g.summary().attemptedCalls,3);
+ }finally{g.close();rmSync(dir,{recursive:true,force:true});}
+});
+test("prepared quality regression stops before attempted call 21 even when cost is low",async()=>{
+ const {qualityRegressionBudget}=await import('../src/lib/digitalStaffRuntime/evaluationSpendGuard');
+ const dir=mkdtempSync(join(tmpdir(),'quality-regression-'));const g=new EvaluationSpendGuard(join(dir,'run.json'),'proposal',qualityRegressionBudget);let calls=0;
+ try{for(let i=0;i<20;i++)g.settle(g.reserve({...body,max_output_tokens:1},String(i)),{...reply,usage:{input_tokens:0,output_tokens:1}});
+ await assert.rejects(()=>evaluationSpendScope.run(g,()=>requestOpenAIResponse(body,{apiKey:'sk-synthetic',requestId:'21',fetchImpl:async()=>{calls++;return new Response();}})),/Maximum attempted/);assert.equal(calls,0);assert.equal(g.summary().attemptedCalls,20);assert.equal(g.summary().accountedNanoUsd,200000);
+ }finally{g.close();rmSync(dir,{recursive:true,force:true});}
+});
+test("prepared quality regression cannot refund uncertainty or change receipt identity",async()=>{
+ const {qualityRegressionBudget}=await import('../src/lib/digitalStaffRuntime/evaluationSpendGuard');const {loadTaylorQualityRegression}=await import('../src/lib/digitalStaffRuntime/taylorQualityRegression');
+ const dir=mkdtempSync(join(tmpdir(),'quality-regression-'));const file=join(dir,'run.json');const g=new EvaluationSpendGuard(file,'proposal',qualityRegressionBudget);
+ try{const t=g.reserve({...body,tools:[{type:'web_search'}],max_tool_calls:3},'research');assert.throws(()=>g.settle(t,{model:'gpt-5',output:[]}),/Missing/);assert.equal(g.summary().cumulativeAccountedNanoUsd,7_026_242_240);assert.throws(()=>g.reserve(body,'retry'),/halted/);g.close();assert.throws(()=>new EvaluationSpendGuard(file,'proposal',qualityRegressionBudget),/halted/);assert.throws(()=>new EvaluationSpendGuard(file,'proposal',{...qualityRegressionBudget,priorAccountedNanoUsd:0}),/authorization/);assert.throws(()=>loadTaylorQualityRegression('/tmp/copy.json','another-run'),/identity/);}finally{g.close();rmSync(dir,{recursive:true,force:true});}
+});
