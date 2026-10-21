@@ -7,6 +7,20 @@ import {GuidanceEvaluationBudget,guidanceCallBound} from './guidance-evaluation-
 const policy={expiresAt:'2099-01-01',searchNano:10_000_000,models:{synthetic:{context:1000,inputNano:1000,outputNano:2000,returned:['synthetic']}}};
 const body={model:'synthetic',store:false,input:'synthetic only'};
 const reply={model:'synthetic',usage:{input_tokens:10,output_tokens:20},output:[]};
+test('ninth call in a turn is blocked even when whole-run budget remains',async()=>{
+ const x=setup();try{x.guard.startTurn('GC-01-T1');let attempts=0;
+ for(let i=0;i<8;i++)await x.guard.dispatch(body,`call-${i}`,async()=>{attempts++;return reply;});
+ await assert.rejects(x.guard.dispatch(body,'call-9',async()=>{attempts++;return reply;}),/Attempt ceiling/);
+ assert.equal(attempts,8);assert.equal(x.guard.summary().entries.length,8);
+ }finally{x.cleanup();}
+});
+test('an unresolved reservation blocks concurrent dispatch and stays fully accounted',async()=>{
+ const x=setup();try{x.guard.startTurn('GC-01-T1');const ticket=x.guard.reserve(body,'pending');
+ let attempts=0;await assert.rejects(x.guard.dispatch(body,'parallel',async()=>{attempts++;return reply;}),/unresolved/);
+ assert.equal(attempts,0);assert.equal(x.guard.summary().accountedNanoUsd,x.guard.summary().entries[0].maximumNanoUsd);
+ ticket.unknown();assert.throws(()=>x.guard.startTurn('GC-01-T2'),/halted/);
+ }finally{x.cleanup();}
+});
 function setup(options={}){const dir=mkdtempSync(join(tmpdir(),'gc-budget-'));const file=join(dir,'ledger.json');const config={file,policy,runId:'gc-test',capNanoUsd:1_000_000_000,turnIds:['GC-01-T1','GC-01-T2'],...options};return {file,config,guard:new GuidanceEvaluationBudget(config),cleanup:()=>rmSync(dir,{recursive:true,force:true})};}
 test('reservation persisted before transport; four web calls and explicit output bound',async()=>{const x=setup();try{x.guard.startTurn('GC-01-T1');let calls=0;await x.guard.dispatch({...body,tools:[{type:'web_search'}],max_tool_calls:4},'a',async prepared=>{calls++;assert.equal(JSON.parse(readFileSync(x.file)).entries[0].status,'reserved');assert.equal(prepared.max_output_tokens,4800);return reply;});assert.equal(calls,1);assert.equal(x.guard.summary().entries[0].accountedNanoUsd,40_050_000);}finally{x.cleanup();}});
 test('overbudget blocks transport before any paid attempt',async()=>{const x=setup({capNanoUsd:1});try{x.guard.startTurn('GC-01-T1');let calls=0;await assert.rejects(x.guard.dispatch(body,'a',async()=>{calls++;return reply;}),/cap/);assert.equal(calls,0);assert.equal(x.guard.summary().entries.length,0);}finally{x.cleanup();}});

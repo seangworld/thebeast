@@ -41,3 +41,11 @@ Preparation verifier checks candidate source-tree identity, seven unique scenari
 The isolated GC spending-control module is now implemented and eight no-cost tests pass, including actual compiled ordinary-runtime and full researched-runtime integration. See [budget guard evidence](BUDGET-GUARD.md). It is not yet a live dispatcher; remaining adapter/price-policy gates are explicit there. Taylor files are unchanged.
 
 [Revision 2 scenarios](scenario-packets-v2.json) preserve the original packet and make pre-execution source-driven refinements: a specific TCC specialization and Microsoft AZ-900 replacing the inaccessible CompTIA case. [Official source baseline](SOURCE-BASELINE.md) now includes college program/fee applicability, payment-versus-application deadline distinctions and Microsoft's nonexpiring Fundamentals renewal policy. The complete eleven-turn answer key remains unfinished; no source-read failure was graded as success. No live calls or new competency grade.
+
+## October 21 no-cost continuation
+
+Added official FAFSA checklist, eligibility overview and year-qualified deadline evidence. The TCC catalog remains inaccessible; exact prerequisites must remain unverified unless valid catalog evidence is obtained during execution. Added [grading rules](GRADING-RULES.md) defining evidence requirements, material failures and treatment of partial/untested capabilities.
+
+The preparation verifier now checks BOTH frozen packet hashes, confirms that only the two documented revision-2 prompts changed, verifies unchanged scenario criteria/records/history, counts unique scenario-level criteria, and reports source/rubric hashes. Previously it checked only revision 1; that preparation gap is corrected. Both packets remain unanswered and ungraded.
+
+Ten no-cost guard/integration tests pass. Added ninth-call rejection and concurrent unresolved-reservation checks. Application source remains unchanged; no new full application-suite run is claimed. No paid calls, credential extraction, production changes or independent review occurred. Remaining live gates: authorized DEV credential setup, reviewed expiring pricing/model availability, exact dispatch manifest and owner spending approval.
