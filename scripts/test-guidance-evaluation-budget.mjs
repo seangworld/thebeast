@@ -49,7 +49,7 @@ test('compiled GC runtime sends all three ordinary stages through reservations',
  try{x.guard.startTurn('GC-01-T1');const result=await runDigitalStaffRuntime({ownerId:'synthetic-gc-evaluation',professionalId:'beasteducation.guidance-counselor',conversationId:'synthetic-gc',message:{id:'test',role:'user',text:'Help me prepare without adding any weekly workload.',createdAt:'2026-10-20'},recentMessages:[],memories:[],structuredRecords:[{domain:'education',record:{weekly_hours:0}}],workspace:null,state},{},{modelOverride:'gpt-5.6-luna'});x.guard.finishTurn();assert.equal(attempts,3);assert.match(result.response,/zero weekly hours/);assert.equal(x.guard.summary().entries.length,3);assert.ok(x.guard.summary().entries.every(e=>e.status==='settled'));}
  finally{registerEvaluationReservation(()=>undefined);globalThis.fetch=original;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;x.cleanup();}
 });
-test('dedicated adapter guards all eight researched stages and retains private-context separation',async()=>{
+test('dedicated adapter guards seven research-first stages and retains private-context separation',async()=>{
  const {runGuidanceEvaluationTurn}=await import('./guidance-evaluation-session.mjs');
  const {safeMemberAgentResponseContract}=await import('../.test-dist/src/lib/memberAgentResponseSafety.js');
  const x=setup({policy:{...policy,models:{'gpt-5.6-luna':{...policy.models.synthetic,context:1050000,returned:['gpt-5.6-luna']}}},capNanoUsd:10_000_000_000});
@@ -64,7 +64,7 @@ test('dedicated adapter guards all eight researched stages and retains private-c
   assert.equal(JSON.parse(readFileSync(x.file)).entries.at(-1).status,'reserved');
   const name=request.text?.format?.name;let value,urls=[];
   if(name==='member_agent_semantic_verification')value={verdict:'safe',categories:[]};
-  else if(name==='digital_staff_runtime_plan')value={intent:'answer',response:'Initial answer',nextQuestion:null,state,proposals:[],navigationTarget:null,toolCalls:[],research:{query:'tuition',domains:['example.edu'],reason:'fees'},handoff:null,responseContract:safeMemberAgentResponseContract};
+  else if(name==='digital_staff_runtime_plan')assert.fail('mandatory research must not draft an initial answer');
   else if(name==='guidance_brief')value=brief;
   else if(name==='guidance_privacy')value={verdict:'safe'};
   else if(request.tools){publicCalls++;assert.doesNotMatch(JSON.stringify(request),/Alex Example|caregiving/);assert.equal(request.max_tool_calls,4);urls=[url,proof];value=id.endsWith('-discover')?{candidates:[{target:0,url}]}:{identities:[{target:0,officialUrl:url,identityEvidenceUrl:proof,status:'verified',evidence:'Official identity page.'}],findings:[{target:0,question:'tuition_and_fees',fact:'Tuition $100 per credit excluding fees.',applicability:'Spring 2027',asOf:'2026-10-20',url}]};}
@@ -72,7 +72,7 @@ test('dedicated adapter guards all eight researched stages and retains private-c
   const payload={...reply,model:'gpt-5.6-luna',output_text:typeof value==='string'?value:JSON.stringify(value),output:urls.length?[{type:'web_search_call',status:'completed',action:{type:'search',sources:urls.map(url=>({url}))}}]:[]};
   return name==='member_agent_semantic_verification'?Response.json(payload):new Response(`data: ${JSON.stringify({type:'response.completed',response:payload})}\n\ndata: [DONE]\n\n`,{headers:{'Content-Type':'text/event-stream'}});
  };
- try{const result=await runGuidanceEvaluationTurn({guard:x.guard,turnId:'GC-01-T1',model:'gpt-5.6-luna',context:{ownerId:'synthetic-gc-evaluation',professionalId:'beasteducation.guidance-counselor',conversationId:'synthetic-gc',message:{id:'test',role:'user',text:'Compare current tuition at Example College for Alex Example.',createdAt:'2026-10-20'},recentMessages:[],memories:[],structuredRecords:[{domain:'education',record:{weekly_hours:0,constraints:'Private caregiving'}}],workspace:null,state}});assert.equal(attempts,8);assert.equal(publicCalls,2);assert.match(result.response,/zero study hours/);assert.ok(x.guard.summary().entries.every(e=>e.status==='settled'));}
+ try{const result=await runGuidanceEvaluationTurn({guard:x.guard,turnId:'GC-01-T1',model:'gpt-5.6-luna',context:{ownerId:'synthetic-gc-evaluation',professionalId:'beasteducation.guidance-counselor',conversationId:'synthetic-gc',message:{id:'test',role:'user',text:'Compare current tuition at Example College for Alex Example.',createdAt:'2026-10-20'},recentMessages:[],memories:[],structuredRecords:[{domain:'education',record:{weekly_hours:0,constraints:'Private caregiving'}}],workspace:null,state}});assert.equal(attempts,7);assert.equal(publicCalls,2);assert.match(result.response,/zero study hours/);assert.ok(x.guard.summary().entries.every(e=>e.status==='settled'));}
  finally{globalThis.fetch=original;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;x.cleanup();}
 });
 test('unknown usage preserves the original response and measured latency',async()=>{
@@ -141,4 +141,25 @@ test('future metadata requests are recorded once and failure stops before infere
  assert.equal(count,failed?1:2);assert.equal(x.guard.summary().entries.length,0);assert.equal(x.guard.state.metadataReceipt.attempts.length,count);
  if(failed)assert.ok(x.guard.state.halted);
  }finally{x.cleanup();}}
+});
+
+
+test('mandatory research brief with missing usage halts the real adapter before privacy, search or synthesis',async()=>{
+ const {runGuidanceEvaluationTurn}=await import('./guidance-evaluation-session.mjs');
+ const x=setup({turnIds:['GC-04-T1','GC-04-T2'],policy:{...policy,models:{'gpt-5.6-luna':{...policy.models.synthetic,context:1050000,returned:['gpt-5.6-luna']}}},capNanoUsd:10_000_000_000});
+ const original=globalThis.fetch,key=process.env.OPENAI_API_KEY;const stages=[];
+ process.env.OPENAI_API_KEY='sk-proj-SYNTHETIC_TEST_ONLY_GC_123456789';
+ globalThis.fetch=async(_url,init)=>{
+  const request=JSON.parse(init.body),name=request.text?.format?.name;stages.push(name);
+  if(name==='member_agent_semantic_verification')return Response.json({...reply,model:'gpt-5.6-luna',output_text:JSON.stringify({verdict:'safe',categories:[]})});
+  assert.equal(name,'guidance_brief');
+  return new Response('data: '+JSON.stringify({type:'response.completed',response:{model:'gpt-5.6-luna',output_text:'{"targets":[],"questions":[]}'}})+'\n\n',{headers:{'Content-Type':'text/event-stream'}});
+ };
+ try{
+  const context={ownerId:'synthetic-gc-evaluation',professionalId:'beasteducation.guidance-counselor',conversationId:'synthetic-gc',message:{id:'test',role:'user',text:'What are the current FAFSA requirements?',createdAt:'2026-10-21'},recentMessages:[],memories:[],structuredRecords:[],workspace:null,state:{currentTopic:null,currentWorkspace:null,lastProfessionalQuestion:null,unresolvedQuestions:[],corrections:[],pendingApprovals:[],currentGoal:null,previousDecisions:[]}};
+  await assert.rejects(runGuidanceEvaluationTurn({guard:x.guard,turnId:'GC-04-T1',model:'gpt-5.6-luna',context}));
+  assert.deepEqual(stages,['member_agent_semantic_verification','guidance_brief']);
+  const entries=x.guard.summary().entries;assert.equal(entries.length,2);assert.equal(entries[0].status,'settled');assert.equal(entries[1].status,'unknown');assert.ok(x.guard.summary().accountedNanoUsd>=entries[1].maximumNanoUsd);
+  assert.throws(()=>x.guard.startTurn('GC-04-T2'));
+ }finally{globalThis.fetch=original;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;x.cleanup();}
 });

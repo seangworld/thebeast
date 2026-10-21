@@ -2,8 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { guidanceResearchRequest, guidanceResearchUnavailable, isGuidanceResearchSource } from "../src/lib/digitalStaffRuntime/guidanceResearch";
 import { executeGuidanceDiscovery, parseGuidanceBrief, guidanceCandidates, guidanceObservedUrls, verifiedGuidanceEvidence } from "../src/lib/digitalStaffRuntime/guidanceDiscovery";
-import { runDigitalStaffRuntime, requiresDeterministicResearch } from "../src/lib/digitalStaffRuntime/runtime";
-import { safeMemberAgentResponseContract } from "../src/lib/memberAgentResponseSafety";
+import { runDigitalStaffRuntime, requiresDeterministicResearch, guidanceMandatoryResearchPlan } from "../src/lib/digitalStaffRuntime/runtime";
 import type { RuntimeContext } from "../src/lib/digitalStaffRuntime/types";
 const ctx: RuntimeContext = {
   ownerId: "synthetic-owner", professionalId: "beasteducation.guidance-counselor", conversationId: "synthetic-conversation",
@@ -52,12 +51,13 @@ test("source identity requires observed tool URLs, target binding and independen
 test("specific college research checks privacy, independently verifies sources, and privately applies findings", async () => {
   const originalFetch = globalThis.fetch, key = process.env.OPENAI_API_KEY;
   process.env.OPENAI_API_KEY = "sk-proj-TEST_ONLY_GUIDANCE_RESEARCH_123456789";
-  const publicCalls: unknown[] = [], delivered: string[] = [];
+  const publicCalls: unknown[] = [], delivered: string[] = [], stages: string[] = [];
   globalThis.fetch = async (_url, init) => {
     const request = JSON.parse(String(init?.body));
     const id = new Headers(init?.headers).get("X-Client-Request-Id") || "";
     if (request.text?.format?.name === "member_agent_semantic_verification") return Response.json({ output_text: JSON.stringify({ verdict: "safe", categories: [] }) });
-    if (request.text?.format?.name === "digital_staff_runtime_plan") return stream({ output_text: JSON.stringify({ intent: "answer", response: "Initial answer", nextQuestion: null, state: ctx.state, proposals: [], navigationTarget: null, toolCalls: [], research: { query: "private model query", domains: ["evil.example"], reason: "requirements" }, handoff: null, responseContract: safeMemberAgentResponseContract }) });
+    stages.push(request.text?.format?.name || (request.tools ? (id.endsWith("-discover") ? "discover" : "verify") : "synthesis"));
+    assert.notEqual(request.text?.format?.name, "digital_staff_runtime_plan", "mandatory research must never draft an initial answer");
     if (request.text?.format?.name === "guidance_brief") {
       assert.match(request.input, /caregiving/); assert.equal(request.tools, undefined);
       return stream({ output_text: JSON.stringify(brief) });
@@ -90,8 +90,9 @@ test("specific college research checks privacy, independently verifies sources, 
   try {
     const result = await runDigitalStaffRuntime({ ...ctx, requestId: "gc-research" }, { onResponseDelta: async text => { delivered.push(text); } });
     assert.match(result.response, /no weekly study hours/);
+    assert.deepEqual(stages, ["guidance_brief", "guidance_privacy", "discover", "verify", "synthesis"]);
     assert.equal(publicCalls.length, 2);
-    assert.equal(result.timings.providerInvocationCount, 8);
+    assert.equal(result.timings.providerInvocationCount, 7);
     assert.equal(result.researchSources.length, 1);
     assert.equal(result.researchSources[0].url, url);
     assert.doesNotMatch(delivered.join(""), /Initial answer|Tuition is \$100/);
@@ -130,7 +131,7 @@ test("unverified official identity suppresses initial ungrounded requirements in
     const request = JSON.parse(String(init?.body));
     if (request.text?.format?.name === "member_agent_semantic_verification") return Response.json({ output_text: JSON.stringify({ verdict: "safe", categories: [] }) });
     if (request.text?.format?.name === "guidance_brief") return stream({ output_text: JSON.stringify({ targets: [], questions: [] }) });
-    return stream({ output_text: JSON.stringify({ intent: "answer", response: "You qualify; deadline tomorrow", nextQuestion: null, state: ctx.state, proposals: [], navigationTarget: null, toolCalls: [], research: null, handoff: null, responseContract: safeMemberAgentResponseContract }) });
+    throw new Error("No initial answer, synthesis or public search is permitted after brief failure");
   };
   try {
     const result = await runDigitalStaffRuntime(ctx);
@@ -138,4 +139,17 @@ test("unverified official identity suppresses initial ungrounded requirements in
     assert.deepEqual(result.proposals, []);
     assert.equal(result.researchSources.length, 0);
   } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
+});
+
+
+test("mandatory routing is answer-free and leaves ordinary guidance, historical work and other roles unchanged", () => {
+  const plan = guidanceMandatoryResearchPlan(ctx)!;
+  assert.ok(plan.research);
+  assert.equal(plan.state, ctx.state);
+  assert.deepEqual(plan.proposals, []);
+  assert.deepEqual(plan.toolCalls, []);
+  assert.doesNotMatch(plan.response, /tuition|qualif|deadline|Alex|caregiving/);
+  assert.equal(guidanceMandatoryResearchPlan({ ...ctx, message: { ...ctx.message, text: "I now have two hours weekly. Help me plan around that." } }), null);
+  assert.equal(guidanceMandatoryResearchPlan({ ...ctx, executionMode: "historical_reconciliation" }), null);
+  assert.equal(guidanceMandatoryResearchPlan({ ...ctx, professionalId: "beastmoney.money-coach" }), null);
 });

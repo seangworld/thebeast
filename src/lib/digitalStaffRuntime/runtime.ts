@@ -97,6 +97,18 @@ export function requiresDeterministicResearch(context: Pick<RuntimeContext, "pro
   return externalAuthority.test(text);
 }
 
+/** Mandatory research is already a deterministic routing decision. No factual
+ * answer or consequential proposal is needed before private source discovery. */
+export function guidanceMandatoryResearchPlan(context: RuntimeContext): RuntimePlan | null {
+  if (context.professionalId !== "beasteducation.guidance-counselor" || context.executionMode === "historical_reconciliation") return null;
+  if (!requiresDeterministicResearch(context) && !/\b(?:authoritative|according to|what does .{0,40} say)\b/i.test(context.message.text)) return null;
+  return {
+    intent: "answer", response: "I will check official sources before answering.", nextQuestion: null,
+    state: context.state, proposals: [], navigationTarget: null, toolCalls: [],
+    research: guidanceResearchRequest(), handoff: null, responseContract: safeMemberAgentResponseContract,
+  };
+}
+
 /** A disclosed member fact is not itself a request for external research. */
 export function isDeclarativeMemberStatement(text: string) {
   return !text.includes("?") && /^\s*(?:i|we|my)\b/i.test(text) && /\b(?:hold|have|take|work|served|graduated|prefer|priority|live|currently)\b/i.test(text);
@@ -344,8 +356,9 @@ export async function runDigitalStaffRuntime(
   const responseSchema = buildRuntimeResponseSchema(config, executionContext);
   const modelStartedAt = Date.now();
   const planPerformance = healthPlanPerformance(executionContext, model);
-  providerInvocationCount += 1;
-  const payload = await requestOpenAIResponseStream<ResponsesPayload>({
+  const routingPlan = guidanceMandatoryResearchPlan(executionContext);
+  if (!routingPlan) providerInvocationCount += 1;
+  const payload = routingPlan ? null : await requestOpenAIResponseStream<ResponsesPayload>({
       model, store: false,
       ...(context.professionalId === "beastmoney.money-coach" ? moneyCoachProviderLimits(model) : {}),
       ...(planPerformance.reasoning ? { reasoning: planPerformance.reasoning } : {}),
@@ -365,9 +378,9 @@ export async function runDigitalStaffRuntime(
       },
       onComplete: () => { providerCompleteMs = Date.now() - startedAt; },
   });
-  const initialModelMs = Date.now() - modelStartedAt;
+  const initialModelMs = routingPlan ? 0 : Date.now() - modelStartedAt;
   const validationStartedAt = Date.now();
-  const validated = validateRuntimePlan(executionContext, parseRuntimePlan(payload));
+  const validated = validateRuntimePlan(executionContext, routingPlan || parseRuntimePlan(payload!));
   const validationMs = Date.now() - validationStartedAt;
   let researchMs = 0;
   let researchValidationMs = 0;
