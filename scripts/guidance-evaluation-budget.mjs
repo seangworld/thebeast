@@ -8,6 +8,7 @@ export function guidanceCallBound(original,policy,now=Date.now()){
  const body=structuredClone(original),rate=policy.models[body.model];
  check(rate&&[rate.context,rate.inputNano,rate.outputNano].every(x=>integer(x)&&x>0),'Unknown model/pricing');
  check(body.store===false&&!body.background&&!body.previous_response_id&&!body.conversation,'Unbounded stored history');
+ check(typeof body.input==='string','Only bounded text input is priced');
  check(body.service_tier===undefined||body.service_tier==='default','Unpriced service tier');
  const allowed=['model','store','instructions','input','text','reasoning','max_output_tokens','max_tool_calls','tools','tool_choice','include','service_tier','stream'];
  check(Object.keys(body).every(k=>allowed.includes(k)),'Unknown request parameter');
@@ -19,7 +20,7 @@ export function guidanceCallBound(original,policy,now=Date.now()){
  check(['minimal','low','medium','high'].includes(body.reasoning.effort),'Unreviewed reasoning effort');
  const tools=body.tools??[];
  check(policy.allowWebSearch!==false||tools.length===0,'Public tools forbidden for private probe');
- check(Array.isArray(tools)&&tools.length<=1&&tools.every(t=>t?.type==='web_search'),'Unpriced tool');
+ check(Array.isArray(tools)&&tools.length<=1&&tools.every(t=>t?.type==='web_search'&&Object.keys(t).every(k=>['type','filters','search_context_size'].includes(k))),'Unpriced tool or tool option');
  const calls=tools.length?body.max_tool_calls:0;
  check(integer(calls)&&calls<=4&&(!tools.length||calls>0),'Tool ceiling exceeded');
  check(Buffer.byteLength(JSON.stringify(body))<=100000,'Request byte ceiling exceeded');
@@ -28,6 +29,30 @@ export function guidanceCallBound(original,policy,now=Date.now()){
  const maximumNanoUsd=rate.context*(calls+1)*rate.inputNano+body.max_output_tokens*rate.outputNano+calls*policy.searchNano;
  check(integer(maximumNanoUsd),'Unsafe cost arithmetic');
  return {body,rate,calls,maximumNanoUsd};
+}
+// Diagnostic observations are deliberately NOT billing units or settlement rules.
+// A completed response may include an unfinished tool item (captured in 52b9bbd3).
+export function guidanceWebObservations(payload) {
+ const items=Array.isArray(payload?.output)?payload.output.filter(x=>x?.type==='web_search_call'):[];
+ return {
+  emittedItems:items.length,
+  completedActions:items.filter(x=>x.status==='completed').length,
+  completedSearchActions:items.filter(x=>x.status==='completed'&&x.action?.type==='search').length,
+  completedPageOpens:items.filter(x=>x.status==='completed'&&x.action?.type==='open_page').length,
+  completedInPageFinds:items.filter(x=>x.status==='completed'&&x.action?.type==='find_in_page').length,
+  unfinishedItems:items.filter(x=>x.status!=='completed').length,
+  unsupportedActions:items.filter(x=>!['search','open_page','find_in_page'].includes(x.action?.type)).length,
+  reportedBillableSearches:payload?.tool_usage?.web_search?.num_requests??null,
+  billableCountVerified:false,
+ };
+}
+function unpricedProviderOutput(payload) {
+ if(!Array.isArray(payload?.output)||payload.output.some(x=>!['message','reasoning','web_search_call'].includes(x?.type)))return true;
+ if(payload.output.some(x=>x.type==='message'&&(x.content??[]).some(c=>!['output_text','refusal'].includes(c?.type))))return true;
+ // The captured response includes a zero-valued image meter even without that tool.
+ // Only that exact kind of zero counter is harmless; never ignore a nonzero/unrecognized meter.
+ const zero=v=>typeof v==='number'?v===0:!!v&&typeof v==='object'&&!Array.isArray(v)&&Object.values(v).every(zero);
+ return Object.entries(payload.tool_usage??{}).some(([k,v])=>k!=='web_search'&&(k!=='image_gen'||!zero(v)));
 }
 export class GuidanceEvaluationBudget {
  constructor({file,policy,runId,capNanoUsd,maximumAttempts=88,metadataReceipt=null,priorAccountedNanoUsd=0,priorLedgerSha256=null,turnIds,now=Date.now}){
@@ -52,6 +77,10 @@ export class GuidanceEvaluationBudget {
  ready(){check(!this.closed&&!this.state.halted&&!this.state.entries.some(e=>e.status!=='settled'),'Run halted or unresolved');}
  halt(message){this.state.halted=message;this.save();throw Error(message);}
  startTurn(id){this.ready();check(this.activeTurn===null,'Finish preceding turn first');check(this.state.turnIds.includes(id)&&!this.state.started.includes(id),'Unapproved or duplicate turn');this.state.started.push(id);this.activeTurn=id;this.save();}
+ retainUndeliveredResult(result){
+  // Evidence only: never a completed turn or a settled provider charge.
+  this.state.undeliveredResults??=[];this.state.undeliveredResults.push({turnId:this.activeTurn,result:structuredClone(result)});this.save();
+ }
  finishTurn(result){this.ready();check(this.activeTurn!==null,'No active turn');if(result!==undefined)this.state.results.push({turnId:this.activeTurn,result:structuredClone(result)});this.save();this.activeTurn=null;}
  reserve(original,requestId){
   this.ready();check(this.activeTurn!==null,'No active turn');
@@ -72,10 +101,11 @@ export class GuidanceEvaluationBudget {
   entry.response=structuredClone(p);
   entry.latencyMs=this.now()-Date.parse(entry.startedAt);
   const input=p?.usage?.input_tokens,output=p?.usage?.output_tokens;
-  const calls=Array.isArray(p?.output)?p.output.filter(x=>x.type==='web_search_call').length:Infinity;
+  entry.contractDiagnostic=guidanceWebObservations(p);
+  const calls=Array.isArray(p?.output)?entry.contractDiagnostic.emittedItems:Infinity;
   const reportedSearches=p?.tool_usage?.web_search?.num_requests;
   if(reportedSearches!==undefined&&(!integer(reportedSearches)||reportedSearches>bound.calls)){this.unknown(entry);throw Error('Reported tool usage exceeds reservation');}
-  if((p?.status!==undefined&&p.status!=='completed')||!integer(input)||!integer(output)||input>bound.rate.context*(bound.calls+1)||output>bound.body.max_output_tokens||calls>bound.calls||!bound.rate.returned.includes(p.model)||(p.service_tier!==undefined&&p.service_tier!=='default')||p.output.some(x=>x.type?.endsWith('_call')&&x.type!=='web_search_call')){
+  if(p?.status!=='completed'||unpricedProviderOutput(p)||!integer(input)||!integer(output)||input>bound.rate.context*(bound.calls+1)||output>bound.body.max_output_tokens||calls>bound.calls||entry.contractDiagnostic.unfinishedItems>0||entry.contractDiagnostic.unsupportedActions>0||!bound.rate.returned.includes(p.model)||(p.service_tier!==undefined&&p.service_tier!=='default')||p.output.some(x=>x.type?.endsWith('_call')&&x.type!=='web_search_call')){
    this.unknown(entry);throw Error('Unverified usage/model/tools');
   }
   // No cache discounts; retain all reserved search charges.

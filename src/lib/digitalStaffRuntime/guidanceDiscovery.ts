@@ -46,7 +46,7 @@ const fields = ["organization", "program", "region", "intake"] as const;
 const stringSchema = { type: "string" };
 export function guidanceBriefSchema(allowed: readonly string[] = questions) { return {
   type: "object", additionalProperties: false, required: ["targets", "questions"], properties: {
-    targets: { type: "array", items: { type: "object", additionalProperties: false, required: fields, properties: Object.fromEntries(fields.map(field => [field, stringSchema])) } },
+    targets: { type: "array", minItems: 0, maxItems: 2, items: { type: "object", additionalProperties: false, required: fields, properties: Object.fromEntries(fields.map(field => [field, stringSchema])) } },
     questions: { type: "array", minItems: guidanceQuestionLimits.min, maxItems: guidanceQuestionLimits.max, items: { type: "string", enum: allowed } },
   },
 }; }

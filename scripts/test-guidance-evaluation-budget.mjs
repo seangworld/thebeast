@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {GuidanceEvaluationBudget,guidanceCallBound} from './guidance-evaluation-budget.mjs';
 const policy={expiresAt:'2099-01-01',searchNano:10_000_000,models:{synthetic:{context:1000,inputNano:1000,outputNano:2000,returned:['synthetic']}}};
 const body={model:'synthetic',store:false,input:'synthetic only'};
-const reply={model:'synthetic',usage:{input_tokens:10,output_tokens:20},output:[]};
+const reply={status:'completed',model:'synthetic',usage:{input_tokens:10,output_tokens:20},output:[]};
 test('ninth call in a turn is blocked even when whole-run budget remains',async()=>{
  const x=setup();try{x.guard.startTurn('GC-01-T1');let attempts=0;
  for(let i=0;i<8;i++)await x.guard.dispatch(body,`call-${i}`,async()=>{attempts++;return reply;});
@@ -170,8 +170,8 @@ test('actual $3 policy stops before next four-tool reservation and retains both 
  const x=setup({policy:real,capNanoUsd:3000000000,maximumAttempts:7,priorAccountedNanoUsd:1124180130,priorLedgerSha256:'a'.repeat(64)});
  try{
   x.guard.startTurn('GC-01-T1');let transports=0;
-  await x.guard.dispatch({model:'gpt-5',store:false,max_output_tokens:4800},'first',async()=>{transports++;return {model:'gpt-5',usage:{input_tokens:400000,output_tokens:4800},output:[]};});
-  const request={model:'gpt-5',store:false,max_output_tokens:3600,tools:[{type:'web_search'}],max_tool_calls:4};
+  await x.guard.dispatch({model:'gpt-5',store:false,input:'Synthetic budget-bound fixture',max_output_tokens:4800},'first',async()=>{transports++;return {status:'completed',model:'gpt-5',usage:{input_tokens:400000,output_tokens:4800},output:[]};});
+  const request={model:'gpt-5',store:false,input:'Synthetic budget-bound fixture',max_output_tokens:3600,tools:[{type:'web_search'}],max_tool_calls:4};
   assert.equal(guidanceCallBound(request,real).maximumNanoUsd,2576000000);
   await assert.rejects(x.guard.dispatch(request,'cannot-fit',async()=>{transports++;return reply;}),/Next reservation exceeds cap/);
   assert.equal(transports,1);assert.equal(x.guard.summary().entries.length,1);assert.equal(x.guard.summary().cumulativeAccountedNanoUsd,1672180130);
@@ -246,10 +246,10 @@ test('private $1.58 cap fits only the three frozen maximum reservations and refu
  const p={...policy,models:{'gpt-5':{context:400000,inputNano:1250,outputNano:10000,returned:['gpt-5']}}};
  const x=setup({policy:p,capNanoUsd:1580000000,maximumAttempts:3,priorAccountedNanoUsd:1640700130,priorLedgerSha256:'a'.repeat(64)});
  try{x.guard.startTurn('GC-01-T1');let calls=0;
-  for(const [i,limit] of [4800,1400,1400].entries())await x.guard.dispatch({model:'gpt-5',store:false,max_output_tokens:limit},'probe-'+i,async()=>{calls++;return {model:'gpt-5',usage:{input_tokens:400000,output_tokens:limit},output:[]};});
+  for(const [i,limit] of [4800,1400,1400].entries())await x.guard.dispatch({model:'gpt-5',store:false,input:'Synthetic budget-bound fixture',max_output_tokens:limit},'probe-'+i,async()=>{calls++;return {status:'completed',model:'gpt-5',usage:{input_tokens:400000,output_tokens:limit},output:[]};});
   assert.equal(x.guard.summary().accountedNanoUsd,1576000000);assert.equal(x.guard.summary().cumulativeAccountedNanoUsd,3216700130);
   assert.equal(x.guard.state.capNanoUsd+x.guard.state.priorAccountedNanoUsd,3220700130);
-  await assert.rejects(x.guard.dispatch({model:'gpt-5',store:false},'fourth',async()=>{calls++;return reply;}),/Attempt ceiling/);assert.equal(calls,3);
+  await assert.rejects(x.guard.dispatch({model:'gpt-5',store:false,input:'Synthetic budget-bound fixture'},'fourth',async()=>{calls++;return reply;}),/Attempt ceiling/);assert.equal(calls,3);
  }finally{x.cleanup();}
 });
 
@@ -293,7 +293,7 @@ test('full public verification failure retains its full tool reservation and pre
    else if(name==='guidance_privacy')value={verdict:'safe'};
    else if(id.endsWith('-discover'))value={candidates:[{target:0,url:source}]};
    else {assert.ok(id.endsWith('-verify'));return new Response('data: '+JSON.stringify({type:'response.incomplete',response:{...reply,model:'gpt-5',status:'incomplete',incomplete_details:{reason:'max_output_tokens'}}})+'\n\n');}
-   const payload={...reply,model:'gpt-5',output_text:JSON.stringify(value),output:r.tools?[{type:'web_search_call',status:'completed',action:{sources:[{url:source}]}}]:[]};
+   const payload={...reply,model:'gpt-5',output_text:JSON.stringify(value),output:r.tools?[{type:'web_search_call',status:'completed',action:{type:'search',sources:[{url:source}]}}]:[]};
    return name==='member_agent_semantic_verification'?Response.json(payload):new Response('data: '+JSON.stringify({type:'response.completed',response:payload})+'\n\n');
   };
   await assert.rejects(runGuidanceEvaluationTurn({guard:x.guard,turnId:'GC-04-T1',model:'gpt-5',context:contextFor(fixture.packets.find(t=>t.id==='GC-04-T1'))}));
@@ -304,8 +304,8 @@ test('full public verification failure retains its full tool reservation and pre
 test('proposed $8.33 consolidated cap blocks next maximum tool call and retains five-run balance',async()=>{
  const p={...policy,models:{'gpt-5':{context:400000,inputNano:1250,outputNano:10000,returned:['gpt-5']}}};
  const x=setup({policy:p,capNanoUsd:8330000000,maximumAttempts:34,priorAccountedNanoUsd:1661240130,priorLedgerSha256:'a'.repeat(64)});
- try{x.guard.startTurn('GC-01-T1');let calls=0;const request={model:'gpt-5',store:false,max_output_tokens:3600,tools:[{type:'web_search'}],max_tool_calls:4};
-  for(let i=0;i<3;i++)await x.guard.dispatch(request,'public-'+i,async()=>{calls++;return {model:'gpt-5',usage:{input_tokens:2000000,output_tokens:3600},output:[]};});
+ try{x.guard.startTurn('GC-01-T1');let calls=0;const request={model:'gpt-5',store:false,input:'Synthetic budget-bound fixture',max_output_tokens:3600,tools:[{type:'web_search'}],max_tool_calls:4};
+  for(let i=0;i<3;i++)await x.guard.dispatch(request,'public-'+i,async()=>{calls++;return {status:'completed',model:'gpt-5',usage:{input_tokens:2000000,output_tokens:3600},output:[]};});
   await assert.rejects(x.guard.dispatch(request,'cannot-fit',async()=>{calls++;return reply;}),/Next reservation exceeds cap/);
   assert.equal(calls,3);assert.equal(x.guard.summary().accountedNanoUsd,7728000000);assert.equal(x.guard.summary().cumulativeAccountedNanoUsd,9389240130);assert.equal(x.guard.state.priorAccountedNanoUsd+x.guard.state.capNanoUsd,9991240130);
  }finally{x.cleanup();}

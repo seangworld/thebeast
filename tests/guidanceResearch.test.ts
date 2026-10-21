@@ -269,3 +269,10 @@ test("irrelevant but short FAFSA output stops before privacy or public transport
     assert.equal(calls, 1);
   } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
 });
+
+
+test("brief provider target schema matches runtime maximum and permits clarification sentinel", () => {
+ const targets = guidanceBriefSchema().properties.targets;
+ assert.equal(targets.minItems, 0);
+ assert.equal(targets.maxItems, 2);
+});

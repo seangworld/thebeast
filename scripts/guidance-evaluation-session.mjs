@@ -11,9 +11,12 @@ export async function runGuidanceEvaluationTurn({guard,turnId,context,model,obse
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(new Error('GC 170-second deadline')),170000);
  registerEvaluationReservation((body,id)=>guard.reserve(body,id));
  try{
-  const result=await runDigitalStaffRuntime({...context,requestId:turnId,signal:controller.signal},observer,{modelOverride:model,guidancePrivateProbe:privateProbe});
-  guard.ready(); // A runtime fallback must not disguise uncertain billing.
+  const result=await runDigitalStaffRuntime({...context,requestId:turnId,signal:controller.signal},{...observer,onResponseDelta:async()=>{}},{modelOverride:model,guidancePrivateProbe:privateProbe});
+  // The runtime may produce a safe fallback after an unsettled output screen.
+  // Do not expose even that fallback as a completed evaluation answer.
+  try{guard.ready();}catch(error){guard.retainUndeliveredResult(result);throw error;}
   guard.finishTurn(result);
+  await observer.onResponseDelta?.(result.response);
   return result;
  }catch(error){
   const {GuidancePrivateProbeStop}=await import('../.test-dist/src/lib/digitalStaffRuntime/guidanceDiscovery.js');
