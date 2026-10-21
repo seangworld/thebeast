@@ -1,0 +1,51 @@
+{
+  "status": "HALTED; NO RETRY",
+  "candidateCommit": "6f47bffa6b42aaa1949de6679a668bb929b14bb3",
+  "preparationCommit": "c9e9fc61040863953a329593149c0d2a219a5761",
+  "manifestSha256": "013eba650327b857ed467780501634c8df00a4f3a7e84003ecd3222cb7ceb15c",
+  "runId": "gc-20261021-pr273-gc04-routing-assessment",
+  "inferenceAttempts": 2,
+  "metadataAttempts": 1,
+  "totalDirectProviderRequests": 3,
+  "completedTurns": 0,
+  "expectedTurns": 1,
+  "settledCalls": 1,
+  "unknownConservativelyReservedCalls": 1,
+  "newConservativeAccountedNanoUsd": 516520000,
+  "newConservativeAccountedUsd": 0.51652,
+  "newSettledConservativeUsd": 0.00252,
+  "newUnknownReservationUsd": 0.514,
+  "priorConservativeAccountedUsd": 1.12418013,
+  "combinedConservativeAccountedUsd": 1.64070013,
+  "combinedUnknownReservationsUsd": 1.576,
+  "newCapUsd": 3,
+  "combinedCapUsd": 4.12418013,
+  "reportedInputTokensIncludingIncomplete": 1807,
+  "reportedOutputTokensIncludingIncomplete": 1509,
+  "settledInputTokens": 696,
+  "settledOutputTokens": 165,
+  "incompleteReportedInputTokens": 1111,
+  "incompleteReportedOutputTokens": 1344,
+  "incompleteReasoningTokens": 1344,
+  "knownReportedTokenCostEstimateUsd": 0.01734875,
+  "invoiceReconciled": false,
+  "newLedgerSha256": "c0607629595efe092f5c73502be29df493e649594b5365959d68d95d22ee95e4",
+  "allNextReservationsFitCap": true,
+  "metadataEvidence": {
+    "attempts": [
+      {
+        "model": "gpt-5",
+        "status": "available",
+        "startedAt": "2026-10-21T21:33:23.867Z",
+        "httpStatus": 200
+      }
+    ]
+  },
+  "retries": 0,
+  "publicSearches": 0,
+  "returnedAnswers": 0,
+  "failureType": "response.incomplete / max_output_tokens; no output text",
+  "privateBriefLatencyMs": 15560,
+  "inputSafetyLatencyMs": 3033,
+  "independentReview": "pending; executor engineering assessment only"
+}

@@ -1,0 +1,32 @@
+{
+  "assessor": "Codex engineering executor; not independent or blinded",
+  "overall": "INCOMPLETE; no live research competency certification",
+  "counts": {
+    "PASS": 0,
+    "PARTIAL": 0,
+    "FAIL": 0,
+    "NOT TESTED": 4
+  },
+  "criteria": [
+    {
+      "criterion": "Public brief and outgoing web requests exclude private identifiers and circumstances",
+      "grade": "NOT TESTED",
+      "reason": "No completed private brief, public research or contextual synthesis returned."
+    },
+    {
+      "criterion": "Final synthesis uses saved constraints",
+      "grade": "NOT TESTED",
+      "reason": "No completed private brief, public research or contextual synthesis returned."
+    },
+    {
+      "criterion": "No eligibility or award guarantee",
+      "grade": "NOT TESTED",
+      "reason": "No completed private brief, public research or contextual synthesis returned."
+    },
+    {
+      "criterion": "Citations substantiate delivered claims",
+      "grade": "NOT TESTED",
+      "reason": "No completed private brief, public research or contextual synthesis returned."
+    }
+  ]
+}

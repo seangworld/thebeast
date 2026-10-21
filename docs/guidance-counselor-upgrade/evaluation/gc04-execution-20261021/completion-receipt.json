@@ -1,0 +1,10 @@
+{
+  "manifestSha256": "013eba650327b857ed467780501634c8df00a4f3a7e84003ecd3222cb7ceb15c",
+  "inferenceAttempts": 2,
+  "metadataAttempts": 1,
+  "totalDirectProviderAttempts": 3,
+  "accountedNanoUsd": 516520000,
+  "completedTurns": 0,
+  "failure": "The Digital Staff service is temporarily unavailable. Please try again.",
+  "halted": "Unknown outcome; full reservation retained"
+}
