@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { runDigitalStaffRuntime } from "../src/lib/digitalStaffRuntime/runtime";
 import { executeGuidanceDiscovery, guidanceQuestionScope, verifiedGuidanceEvidence } from "../src/lib/digitalStaffRuntime/guidanceDiscovery";
-import { guidanceCitationsValid, guidanceResearchUnavailable } from "../src/lib/digitalStaffRuntime/guidanceResearch";
+import { guidanceCitationsValid, guidanceSourcesCitedInAnswer, guidanceResearchUnavailable } from "../src/lib/digitalStaffRuntime/guidanceResearch";
 import { safeMemberAgentResponseContract } from "../src/lib/memberAgentResponseSafety";
 import type { RuntimeContext } from "../src/lib/digitalStaffRuntime/types";
 const state = { currentTopic: null, currentWorkspace: null, lastProfessionalQuestion: null, unresolvedQuestions: [], corrections: [], pendingApprovals: [], currentGoal: null, previousDecisions: [] };
@@ -14,7 +14,7 @@ const web = (value: unknown, seen: string[]) => ({ output_text: JSON.stringify(v
 
 test("two-institution research preserves fee applicability and private context; failures never deliver unsupported synthesis", async () => {
  const original = globalThis.fetch, key = process.env.OPENAI_API_KEY; process.env.OPENAI_API_KEY = "sk-proj-SYNTHETIC_GC_FLOW_ONLY_123456789";
- try { for (const mode of ["good", "correction", "foreign-citation", "missing-citation", "unsupported-claim", "unsafe-privacy", "forged-proof", "incomplete-verify"]) {
+ try { for (const mode of ["good", "correction", "identity-citation", "foreign-citation", "missing-citation", "unsupported-claim", "unsafe-privacy", "forged-proof", "incomplete-verify"]) {
   const delivered: string[] = [], stages: string[] = []; let publicCalls = 0, outputChecks = 0;
   const context = mode === "correction" ? { ...base, message: { ...base.message, text: "Correction: I meant Fall 2027, not Spring 2027. Which costs and deadlines are confirmed?" }, recentMessages: [base.message] } : base;
   globalThis.fetch = async (_url, init) => {
@@ -40,6 +40,7 @@ test("two-institution research preserves fee applicability and private context; 
    stages.push("synthesis"); assert.equal(request.reasoning.effort, "medium"); assert.equal(request.max_output_tokens, 4800);
    const input = JSON.parse(request.input); assert.match(JSON.stringify(input.memberContext), /weekly_hours.*4/); assert.match(input.retrievedEvidence, /deadlines.*unverified/);
    let answer = mode === "correction" ? `Fall 2027 rates remain unverified; Spring rates cannot be applied to that intake. With four weekly hours and a $500 budget, prepare questions first. Sources: ${urls.join(" ")}` : `With four weekly hours and $500, compare resident versus nonresident rates without assuming residency. Spring rates exclude materials/program fees; application deadlines remain unverified. Sources: ${urls.join(" ")}`;
+   if (mode === "identity-citation") answer += ` Identity: ${proofs[0]}`;
    if (mode === "foreign-citation") answer += " https://unverified.edu/guarantee";
    if (mode === "missing-citation") answer = "Tuition is $200 per credit.";
    if (mode === "unsupported-claim") answer = `Admission is guaranteed and all credits transfer. ${urls[0]}`;
@@ -50,7 +51,7 @@ test("two-institution research preserves fee applicability and private context; 
    const result = await runDigitalStaffRuntime(context, { onResponseDelta: async s => { delivered.push(s); } });
    if (["foreign-citation", "missing-citation", "unsafe-privacy", "forged-proof"].includes(mode)) assert.equal(result.response, guidanceResearchUnavailable);
    else if (mode === "unsupported-claim") { assert.doesNotMatch(result.response, /Admission is guaranteed|all credits transfer/); assert.ok(result.validationFailures.includes("other_boundary_violation")); }
-   else { assert.equal(result.researchSources.length, 2); assert.equal(result.timings.providerInvocationCount, 7); assert.match(result.response, /four weekly hours/); }
+   else { assert.equal(result.researchSources.length, mode === "identity-citation" ? 3 : 2); assert.equal(result.timings.providerInvocationCount, 7); assert.match(result.response, /four weekly hours/); }
    assert.equal(delivered.join(""), result.response); assert.equal(outputChecks, 1);
   }
   if (mode === "unsafe-privacy") assert.equal(publicCalls, 0); else assert.equal(publicCalls, 2);
@@ -64,6 +65,8 @@ test("intake correction retains original prerequisite/fee/deadline scope without
 });
 
 test("citation membership rejects missing and lookalike references; target bounds reject out-of-range provenance", () => {
+ assert.equal(guidanceCitationsValid(`Identity: ${proofs[0]}`, [{ url: urls[0], identityEvidenceUrl: proofs[0] }]), true);
+ assert.equal(guidanceSourcesCitedInAnswer(`Identity: ${proofs[0]}`, [{ url: urls[0], identityEvidenceUrl: proofs[0] }])[0].url, proofs[0]);
  assert.equal(guidanceCitationsValid("No citations", [{ url: urls[0] }]), false);
  assert.equal(guidanceCitationsValid(`[source](${urls[0]}).`, [{ url: urls[0] }]), true);
  assert.equal(guidanceCitationsValid(`${urls[0]} https://example.edu.evil.test/program`, [{ url: urls[0] }]), false);

@@ -1,6 +1,6 @@
 import { guidancePlanningState } from "./guidancePlanning";
 import { executeGuidanceDiscovery } from "./guidanceDiscovery";
-import { guidanceResearchRequest, guidanceResearchUnavailable, guidanceCitationsValid } from "./guidanceResearch";
+import { guidanceResearchRequest, guidanceResearchUnavailable, guidanceCitationsValid, guidanceSourcesCitedInAnswer } from "./guidanceResearch";
 import { supportedMoneyProposal } from "../moneyCoachEvidence";
 import { moneyCoachModelConfiguration, moneyCoachProviderLimits, moneyCoachRequestLimits } from "../moneyCoachModelConfig";
 import { verifyMoneyCoachReasoning, moneyCoachResearchQuery } from "../moneyCoachReasoning";
@@ -479,7 +479,7 @@ export async function runDigitalStaffRuntime(
     latencyMs: totalMs,
     timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptConstructionMs, promptCharacters: runtimeInput.length, providerInvocationCount, semanticVerifierInvocationCount, semanticVerifierMs, semanticVerifierFailureCount },
     researchSources: (context.professionalId === "beasthealth.health-advisor" || context.professionalId === "beasteducation.guidance-counselor")
-      ? sourcesCitedInAnswer(responseSafety.response, research?.sources || []).map(source => ({ ...source, supportedClaim: "Cited in the delivered answer; relevance not independently verified." }))
+      ? (context.professionalId === "beasteducation.guidance-counselor" ? guidanceSourcesCitedInAnswer(responseSafety.response, research?.sources || []) : sourcesCitedInAnswer(responseSafety.response, research?.sources || [])).map(source => ({ ...source, supportedClaim: "Cited in the delivered answer; relevance not independently verified." }))
       : research?.sources || [],
   };
 }
