@@ -1,0 +1,11 @@
+{
+  "manifestSha256": "ec5c2028439143bc777b997f6542973d698c41c994f0a6305aa83a106d5e3c46",
+  "inferenceAttempts": 3,
+  "metadataAttempts": 1,
+  "totalDirectProviderAttempts": 4,
+  "accountedNanoUsd": 15825000,
+  "completedTurns": 0,
+  "completedPrivateProbes": 1,
+  "failure": null,
+  "halted": null
+}
