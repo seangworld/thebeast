@@ -1,0 +1,134 @@
+[
+  {
+    "turnId": "GC-01-T1",
+    "result": {
+      "intent": "answer",
+      "response": "A manageable first step is a **60-minute career direction check**, not enrolling in a program yet.\n\nBecause you have customer-service experience, about 4 hours available weekly, and up to $500 to invest, start with roles that build on what you already know—such as customer-success specialist, administrative coordinator, sales-support specialist, recruiting coordinator, or help-desk support.\n\nFor your first hour:\n1. Choose **two** of those role areas that sound most interesting.\n2. Review 5 job postings for each and note repeated requirements.\n3. Mark each requirement as **already have**, **could learn**, or **not appealing**.\n4. Pick the one role with the best combination of interest, fit, and realistic skill-building.\n\nThen use your 4 weekly hours for a low-cost trial: spend 2 hours learning one repeated skill and 2 hours creating evidence of it—for example, a spreadsheet, sample customer-support workflow, or basic technical-support exercise. Avoid spending the full $500 until you have confirmed that the work itself interests you.\n\nThis gives you evidence before committing to a course or credential. Requirements and hiring outcomes vary by employer, so treat this as exploration rather than a guarantee.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "career direction and first-step planning",
+        "currentWorkspace": "/dashboard/education/career-planning",
+        "lastProfessionalQuestion": "What manageable first step can help the member choose a better career direction?",
+        "unresolvedQuestions": [],
+        "corrections": [],
+        "pendingApprovals": [],
+        "currentGoal": "Choose a manageable first step toward a better career",
+        "previousDecisions": []
+      },
+      "proposals": [],
+      "navigationTarget": "/dashboard/education/career-planning",
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      },
+      "validationFailures": [],
+      "model": "gpt-5.6-luna",
+      "latencyMs": 10021,
+      "timings": {
+        "totalMs": 10021,
+        "contextAssemblyMs": 0,
+        "initialModelMs": 5883,
+        "firstModelOutputMs": 4843,
+        "firstUsefulOutputMs": null,
+        "researchMs": 0,
+        "researchValidationMs": 0,
+        "persistenceMs": 0,
+        "providerResponseHeadersMs": 3221,
+        "providerFirstEventMs": 3235,
+        "providerCompleteMs": 8444,
+        "validationMs": 1,
+        "promptConstructionMs": 1,
+        "promptCharacters": 3306,
+        "providerInvocationCount": 3,
+        "semanticVerifierInvocationCount": 2,
+        "semanticVerifierMs": 4132,
+        "semanticVerifierFailureCount": 0
+      },
+      "researchSources": []
+    }
+  },
+  {
+    "turnId": "GC-01-T2",
+    "result": {
+      "intent": "correction",
+      "response": "Understood—sales is excluded, and I’ll fit this to **two hours now**, not the older four-hour estimate. Don’t enroll or spend money yet.\n\nUse the two hours for a focused comparison:\n1. **20 minutes:** Choose two directions from administrative coordination, customer support, recruiting coordination, or help-desk support.\n2. **50 minutes:** Review three job postings for each direction and note repeated skills, such as scheduling, spreadsheets, communication, ticketing, or basic troubleshooting.\n3. **30 minutes:** Mark each skill as **already have**, **could learn**, or **not appealing**.\n4. **20 minutes:** Pick the direction with the strongest combination of interest, existing experience, and realistic skill-building.\n\nThis creates a clearer next step without committing your budget. Your two-hour limit is being used for this plan only; it does not update your saved weekly availability.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "career direction and first-step planning",
+        "currentWorkspace": "/dashboard/education/career-planning",
+        "lastProfessionalQuestion": "What manageable first step can help the member choose a better career direction?",
+        "unresolvedQuestions": [],
+        "corrections": [
+          "Sales is not a desired career direction.",
+          "Current available planning time is two hours now; this is not a saved-profile update.",
+          "Current conversational planning constraint (not a saved-profile update): I do not want sales, and I can only spare two hours now."
+        ],
+        "pendingApprovals": [],
+        "currentGoal": "Choose a manageable first step toward a better career",
+        "previousDecisions": []
+      },
+      "proposals": [
+        {
+          "id": "career-preference-no-sales-GC-01-T2",
+          "domain": "preference",
+          "entityType": "career-direction-preference",
+          "fields": {
+            "excludedCareerArea": "sales"
+          },
+          "sourceMessageId": "GC-01-T2",
+          "confidence": 1,
+          "missingFields": [],
+          "contradictions": [],
+          "approvalStatus": "proposed",
+          "relatedRecordId": null,
+          "proposedAction": "create"
+        }
+      ],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      },
+      "validationFailures": [],
+      "model": "gpt-5.6-luna",
+      "latencyMs": 9573,
+      "timings": {
+        "totalMs": 9573,
+        "contextAssemblyMs": 0,
+        "initialModelMs": 6754,
+        "firstModelOutputMs": 4449,
+        "firstUsefulOutputMs": null,
+        "researchMs": 0,
+        "researchValidationMs": 0,
+        "persistenceMs": 0,
+        "providerResponseHeadersMs": 1767,
+        "providerFirstEventMs": 1775,
+        "providerCompleteMs": 7831,
+        "validationMs": 2,
+        "promptConstructionMs": 1,
+        "promptCharacters": 5257,
+        "providerInvocationCount": 3,
+        "semanticVerifierInvocationCount": 2,
+        "semanticVerifierMs": 2814,
+        "semanticVerifierFailureCount": 0
+      },
+      "researchSources": []
+    }
+  }
+]
