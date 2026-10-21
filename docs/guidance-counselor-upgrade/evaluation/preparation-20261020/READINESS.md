@@ -35,3 +35,9 @@ Role-specific criteria are in scenario-packets.json and the parent plan. Record 
 ## Verification of this preparation
 
 Preparation verifier checks candidate source-tree identity, seven unique scenario families, eleven unique turns, real follow-up dependencies, empty grades/answers, synthetic-only labeling and packet SHA-256. It performs no network requests and reads no credentials. Application source is unchanged, so the prior 2,523-test/security-gated-build result applies to the same application candidate; this documentation change does not constitute a new full-suite run.
+
+## Follow-up implementation (same date)
+
+The isolated GC spending-control module is now implemented and eight no-cost tests pass, including actual compiled ordinary-runtime and full researched-runtime integration. See [budget guard evidence](BUDGET-GUARD.md). It is not yet a live dispatcher; remaining adapter/price-policy gates are explicit there. Taylor files are unchanged.
+
+[Revision 2 scenarios](scenario-packets-v2.json) preserve the original packet and make pre-execution source-driven refinements: a specific TCC specialization and Microsoft AZ-900 replacing the inaccessible CompTIA case. [Official source baseline](SOURCE-BASELINE.md) now includes college program/fee applicability, payment-versus-application deadline distinctions and Microsoft's nonexpiring Fundamentals renewal policy. The complete eleven-turn answer key remains unfinished; no source-read failure was graded as success. No live calls or new competency grade.
