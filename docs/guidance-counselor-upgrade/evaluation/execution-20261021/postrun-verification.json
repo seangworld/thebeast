@@ -1,0 +1,44 @@
+{
+  "approvedManifestSha256": "89107ef00887f92edaed5afe833d01ef2025ae94b53ba8f174239a04262258b5",
+  "offlineFrozenPreflight": "passed after execution; no source/script/fixture/compiled changes",
+  "originalUnknownReservationRetainedNanoUsd": 514000000,
+  "newLedgerSha256": "5dbbc8d18328d520c8070a681cd84c50bea5dc6781f117405b0f9005774abe2c",
+  "allReservationsFitCap": true,
+  "accountedNanoUsd": 565628670,
+  "inferenceAttempts": 18,
+  "directProviderRequestsIncludingMetadata": 20,
+  "retries": 0,
+  "attemptsAfterHalt": 0,
+  "followupChecks": [
+    {
+      "turnId": "GC-01-T2",
+      "genuinePreviousReplyPresent": true
+    },
+    {
+      "turnId": "GC-03-T2",
+      "genuinePreviousReplyPresent": true
+    }
+  ],
+  "taylorReceiptsUnchanged": [
+    {
+      "runId": "taylor-20261018-pr271",
+      "sha256": "423f557b3fa56762ccbd70180aa8ee2ed528d2f9136370e1360a137cf1ec6939",
+      "byteIdentical": true
+    },
+    {
+      "runId": "taylor-20261019-continuation-pr271",
+      "sha256": "48bd39160a02d9a374fc3e916cd98a9335f9bfba38e455c34137a4c51cc2d744",
+      "byteIdentical": true
+    },
+    {
+      "runId": "taylor-20261020-regression-pr271",
+      "sha256": "4104e37f00f8a61eb4b15e9665391f84c1237bd48a1ca8fbe06466e46f4a47da",
+      "byteIdentical": true
+    },
+    {
+      "runId": "taylor-20261020-quality-regression-pr271",
+      "sha256": "4cfd3c148574d449dba7ba8c12f93c846b1fd96f517a0c9eda745479f6244966",
+      "byteIdentical": true
+    }
+  ]
+}

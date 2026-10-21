@@ -1,0 +1,601 @@
+{
+  "note": "Accounting/model metadata separate from ungraded review evidence; estimates are not an invoice",
+  "calls": [
+    {
+      "turnId": "GC-01-T1",
+      "requestId": "GC-01-T1-semantic-input",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 458260,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00018680000000000001,
+      "usage": {
+        "input_tokens": 682,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 42,
+        "output_tokens_details": {
+          "reasoning_tokens": 19
+        },
+        "total_tokens": 724
+      },
+      "latencyMs": 3053,
+      "startedAt": "2026-10-21T20:39:01.512Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-01-T1",
+      "requestId": "GC-01-T1-plan",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 2740980,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00140355,
+      "usage": {
+        "input_tokens": 3090,
+        "input_tokens_details": {
+          "cache_write_tokens": 3087,
+          "cached_tokens": 0
+        },
+        "output_tokens": 526,
+        "output_tokens_details": {
+          "reasoning_tokens": 135
+        },
+        "total_tokens": 3616
+      },
+      "latencyMs": 5492,
+      "startedAt": "2026-10-21T20:39:04.589Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-01-T1",
+      "requestId": "GC-01-T1-semantic-output",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 588720,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00023520000000000002,
+      "usage": {
+        "input_tokens": 912,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 44,
+        "output_tokens_details": {
+          "reasoning_tokens": 21
+        },
+        "total_tokens": 956
+      },
+      "latencyMs": 1435,
+      "startedAt": "2026-10-21T20:39:10.092Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-01-T2",
+      "requestId": "GC-01-T2-semantic-input",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 468820,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.000194,
+      "usage": {
+        "input_tokens": 676,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 49,
+        "output_tokens_details": {
+          "reasoning_tokens": 26
+        },
+        "total_tokens": 725
+      },
+      "latencyMs": 1171,
+      "startedAt": "2026-10-21T20:39:11.564Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-01-T2",
+      "requestId": "GC-01-T2-plan",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 2967470,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00097704,
+      "usage": {
+        "input_tokens": 3419,
+        "input_tokens_details": {
+          "cache_write_tokens": 1084,
+          "cached_tokens": 2332
+        },
+        "output_tokens": 549,
+        "output_tokens_details": {
+          "reasoning_tokens": 118
+        },
+        "total_tokens": 3968
+      },
+      "latencyMs": 5075,
+      "startedAt": "2026-10-21T20:39:12.746Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-01-T2",
+      "requestId": "GC-01-T2-semantic-output",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 619520,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00025600000000000004,
+      "usage": {
+        "input_tokens": 896,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 64,
+        "output_tokens_details": {
+          "reasoning_tokens": 41
+        },
+        "total_tokens": 960
+      },
+      "latencyMs": 1627,
+      "startedAt": "2026-10-21T20:39:17.832Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-02-T1",
+      "requestId": "GC-02-T1-semantic-input",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 443960,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00017920000000000002,
+      "usage": {
+        "input_tokens": 674,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 37,
+        "output_tokens_details": {
+          "reasoning_tokens": 14
+        },
+        "total_tokens": 711
+      },
+      "latencyMs": 1386,
+      "startedAt": "2026-10-21T20:39:19.486Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-02-T1",
+      "requestId": "GC-02-T1-plan",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 2759790,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0008793399999999999,
+      "usage": {
+        "input_tokens": 3081,
+        "input_tokens_details": {
+          "cache_write_tokens": 746,
+          "cached_tokens": 2332
+        },
+        "output_tokens": 538,
+        "output_tokens_details": {
+          "reasoning_tokens": 74
+        },
+        "total_tokens": 3619
+      },
+      "latencyMs": 5268,
+      "startedAt": "2026-10-21T20:39:20.882Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-02-T1",
+      "requestId": "GC-02-T1-semantic-output",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 634150,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0002522,
+      "usage": {
+        "input_tokens": 991,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 45,
+        "output_tokens_details": {
+          "reasoning_tokens": 22
+        },
+        "total_tokens": 1036
+      },
+      "latencyMs": 1217,
+      "startedAt": "2026-10-21T20:39:26.163Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-03-T1",
+      "requestId": "GC-03-T1-semantic-input",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 457820,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0001876,
+      "usage": {
+        "input_tokens": 674,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 44,
+        "output_tokens_details": {
+          "reasoning_tokens": 21
+        },
+        "total_tokens": 718
+      },
+      "latencyMs": 1408,
+      "startedAt": "2026-10-21T20:39:27.407Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-03-T1",
+      "requestId": "GC-03-T1-plan",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 2532310,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00073814,
+      "usage": {
+        "input_tokens": 3121,
+        "input_tokens_details": {
+          "cache_write_tokens": 786,
+          "cached_tokens": 2332
+        },
+        "output_tokens": 412,
+        "output_tokens_details": {
+          "reasoning_tokens": 140
+        },
+        "total_tokens": 3533
+      },
+      "latencyMs": 4159,
+      "startedAt": "2026-10-21T20:39:28.825Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-03-T1",
+      "requestId": "GC-03-T1-semantic-output",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 532620,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00021960000000000003,
+      "usage": {
+        "input_tokens": 774,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 54,
+        "output_tokens_details": {
+          "reasoning_tokens": 31
+        },
+        "total_tokens": 828
+      },
+      "latencyMs": 1398,
+      "startedAt": "2026-10-21T20:39:33.001Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-03-T2",
+      "requestId": "GC-03-T2-semantic-input",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 459800,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00018880000000000004,
+      "usage": {
+        "input_tokens": 674,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 45,
+        "output_tokens_details": {
+          "reasoning_tokens": 22
+        },
+        "total_tokens": 719
+      },
+      "latencyMs": 1762,
+      "startedAt": "2026-10-21T20:39:34.431Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-03-T2",
+      "requestId": "GC-03-T2-plan",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 2861320,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00091979,
+      "usage": {
+        "input_tokens": 3334,
+        "input_tokens_details": {
+          "cache_write_tokens": 999,
+          "cached_tokens": 2332
+        },
+        "output_tokens": 519,
+        "output_tokens_details": {
+          "reasoning_tokens": 149
+        },
+        "total_tokens": 3853
+      },
+      "latencyMs": 5085,
+      "startedAt": "2026-10-21T20:39:36.204Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-03-T2",
+      "requestId": "GC-03-T2-semantic-output",
+      "status": "settled",
+      "requestedModel": "gpt-5.6-luna",
+      "returnedModel": "gpt-5.6-luna",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "all_turns",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 587004000,
+      "accountedNanoUsd": 506880,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.0002064,
+      "usage": {
+        "input_tokens": 756,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 46,
+        "output_tokens_details": {
+          "reasoning_tokens": 23
+        },
+        "total_tokens": 802
+      },
+      "latencyMs": 1082,
+      "startedAt": "2026-10-21T20:39:41.300Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-04-T1",
+      "requestId": "GC-04-T1-semantic-input",
+      "status": "settled",
+      "requestedModel": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "requestedReasoning": {
+        "effort": "low"
+      },
+      "returnedReasoning": {
+        "context": "current_turn",
+        "effort": "low",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 548000000,
+      "accountedNanoUsd": 2450000,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.00245,
+      "usage": {
+        "input_tokens": 696,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 158,
+        "output_tokens_details": {
+          "reasoning_tokens": 128
+        },
+        "total_tokens": 854
+      },
+      "latencyMs": 2764,
+      "startedAt": "2026-10-21T20:39:42.413Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-04-T1",
+      "requestId": "GC-04-T1-plan",
+      "status": "settled",
+      "requestedModel": "gpt-5",
+      "returnedModel": "gpt-5-2025-08-07",
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": {
+        "context": "current_turn",
+        "effort": "medium",
+        "mode": "standard",
+        "summary": null
+      },
+      "maximumNanoUsd": 548000000,
+      "accountedNanoUsd": 30146250,
+      "usageBasedEstimateWithMaximumToolFeesUsd": 0.03014625,
+      "usage": {
+        "input_tokens": 3117,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 2625,
+        "output_tokens_details": {
+          "reasoning_tokens": 1280
+        },
+        "total_tokens": 5742
+      },
+      "latencyMs": 43434,
+      "startedAt": "2026-10-21T20:39:45.191Z",
+      "completedToolActions": []
+    },
+    {
+      "turnId": "GC-04-T1",
+      "requestId": "GC-04-T1-guidance-brief",
+      "status": "unknown",
+      "requestedModel": "gpt-5",
+      "returnedModel": null,
+      "requestedReasoning": {
+        "effort": "medium"
+      },
+      "returnedReasoning": null,
+      "maximumNanoUsd": 514000000,
+      "accountedNanoUsd": 514000000,
+      "usageBasedEstimateWithMaximumToolFeesUsd": null,
+      "usage": null,
+      "latencyMs": 21851,
+      "startedAt": "2026-10-21T20:40:28.642Z",
+      "completedToolActions": []
+    }
+  ]
+}
