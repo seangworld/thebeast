@@ -90,13 +90,13 @@ export async function dispatchApproved(manifestFile,approvalFile){
   if(m.requireFreshMetadata)await verifyModelMetadata(guard,m);
   for(const p of fixture.packets){
    const prior=history.get(p.scenarioId)??[],context=contextFor(p,prior);
-   const result=await runGuidanceEvaluationTurn({guard,turnId:p.id,context,model:m.turnModels[p.id]});
+   const result=await runGuidanceEvaluationTurn({guard,turnId:p.id,context,model:m.turnModels[p.id],privateProbe:m.mode==='private-stage-probe'});
    prior.push({packet:p,result});history.set(p.scenarioId,prior);
    // Only the genuine delivered reply and returned state are reused.
   }
  }catch(e){failure=e instanceof Error?e.message:'Execution failed';}
  finally{
-  const summary=guard.summary();writeFileSync(join(root,'completion.json'),JSON.stringify({manifestSha256,inferenceAttempts:summary.entries.length,metadataAttempts:summary.metadataReceipt?.attempts?.length??m.metadataAttempts,totalDirectProviderAttempts:summary.entries.length+(summary.metadataReceipt?.attempts?.length??m.metadataAttempts),accountedNanoUsd:summary.accountedNanoUsd,completedTurns:summary.results.length,failure,halted:summary.halted},null,2)+'\n',{mode:0o600});guard.close();
+  const summary=guard.summary();writeFileSync(join(root,'completion.json'),JSON.stringify({manifestSha256,inferenceAttempts:summary.entries.length,metadataAttempts:summary.metadataReceipt?.attempts?.length??m.metadataAttempts,totalDirectProviderAttempts:summary.entries.length+(summary.metadataReceipt?.attempts?.length??m.metadataAttempts),accountedNanoUsd:summary.accountedNanoUsd,completedTurns:m.mode==='private-stage-probe'?0:summary.results.length,completedPrivateProbes:m.mode==='private-stage-probe'?summary.results.length:0,failure,halted:summary.halted},null,2)+'\n',{mode:0o600});guard.close();
  }
  if(failure)throw Error('Assessment stopped; inspect private receipts; no retry');
 }

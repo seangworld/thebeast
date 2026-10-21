@@ -206,3 +206,49 @@ test('single-turn seven-attempt ceiling blocks an eighth transport even with bud
   assert.equal(calls,7);assert.equal(x.guard.summary().entries.length,7);
  }finally{x.cleanup();}
 });
+
+test('private probe stops after actual runtime privacy review; no public or later transport can run',async()=>{
+ const {runGuidanceEvaluationTurn}=await import('./guidance-evaluation-session.mjs');
+ const {contextFor}=await import('./guidance-evaluation-dispatch.mjs');
+ const fixture=JSON.parse(readFileSync('docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json'));
+ const context=contextFor(fixture.packets.find(p=>p.id==='GC-04-T1'));
+ const original=globalThis.fetch,key=process.env.OPENAI_API_KEY,env=process.env.NODE_ENV;
+ process.env.OPENAI_API_KEY='sk-proj-SYNTHETIC_TEST_ONLY_GC_123456789';process.env.NODE_ENV='development';
+ try{for(const mode of ['safe','unsafe','uncertain','invalid-brief','incomplete','missing-usage']){
+  const p={...policy,allowWebSearch:false,allowedRequestSuffixes:['-semantic-input','-guidance-brief','-guidance-privacy'],models:{'gpt-5':{context:400000,inputNano:1250,outputNano:10000,returned:['gpt-5','gpt-5-2025-08-07']}}};
+  const x=setup({policy:p,capNanoUsd:1580000000,maximumAttempts:3,turnIds:['GC-04-T1'],priorAccountedNanoUsd:1640700130,priorLedgerSha256:'a'.repeat(64)});const stages=[],efforts=[];
+  try{
+   globalThis.fetch=async(_url,init)=>{
+    const request=JSON.parse(init.body),name=request.text?.format?.name;stages.push(name);efforts.push(request.reasoning.effort);assert.equal(request.tools,undefined);
+    let value;if(name==='member_agent_semantic_verification')value={verdict:'safe',categories:[]};
+    else if(name==='guidance_brief')value=mode==='invalid-brief'?{targets:[],questions:[]}:{targets:[{organization:'Federal Student Aid',program:'FAFSA',region:'',intake:''}],questions:['funding']};
+    else if(name==='guidance_privacy')value={verdict:['unsafe','uncertain'].includes(mode)?mode:'safe'};
+    else assert.fail('Public discovery, planning, synthesis and output stages forbidden');
+    const payload={...reply,model:'gpt-5-2025-08-07',output_text:JSON.stringify(value)};
+    if(name==='guidance_brief'&&mode==='missing-usage')delete payload.usage;
+    const type=name==='guidance_brief'&&mode==='incomplete'?'response.incomplete':'response.completed';
+    return name==='member_agent_semantic_verification'?Response.json(payload):new Response('data: '+JSON.stringify({type,response:payload})+'\n\n');
+   };
+   const call=runGuidanceEvaluationTurn({guard:x.guard,turnId:'GC-04-T1',context,model:'gpt-5',privateProbe:true});
+   if(['incomplete','missing-usage'].includes(mode)){await assert.rejects(call);assert.equal(x.guard.summary().entries.at(-1).status,'unknown');assert.equal(stages.length,2);}
+   else{const result=await call;assert.equal(result.kind,'private-stage-probe');assert.equal(result.privacyVerdict,mode==='invalid-brief'?null:mode);assert.equal(stages.length,mode==='invalid-brief'?2:3);assert.equal(result.response,undefined);}
+   assert.deepEqual(efforts,stages.length===3?['low','minimal','medium']:['low','minimal']);
+   assert.equal(x.guard.summary().cumulativeAccountedNanoUsd,x.guard.summary().accountedNanoUsd+1640700130);
+  }finally{x.cleanup();}
+ }}finally{globalThis.fetch=original;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;if(env===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=env;}
+});
+test('private policy rejects public tools and later stages before transport independently of runtime stop',async()=>{
+ const x=setup({policy:{...policy,allowWebSearch:false,allowedRequestSuffixes:['-semantic-input','-guidance-brief','-guidance-privacy']},capNanoUsd:1580000000,maximumAttempts:3});
+ try{x.guard.startTurn('GC-01-T1');let calls=0;await assert.rejects(x.guard.dispatch(body,'GC-01-T1-synthesis',async()=>{calls++;return reply;}),/Stage forbidden/);assert.equal(calls,0);assert.throws(()=>guidanceCallBound({...body,tools:[{type:'web_search'}],max_tool_calls:1},x.guard.policy),/Public tools forbidden/);}finally{x.cleanup();}
+});
+
+test('private $1.58 cap fits only the three frozen maximum reservations and refuses fourth dispatch',async()=>{
+ const p={...policy,models:{'gpt-5':{context:400000,inputNano:1250,outputNano:10000,returned:['gpt-5']}}};
+ const x=setup({policy:p,capNanoUsd:1580000000,maximumAttempts:3,priorAccountedNanoUsd:1640700130,priorLedgerSha256:'a'.repeat(64)});
+ try{x.guard.startTurn('GC-01-T1');let calls=0;
+  for(const [i,limit] of [4800,1400,1400].entries())await x.guard.dispatch({model:'gpt-5',store:false,max_output_tokens:limit},'probe-'+i,async()=>{calls++;return {model:'gpt-5',usage:{input_tokens:400000,output_tokens:limit},output:[]};});
+  assert.equal(x.guard.summary().accountedNanoUsd,1576000000);assert.equal(x.guard.summary().cumulativeAccountedNanoUsd,3216700130);
+  assert.equal(x.guard.state.capNanoUsd+x.guard.state.priorAccountedNanoUsd,3220700130);
+  await assert.rejects(x.guard.dispatch({model:'gpt-5',store:false},'fourth',async()=>{calls++;return reply;}),/Attempt ceiling/);assert.equal(calls,3);
+ }finally{x.cleanup();}
+});

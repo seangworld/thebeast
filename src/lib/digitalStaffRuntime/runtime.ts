@@ -258,9 +258,10 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
 export async function runDigitalStaffRuntime(
   context: RuntimeContext,
   observer: RuntimeObserver = {},
-  options: { modelOverride?: string } = {}
+  options: { modelOverride?: string; guidancePrivateProbe?: boolean } = {}
 ): Promise<RuntimeResult> {
   const startedAt = Date.now();
+  if (options.guidancePrivateProbe && (process.env.NODE_ENV !== "development" || context.professionalId !== "beasteducation.guidance-counselor" || !context.ownerId.startsWith("synthetic-gc-"))) throw new Error("Private probe requires synthetic DEV context");
   if (context.professionalId === "beastmoney.money-coach") {
     const deadline = AbortSignal.timeout(moneyCoachRequestLimits.timeoutMs);
     context = { ...context, signal: context.signal ? AbortSignal.any([context.signal, deadline]) : deadline };
@@ -389,7 +390,7 @@ export async function runDigitalStaffRuntime(
     await observer.onActivity?.("researching");
     const researchStartedAt = Date.now();
     if (context.professionalId === "beasteducation.guidance-counselor") {
-      research = await executeGuidanceDiscovery({ model, privateContext: runtimeInput, signal: context.signal, requestId: context.requestId, onCall: () => { providerInvocationCount += 1; } });
+      research = await executeGuidanceDiscovery({ model, privateProbe: options.guidancePrivateProbe, privateContext: runtimeInput, signal: context.signal, requestId: context.requestId, onCall: () => { providerInvocationCount += 1; } });
       if (!research) {
         validated.response = guidanceResearchUnavailable;
         validated.nextQuestion = null;

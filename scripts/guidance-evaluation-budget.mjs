@@ -18,6 +18,7 @@ export function guidanceCallBound(original,policy,now=Date.now()){
  body.reasoning=body.reasoning??{effort:'medium'};
  check(['minimal','low','medium','high'].includes(body.reasoning.effort),'Unreviewed reasoning effort');
  const tools=body.tools??[];
+ check(policy.allowWebSearch!==false||tools.length===0,'Public tools forbidden for private probe');
  check(Array.isArray(tools)&&tools.length<=1&&tools.every(t=>t?.type==='web_search'),'Unpriced tool');
  const calls=tools.length?body.max_tool_calls:0;
  check(integer(calls)&&calls<=4&&(!tools.length||calls>0),'Tool ceiling exceeded');
@@ -55,6 +56,7 @@ export class GuidanceEvaluationBudget {
  reserve(original,requestId){
   this.ready();check(this.activeTurn!==null,'No active turn');
   if(typeof requestId!=='string'||!requestId||this.state.entries.some(e=>e.requestId===requestId))return this.halt('Duplicate or invalid request ID; retries prohibited');
+  if(this.policy.allowedRequestSuffixes&&!this.policy.allowedRequestSuffixes.some(s=>requestId.endsWith(s)))return this.halt('Stage forbidden for private probe');
   if(this.state.entries.length>=this.state.maximumAttempts||this.state.entries.filter(e=>e.turnId===this.activeTurn).length>=8)return this.halt('Attempt ceiling reached');
   let bound;try{bound=guidanceCallBound(original,this.policy,this.now());}catch(error){return this.halt(error.message);}
   if(this.summary().accountedNanoUsd+bound.maximumNanoUsd>this.state.capNanoUsd)return this.halt('Next reservation exceeds cap');
