@@ -252,3 +252,20 @@ test('private $1.58 cap fits only the three frozen maximum reservations and refu
   await assert.rejects(x.guard.dispatch({model:'gpt-5',store:false},'fourth',async()=>{calls++;return reply;}),/Attempt ceiling/);assert.equal(calls,3);
  }finally{x.cleanup();}
 });
+
+test('finished invalid probe remains immutable and requires pinned completion when not transport-halted',async()=>{
+ const {verifyPriorAccounting,sha}=await import('./guidance-evaluation-dispatch.mjs');
+ const {mkdirSync,writeFileSync}=await import('node:fs');const root=mkdtempSync(join(tmpdir(),'gc-sealed-'));
+ try{const runId='gc-finished-invalid';mkdirSync(join(root,runId),{mode:0o700});
+  const ledger=JSON.stringify({halted:null,entries:[{status:'settled',accountedNanoUsd:4715000}]});
+  writeFileSync(join(root,runId,'spend.json'),ledger,{mode:0o600});
+  const completion=JSON.stringify({manifestSha256:'b'.repeat(64),accountedNanoUsd:4715000,inferenceAttempts:1});
+  writeFileSync(join(root,runId,'completion.json'),completion,{mode:0o600});
+  const receipt={runId,ledgerSha256:sha(ledger),accountedNanoUsd:4715000,completionSha256:sha(completion),manifestSha256:'b'.repeat(64)};
+  const manifest={capNanoUsd:1580000000,priorAccounting:{receipts:[receipt],accountedNanoUsd:4715000,ledgerSha256:sha(JSON.stringify([receipt]))}};
+  assert.equal(verifyPriorAccounting(manifest,root),4715000);
+  const unsealed={...receipt};delete unsealed.completionSha256;
+  assert.throws(()=>verifyPriorAccounting({...manifest,priorAccounting:{...manifest.priorAccounting,receipts:[unsealed]}},root));
+  writeFileSync(join(root,runId,'completion.json'),'{}',{mode:0o600});assert.throws(()=>verifyPriorAccounting(manifest,root));
+ }finally{rmSync(root,{recursive:true,force:true});}
+});

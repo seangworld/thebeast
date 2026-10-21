@@ -30,7 +30,15 @@ export function verifyPriorAccounting(m,root=resolve(homedir(),'.config/seangwor
   if(!stat.isFile()||stat.isSymbolicLink()||stat.mode&0o077)throw Error('Original private prior ledger required');
   const bytes=readFileSync(file),prior=JSON.parse(bytes);
   const balance=prior.entries.reduce((n,e)=>n+(e.status==='settled'?e.accountedNanoUsd:e.maximumNanoUsd),0);
-  if(!Number.isSafeInteger(balance)||balance<0||sha(bytes)!==receipt.ledgerSha256||balance!==receipt.accountedNanoUsd||!prior.halted)throw Error('Prior cost/receipt mismatch');
+  let sealed=false;
+  if(receipt.completionSha256){
+   const completionFile=join(root,receipt.runId,'completion.json'),cs=lstatSync(completionFile);
+   if(!cs.isFile()||cs.isSymbolicLink()||cs.mode&0o077)throw Error('Private completion receipt required');
+   const cb=readFileSync(completionFile),c=JSON.parse(cb);
+   sealed=sha(cb)===receipt.completionSha256&&c.manifestSha256===receipt.manifestSha256&&c.accountedNanoUsd===balance&&c.inferenceAttempts===prior.entries.length;
+   if(!sealed)throw Error('Prior completion mismatch');
+  }
+  if(!Number.isSafeInteger(balance)||balance<0||sha(bytes)!==receipt.ledgerSha256||balance!==receipt.accountedNanoUsd||(!prior.halted&&!sealed))throw Error('Prior cost/receipt mismatch');
   total+=balance;
  }
  if(total!==m.priorAccounting.accountedNanoUsd||total+m.capNanoUsd>10000000000)throw Error('Prior aggregate mismatch');

@@ -1,7 +1,8 @@
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { guidanceResearchRequest, guidanceResearchUnavailable, isGuidanceResearchSource } from "../src/lib/digitalStaffRuntime/guidanceResearch";
-import { executeGuidanceDiscovery, parseGuidanceBrief, guidanceCandidates, guidanceObservedUrls, verifiedGuidanceEvidence } from "../src/lib/digitalStaffRuntime/guidanceDiscovery";
+import { executeGuidanceDiscovery, parseGuidanceBrief, guidanceCandidates, guidanceObservedUrls, verifiedGuidanceEvidence, guidanceQuestionScope, guidanceBriefSchema, guidanceQuestionLimits } from "../src/lib/digitalStaffRuntime/guidanceDiscovery";
 import { runDigitalStaffRuntime, requiresDeterministicResearch, guidanceMandatoryResearchPlan } from "../src/lib/digitalStaffRuntime/runtime";
 import type { RuntimeContext } from "../src/lib/digitalStaffRuntime/types";
 const ctx: RuntimeContext = {
@@ -185,7 +186,7 @@ test("institution, credential and FAFSA authority briefs use bounded extraction 
         return stream(webPayload({ candidates: [] }, []));
       };
       assert.deepEqual(parseGuidanceBrief(proposed), proposed);
-      assert.equal(await executeGuidanceDiscovery({ model: "gpt-5", privateContext: JSON.stringify(ctx), onCall: () => {} }), null);
+      assert.equal(await executeGuidanceDiscovery({ model: "gpt-5", privateContext: JSON.stringify({ ...ctx, message: { ...ctx.message, text: proposed === authority ? "What are the current FAFSA requirements for Alex Example, phone 202-555-0147?" : proposed === credential ? "Check Professional Exam version for Alex Example, phone 202-555-0147." : ctx.message.text } }), onCall: () => {} }), null);
       assert.deepEqual(stages, ["guidance_brief", "guidance_privacy", "discover"]);
     }
   } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
@@ -218,6 +219,53 @@ test("incomplete private brief with reported reasoning usage stops before privac
   };
   try {
     await assert.rejects(executeGuidanceDiscovery({ model: "gpt-5", privateContext: JSON.stringify(ctx), onCall: () => {} }));
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
+});
+
+
+test("actual nine-category probe output, duplicates and irrelevant smaller selections are rejected intact", () => {
+  const evidence = JSON.parse(readFileSync("docs/guidance-counselor-upgrade/evaluation/private-probe-execution-20261021/call-accounting.json", "utf8"));
+  const raw = evidence.find((c: { requestId: string }) => c.requestId.endsWith("-guidance-brief")).verbatimOutputTextParts[0];
+  const actual = JSON.parse(raw), before = JSON.stringify(actual);
+  const request = { currentMessage: { text: "What are the current FAFSA requirements for Alex Example, phone 202-555-0147, living at 123 Example Lane? I need this explained around my saved constraints." }, structuredRecords: [{ exam_version: "unrelated private saved context" }] };
+  const allowed = guidanceQuestionScope(request);
+  assert.deepEqual(allowed, ["funding"]);
+  assert.equal(parseGuidanceBrief(actual, allowed), null);
+  for (const selected of [["exam_version"], ["funding", "renewal", "accreditation", "tuition_and_fees"], ["funding", "funding"]]) {
+    assert.equal(parseGuidanceBrief({ ...actual, questions: selected }, allowed), null);
+  }
+  assert.equal(JSON.stringify(actual), before); // Never truncate, deduplicate or replace output.
+  assert.deepEqual(parseGuidanceBrief({ ...actual, questions: ["funding"] }, allowed)?.questions, ["funding"]);
+  const schema = guidanceBriefSchema(allowed).properties.questions;
+  assert.equal(schema.minItems, guidanceQuestionLimits.min); assert.equal(schema.maxItems, guidanceQuestionLimits.max);
+  assert.deepEqual(schema.items.enum, ["funding"]); assert.equal("uniqueItems" in schema, false);
+});
+
+test("focused institutional and credential questions, explicit FAFSA additions and genuine followups retain scope", () => {
+  const school = guidanceQuestionScope({ currentMessage: { text: "Compare Example College tuition and deadlines." } });
+  assert.deepEqual(school, ["tuition_and_fees", "deadlines"]);
+  assert.deepEqual(parseGuidanceBrief(brief, school), brief);
+  assert.equal(parseGuidanceBrief({ ...brief, questions: ["exam_version"] }, school), null);
+  const credential = { targets: [{ organization: "Example Credential Board", program: "Professional Exam", region: "", intake: "" }], questions: ["exam_version", "renewal"] };
+  assert.deepEqual(parseGuidanceBrief(credential, guidanceQuestionScope({ currentMessage: { text: "Check the Professional Exam version and renewal." } })), credential);
+  assert.deepEqual(guidanceQuestionScope({ currentMessage: { text: "FAFSA requirements and deadlines, plus tuition fees and exam version." } }), ["funding", "tuition_and_fees", "deadlines", "exam_version"]);
+  assert.deepEqual(guidanceQuestionScope({ currentMessage: { text: "And deadlines?" }, recentConversation: [{ role: "user", text: "FAFSA requirements" }, { role: "assistant", text: "You could consider exam renewal." }] }), ["funding", "deadlines"]);
+});
+
+test("irrelevant but short FAFSA output stops before privacy or public transport", async () => {
+  const originalFetch = globalThis.fetch, key = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "sk-proj-TEST_ONLY_GUIDANCE_RESEARCH_123456789";
+  let calls = 0;
+  globalThis.fetch = async (_url, init) => {
+    calls++; const request = JSON.parse(String(init?.body));
+    assert.equal(request.text.format.name, "guidance_brief");
+    assert.deepEqual(request.text.format.schema.properties.questions.items.enum, ["funding"]);
+    assert.match(request.instructions, /UNIQUE/); assert.match(request.instructions, /never the whole enum/);
+    return stream({ output_text: JSON.stringify({ targets: [{ organization: "Federal Student Aid", program: "FAFSA", region: "", intake: "" }], questions: ["exam_version", "renewal"] }) });
+  };
+  try {
+    assert.equal(await executeGuidanceDiscovery({ model: "gpt-5", privateContext: JSON.stringify({ currentMessage: { text: "What are the FAFSA requirements?" } }), onCall: () => {} }), null);
     assert.equal(calls, 1);
   } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
 });
