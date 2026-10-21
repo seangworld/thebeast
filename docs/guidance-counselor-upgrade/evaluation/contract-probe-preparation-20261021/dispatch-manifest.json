@@ -1,0 +1,202 @@
+{
+  "status": "FROZEN PRIVATE PROBE PROPOSAL; OWNER APPROVAL REQUIRED; NO EXECUTION",
+  "runId": "gc-20261021-pr273-question-contract-probe",
+  "applicationCommit": "075cdb0917698e003a9db5b374c1dfd38b0c4372",
+  "resumedPublishedHead": "fdc44df229616e10c1a50a38c4d19408a3e6a909",
+  "applicationSrcTree": "b9384f0ef077381da3cedd5c02ee227296e84d73",
+  "sourceFilesSha256": "2b983909eacf7bc45e5b6c870f6d56849023159f497c93fe9680adc71a7d7d7f",
+  "compiledRuntimeSha256": "8090d0e980ddddc3e090d62e23f77ee4d95ac51f570cc8f6d892ede895f93e19",
+  "fixturePath": "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json",
+  "fileHashes": {
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json": "a2a6b43ee1241c3273884baee5bf24e0a8238d4cd558bb58a82618365a6e3d03",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets.json": "ba1e8a32aa088d03c40896824b6296a42600effcce3675f9deb6b3a2d54ba1aa",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/GRADING-RULES.md": "1b6fed5a2f20ec9b2f8aa8b8fba5fa45ae7b367aef8b77a106d15c761ab476fb",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/SOURCE-BASELINE.md": "8af9212ccc7ec60c164c84c437643d314405de1f264bb3ea84305ff5ce24144c",
+    "docs/guidance-counselor-upgrade/EVALUATION-PLAN.md": "1f8af8f256577329782dc633511c9c07408f8ea8d57b29f7172e82f60b966524",
+    "package-lock.json": "9eb4c807a2ace258dd8a78682c38bdb66b958aa298a4ec9bbe712d083c96a3f5",
+    "tsconfig.test.json": "85980c3a9bc3afc7224c950272894c607c4c529bbfbcb2900815a252859d6b78",
+    "scripts/guidance-evaluation-budget.mjs": "14117f03eaecc1881ffd404087cd9c941e33f1fa5633063b194a0670ae28067c",
+    "scripts/guidance-evaluation-session.mjs": "49b60909ef3a653c774898b1efb63407e96076413ccc59d92c2d33350bb87ae4",
+    "scripts/guidance-evaluation-dispatch.mjs": "4dce1f054ba7e168921fe57a74216159dcdfe27417467ae6fcb9407b01cb7879",
+    "scripts/run-guidance-evaluation-dev.py": "414a73d0208d542d8d73bef9b3a65f747cf65a89504ef577ef62f37397783658",
+    "scripts/verify-guidance-evaluation-preparation.mjs": "07e7d2343d4e01aea334d270955cd340830844fcb38e9e606578c2ab14123bce",
+    "scripts/test-guidance-evaluation-budget.mjs": "5295f2dd85046460024c6f3d53206555975fad6388f8ef7c4bfdefb2b1d08195",
+    "src/lib/digitalStaffRuntime/providerStream.ts": "4f615451dc445b3d5cc769768ecc88eafa8b8bfda5343a659cc1d95cc3d617a7",
+    "src/lib/digitalStaffRuntime/guidancePlanning.ts": "d3202b5f9a0701ac2f16d6bb7ec5736746294f98815a3c4664a6d8eebf4e4576",
+    "tests/providerStreamDiagnostics.test.ts": "f10efa26980a2aa3eeef9a74297a1dde586bfe44cce9b481a2ca2f5213473bf4",
+    "tests/guidancePlanningConstraint.test.ts": "a3e5c46cc8bba821f66d9711b77662862e10b7555b6243bef3bcacb5d5350faa",
+    "src/lib/digitalStaffRuntime/runtime.ts": "ceb96cba5b87b30f19288a87cd2d831db5b2f51ae4c864a8cf73990ede6c828a",
+    "tests/guidanceResearch.test.ts": "eb813e773df32fe313bbedfe6d2adbd6effba0ae6f434e6736df2596e6cf8c75",
+    "src/lib/digitalStaffRuntime/guidanceDiscovery.ts": "32282cfd5586bf9106b26ee5d0643b6105db7bccee970d831abadceae91f05d7",
+    "src/lib/digitalStaffRuntime/guidanceResearch.ts": "57c3d1123d1c9bf52f1b3f19854c9b88d04cb09676122e072ffc64e3311d161c",
+    "docs/guidance-counselor-upgrade/evaluation/private-probe-execution-20261021/call-accounting.json": "649bb285174dfa4dbcbb4b481a7c8e05f287cba53f9429f00ebbd4cefca5d3ae"
+  },
+  "turnModels": {
+    "GC-04-T1": "gpt-5"
+  },
+  "policy": {
+    "reviewedAt": "2026-10-21T22:04:06Z",
+    "expiresAt": "2026-10-23T22:04:06Z",
+    "searchNano": 10000000,
+    "models": {
+      "gpt-5": {
+        "context": 400000,
+        "inputNano": 1250,
+        "outputNano": 10000,
+        "returned": [
+          "gpt-5",
+          "gpt-5-2025-08-07"
+        ]
+      }
+    },
+    "sources": [
+      "https://developers.openai.com/api/docs/models/gpt-5",
+      "https://developers.openai.com/api/docs/pricing"
+    ],
+    "assumptions": "Official global standard Responses endpoint, no cache discounts, no cache-write option; reserve full context per private call plus maximum output. All tools prohibited. GPT-5 is deprecated; fresh one-time metadata GET after approval must succeed or halt, no substitute.",
+    "allowWebSearch": false,
+    "allowedRequestSuffixes": [
+      "-semantic-input",
+      "-guidance-brief",
+      "-guidance-privacy"
+    ]
+  },
+  "capNanoUsd": 1580000000,
+  "maximumInferenceAttempts": 3,
+  "metadataAttempts": 1,
+  "metadataReceipt": null,
+  "maximumDirectProviderAttempts": 4,
+  "expectedInferenceAttempts": 3,
+  "scenarioFamilies": 1,
+  "turns": 1,
+  "uniqueCriteria": 4,
+  "maximumCallsPerTurn": 3,
+  "maximumToolActionsPerRequest": 0,
+  "maximumToolActionsPerTurn": 0,
+  "maximumWholeRunToolActions": 0,
+  "outputLimits": {
+    "initialPlan": 0,
+    "inputSemanticSafety": 4800,
+    "privateBriefAndReview": 1400,
+    "publicDiscoveryAndVerification": 0,
+    "synthesis": 0,
+    "outputSemanticSafety": 0
+  },
+  "reasoning": "Input semantic safety Low; private brief Minimal; separate privacy review Medium; explicit stop before public tools or any later stage.",
+  "requestLimitBytesBeforeStreamingFlag": 100000,
+  "streamingFlagOverheadMaxBytes": 14,
+  "storedProviderHistory": false,
+  "retries": 0,
+  "turnTimeoutMs": 170000,
+  "phaseTimeoutMs": {
+    "privateBriefAndPrivacy": 25000,
+    "semanticChecks": "within unchanged 170000 turn abort signal"
+  },
+  "perCallBounds": [
+    {
+      "model": "gpt-5",
+      "inputSemantic4800NanoUsd": 548000000,
+      "private1400NanoUsd": 514000000
+    }
+  ],
+  "unknownUsage": "Capture bounded terminal diagnostics and any reported usage; retain full maximum on incomplete/failed/error/disconnection or missing usage and halt; no retry or restart",
+  "history": "Unchanged original GC-04-T1 prompt/record/empty history through existing contextFor/buildRuntimeInput; no substitutions.",
+  "credential": "Existing owner-authorized private DEV workflow; key loaded into child memory only; no production key/config copied",
+  "ledger": "Private ~/.config/seangworld/evaluations/<runId>/spend.json, exclusive creation; no existing GC run resume",
+  "sourceLimitations": [
+    "Private-stage extraction/privacy probe only; no evidence of live source discovery, factual accuracy, citations or contextual synthesis.",
+    "Mocked probes validate routing/accounting mechanics, not live model semantics.",
+    "Original scenario previously exposed, not held-out. All three old unknown reservations remain retained."
+  ],
+  "approvalRequired": true,
+  "paidInferenceCalls": 0,
+  "liveCompetencyGrade": null,
+  "selectedTurnIds": [
+    "GC-04-T1"
+  ],
+  "requireFreshMetadata": true,
+  "priorAccounting": {
+    "receipts": [
+      {
+        "runId": "gc-20261021-pr273-assessment-v2",
+        "ledgerSha256": "5dbbc8d18328d520c8070a681cd84c50bea5dc6781f117405b0f9005774abe2c",
+        "accountedNanoUsd": 565628670,
+        "conservativeSettledNanoUsd": 51628670,
+        "unknownMaximumRetainedNanoUsd": 514000000
+      },
+      {
+        "runId": "gc-20261021-pr273-remediation-assessment",
+        "ledgerSha256": "e3bfcba843960581ce99c6915d3b26170d7445184c97b0e289279150ad374b10",
+        "accountedNanoUsd": 558551460,
+        "conservativeSettledNanoUsd": 10551460,
+        "unknownMaximumRetainedNanoUsd": 548000000
+      },
+      {
+        "runId": "gc-20261021-pr273-gc04-routing-assessment",
+        "ledgerSha256": "c0607629595efe092f5c73502be29df493e649594b5365959d68d95d22ee95e4",
+        "accountedNanoUsd": 516520000,
+        "conservativeSettledNanoUsd": 2520000,
+        "unknownMaximumRetainedNanoUsd": 514000000
+      },
+      {
+        "runId": "gc-20261021-pr273-private-brief-probe",
+        "ledgerSha256": "ec0fd349708df9591edbad3b074cc8522bce1ca044df9641cdefd203a9c8e180",
+        "accountedNanoUsd": 4715000,
+        "conservativeSettledNanoUsd": 4715000,
+        "unknownMaximumRetainedNanoUsd": 0,
+        "completionSha256": "4dcc1b325f48b76e2182530df56c3a9d099a02991629ef5d467f884663c1f07b",
+        "manifestSha256": "56b9f68a3d34b5f5f98c0be3a033c9106ee56409a31a23320958e564367e8c64"
+      }
+    ],
+    "ledgerSha256": "e3b43f1779ef15e349c70104b9449ccf2117cc7adfabc9ea694932aecd7bfb00",
+    "accountedNanoUsd": 1645415130,
+    "conservativeSettledNanoUsd": 69415130,
+    "unknownMaximumRetainedNanoUsd": 1576000000,
+    "inferenceAttempts": 30,
+    "metadataAttempts": 6
+  },
+  "maximumCumulativeAccountedNanoUsd": 3225415130,
+  "maximumCumulativeInferenceAttempts": 33,
+  "maximumCumulativeDirectProviderAttempts": 40,
+  "reusedFixturesAreNotHeldOut": true,
+  "newProviderMetadataCalls": 0,
+  "modelVisibility": "No new metadata request in preparation. One fresh durably recorded free check after approval; failure/uncertainty halts, no retry.",
+  "originalManifestSha256": "89107ef00887f92edaed5afe833d01ef2025ae94b53ba8f174239a04262258b5",
+  "stages": [
+    {
+      "name": "input semantic safety",
+      "effort": "low",
+      "maximumNanoUsd": 548000000
+    },
+    {
+      "name": "private brief",
+      "effort": "minimal",
+      "maximumNanoUsd": 514000000
+    },
+    {
+      "name": "privacy review",
+      "effort": "medium",
+      "maximumNanoUsd": 514000000
+    }
+  ],
+  "maximumAllStagesReservationSumNanoUsd": 1576000000,
+  "mode": "private-stage-probe",
+  "baseCandidate": "212d3cdd0e59b9f20cc145ff0bb030c624facb76",
+  "successCriteria": [
+    "Completed input safety with safe verdict",
+    "Completed brief with exact original FAFSA request scope: Federal Student Aid organization, FAFSA program, one funding category, no learner identifiers/private attributes or invented school/year/location/details",
+    "Completed separate privacy review returns safe; executor semantically inspects actual brief for correctness and privacy, review is not independent certification",
+    "Explicit stop after privacy review; no public or later stages; original four end-to-end criteria remain NOT TESTED"
+  ],
+  "endToEndGc04CriteriaStatus": "All four original end-to-end criteria remain NOT TESTED by this private probe, regardless of probe success.",
+  "contract": {
+    "minimumQuestionCategories": 1,
+    "maximumQuestionCategories": 6,
+    "uniqueQuestionsEnforcedAtRuntime": true,
+    "requestScopedQuestionEnum": [
+      "funding"
+    ],
+    "unsupportedUniqueItemsKeywordNotUsed": true,
+    "invalidOutputAction": "Reject unchanged; no truncation, deduplication, category replacement or retry"
+  }
+}
