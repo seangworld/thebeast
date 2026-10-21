@@ -1,5 +1,5 @@
 /** Citation membership, not semantic verification of a source's claims. */
-export function sourcesCitedInAnswer<T extends { url: string }>(answer: string, sources: readonly T[]): T[] {
+export function citationUrlsInAnswer(answer: string): string[] {
   function normalized(value: string): string | null {
     try {
       const url = new URL(value);
@@ -13,9 +13,15 @@ export function sourcesCitedInAnswer<T extends { url: string }>(answer: string, 
     while (url.endsWith(")") && (url.match(/\)/g) || []).length > (url.match(/\(/g) || []).length) url = url.slice(0, -1);
     return normalized(url);
   }).filter((url): url is string => url !== null));
+  return Array.from(citations);
+}
+
+export function sourcesCitedInAnswer<T extends { url: string }>(answer: string, sources: readonly T[]): T[] {
+  const citations = new Set(citationUrlsInAnswer(answer));
   const seen = new Set<string>();
   return sources.filter(source => {
-    const url = normalized(source.url);
+    let url: string;
+    try { url = new URL(source.url).href; } catch { return false; }
     if (!url || !citations.has(url) || seen.has(url)) return false;
     seen.add(url);
     return true;

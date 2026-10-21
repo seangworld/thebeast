@@ -269,3 +269,55 @@ test('finished invalid probe remains immutable and requires pinned completion wh
   writeFileSync(join(root,runId,'completion.json'),'{}',{mode:0o600});assert.throws(()=>verifyPriorAccounting(manifest,root));
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+
+test('nonstream incomplete safety response with usage retains full reservation and halts',async()=>{
+ const x=setup();try{x.guard.startTurn('GC-01-T1');await assert.rejects(x.guard.dispatch(body,'incomplete-safety',async()=>({...reply,status:'incomplete'})),/Unverified usage/);const e=x.guard.summary().entries[0];assert.equal(e.status,'unknown');assert.equal(x.guard.summary().accountedNanoUsd,e.maximumNanoUsd);}finally{x.cleanup();}
+});
+test('consolidated per-turn ceilings prohibit unplanned research in ordinary turns',async()=>{
+ const x=setup({maximumAttempts:34,policy:{...policy,turnAttemptLimits:{'GC-01-T1':3}}});try{x.guard.startTurn('GC-01-T1');let calls=0;for(let i=0;i<3;i++)await x.guard.dispatch(body,'ordinary-'+i,async()=>{calls++;return reply;});await assert.rejects(x.guard.dispatch(body,'unplanned-fourth',async()=>{calls++;return reply;}),/Attempt ceiling/);assert.equal(calls,3);}finally{x.cleanup();}
+});
+
+test('full public verification failure retains its full tool reservation and prevents synthesis',async()=>{
+ const {runGuidanceEvaluationTurn}=await import('./guidance-evaluation-session.mjs');
+ const {contextFor}=await import('./guidance-evaluation-dispatch.mjs');
+ const fixture=JSON.parse(readFileSync('docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json'));
+ const p={...policy,models:{'gpt-5':{context:400000,inputNano:1250,outputNano:10000,returned:['gpt-5']}}};
+ const x=setup({policy:p,capNanoUsd:8330000000,maximumAttempts:34,turnIds:['GC-04-T1']});
+ const original=globalThis.fetch,key=process.env.OPENAI_API_KEY;process.env.OPENAI_API_KEY='sk-proj-SYNTHETIC_TEST_ONLY_GC_123456789';const stages=[];
+ try{
+  globalThis.fetch=async(_url,init)=>{
+   const r=JSON.parse(init.body),name=r.text?.format?.name,id=new Headers(init.headers).get('X-Client-Request-Id');stages.push(id);let value;
+   const source='https://studentaid.gov/public-synthetic-fixture';
+   if(name==='member_agent_semantic_verification')value={verdict:'safe',categories:[]};
+   else if(name==='guidance_brief')value={targets:[{organization:'Federal Student Aid',program:'FAFSA',region:'',intake:''}],questions:['funding']};
+   else if(name==='guidance_privacy')value={verdict:'safe'};
+   else if(id.endsWith('-discover'))value={candidates:[{target:0,url:source}]};
+   else {assert.ok(id.endsWith('-verify'));return new Response('data: '+JSON.stringify({type:'response.incomplete',response:{...reply,model:'gpt-5',status:'incomplete',incomplete_details:{reason:'max_output_tokens'}}})+'\n\n');}
+   const payload={...reply,model:'gpt-5',output_text:JSON.stringify(value),output:r.tools?[{type:'web_search_call',status:'completed',action:{sources:[{url:source}]}}]:[]};
+   return name==='member_agent_semantic_verification'?Response.json(payload):new Response('data: '+JSON.stringify({type:'response.completed',response:payload})+'\n\n');
+  };
+  await assert.rejects(runGuidanceEvaluationTurn({guard:x.guard,turnId:'GC-04-T1',model:'gpt-5',context:contextFor(fixture.packets.find(t=>t.id==='GC-04-T1'))}));
+  assert.equal(stages.length,5);const e=x.guard.summary().entries.at(-1);assert.equal(e.status,'unknown');assert.equal(e.maximumNanoUsd,2576000000);assert.ok(x.guard.summary().accountedNanoUsd>=2576000000);assert.ok(!stages.some(s=>s.endsWith('-synthesis')||s.endsWith('-semantic-output')));
+ }finally{globalThis.fetch=original;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;x.cleanup();}
+});
+
+test('proposed $8.33 consolidated cap blocks next maximum tool call and retains five-run balance',async()=>{
+ const p={...policy,models:{'gpt-5':{context:400000,inputNano:1250,outputNano:10000,returned:['gpt-5']}}};
+ const x=setup({policy:p,capNanoUsd:8330000000,maximumAttempts:34,priorAccountedNanoUsd:1661240130,priorLedgerSha256:'a'.repeat(64)});
+ try{x.guard.startTurn('GC-01-T1');let calls=0;const request={model:'gpt-5',store:false,max_output_tokens:3600,tools:[{type:'web_search'}],max_tool_calls:4};
+  for(let i=0;i<3;i++)await x.guard.dispatch(request,'public-'+i,async()=>{calls++;return {model:'gpt-5',usage:{input_tokens:2000000,output_tokens:3600},output:[]};});
+  await assert.rejects(x.guard.dispatch(request,'cannot-fit',async()=>{calls++;return reply;}),/Next reservation exceeds cap/);
+  assert.equal(calls,3);assert.equal(x.guard.summary().accountedNanoUsd,7728000000);assert.equal(x.guard.summary().cumulativeAccountedNanoUsd,9389240130);assert.equal(x.guard.state.priorAccountedNanoUsd+x.guard.state.capNanoUsd,9991240130);
+ }finally{x.cleanup();}
+});
+
+test('consolidated safety/citation rejection stops the assessment without additional calls',async()=>{
+ const {enforceAssessmentStop}=await import('./guidance-evaluation-dispatch.mjs');
+ for(const result of [{timings:{semanticVerifierFailureCount:1}},{validationFailures:['guidance-citation-unverified']}]){
+  const x=setup();try{assert.throws(()=>enforceAssessmentStop(x.guard,result,{stopOnSafetyFailure:true}),/safety\/citation/);assert.ok(x.guard.summary().halted);assert.equal(x.guard.summary().entries.length,0);}finally{x.cleanup();}
+ }
+});
+
+test('reported web request usage above the documented tool bound halts without releasing maximum',async()=>{
+ const x=setup();try{x.guard.startTurn('GC-01-T1');await assert.rejects(x.guard.dispatch({...body,tools:[{type:'web_search'}],max_tool_calls:4},'over-reported-tools',async()=>({...reply,tool_usage:{web_search:{num_requests:5}}})),/tool usage/);assert.equal(x.guard.summary().entries[0].status,'unknown');assert.equal(x.guard.summary().accountedNanoUsd,x.guard.summary().entries[0].maximumNanoUsd);}finally{x.cleanup();}
+});

@@ -57,7 +57,9 @@ export class GuidanceEvaluationBudget {
   this.ready();check(this.activeTurn!==null,'No active turn');
   if(typeof requestId!=='string'||!requestId||this.state.entries.some(e=>e.requestId===requestId))return this.halt('Duplicate or invalid request ID; retries prohibited');
   if(this.policy.allowedRequestSuffixes&&!this.policy.allowedRequestSuffixes.some(s=>requestId.endsWith(s)))return this.halt('Stage forbidden for private probe');
-  if(this.state.entries.length>=this.state.maximumAttempts||this.state.entries.filter(e=>e.turnId===this.activeTurn).length>=8)return this.halt('Attempt ceiling reached');
+  const turnLimit=this.policy.turnAttemptLimits?.[this.activeTurn]??8;
+  if(!integer(turnLimit)||turnLimit<1||turnLimit>8)return this.halt('Invalid per-turn attempt ceiling');
+  if(this.state.entries.length>=this.state.maximumAttempts||this.state.entries.filter(e=>e.turnId===this.activeTurn).length>=turnLimit)return this.halt('Attempt ceiling reached');
   let bound;try{bound=guidanceCallBound(original,this.policy,this.now());}catch(error){return this.halt(error.message);}
   if(this.summary().accountedNanoUsd+bound.maximumNanoUsd>this.state.capNanoUsd)return this.halt('Next reservation exceeds cap');
   const entry={requestId,turnId:this.activeTurn,status:'reserved',startedAt:new Date(this.now()).toISOString(),maximumNanoUsd:bound.maximumNanoUsd,request:bound.body};
@@ -71,7 +73,9 @@ export class GuidanceEvaluationBudget {
   entry.latencyMs=this.now()-Date.parse(entry.startedAt);
   const input=p?.usage?.input_tokens,output=p?.usage?.output_tokens;
   const calls=Array.isArray(p?.output)?p.output.filter(x=>x.type==='web_search_call').length:Infinity;
-  if(!integer(input)||!integer(output)||input>bound.rate.context*(bound.calls+1)||output>bound.body.max_output_tokens||calls>bound.calls||!bound.rate.returned.includes(p.model)||(p.service_tier!==undefined&&p.service_tier!=='default')||p.output.some(x=>x.type?.endsWith('_call')&&x.type!=='web_search_call')){
+  const reportedSearches=p?.tool_usage?.web_search?.num_requests;
+  if(reportedSearches!==undefined&&(!integer(reportedSearches)||reportedSearches>bound.calls)){this.unknown(entry);throw Error('Reported tool usage exceeds reservation');}
+  if((p?.status!==undefined&&p.status!=='completed')||!integer(input)||!integer(output)||input>bound.rate.context*(bound.calls+1)||output>bound.body.max_output_tokens||calls>bound.calls||!bound.rate.returned.includes(p.model)||(p.service_tier!==undefined&&p.service_tier!=='default')||p.output.some(x=>x.type?.endsWith('_call')&&x.type!=='web_search_call')){
    this.unknown(entry);throw Error('Unverified usage/model/tools');
   }
   // No cache discounts; retain all reserved search charges.

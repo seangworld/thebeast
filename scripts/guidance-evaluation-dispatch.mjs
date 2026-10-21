@@ -86,6 +86,9 @@ export function verifyApproval(file,manifestSha256,m){
  if(a.owner!=='Sean'||a.approved!==true||a.manifestSha256!==manifestSha256||a.capNanoUsd!==m.capNanoUsd||a.maximumInferenceAttempts!==m.maximumInferenceAttempts||a.runId!==m.runId)throw Error('Exact owner approval required');
  return a;
 }
+export function enforceAssessmentStop(guard,result,manifest){
+ if(manifest.stopOnSafetyFailure&&((result.timings?.semanticVerifierFailureCount??0)>0||result.validationFailures?.includes('guidance-citation-unverified')))guard.halt('Assessment safety/citation check rejected a response; result retained, no further calls');
+}
 export async function dispatchApproved(manifestFile,approvalFile){
  const {manifest:m,manifestSha256,fixture}=await verifyDispatch(manifestFile);verifyApproval(approvalFile,manifestSha256,m);
  if(process.env.NODE_ENV!=='development'||!process.env.OPENAI_API_KEY||process.env.VERCEL||process.env.SUPABASE_SERVICE_ROLE_KEY)throw Error('Dedicated authorized DEV process required');
@@ -99,6 +102,7 @@ export async function dispatchApproved(manifestFile,approvalFile){
   for(const p of fixture.packets){
    const prior=history.get(p.scenarioId)??[],context=contextFor(p,prior);
    const result=await runGuidanceEvaluationTurn({guard,turnId:p.id,context,model:m.turnModels[p.id],privateProbe:m.mode==='private-stage-probe'});
+   enforceAssessmentStop(guard,result,m);
    prior.push({packet:p,result});history.set(p.scenarioId,prior);
    // Only the genuine delivered reply and returned state are reused.
   }
