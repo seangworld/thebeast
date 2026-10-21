@@ -1,0 +1,13 @@
+{
+  "status": "BOTH PACKETS VERIFIED; PAID DISPATCH NOT READY",
+  "revision": 2,
+  "scenarioFamilies": 7,
+  "turns": 11,
+  "uniqueScenarioCriteria": 24,
+  "packetSha256": "a2a6b43ee1241c3273884baee5bf24e0a8238d4cd558bb58a82618365a6e3d03",
+  "gradingRulesSha256": "1b6fed5a2f20ec9b2f8aa8b8fba5fa45ae7b367aef8b77a106d15c761ab476fb",
+  "sourceBaselineSha256": "8af9212ccc7ec60c164c84c437643d314405de1f264bb3ea84305ff5ce24144c",
+  "historicalPacketUnchanged": true,
+  "applicationSourceUnchanged": true,
+  "modelCalls": 0
+}

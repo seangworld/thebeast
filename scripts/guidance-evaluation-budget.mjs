@@ -15,6 +15,8 @@ export function guidanceCallBound(original,policy,now=Date.now()){
  body.max_output_tokens=body.max_output_tokens??4800;
  check(integer(body.max_output_tokens)&&body.max_output_tokens>0&&body.max_output_tokens<=4800,'Output ceiling exceeded');
  body.service_tier='default';
+ body.reasoning=body.reasoning??{effort:'medium'};
+ check(['minimal','low','medium','high'].includes(body.reasoning.effort),'Unreviewed reasoning effort');
  const tools=body.tools??[];
  check(Array.isArray(tools)&&tools.length<=1&&tools.every(t=>t?.type==='web_search'),'Unpriced tool');
  const calls=tools.length?body.max_tool_calls:0;
@@ -27,14 +29,14 @@ export function guidanceCallBound(original,policy,now=Date.now()){
  return {body,rate,calls,maximumNanoUsd};
 }
 export class GuidanceEvaluationBudget {
- constructor({file,policy,runId,capNanoUsd,maximumAttempts=88,turnIds,now=Date.now}){
+ constructor({file,policy,runId,capNanoUsd,maximumAttempts=88,metadataReceipt=null,turnIds,now=Date.now}){
   check(isAbsolute(file)&&/^gc-[a-z0-9-]+$/.test(runId),'GC ledger identity required');
   check(integer(capNanoUsd)&&capNanoUsd>0&&capNanoUsd<=10_000_000_000,'GC cap must be within $10 proposal');
   check(integer(maximumAttempts)&&maximumAttempts>0&&maximumAttempts<=88,'Invalid attempt ceiling');
   check(Array.isArray(turnIds)&&turnIds.length>0&&new Set(turnIds).size===turnIds.length&&turnIds.every(x=>/^GC-\d\d-T\d+$/.test(x)),'Invalid turn allowlist');
   const dir=lstatSync(dirname(file));check(dir.isDirectory()&&!dir.isSymbolicLink()&&!(dir.mode&0o077),'Private ledger directory required');
   this.file=file;this.now=now;this.policy=structuredClone(policy);this.closed=false;this.activeTurn=null;
-  this.state={runId,policy:this.policy,capNanoUsd,maximumAttempts,turnIds:[...turnIds],started:[],entries:[],results:[],halted:null};
+  this.state={runId,policy:this.policy,capNanoUsd,maximumAttempts,metadataReceipt:structuredClone(metadataReceipt),turnIds:[...turnIds],started:[],entries:[],results:[],halted:null};
   // Exclusive create prohibits overwriting or silently restarting an existing run.
   const fd=openSync(file,'wx',0o600);try{writeFileSync(fd,JSON.stringify(this.state));fsyncSync(fd);}finally{closeSync(fd);}
  }
@@ -54,13 +56,15 @@ export class GuidanceEvaluationBudget {
   if(this.state.entries.length>=this.state.maximumAttempts||this.state.entries.filter(e=>e.turnId===this.activeTurn).length>=8)return this.halt('Attempt ceiling reached');
   let bound;try{bound=guidanceCallBound(original,this.policy,this.now());}catch(error){return this.halt(error.message);}
   if(this.summary().accountedNanoUsd+bound.maximumNanoUsd>this.state.capNanoUsd)return this.halt('Next reservation exceeds cap');
-  const entry={requestId,turnId:this.activeTurn,status:'reserved',maximumNanoUsd:bound.maximumNanoUsd,request:bound.body};
+  const entry={requestId,turnId:this.activeTurn,status:'reserved',startedAt:new Date(this.now()).toISOString(),maximumNanoUsd:bound.maximumNanoUsd,request:bound.body};
   this.state.entries.push(entry);this.save();
   return {body:bound.body,settle:payload=>this.settle(entry,bound,payload),unknown:()=>this.unknown(entry)};
  }
- unknown(entry){if(!this.state.entries.includes(entry))throw Error('Foreign reservation');entry.status='unknown';delete entry.accountedNanoUsd;this.state.halted='Unknown outcome; full reservation retained';this.save();}
+ unknown(entry){if(!this.state.entries.includes(entry))throw Error('Foreign reservation');entry.status='unknown';entry.latencyMs=this.now()-Date.parse(entry.startedAt);delete entry.accountedNanoUsd;this.state.halted='Unknown outcome; full reservation retained';this.save();}
  settle(entry,bound,p){
   check(entry.status==='reserved'&&this.state.entries.includes(entry),'Invalid settlement');
+  entry.response=structuredClone(p);
+  entry.latencyMs=this.now()-Date.parse(entry.startedAt);
   const input=p?.usage?.input_tokens,output=p?.usage?.output_tokens;
   const calls=Array.isArray(p?.output)?p.output.filter(x=>x.type==='web_search_call').length:Infinity;
   if(!integer(input)||!integer(output)||input>bound.rate.context*(bound.calls+1)||output>bound.body.max_output_tokens||calls>bound.calls||!bound.rate.returned.includes(p.model)||(p.service_tier!==undefined&&p.service_tier!=='default')||p.output.some(x=>x.type?.endsWith('_call')&&x.type!=='web_search_call')){

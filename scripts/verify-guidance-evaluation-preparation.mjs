@@ -29,8 +29,8 @@ for(const p of data.packets){
  if(p.seedHistory.length) assert.match(p.seedHistoryPurpose,/not an observed/);
 }
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
-assert.equal(git('rev-parse','HEAD:src'),git('rev-parse','73187630:src'));
-assert.equal(git('diff','--name-only','73187630','--','src'),'');
+assert.equal(git('rev-parse','HEAD:src'),git('rev-parse','cc98fcb77b476e5b63919126628cbfe574d8856e:src'));
+assert.equal(git('diff','--name-only','cc98fcb77b476e5b63919126628cbfe574d8856e','--','src'),'');
 const families=[...new Set(data.packets.map(p=>p.scenarioId))];
 const criterionCount=families.reduce((count,id)=>count+data.packets.find(p=>p.scenarioId===id).criteria.length,0);
 for(const id of families){const packets=data.packets.filter(p=>p.scenarioId===id);for(const p of packets)assert.deepEqual(p.criteria,packets[0].criteria);}

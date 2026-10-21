@@ -1,0 +1,26 @@
+{
+  "applicationTests": {
+    "passed": 2523,
+    "failed": 0,
+    "skipped": 0,
+    "command": "npm test; fresh TypeScript compilation in new worktree"
+  },
+  "guardIntegrationTests": {
+    "passed": 15,
+    "failed": 0,
+    "command": "node --test scripts/test-guidance-evaluation-budget.mjs"
+  },
+  "lint": "passed",
+  "typescript": "passed sequentially after build",
+  "requiredSecurityGatedBuild": "passed",
+  "npmAuditVulnerabilities": 0,
+  "maintainedBracesTestsPassed": 22,
+  "applicationSourceChanged": false,
+  "frozenPacketsChanged": false,
+  "newInferenceCalls": 0,
+  "metadataCalls": 2,
+  "liveLedgerCreated": false,
+  "liveCompetencyGrade": null,
+  "approval": "pending owner approval of exact manifest",
+  "sourceCatalogCheck": "TCC official linked Network Administration catalog returned403; no bypass"
+}

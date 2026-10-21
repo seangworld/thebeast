@@ -75,3 +75,35 @@ test('dedicated adapter guards all eight researched stages and retains private-c
  try{const result=await runGuidanceEvaluationTurn({guard:x.guard,turnId:'GC-01-T1',model:'gpt-5.6-luna',context:{ownerId:'synthetic-gc-evaluation',professionalId:'beasteducation.guidance-counselor',conversationId:'synthetic-gc',message:{id:'test',role:'user',text:'Compare current tuition at Example College for Alex Example.',createdAt:'2026-10-20'},recentMessages:[],memories:[],structuredRecords:[{domain:'education',record:{weekly_hours:0,constraints:'Private caregiving'}}],workspace:null,state}});assert.equal(attempts,8);assert.equal(publicCalls,2);assert.match(result.response,/zero study hours/);assert.ok(x.guard.summary().entries.every(e=>e.status==='settled'));}
  finally{globalThis.fetch=original;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;x.cleanup();}
 });
+test('unknown usage preserves the original response and measured latency',async()=>{
+ const x=setup();try{x.guard.startTurn('GC-01-T1');const payload={model:'synthetic',output:[],output_text:'Unsettled original answer'};
+ await assert.rejects(x.guard.dispatch(body,'missing-usage',async()=>payload));
+ const e=JSON.parse(readFileSync(x.file)).entries[0];assert.deepEqual(e.response,payload);assert.equal(e.status,'unknown');assert.ok(e.latencyMs>=0);
+ }finally{x.cleanup();}
+});
+test('default effort is pinned Medium; existing Low and lower ceilings survive',()=>{
+ assert.equal(guidanceCallBound(body,policy).body.reasoning.effort,'medium');
+ assert.equal(guidanceCallBound({...body,reasoning:{effort:'low'}},policy).body.reasoning.effort,'low');
+ assert.throws(()=>guidanceCallBound({...body,reasoning:{effort:'unknown'}},policy));
+});
+test('followups require genuine answers/state; exact private owner approval is mandatory',async()=>{
+ const {contextFor,verifyApproval,sha}=await import('./guidance-evaluation-dispatch.mjs');
+ const {writeFileSync,chmodSync}=await import('node:fs');const x=setup();
+ try{
+ const p={id:'GC-01-T2',scenarioId:'GC-01',turn:2,prompt:'Only two hours',syntheticRecord:{weekly_hours:4},seedHistory:[]};
+ assert.throws(()=>contextFor(p,[]),/preceding/);
+ const context=contextFor(p,[{packet:{id:'GC-01-T1',prompt:'Original question',seedHistory:[]},result:{response:'Actual previous reply',state:{corrections:['actual returned state']}}}]);
+ assert.equal(context.recentMessages[1].text,'Actual previous reply');assert.deepEqual(context.state.corrections,['actual returned state']);
+ const file=x.file+'.approval';const m={capNanoUsd:10_000_000_000,maximumInferenceAttempts:88,runId:'gc-test'},digest=sha('frozen manifest');
+ writeFileSync(file,JSON.stringify({owner:'Sean',approved:false,manifestSha256:digest,...m}),{mode:0o600});assert.throws(()=>verifyApproval(file,digest,m),/approval/);
+ writeFileSync(file,JSON.stringify({owner:'Sean',approved:true,manifestSha256:digest,...m}));assert.ok(verifyApproval(file,digest,m));assert.throws(()=>verifyApproval(file,sha('changed'),m),/approval/);
+ chmodSync(file,0o644);assert.throws(()=>verifyApproval(file,digest,m),/Private/);
+ }finally{x.cleanup();}
+});
+test('whole-run cap stops before the third transport after earlier calls settle',async()=>{
+ const x=setup({capNanoUsd:10_650_000});try{x.guard.startTurn('GC-01-T1');let calls=0;
+ for(let i=0;i<2;i++)await x.guard.dispatch(body,'paid-'+i,async()=>{calls++;return reply;});
+ await assert.rejects(x.guard.dispatch(body,'blocked',async()=>{calls++;return reply;}),/exceeds cap/);
+ assert.equal(calls,2);assert.equal(x.guard.summary().entries.length,2);assert.equal(x.guard.summary().accountedNanoUsd,100_000);
+ }finally{x.cleanup();}
+});
