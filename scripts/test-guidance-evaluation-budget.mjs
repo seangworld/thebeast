@@ -81,7 +81,8 @@ test('unknown usage preserves the original response and measured latency',async(
  const e=JSON.parse(readFileSync(x.file)).entries[0];assert.deepEqual(e.response,payload);assert.equal(e.status,'unknown');assert.ok(e.latencyMs>=0);
  }finally{x.cleanup();}
 });
-test('default effort is pinned Medium; existing Low and lower ceilings survive',()=>{
+test('default effort is pinned Medium; explicit Minimal/Low and lower ceilings survive',()=>{
+ assert.equal(guidanceCallBound({...body,reasoning:{effort:'minimal'},max_output_tokens:1400},policy).body.reasoning.effort,'minimal');
  assert.equal(guidanceCallBound(body,policy).body.reasoning.effort,'medium');
  assert.equal(guidanceCallBound({...body,reasoning:{effort:'low'}},policy).body.reasoning.effort,'low');
  assert.throws(()=>guidanceCallBound({...body,reasoning:{effort:'unknown'}},policy));

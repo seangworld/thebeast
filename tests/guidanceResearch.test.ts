@@ -153,3 +153,71 @@ test("mandatory routing is answer-free and leaves ordinary guidance, historical 
   assert.equal(guidanceMandatoryResearchPlan({ ...ctx, executionMode: "historical_reconciliation" }), null);
   assert.equal(guidanceMandatoryResearchPlan({ ...ctx, professionalId: "beastmoney.money-coach" }), null);
 });
+
+test("institution, credential and FAFSA authority briefs use bounded extraction and independent privacy review", async () => {
+  const originalFetch = globalThis.fetch, key = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "sk-proj-TEST_ONLY_GUIDANCE_RESEARCH_123456789";
+  const authority = { targets: [{ organization: "Federal Student Aid", program: "FAFSA", region: "", intake: "" }], questions: ["funding"] };
+  const credential = { targets: [{ organization: "Example Credential Board", program: "Professional Exam", region: "", intake: "Version 3" }], questions: ["exam_version"] };
+  try {
+    for (const proposed of [brief, credential, authority]) {
+      const stages: string[] = [];
+      globalThis.fetch = async (_url, init) => {
+        const request = JSON.parse(String(init?.body)), name = request.text?.format?.name;
+        stages.push(name || "discover");
+        if (name === "guidance_brief") {
+          assert.deepEqual(request.reasoning, { effort: "minimal" });
+          assert.equal(request.max_output_tokens, 1400); assert.equal(request.tools, undefined);
+          assert.match(request.instructions, /Federal Student Aid/);
+          assert.match(request.input, /202-555-0147/); // Actual private context retained, not sent publicly.
+          return stream({ output_text: JSON.stringify(proposed) });
+        }
+        if (name === "guidance_privacy") {
+          assert.equal(request.tools, undefined);
+          assert.deepEqual(JSON.parse(request.input).brief, proposed);
+          return stream({ output_text: JSON.stringify({ verdict: "safe" }) });
+        }
+        assert.ok(request.tools); assert.doesNotMatch(request.input, /Alex Example|202-555|Example Lane|caregiving/);
+        if (proposed === authority) {
+          assert.match(request.input, /Federal Student Aid/); assert.match(request.input, /FAFSA/);
+          assert.doesNotMatch(request.input, /Example College|2026|2027/);
+        }
+        return stream(webPayload({ candidates: [] }, []));
+      };
+      assert.deepEqual(parseGuidanceBrief(proposed), proposed);
+      assert.equal(await executeGuidanceDiscovery({ model: "gpt-5", privateContext: JSON.stringify(ctx), onCall: () => {} }), null);
+      assert.deepEqual(stages, ["guidance_brief", "guidance_privacy", "discover"]);
+    }
+  } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
+});
+
+test("ambiguous or personally identifying brief never reaches public search; clarification remains available", async () => {
+  const originalFetch = globalThis.fetch, key = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "sk-proj-TEST_ONLY_GUIDANCE_RESEARCH_123456789";
+  try {
+    for (const proposed of [{ targets: [], questions: [] }, { ...brief, targets: [{ ...brief.targets[0], organization: "Alex Example" }] }, { ...brief, targets: [{ ...brief.targets[0], organization: "202-555-0147" }] }]) {
+      let calls = 0;
+      globalThis.fetch = async (_url, init) => {
+        calls++; const request = JSON.parse(String(init?.body)); assert.equal(request.tools, undefined);
+        return stream({ output_text: JSON.stringify(request.text.format.name === "guidance_brief" ? proposed : { verdict: "unsafe" }) });
+      };
+      assert.equal(await executeGuidanceDiscovery({ model: "gpt-5", privateContext: JSON.stringify(ctx), onCall: () => {} }), null);
+      assert.equal(calls, proposed.targets[0]?.organization === "Alex Example" ? 2 : 1);
+    }
+    assert.match(guidanceResearchUnavailable, /please name the institution, credential or public program/);
+  } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
+});
+
+test("incomplete private brief with reported reasoning usage stops before privacy or public search", async () => {
+  const originalFetch = globalThis.fetch, key = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "sk-proj-TEST_ONLY_GUIDANCE_RESEARCH_123456789";
+  let calls = 0;
+  globalThis.fetch = async (_url, init) => {
+    calls++; const request = JSON.parse(String(init?.body)); assert.equal(request.text.format.name, "guidance_brief");
+    return new Response(`data: ${JSON.stringify({ type: "response.incomplete", response: { status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, usage: { input_tokens: 1111, output_tokens: 1344, output_tokens_details: { reasoning_tokens: 1344 } } } })}\n\n`);
+  };
+  try {
+    await assert.rejects(executeGuidanceDiscovery({ model: "gpt-5", privateContext: JSON.stringify(ctx), onCall: () => {} }));
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
+});
