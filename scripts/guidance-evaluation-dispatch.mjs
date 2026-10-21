@@ -28,6 +28,18 @@ export async function verifyDispatch(manifestFile){
  if(fingerprint('src')!==m.sourceFilesSha256||fingerprint('.test-dist/src')!==m.compiledRuntimeSha256)throw Error('Source or compiled runtime changed; rebuild/refreeze');
  for(const [path,digest] of Object.entries(m.fileHashes))if(sha(readFileSync(path))!==digest)throw Error('Frozen file changed: '+path);
  const fixture=JSON.parse(readFileSync(m.fixturePath));if(!fixture.syntheticOnly||fixture.packets.length!==11)throw Error('Synthetic fixture required');
+ if(m.selectedTurnIds){
+  if(new Set(m.selectedTurnIds).size!==m.selectedTurnIds.length||!m.selectedTurnIds.every(id=>fixture.packets.some(p=>p.id===id)))throw Error('Invalid selected frozen turns');
+  fixture.packets=fixture.packets.filter(p=>m.selectedTurnIds.includes(p.id));
+  for(const p of fixture.packets)if(fixture.packets.filter(q=>q.scenarioId===p.scenarioId&&q.turn<p.turn).length!==p.turn-1)throw Error('Missing genuine-history prerequisite');
+ }
+ if(m.priorAccounting){
+  const expected=resolve(homedir(),'.config/seangworld/evaluations/gc-20261021-pr273-assessment-v2/spend.json');
+  const stat=lstatSync(expected);if(!stat.isFile()||stat.isSymbolicLink()||stat.mode&0o077)throw Error('Original private prior ledger required');
+  const bytes=readFileSync(expected),prior=JSON.parse(bytes);
+  const balance=prior.entries.reduce((n,e)=>n+(e.status==='settled'?e.accountedNanoUsd:e.maximumNanoUsd),0);
+  if(sha(bytes)!==m.priorAccounting.ledgerSha256||balance!==m.priorAccounting.accountedNanoUsd||!prior.halted||balance+m.capNanoUsd>10000000000)throw Error('Prior cost/receipt mismatch');
+ }
  const {selectDigitalStaffModel}=await import('../.test-dist/src/lib/digitalStaffRuntime/runtime.js');
  for(const p of fixture.packets){
   // Selection uses the frozen member prompt; no fabricated answers enter execution.
@@ -35,6 +47,18 @@ export async function verifyDispatch(manifestFile){
   if(selectDigitalStaffModel(c)!==m.turnModels[p.id])throw Error('Effective model configuration changed');
  }
  return {manifest:m,manifestSha256:sha(raw),fixture};
+}
+export async function verifyModelMetadata(guard,m,fetchImpl=fetch){
+   guard.state.metadataReceipt={attempts:[]};guard.save();
+   for(const model of [...new Set(Object.values(m.turnModels))]){
+    if(guard.state.metadataReceipt.attempts.length>=m.metadataAttempts)guard.halt('Metadata attempt ceiling reached');
+    const receipt={model,status:'attempted',startedAt:new Date().toISOString()};guard.state.metadataReceipt.attempts.push(receipt);guard.save();
+    try{
+     const response=await fetchImpl('https://api.openai.com/v1/models/'+encodeURIComponent(model),{headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY},signal:AbortSignal.timeout(15000)});
+     receipt.httpStatus=response.status;receipt.status=response.ok?'available':'unavailable';guard.save();
+     if(!response.ok)guard.halt('Model metadata unavailable; no inference dispatched');
+    }catch{receipt.status='unknown-or-unavailable';guard.save();guard.halt('Metadata check failed; no retry or inference');}
+   }
 }
 export function verifyApproval(file,manifestSha256,m){
  const s=lstatSync(file);if(!s.isFile()||s.isSymbolicLink()||s.mode&0o077)throw Error('Private approval receipt required');
@@ -47,10 +71,11 @@ export async function dispatchApproved(manifestFile,approvalFile){
  if(process.env.NODE_ENV!=='development'||!process.env.OPENAI_API_KEY||process.env.VERCEL||process.env.SUPABASE_SERVICE_ROLE_KEY)throw Error('Dedicated authorized DEV process required');
  const root=resolve(homedir(),'.config/seangworld/evaluations',m.runId);mkdirSync(root,{mode:0o700,recursive:true});
  const ledger=join(root,'spend.json');if(existsSync(ledger))throw Error('Existing run cannot be restarted');
- const guard=new GuidanceEvaluationBudget({file:ledger,policy:m.policy,runId:m.runId,capNanoUsd:m.capNanoUsd,maximumAttempts:m.maximumInferenceAttempts,metadataReceipt:m.metadataReceipt,turnIds:fixture.packets.map(p=>p.id)});
+ const guard=new GuidanceEvaluationBudget({file:ledger,policy:m.policy,runId:m.runId,capNanoUsd:m.capNanoUsd,maximumAttempts:m.maximumInferenceAttempts,metadataReceipt:m.metadataReceipt,priorAccountedNanoUsd:m.priorAccounting?.accountedNanoUsd??0,priorLedgerSha256:m.priorAccounting?.ledgerSha256??null,turnIds:fixture.packets.map(p=>p.id)});
  const {runGuidanceEvaluationTurn}=await import('./guidance-evaluation-session.mjs');
  const history=new Map();let failure=null;
  try{
+  if(m.requireFreshMetadata)await verifyModelMetadata(guard,m);
   for(const p of fixture.packets){
    const prior=history.get(p.scenarioId)??[],context=contextFor(p,prior);
    const result=await runGuidanceEvaluationTurn({guard,turnId:p.id,context,model:m.turnModels[p.id]});
@@ -59,7 +84,7 @@ export async function dispatchApproved(manifestFile,approvalFile){
   }
  }catch(e){failure=e instanceof Error?e.message:'Execution failed';}
  finally{
-  const summary=guard.summary();writeFileSync(join(root,'completion.json'),JSON.stringify({manifestSha256,inferenceAttempts:summary.entries.length,metadataAttempts:m.metadataAttempts,totalDirectProviderAttempts:summary.entries.length+m.metadataAttempts,accountedNanoUsd:summary.accountedNanoUsd,completedTurns:summary.results.length,failure,halted:summary.halted},null,2)+'\n',{mode:0o600});guard.close();
+  const summary=guard.summary();writeFileSync(join(root,'completion.json'),JSON.stringify({manifestSha256,inferenceAttempts:summary.entries.length,metadataAttempts:summary.metadataReceipt?.attempts?.length??m.metadataAttempts,totalDirectProviderAttempts:summary.entries.length+(summary.metadataReceipt?.attempts?.length??m.metadataAttempts),accountedNanoUsd:summary.accountedNanoUsd,completedTurns:summary.results.length,failure,halted:summary.halted},null,2)+'\n',{mode:0o600});guard.close();
  }
  if(failure)throw Error('Assessment stopped; inspect private receipts; no retry');
 }

@@ -1,3 +1,4 @@
+import { guidancePlanningState } from "./guidancePlanning";
 import { executeGuidanceDiscovery } from "./guidanceDiscovery";
 import { guidanceResearchRequest, guidanceResearchUnavailable } from "./guidanceResearch";
 import { supportedMoneyProposal } from "../moneyCoachEvidence";
@@ -225,6 +226,7 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
   if (plan.handoff && !handoff) validationFailures.push("Rejected an unauthorized professional handoff.");
   const governed = applyDigitalStaffInteractionPolicy(context, {
     ...plan,
+    state: guidancePlanningState(context, plan.state),
     proposals,
     navigationTarget: productNavigation?.href || null,
     toolCalls: tools.accepted,

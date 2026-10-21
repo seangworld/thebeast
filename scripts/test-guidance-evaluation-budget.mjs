@@ -107,3 +107,38 @@ test('whole-run cap stops before the third transport after earlier calls settle'
  assert.equal(calls,2);assert.equal(x.guard.summary().entries.length,2);assert.equal(x.guard.summary().accountedNanoUsd,100_000);
  }finally{x.cleanup();}
 });
+test('actual provider adapter diagnoses completed/incomplete/failed/disconnected streams; uncertain usage never reduces reservation',async()=>{
+ const {requestOpenAIResponseStream}=await import('../.test-dist/src/lib/digitalStaffRuntime/provider.js');
+ const {registerEvaluationReservation}=await import('../.test-dist/src/lib/digitalStaffRuntime/evaluationProviderHook.js');
+ for(const kind of ['completed','incomplete','failed','error','disconnect','completed-missing-usage']){
+  const x=setup();try{
+   x.guard.startTurn('GC-01-T1');registerEvaluationReservation((body,id)=>x.guard.reserve(body,id));let attempts=0;
+   const response={...reply,status:kind==='completed'||kind==='completed-missing-usage'?'completed':kind};
+   if(kind==='completed-missing-usage')delete response.usage;
+   const data=kind==='disconnect'?{type:'response.created',response:reply}:kind==='error'?{type:'error',code:'synthetic_error',message:'private diagnostic message',usage:reply.usage}:{type:'response.'+(kind==='completed-missing-usage'?'completed':kind),response};
+   let pulled=false;
+   const fetchImpl=async()=>{attempts++;return new Response(new ReadableStream({pull(c){if(!pulled){pulled=true;c.enqueue(new TextEncoder().encode('data: '+JSON.stringify(data)+'\n\n'));}else if(kind==='disconnect')c.error(new Error('synthetic disconnect'));else c.close();}}),{headers:{'x-request-id':'synthetic-provider-reference'}});};
+   const call=requestOpenAIResponseStream(body,{requestId:'adapter-'+kind,apiKey:'sk-proj-SYNTHETIC_TEST_ONLY_GC_DIAGNOSTICS',fetchImpl});
+   if(kind==='completed')await call;else await assert.rejects(call);
+   const e=JSON.parse(readFileSync(x.file)).entries[0];assert.equal(attempts,1);assert.equal(e.streamDiagnostic.providerRequestId,'synthetic-provider-reference');
+   if(kind==='completed')assert.equal(e.status,'settled');
+   else{assert.equal(e.status,'unknown');assert.equal(x.guard.summary().accountedNanoUsd,e.maximumNanoUsd);assert.throws(()=>x.guard.startTurn('GC-01-T2'));}
+   if(kind!=='completed-missing-usage')assert.deepEqual(e.streamDiagnostic.reportedUsage,reply.usage);
+   if(kind==='incomplete'||kind==='failed')assert.deepEqual(JSON.parse(e.streamDiagnostic.terminalJson).response.usage,reply.usage);
+  }finally{registerEvaluationReservation(()=>undefined);x.cleanup();}
+ }
+});
+test('a separate proposed run accounts for the prior halted balance without releasing its unknown reservation',async()=>{
+ assert.throws(()=>setup({capNanoUsd:9_440_000_000,priorAccountedNanoUsd:565_628_670,priorLedgerSha256:'a'.repeat(64)}),/Cumulative/);
+ const x=setup({capNanoUsd:9_430_000_000,priorAccountedNanoUsd:565_628_670,priorLedgerSha256:'a'.repeat(64)});
+ try{x.guard.startTurn('GC-01-T1');await x.guard.dispatch(body,'new-only',async()=>reply);assert.equal(x.guard.summary().cumulativeAccountedNanoUsd,565_678_670);assert.equal(x.guard.summary().priorAccountedNanoUsd,565_628_670);}finally{x.cleanup();}
+});
+test('future metadata requests are recorded once and failure stops before inference without retry',async()=>{
+ const {verifyModelMetadata}=await import('./guidance-evaluation-dispatch.mjs');
+ for(const failed of [false,true]){const x=setup();try{let count=0;
+ const call=verifyModelMetadata(x.guard,{turnModels:{a:'synthetic-one',b:'synthetic-two'},metadataAttempts:2},async url=>{assert.match(url,/^https:\/\/api.openai.com\/v1\/models\//);count++;if(failed)throw Error('synthetic metadata failure');return new Response('{}');});
+ if(failed)await assert.rejects(call);else await call;
+ assert.equal(count,failed?1:2);assert.equal(x.guard.summary().entries.length,0);assert.equal(x.guard.state.metadataReceipt.attempts.length,count);
+ if(failed)assert.ok(x.guard.state.halted);
+ }finally{x.cleanup();}}
+});

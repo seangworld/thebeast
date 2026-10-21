@@ -29,9 +29,10 @@ for(const p of data.packets){
  if(p.seedHistory.length) assert.match(p.seedHistoryPurpose,/not an observed/);
 }
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
-assert.equal(git('rev-parse','HEAD:src'),git('rev-parse','cc98fcb77b476e5b63919126628cbfe574d8856e:src'));
-assert.equal(git('diff','--name-only','cc98fcb77b476e5b63919126628cbfe574d8856e','--','src'),'');
+const fixturesOnly=process.argv.includes('--fixtures-only');
+if(!fixturesOnly)assert.equal(git('rev-parse','HEAD:src'),git('rev-parse','cc98fcb77b476e5b63919126628cbfe574d8856e:src'));
+if(!fixturesOnly)assert.equal(git('diff','--name-only','cc98fcb77b476e5b63919126628cbfe574d8856e','--','src'),'');
 const families=[...new Set(data.packets.map(p=>p.scenarioId))];
 const criterionCount=families.reduce((count,id)=>count+data.packets.find(p=>p.scenarioId===id).criteria.length,0);
 for(const id of families){const packets=data.packets.filter(p=>p.scenarioId===id);for(const p of packets)assert.deepEqual(p.criteria,packets[0].criteria);}
-console.log(JSON.stringify({status:'BOTH PACKETS VERIFIED; PAID DISPATCH NOT READY',revision:2,scenarioFamilies:7,turns:11,uniqueScenarioCriteria:criterionCount,packetSha256:sha(raw),gradingRulesSha256:sha(readFileSync(base+'GRADING-RULES.md')),sourceBaselineSha256:sha(readFileSync(base+'SOURCE-BASELINE.md')),historicalPacketUnchanged:true,applicationSourceUnchanged:true,modelCalls:0},null,2));
+console.log(JSON.stringify({status:'BOTH PACKETS VERIFIED; PAID DISPATCH NOT READY',revision:2,scenarioFamilies:7,turns:11,uniqueScenarioCriteria:criterionCount,packetSha256:sha(raw),gradingRulesSha256:sha(readFileSync(base+'GRADING-RULES.md')),sourceBaselineSha256:sha(readFileSync(base+'SOURCE-BASELINE.md')),historicalPacketUnchanged:true,applicationSourceUnchanged:git('rev-parse','HEAD:src')===git('rev-parse','cc98fcb77b476e5b63919126628cbfe574d8856e:src')&&!git('diff','--name-only','--','src'),fixturesOnly,modelCalls:0},null,2));
