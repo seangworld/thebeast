@@ -21,6 +21,13 @@ test('an unresolved reservation blocks concurrent dispatch and stays fully accou
  ticket.unknown();assert.throws(()=>x.guard.startTurn('GC-01-T2'),/halted/);
  }finally{x.cleanup();}
 });
+test('delivered results and returned state are persisted before turn completion',async()=>{
+ const x=setup();try{x.guard.startTurn('GC-01-T1');await x.guard.dispatch(body,'a',async()=>reply);
+ const result={response:'Delivered answer',state:{corrections:['two hours']},researchSources:[],validationFailures:[]};
+ x.guard.finishTurn(result);result.response='Changed outside ledger';
+ const saved=JSON.parse(readFileSync(x.file));assert.equal(saved.results[0].turnId,'GC-01-T1');assert.equal(saved.results[0].result.response,'Delivered answer');assert.deepEqual(saved.results[0].result.state.corrections,['two hours']);
+ }finally{x.cleanup();}
+});
 function setup(options={}){const dir=mkdtempSync(join(tmpdir(),'gc-budget-'));const file=join(dir,'ledger.json');const config={file,policy,runId:'gc-test',capNanoUsd:1_000_000_000,turnIds:['GC-01-T1','GC-01-T2'],...options};return {file,config,guard:new GuidanceEvaluationBudget(config),cleanup:()=>rmSync(dir,{recursive:true,force:true})};}
 test('reservation persisted before transport; four web calls and explicit output bound',async()=>{const x=setup();try{x.guard.startTurn('GC-01-T1');let calls=0;await x.guard.dispatch({...body,tools:[{type:'web_search'}],max_tool_calls:4},'a',async prepared=>{calls++;assert.equal(JSON.parse(readFileSync(x.file)).entries[0].status,'reserved');assert.equal(prepared.max_output_tokens,4800);return reply;});assert.equal(calls,1);assert.equal(x.guard.summary().entries[0].accountedNanoUsd,40_050_000);}finally{x.cleanup();}});
 test('overbudget blocks transport before any paid attempt',async()=>{const x=setup({capNanoUsd:1});try{x.guard.startTurn('GC-01-T1');let calls=0;await assert.rejects(x.guard.dispatch(body,'a',async()=>{calls++;return reply;}),/cap/);assert.equal(calls,0);assert.equal(x.guard.summary().entries.length,0);}finally{x.cleanup();}});
@@ -53,6 +60,7 @@ test('dedicated adapter guards all eight researched stages and retains private-c
  process.env.OPENAI_API_KEY='sk-proj-SYNTHETIC_TEST_ONLY_GC_123456789';let attempts=0,publicCalls=0;
  globalThis.fetch=async(_url,init)=>{
   attempts++;const request=JSON.parse(init.body),id=new Headers(init.headers).get('X-Client-Request-Id');
+  if(attempts===1)await assert.rejects(runGuidanceEvaluationTurn({guard:x.guard,turnId:'GC-01-T2',context:{},model:'gpt-5.6-luna'}),/already active/);
   assert.equal(JSON.parse(readFileSync(x.file)).entries.at(-1).status,'reserved');
   const name=request.text?.format?.name;let value,urls=[];
   if(name==='member_agent_semantic_verification')value={verdict:'safe',categories:[]};

@@ -49,3 +49,13 @@ Added official FAFSA checklist, eligibility overview and year-qualified deadline
 The preparation verifier now checks BOTH frozen packet hashes, confirms that only the two documented revision-2 prompts changed, verifies unchanged scenario criteria/records/history, counts unique scenario-level criteria, and reports source/rubric hashes. Previously it checked only revision 1; that preparation gap is corrected. Both packets remain unanswered and ungraded.
 
 Ten no-cost guard/integration tests pass. Added ninth-call rejection and concurrent unresolved-reservation checks. Application source remains unchanged; no new full application-suite run is claimed. No paid calls, credential extraction, production changes or independent review occurred. Remaining live gates: authorized DEV credential setup, reviewed expiring pricing/model availability, exact dispatch manifest and owner spending approval.
+
+## Final local handoff — October 21
+
+Latest verification: **11/11 guard/integration tests pass**, both frozen packets verify, and diff checks pass. Delivered answers and returned conversation state are now saved durably before turn completion. Overlapping adapter sessions cannot replace each other's accounting hook. No application source changes; earlier full-suite/build results remain historical evidence for the unchanged application candidate.
+
+The normal local credential paths were checked without printing secrets: process OPENAI_API_KEY is absent, and no `.env.local`, `.env.development.local`, `.env.development` or `.env` exists in this checkout. No alternate environment credentials were extracted. This is the current execution blocker, not evidence that the deployed app lacks credentials.
+
+Resumption: use an owner-authorized DEV credential configured through the normal secure environment setup; rebuild the compiled runtime from the pinned source; run the preparation verifier and guard tests; confirm actual model availability; freeze the expiring conservative pricing policy, source/rubric/packet hashes, attempted-call ceiling and total dollar cap; obtain the concrete dispatch approval required by AGENTS.md and EVALUATION-PLAN.md; execute once using synthetic records and actual returned follow-up state. Never reuse Taylor's budget or ledgers. Preserve exact delivered evidence before executor grading and independent review. Do not merge or deploy as part of the assessment.
+
+Nothing is running unattended. No paid calls, new competence score or production changes occurred. Owner computer access is only needed if the authorized DEV credential configuration cannot be supplied through an existing configured workflow.

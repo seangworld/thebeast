@@ -34,7 +34,7 @@ export class GuidanceEvaluationBudget {
   check(Array.isArray(turnIds)&&turnIds.length>0&&new Set(turnIds).size===turnIds.length&&turnIds.every(x=>/^GC-\d\d-T\d+$/.test(x)),'Invalid turn allowlist');
   const dir=lstatSync(dirname(file));check(dir.isDirectory()&&!dir.isSymbolicLink()&&!(dir.mode&0o077),'Private ledger directory required');
   this.file=file;this.now=now;this.policy=structuredClone(policy);this.closed=false;this.activeTurn=null;
-  this.state={runId,policy:this.policy,capNanoUsd,maximumAttempts,turnIds:[...turnIds],started:[],entries:[],halted:null};
+  this.state={runId,policy:this.policy,capNanoUsd,maximumAttempts,turnIds:[...turnIds],started:[],entries:[],results:[],halted:null};
   // Exclusive create prohibits overwriting or silently restarting an existing run.
   const fd=openSync(file,'wx',0o600);try{writeFileSync(fd,JSON.stringify(this.state));fsyncSync(fd);}finally{closeSync(fd);}
  }
@@ -47,7 +47,7 @@ export class GuidanceEvaluationBudget {
  ready(){check(!this.closed&&!this.state.halted&&!this.state.entries.some(e=>e.status!=='settled'),'Run halted or unresolved');}
  halt(message){this.state.halted=message;this.save();throw Error(message);}
  startTurn(id){this.ready();check(this.activeTurn===null,'Finish preceding turn first');check(this.state.turnIds.includes(id)&&!this.state.started.includes(id),'Unapproved or duplicate turn');this.state.started.push(id);this.activeTurn=id;this.save();}
- finishTurn(){this.ready();check(this.activeTurn!==null,'No active turn');this.activeTurn=null;}
+ finishTurn(result){this.ready();check(this.activeTurn!==null,'No active turn');if(result!==undefined)this.state.results.push({turnId:this.activeTurn,result:structuredClone(result)});this.save();this.activeTurn=null;}
  reserve(original,requestId){
   this.ready();check(this.activeTurn!==null,'No active turn');
   if(typeof requestId!=='string'||!requestId||this.state.entries.some(e=>e.requestId===requestId))return this.halt('Duplicate or invalid request ID; retries prohibited');
