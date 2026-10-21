@@ -163,3 +163,45 @@ test('mandatory research brief with missing usage halts the real adapter before 
   assert.throws(()=>x.guard.startTurn('GC-04-T2'));
  }finally{globalThis.fetch=original;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;x.cleanup();}
 });
+
+test('actual $3 policy stops before next four-tool reservation and retains both prior balances',async()=>{
+ const real={expiresAt:'2099-01-01',searchNano:10000000,models:{'gpt-5':{context:400000,inputNano:1250,outputNano:10000,returned:['gpt-5','gpt-5-2025-08-07']}}};
+ const x=setup({policy:real,capNanoUsd:3000000000,maximumAttempts:7,priorAccountedNanoUsd:1124180130,priorLedgerSha256:'a'.repeat(64)});
+ try{
+  x.guard.startTurn('GC-01-T1');let transports=0;
+  await x.guard.dispatch({model:'gpt-5',store:false,max_output_tokens:4800},'first',async()=>{transports++;return {model:'gpt-5',usage:{input_tokens:400000,output_tokens:4800},output:[]};});
+  const request={model:'gpt-5',store:false,max_output_tokens:3600,tools:[{type:'web_search'}],max_tool_calls:4};
+  assert.equal(guidanceCallBound(request,real).maximumNanoUsd,2576000000);
+  await assert.rejects(x.guard.dispatch(request,'cannot-fit',async()=>{transports++;return reply;}),/Next reservation exceeds cap/);
+  assert.equal(transports,1);assert.equal(x.guard.summary().entries.length,1);assert.equal(x.guard.summary().cumulativeAccountedNanoUsd,1672180130);
+  assert.equal(x.guard.state.priorAccountedNanoUsd+x.guard.state.capNanoUsd,4124180130);
+ }finally{x.cleanup();}
+});
+
+test('two prior halted receipts are checked read-only; tampering, duplicates and wrong totals fail closed',async()=>{
+ const {verifyPriorAccounting,sha}=await import('./guidance-evaluation-dispatch.mjs');
+ const {mkdirSync,writeFileSync}=await import('node:fs');
+ const root=mkdtempSync(join(tmpdir(),'gc-parent-check-'));
+ try{
+  const receipts=[];
+  for(const [runId,known,unknown] of [['gc-first',51628670,514000000],['gc-second',10551460,548000000]]){
+   const dir=join(root,runId);mkdirSync(dir,{mode:0o700});const file=join(dir,'spend.json');
+   const bytes=JSON.stringify({halted:'uncertain',entries:[{status:'settled',accountedNanoUsd:known},{status:'unknown',maximumNanoUsd:unknown}]});writeFileSync(file,bytes,{mode:0o600});
+   receipts.push({runId,ledgerSha256:sha(bytes),accountedNanoUsd:known+unknown});
+  }
+  const m={capNanoUsd:3000000000,maximumCumulativeAccountedNanoUsd:4124180130,priorAccounting:{receipts,accountedNanoUsd:1124180130,ledgerSha256:sha(JSON.stringify(receipts))}};
+  assert.equal(verifyPriorAccounting(m,root),1124180130);
+  assert.throws(()=>verifyPriorAccounting({...m,priorAccounting:{...m.priorAccounting,accountedNanoUsd:0}},root));
+  assert.throws(()=>verifyPriorAccounting({...m,priorAccounting:{...m.priorAccounting,receipts:[receipts[0],receipts[0]]}},root));
+  writeFileSync(join(root,'gc-second','spend.json'),'{}',{mode:0o600});assert.throws(()=>verifyPriorAccounting(m,root));
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('single-turn seven-attempt ceiling blocks an eighth transport even with budget remaining',async()=>{
+ const x=setup({maximumAttempts:7});try{
+  x.guard.startTurn('GC-01-T1');let calls=0;
+  for(let i=0;i<7;i++)await x.guard.dispatch(body,'single-'+i,async()=>{calls++;return reply;});
+  await assert.rejects(x.guard.dispatch(body,'eighth',async()=>{calls++;return reply;}),/Attempt ceiling/);
+  assert.equal(calls,7);assert.equal(x.guard.summary().entries.length,7);
+ }finally{x.cleanup();}
+});

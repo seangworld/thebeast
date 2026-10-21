@@ -20,6 +20,24 @@ export function contextFor(packet,prior=[]){
  const history=[...seed,...actual];
  return {ownerId:'synthetic-gc-assessment',professionalId:'beasteducation.guidance-counselor',conversationId:'synthetic-gc-'+packet.scenarioId,message:{id:packet.id,role:'user',text:packet.prompt,createdAt:date},recentMessages:history,state:structuredClone(prior.at(-1)?.result.state??empty),memories:[],structuredRecords:[{domain:'education',record:structuredClone(packet.syntheticRecord),updatedAt:date}],workspace:'/dashboard/education/guidance-counselor'};
 }
+export function verifyPriorAccounting(m,root=resolve(homedir(),'.config/seangworld/evaluations')){
+ const receipts=m.priorAccounting.receipts??[{...m.priorAccounting}];
+ if(!receipts.length||new Set(receipts.map(r=>r.runId)).size!==receipts.length)throw Error('Distinct prior receipts required');
+ let total=0;
+ for(const receipt of receipts){
+  if(!/^gc-[a-z0-9-]+$/.test(receipt.runId))throw Error('Invalid prior run identity');
+  const file=join(root,receipt.runId,'spend.json'),stat=lstatSync(file);
+  if(!stat.isFile()||stat.isSymbolicLink()||stat.mode&0o077)throw Error('Original private prior ledger required');
+  const bytes=readFileSync(file),prior=JSON.parse(bytes);
+  const balance=prior.entries.reduce((n,e)=>n+(e.status==='settled'?e.accountedNanoUsd:e.maximumNanoUsd),0);
+  if(!Number.isSafeInteger(balance)||balance<0||sha(bytes)!==receipt.ledgerSha256||balance!==receipt.accountedNanoUsd||!prior.halted)throw Error('Prior cost/receipt mismatch');
+  total+=balance;
+ }
+ if(total!==m.priorAccounting.accountedNanoUsd||total+m.capNanoUsd>10000000000)throw Error('Prior aggregate mismatch');
+ if(m.maximumCumulativeAccountedNanoUsd!==undefined&&total+m.capNanoUsd!==m.maximumCumulativeAccountedNanoUsd)throw Error('Cumulative ceiling mismatch');
+ if(m.priorAccounting.receipts&&sha(JSON.stringify(receipts))!==m.priorAccounting.ledgerSha256)throw Error('Prior receipt bundle mismatch');
+ return total;
+}
 export async function verifyDispatch(manifestFile){
  const raw=readFileSync(manifestFile),m=JSON.parse(raw);
  if(!Number.isFinite(Date.parse(m.policy.expiresAt))||Date.now()>=Date.parse(m.policy.expiresAt))throw Error('Pricing expired; refreeze before approval/dispatch');
@@ -33,13 +51,7 @@ export async function verifyDispatch(manifestFile){
   fixture.packets=fixture.packets.filter(p=>m.selectedTurnIds.includes(p.id));
   for(const p of fixture.packets)if(fixture.packets.filter(q=>q.scenarioId===p.scenarioId&&q.turn<p.turn).length!==p.turn-1)throw Error('Missing genuine-history prerequisite');
  }
- if(m.priorAccounting){
-  const expected=resolve(homedir(),'.config/seangworld/evaluations/gc-20261021-pr273-assessment-v2/spend.json');
-  const stat=lstatSync(expected);if(!stat.isFile()||stat.isSymbolicLink()||stat.mode&0o077)throw Error('Original private prior ledger required');
-  const bytes=readFileSync(expected),prior=JSON.parse(bytes);
-  const balance=prior.entries.reduce((n,e)=>n+(e.status==='settled'?e.accountedNanoUsd:e.maximumNanoUsd),0);
-  if(sha(bytes)!==m.priorAccounting.ledgerSha256||balance!==m.priorAccounting.accountedNanoUsd||!prior.halted||balance+m.capNanoUsd>10000000000)throw Error('Prior cost/receipt mismatch');
- }
+ if(m.priorAccounting)verifyPriorAccounting(m);
  const {selectDigitalStaffModel}=await import('../.test-dist/src/lib/digitalStaffRuntime/runtime.js');
  for(const p of fixture.packets){
   // Selection uses the frozen member prompt; no fabricated answers enter execution.
