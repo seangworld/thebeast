@@ -59,7 +59,7 @@ test("life workspaces use canonical owner-scoped records plus shared goals and d
 test("Guidance Counselor knows all life workspaces and authoritative research boundaries", () => {
   for (const route of ["/dashboard/education/schools", "/dashboard/education/certifications", "/dashboard/education/scholarships"]) assert.match(config, new RegExp(route));
   for (const topic of ["old school", "renewal", "education funding", "fafsa", "gi bill"]) assert.match(config, new RegExp(topic, "i"));
-  assert.match(config, /official certification bodies/);
+  assert.doesNotMatch(config, /"official certification bodies"|"accreditor and official school domains"/);
   assert.match(config, /create_education_funding_proposal/);
   assert.match(professionalPrompt, /keep saved opportunities, applications, and confirmed awards distinct/);
   assert.match(research, /official school catalogs and financial-aid pages/);
