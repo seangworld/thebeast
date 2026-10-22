@@ -1,0 +1,562 @@
+{
+  "reviewedAt": "2026-10-21",
+  "sources": [
+    {
+      "repository": "seangworld.com",
+      "commit": "8eb8c87d034ec4e379b0ae0ddcba241aad4581a6",
+      "paths": [
+        "content/digital-professionals.ts",
+        "lib/news/newsroom-staff.ts",
+        "docs/news/NEWS-SCOUT-ZERO-COST-POLICY.md"
+      ]
+    },
+    {
+      "repository": "beastfusion",
+      "commit": "7437aedb40873a0f6f7cb43703d07b2744d00504",
+      "paths": [
+        "state/shared-agent-registry.json",
+        "state/agent-capability-assessment-registry.json"
+      ]
+    }
+  ],
+  "reconciliation": [
+    "Public seangworld.com five member profiles alias the five BeastOS canonical profiles; no duplicate dossiers.",
+    "BeastFusion member classes alias the same specialists. Developer/observer/proposal/reviewer/outcome and ecosystem_orchestrator map to six existing development profiles.",
+    "VA Claims Aide is Taylor\u2019s specialization, not a separate agent.",
+    "Cole Mercer and Leila Bautista are owner-requested identity reconciliation records, not verified deployed personas.",
+    "News workflow roles are contract-only; scouts are separate paused runtime roles.",
+    "Telemetry is not queried by this static roster. Availability is unknown until verified through existing operations evidence.",
+    "Newsroom Source Scout workflow role aliases runtime Source Scout; its contract duties do not create a duplicate or reactivate discovery.",
+    "Legacy validation_reviewer governance class is retained as a Reviewer Agent alias; not an extra independently deployed reviewer."
+  ],
+  "staff": [
+    {
+      "id": "agency.cole-mercer",
+      "name": "Cole Mercer",
+      "role": "Agency persona",
+      "departments": [
+        "AI Agency"
+      ],
+      "products": [
+        "AI Agency"
+      ],
+      "mission": "Agency persona",
+      "duties": [
+        "Owner-requested staff inclusion; canonical implementation and duties require reconciliation."
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "No matching persona record located in inspected source registries. Do not claim activation."
+      ],
+      "source": "https://github.com/seangworld/thebeast/issues/274",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "agency.leila-bautista",
+      "name": "Leila Bautista",
+      "role": "Agency persona",
+      "departments": [
+        "AI Agency"
+      ],
+      "products": [
+        "AI Agency"
+      ],
+      "mission": "Agency persona",
+      "duties": [
+        "Owner-requested staff inclusion; canonical implementation and duties require reconciliation."
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "No matching persona record located in inspected source registries. Do not claim activation."
+      ],
+      "source": "https://github.com/seangworld/thebeast/issues/274",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "atlas",
+      "name": "Atlas",
+      "role": "Owner assistant prototype",
+      "departments": [
+        "Prototype"
+      ],
+      "products": [
+        "Prototype"
+      ],
+      "mission": "Owner assistant prototype",
+      "duties": [
+        "Owner-directed tasks, memory and connection summaries in the existing Atlas implementation."
+      ],
+      "permissions": [
+        "Explicit Remember/Add task commands save owner-scoped Atlas records.",
+        "Read-only supplied GitHub/Vercel snapshots and public homepage reachability checks.",
+        "No shell, deployment, private finance/health access, arbitrary browsing, spending or messaging authority."
+      ],
+      "limitations": [
+        "Backburner by owner. Do not activate from the roster."
+      ],
+      "source": "https://github.com/seangworld/thebeast/blob/main/src/lib/atlas/shared.ts",
+      "lifecycle": "paused",
+      "aliases": []
+    },
+    {
+      "id": "beastfusion.policy.product_specialist",
+      "name": "Product Specialist",
+      "role": "Governance role / policy_only",
+      "departments": [
+        "BeastFusion"
+      ],
+      "products": [
+        "BeastFusion"
+      ],
+      "mission": "Governance role / policy_only",
+      "duties": [
+        "owner-approved product package",
+        "product-owned repository"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "cross-product business logic transfer",
+        "unapproved repository writes",
+        "protected UI changes without approval",
+        "Policy class, not evidence of a separately running agent."
+      ],
+      "source": "https://github.com/seangworld/beastfusion/blob/7437aedb40873a0f6f7cb43703d07b2744d00504/state/shared-agent-registry.json",
+      "lifecycle": "planned",
+      "aliases": [
+        "product_specialist"
+      ]
+    },
+    {
+      "id": "beastfusion.policy.release_coordinator",
+      "name": "Release Coordinator",
+      "role": "Governance role / policy_only",
+      "departments": [
+        "BeastFusion"
+      ],
+      "products": [
+        "BeastFusion"
+      ],
+      "mission": "Governance role / policy_only",
+      "duties": [
+        "approved release classification",
+        "deployment evidence coordination"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "deploy without owner authority",
+        "create deployment targets",
+        "bypass rollback gates",
+        "Policy class, not evidence of a separately running agent."
+      ],
+      "source": "https://github.com/seangworld/beastfusion/blob/7437aedb40873a0f6f7cb43703d07b2744d00504/state/shared-agent-registry.json",
+      "lifecycle": "planned",
+      "aliases": [
+        "release_coordinator"
+      ]
+    },
+    {
+      "id": "beastfusion.policy.security_reviewer",
+      "name": "Security Reviewer",
+      "role": "Governance role / policy_only",
+      "departments": [
+        "BeastFusion"
+      ],
+      "products": [
+        "BeastFusion"
+      ],
+      "mission": "Governance role / policy_only",
+      "duties": [
+        "BeastShield-aligned review",
+        "security evidence reporting"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "access production secrets",
+        "rotate credentials without authority",
+        "replace source-product implementation ownership",
+        "Policy class, not evidence of a separately running agent."
+      ],
+      "source": "https://github.com/seangworld/beastfusion/blob/7437aedb40873a0f6f7cb43703d07b2744d00504/state/shared-agent-registry.json",
+      "lifecycle": "planned",
+      "aliases": [
+        "security_reviewer"
+      ]
+    },
+    {
+      "id": "beastfusion.policy.marketing_specialist",
+      "name": "BeastMarketing Specialist",
+      "role": "Governance role / policy_only",
+      "departments": [
+        "BeastMarketing"
+      ],
+      "products": [
+        "BeastMarketing"
+      ],
+      "mission": "Governance role / policy_only",
+      "duties": [
+        "owner-approved campaigns",
+        "approved public product and content facts",
+        "privacy-safe marketing evidence",
+        "draft assets and recommendations",
+        "platform-style ad previews",
+        "internal provider-neutral distribution plans",
+        "qualified traffic acquisition and distribution recommendations for existing assets"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "publish or schedule without owner approval",
+        "connect providers or use credentials",
+        "spend money or buy media",
+        "invent product claims",
+        "use private member data",
+        "treat unavailable metrics as zero",
+        "Policy class, not evidence of a separately running agent."
+      ],
+      "source": "https://github.com/seangworld/beastfusion/blob/7437aedb40873a0f6f7cb43703d07b2744d00504/state/shared-agent-registry.json",
+      "lifecycle": "planned",
+      "aliases": [
+        "marketing_specialist"
+      ]
+    },
+    {
+      "id": "news.source-scout",
+      "name": "Source Scout",
+      "role": "Source discovery and candidate review",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Source discovery and candidate review",
+      "duties": [
+        "Source discovery and candidate review",
+        "Existing headline refresh remains separate from paused discovery.",
+        "source discovery",
+        "source health",
+        "coverage expansion"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "New source/geography discovery paused by owner; roster does not reactivate scouts.",
+        "Normal headline refresh must remain intact.",
+        "Newsroom Source Scout contract role is included here, not a second agent or activation."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/app/api/news/source-scout/route.ts",
+      "lifecycle": "paused",
+      "aliases": [
+        "news.workflow.source-scout"
+      ]
+    },
+    {
+      "id": "news.geo-scout",
+      "name": "Geo Scout",
+      "role": "Coverage/geography discovery",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Coverage/geography discovery",
+      "duties": [
+        "Coverage/geography discovery",
+        "Existing headline refresh remains separate from paused discovery."
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "New source/geography discovery paused by owner; roster does not reactivate scouts.",
+        "Normal headline refresh must remain intact."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/app/api/news/geo-scout/route.ts",
+      "lifecycle": "paused",
+      "aliases": []
+    },
+    {
+      "id": "news.workflow.assignment-desk",
+      "name": "Assignment Desk",
+      "role": "Newsroom workflow / recommend",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Newsroom workflow / recommend",
+      "duties": [
+        "coverage gaps",
+        "story intake",
+        "cluster routing"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Contract-only workflow role; not a separately deployed autonomous agent.",
+        "No public publishing, new source activation or paid research authority."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "news.workflow.reporter-researcher",
+      "name": "Reporter / Researcher",
+      "role": "Newsroom workflow / research",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Newsroom workflow / research",
+      "duties": [
+        "bounded research queries",
+        "cited URL discovery",
+        "cluster research"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Contract-only workflow role; not a separately deployed autonomous agent.",
+        "No public publishing, new source activation or paid research authority."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "news.workflow.fact-checker",
+      "name": "Fact Checker",
+      "role": "Newsroom workflow / verify",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Newsroom workflow / verify",
+      "duties": [
+        "claim/source binding",
+        "evidence sufficiency",
+        "contradiction detection"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Contract-only workflow role; not a separately deployed autonomous agent.",
+        "No public publishing, new source activation or paid research authority."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "news.workflow.standards-editor",
+      "name": "Standards & Evidence Editor",
+      "role": "Newsroom workflow / block",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Newsroom workflow / block",
+      "duties": [
+        "rights qualification",
+        "evidence policy",
+        "standards gate"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Contract-only workflow role; not a separately deployed autonomous agent.",
+        "No public publishing, new source activation or paid research authority."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "news.workflow.fact-desk-editor",
+      "name": "Fact Desk Editor",
+      "role": "Newsroom workflow / prepare",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Newsroom workflow / prepare",
+      "duties": [
+        "Fact Brief candidate",
+        "revision lifecycle",
+        "review queue"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Contract-only workflow role; not a separately deployed autonomous agent.",
+        "No public publishing, new source activation or paid research authority."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "news.workflow.copy-editor",
+      "name": "Standards & Copy Editor",
+      "role": "Newsroom workflow / block",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Newsroom workflow / block",
+      "duties": [
+        "headline spelling and grammar",
+        "entity-name correctness",
+        "facts-only tone",
+        "duplicate phrasing",
+        "Fact Brief proofreading",
+        "citation/source consistency",
+        "final editorial QA"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Contract-only workflow role; not a separately deployed autonomous agent.",
+        "No public publishing, new source activation or paid research authority."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "news.workflow.publishing-gate",
+      "name": "Publishing Gate",
+      "role": "Newsroom workflow / gate",
+      "departments": [
+        "SEANGWORLD News"
+      ],
+      "products": [
+        "SEANGWORLD News"
+      ],
+      "mission": "Newsroom workflow / gate",
+      "duties": [
+        "owner approval verification",
+        "content fingerprint verification",
+        "publication eligibility"
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Contract-only workflow role; not a separately deployed autonomous agent.",
+        "No public publishing, new source activation or paid research authority."
+      ],
+      "source": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+      "lifecycle": "planned",
+      "aliases": []
+    },
+    {
+      "id": "support.codex",
+      "name": "Codex",
+      "role": "Lead engineering executor",
+      "departments": [
+        "Owner support"
+      ],
+      "products": [
+        "Owner support"
+      ],
+      "mission": "Lead engineering executor",
+      "duties": [
+        "Lead engineering executor",
+        "Follow Sean\u2019s scope, authority and no-paid-testing instruction."
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Operating role; not proof of app integration, shared session or autonomous availability."
+      ],
+      "source": "https://github.com/seangworld/thebeast/blob/main/AGENTS.md",
+      "lifecycle": "limited",
+      "aliases": []
+    },
+    {
+      "id": "support.chatgpt",
+      "name": "ChatGPT",
+      "role": "Strategy and independent advisory/review",
+      "departments": [
+        "Owner support"
+      ],
+      "products": [
+        "Owner support"
+      ],
+      "mission": "Strategy and independent advisory/review",
+      "duties": [
+        "Strategy and independent advisory/review",
+        "Follow Sean\u2019s scope, authority and no-paid-testing instruction."
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Operating role; not proof of app integration, shared session or autonomous availability."
+      ],
+      "source": "https://github.com/seangworld/thebeast/blob/main/AGENTS.md",
+      "lifecycle": "limited",
+      "aliases": []
+    },
+    {
+      "id": "support.dot",
+      "name": "Dot",
+      "role": "Operations coordination",
+      "departments": [
+        "Owner support"
+      ],
+      "products": [
+        "Owner support"
+      ],
+      "mission": "Operations coordination",
+      "duties": [
+        "Operations coordination",
+        "Follow Sean\u2019s scope, authority and no-paid-testing instruction."
+      ],
+      "permissions": [
+        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
+      ],
+      "limitations": [
+        "Operating role; not proof of app integration, shared session or autonomous availability."
+      ],
+      "source": "https://github.com/seangworld/thebeast/blob/main/AGENTS.md",
+      "lifecycle": "limited",
+      "aliases": []
+    }
+  ]
+}

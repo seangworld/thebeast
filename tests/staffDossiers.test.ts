@@ -1,0 +1,45 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+import ts from 'typescript';
+import {staffDossiers,getStaffDossier,filterStaffDossiers} from '../src/lib/staffDossiers';
+import {digitalProfessionals} from '../src/lib/digitalStaff';
+import {developmentAgentProfiles} from '../src/lib/developmentAgentProfiles';
+
+test('one canonical dossier per real profile; VA is Taylor specialization, scouts and contract roles remain distinct',()=>{
+ assert.equal(new Set(staffDossiers.map(x=>x.id)).size,staffDossiers.length);
+ for(const p of digitalProfessionals)assert.equal(getStaffDossier(p.canonicalId)?.name,p.name);
+ for(const p of developmentAgentProfiles)assert.ok(getStaffDossier('beastfusion.'+p.id));
+ assert.equal(getStaffDossier('VA Claims Aide')?.id,'beasthealth.health-advisor');
+ assert.equal(staffDossiers.filter(d=>d.name==='Source Scout').length,1);
+ assert.equal(getStaffDossier('news.source-scout')?.lifecycle,'paused');
+ assert.equal(getStaffDossier('news.geo-scout')?.lifecycle,'paused');
+ assert.equal(getStaffDossier('atlas')?.lifecycle,'paused');
+ assert.ok(staffDossiers.some(d=>d.id.startsWith('news.workflow.')&&d.lifecycle==='planned'));
+});
+test('unsupported levels stay unassessed; release, local evidence, autonomy and accounting cannot imply competency',()=>{
+ for(const d of staffDossiers){assert.equal(d.target,null);assert.equal(d.demonstrated,null);assert.equal(d.released,null);assert.ok(d.duties.length);assert.ok(d.assessments.length);assert.ok(d.history.length);assert.match(d.availability,/Unknown/);for(const e of d.evidence){assert.ok(e.date);assert.ok(e.reviewer);assert.ok(e.version);assert.match(e.url,/^https:\/\/github.com\/seangworld\//);}}
+ const jordan=getStaffDossier('guidance-counselor')!;assert.equal(jordan.releases[0].version,'498bfa974658f6a1ad4e68a5cd0a5e509201ac27');assert.equal(jordan.costs.confirmedChargesUsd,null);assert.equal(jordan.costs.unresolvedReservationsUsd,4.7);assert.equal(jordan.assessments[0].criteria.length,24);
+ assert.ok(jordan.assessments[0].criteria.some(c=>c.result==='not tested'));
+ assert.ok(getStaffDossier('beastfusion.developer-agent')?.autonomy);
+ assert.match(getStaffDossier('tutor')!.limitations.join(' '),/cancellation/);
+});
+test('roster filters work with canonical names, alias, department, paused state and each competency dimension',()=>{
+ assert.equal(filterStaffDossiers(staffDossiers,{query:'VA Claims Aide'})[0].id,'beasthealth.health-advisor');
+ const news=filterStaffDossiers(staffDossiers,{department:'SEANGWORLD News',lifecycle:'paused'});assert.equal(news.length,2);
+ assert.equal(filterStaffDossiers(staffDossiers,{competency:'L5'}).length,0);
+ for(const dimension of ['target','demonstrated','released'] as const)assert.equal(filterStaffDossiers(staffDossiers,{dimension,competency:'unassessed'}).length,staffDossiers.length);
+ assert.equal(filterStaffDossiers(staffDossiers,{query:'nonexistentstaff'}).length,0);
+});
+test('dossier server authorization denies anonymous, member, editable metadata, missing role and profile errors before payload',async()=>{
+ for(const mode of ['owner','anonymous','member','metadata-admin','missing','error']){
+  const exports:{requireStaffDossierOwner?:()=>Promise<void>}={};
+  const client={auth:{getUser:async()=>({data:{user:mode==='anonymous'?null:{id:'synthetic-owner',user_metadata:{role:'admin'}}},error:null})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:mode==='missing'?null:{role:mode==='owner'?'admin':'member'},error:mode==='error'?{message:'unavailable'}:null})})})})};
+  const compiled=ts.transpileModule(readFileSync('src/lib/server/staffDossierOwner.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
+  runInNewContext(compiled,{exports,require:(name:string)=>name==='next/navigation'?{redirect:(path:string)=>{throw Error('redirect:'+path);}}:name==='../supabase/server'?{createRouteClient:()=>client}:{isBeastAdminOwnerRole:(role:string)=>role==='admin'}});
+  if(mode==='owner')await exports.requireStaffDossierOwner!();else await assert.rejects(exports.requireStaffDossierOwner!(),/redirect:/);
+ }
+ for(const path of ['src/app/dashboard/operations/staff/page.tsx','src/app/dashboard/operations/staff/[staffId]/page.tsx']){const s=readFileSync(path,'utf8');assert.ok(s.indexOf('await requireStaffDossierOwner()')<s.indexOf('return <'));assert.match(s,/force-dynamic/);}
+ const client=readFileSync('src/app/dashboard/operations/staff/StaffRoster.tsx','utf8');assert.doesNotMatch(client,/import \{[^}]*\bstaffDossiers\b[^}]*\}/);assert.doesNotMatch(client,/fetch\(|useEffect/);
+});

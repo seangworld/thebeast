@@ -17,7 +17,7 @@ export const operationsLinks = [
   ...operationsVentures.map((venture) => ({ label: venture.name, href: venture.href, group: "Ventures" })),
   { label: "Opportunities", href: "/dashboard/operations/opportunities", group: "Shared services" },
   { label: "Company analytics", href: "/dashboard/operations/analytics", group: "Shared services" },
-  { label: "Agents & approvals", href: "/dashboard/operations/staff", group: "Shared services" },
+  { label: "Staff & dossiers", href: "/dashboard/operations/staff", group: "Shared services" },
   { label: "BeastFusion", href: "/dashboard/operations/fusion", group: "Shared services" },
 ];
 
