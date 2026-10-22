@@ -162,6 +162,18 @@
       "affectedStaffIds": [
         "beastfusion.policy.product_specialist"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Single idle-traffic batch: enforce Atlas backburner policy before DB/AI work and remove recurring cron; preserve data/reactivation path. Optimize existing social idle checks/recovery and visible-only workspace polling without new publishing authority. Shared unread lifecycle polling also reduced; update affected Atlas/Marketing dossiers and watch roots. No activation, competency/accounting changes, paid testing, new services or measured-savings claim. Release verification is updated at the linked permanent handoff after the single release.",
+      "version": "2026-10-22 single idle Supabase traffic batch",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6353916826",
+      "sourceDigest": "a61c6e49ff93b753806b5d2aa969e5cee20239c24c2375ca1032f267c0beb32e",
+      "affectedStaffIds": [
+        "atlas",
+        "beastfusion.policy.marketing_specialist"
+      ]
     }
   ]
 }

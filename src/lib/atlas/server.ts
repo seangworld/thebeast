@@ -1,3 +1,4 @@
+import { ATLAS_PAUSED, ATLAS_PAUSED_MESSAGE } from './operatingPolicy';
 import { inspectAtlasConnections, atlasConnectionSummary } from './connections';
 import { createHash } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -5,7 +6,7 @@ import { createRouteClient } from '@/lib/supabase/server';
 import { ATLAS_ORIGIN, atlasInstructions, atlasOutput, atlasSites, directAtlasAction } from './shared';
 import { requestOpenAIResponse } from '@/lib/digitalStaffRuntime/provider';
 export const hashAtlasToken = (v:string)=>createHash('sha256').update(v).digest('hex');
-export function atlasDB() { const db=createAdminClient(); if(!db) throw new Error('ATLAS storage is unavailable.'); return db; }
+export function atlasDB() { if(ATLAS_PAUSED) throw new Error(ATLAS_PAUSED_MESSAGE); const db=createAdminClient(); if(!db) throw new Error('ATLAS storage is unavailable.'); return db; }
 export async function atlasAuth(request:Request, cookieOnly=false) {
  const bearer=request.headers.get('authorization');
  if(bearer && !cookieOnly) {
@@ -39,6 +40,7 @@ export async function checkAtlasSites(fetcher:typeof fetch=fetch) {
  return Promise.all(atlasSites.map(async url=>{ const start=Date.now(); try {const r=await fetcher(url,{method:'HEAD',redirect:'manual',cache:'no-store',signal:AbortSignal.timeout(8000)});return {url,status:r.status,reachable:r.status>=200&&r.status<400,ms:Date.now()-start,checkedAt:new Date().toISOString()};} catch {return {url,status:null,reachable:false,ms:Date.now()-start,checkedAt:new Date().toISOString()};}}));
 }
 export async function runAtlasTurn(id:string, owner:string) {
+ if(ATLAS_PAUSED) return;
  const db=atlasDB();
  const profile=await db.from('profiles').select('role').eq('id',owner).maybeSingle();
  if(profile.error) return;

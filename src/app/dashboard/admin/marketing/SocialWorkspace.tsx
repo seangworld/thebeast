@@ -1,6 +1,8 @@
 "use client";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { startVisiblePolling } from "@/lib/visiblePolling";
+import { socialRefreshInterval } from "@/lib/marketingSocialPolling";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { socialChannels, socialLabels, socialPostText, socialShareUrl, type SocialChannel, type SocialContent, type SocialConnection, type SocialPost } from "@/lib/marketingSocial";
 import type { SocialTraffic } from "@/lib/marketingSocialTraffic";
 import { MarketingSectionNav } from "./MarketingSectionNav";
@@ -39,27 +41,32 @@ export function SocialWorkspace() {
   const [tab, setTab] = useState<"compose" | "queue" | "accounts">("compose");
   const [filter, setFilter] = useState("all");
   const [traffic, setTraffic] = useState<SocialTraffic[]>([]);
-  const refresh = useCallback(async () => {
-    const response = await fetch(endpoint, { cache: "no-store" });
+  const dataRef = useRef<WorkspaceData | null>(null);
+  const poller = useRef<ReturnType<typeof startVisiblePolling> | null>(null);
+  const load = useCallback(async (signal: AbortSignal) => {
+    const response = await fetch(endpoint, { cache: "no-store", signal });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "Could not load Social.");
+    if (signal.aborted) return;
+    dataRef.current = payload;
     setData(payload);
   }, []);
+  const refresh = useCallback(async () => { await poller.current?.refresh(); }, []);
   useEffect(() => {
     setDraftId(crypto.randomUUID());
-    refresh().catch(e => setError(e.message));
     const result = new URLSearchParams(window.location.search).get("connection");
     if (result) setMessage(result === "connected" ? "Account connected. Select it on your draft before publishing." : result === "no_accounts" ? "No eligible accounts found. Check Page access and the linked professional Instagram account." : "Connection was not completed. Check app setup and permissions, then reconnect.");
-  }, [refresh]);
-  const hasPending = data?.posts.some(p => ["scheduled", "publishing", "processing"].includes(p.status));
-  useEffect(() => {
-    if (!hasPending) return;
-    const timer = setInterval(() => { refresh().catch(() => undefined); }, 30_000);
-    return () => clearInterval(timer);
-  }, [hasPending, refresh]);
-  async function run(task: () => Promise<unknown>, success?: string) {
+    const current = startVisiblePolling({
+      load,
+      intervalMs: () => socialRefreshInterval(dataRef.current),
+      onError: e => setError(e instanceof Error ? e.message : "Could not load Social."),
+    });
+    poller.current = current;
+    return () => { current.stop(); poller.current = null; };
+  }, [load]);
+  async function run(task: () => Promise<unknown>, success?: string, refreshAfter = true) {
     setBusy(true); setError(""); setMessage("");
-    try { await task(); await refresh(); if (success) setMessage(success); }
+    try { await task(); if (refreshAfter) await refresh(); if (success) setMessage(success); }
     catch (e) { setError(e instanceof Error ? e.message : "Something went wrong."); }
     finally { setBusy(false); }
   }
@@ -81,7 +88,7 @@ export function SocialWorkspace() {
     <MarketingSectionNav />
     <section className="space-y-5 text-slate-100">
       <div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-2xl font-black">Your next post starts here.</h2><p className="mt-1 text-base text-slate-300">Prepare, review, and share from BEAST.</p></div><span className="rounded-full border border-amber-300/40 px-4 py-2 text-sm text-amber-100">{data?.controls.paused !== false ? "Direct publishing paused" : "Approved queue enabled"}</span></div>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Social workspace views">{(["compose", "queue", "accounts"] as const).map(t => <button key={t} onClick={() => setTab(t)} aria-pressed={tab === t} className={tab === t ? primary : button}>{t === "compose" ? "Write a post" : t === "queue" ? `Posts & queue${data ? ` (${data.posts.length})` : ""}` : "Accounts & controls"}</button>)}<button className={button} disabled={busy} onClick={() => run(refresh)}>Refresh</button></div>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Social workspace views">{(["compose", "queue", "accounts"] as const).map(t => <button key={t} onClick={() => setTab(t)} aria-pressed={tab === t} className={tab === t ? primary : button}>{t === "compose" ? "Write a post" : t === "queue" ? `Posts & queue${data ? ` (${data.posts.length})` : ""}` : "Accounts & controls"}</button>)}<button className={button} disabled={busy} onClick={() => run(refresh, undefined, false)}>Refresh</button></div>
       {error && <p role="alert" className="rounded-xl border border-red-400/40 bg-red-950/30 p-4">{error}</p>}
       {message && <p role="status" className="rounded-xl border border-amber-300/30 bg-amber-300/5 p-4">{message}</p>}
       {!data && !error && <p role="status">Loading your social workspace…</p>}

@@ -420,7 +420,7 @@ test("BA-129 creates notifications and unread navigation across desktop and mobi
     /Member Messages[\s\S]*?\/dashboard\/admin\/messages/
   );
   assert.match(layout, /get_beast_admin_message_unread_count/);
-  assert.match(layout, /BEAST_ADMIN_MESSAGE_UNREAD_EVENT/);
+  assert.match(readFileSync("src/lib/adminMessageUnreadPolling.ts", "utf8"), /BEAST_ADMIN_MESSAGE_UNREAD_EVENT/);
   assert.match(layout, /unread private messages/);
   assert.match(mobile, /\/dashboard\/messages/);
 });

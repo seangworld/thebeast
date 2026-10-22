@@ -1601,5 +1601,140 @@
         "url": "https://github.com/seangworld/thebeast/pull/282"
       }
     ]
+  },
+  "atlas": {
+    "reviewedAt": "2026-10-22",
+    "duties": [
+      "Owner-directed tasks, memory and connection summaries in the existing Atlas implementation.",
+      "Owner backburner decision enforced in runtime: recurring cron removed, generic paused API denial and worker/DB guard before database/provider access, paused workspace does not poll. Existing records/device state retained; separate owner-approved source/release reactivation required."
+    ],
+    "limitations": [
+      "Backburner by owner. Do not activate from the roster.",
+      "Paused before any Atlas database/AI access, including existing device/API requests. Reactivation requires a separate owner-approved policy/release change; data is preserved."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Owner backburner decision enforced in runtime: recurring cron removed, generic paused API denial and worker/DB guard before database/provider access, paused workspace does not poll. Existing records/device state retained; separate owner-approved source/release reactivation required."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (engineering executor; no competency evaluation)",
+        "why": "Owner backburner decision enforced in runtime: recurring cron removed, generic paused API denial and worker/DB guard before database/provider access, paused workspace does not poll. Existing records/device state retained; separate owner-approved source/release reactivation required. Request effects are estimates; no measured bandwidth or billing savings.",
+        "version": "2026-10-22 single idle-traffic batch; exact release identity in linked handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/atlas/shared.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Idle-traffic engineering and single-batch release verification handoff",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6353916826",
+        "kind": "code review",
+        "reviewer": "Codex engineering executor; no independent competency review",
+        "date": "2026-10-22",
+        "version": "2026-10-22 single idle-traffic batch; exact release identity in linked handoff"
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-22",
+        "version": "Idle-traffic operating behavior \u2014 exact release status in handoff",
+        "summary": "Source-revision operating behavior update. The linked permanent handoff records preparation/confirmed deployment status and is updated after release without a second deployment. No competency level or agent activation inferred.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6353916826"
+      }
+    ]
+  },
+  "beastfusion.policy.marketing_specialist": {
+    "reviewedAt": "2026-10-22",
+    "duties": [
+      "owner-approved campaigns",
+      "approved public product and content facts",
+      "privacy-safe marketing evidence",
+      "draft assets and recommendations",
+      "platform-style ad previews",
+      "internal provider-neutral distribution plans",
+      "qualified traffic acquisition and distribution recommendations for existing assets",
+      "Existing deterministic social controls/scheduler: retain minute scheduled publishing and all approval/CAS gates; idle ticks use one eligibility read and no write, recovery targets observed stale claims only, visible workspace polls only enabled scheduled/in-flight jobs and stops hidden/unmounted. This administrative workflow is not activation or permission expansion of the policy class."
+    ],
+    "limitations": [
+      "publish or schedule without owner approval",
+      "connect providers or use credentials",
+      "spend money or buy media",
+      "invent product claims",
+      "use private member data",
+      "treat unavailable metrics as zero",
+      "Policy class, not evidence of a separately running agent.",
+      "No staff activation or publishing authority is granted by polling/scheduler optimization. Exact revision approval and role/pause/account checks remain mandatory.",
+      "Idle minute eligibility reads remain necessary with the existing scheduler; active-job paths can require additional safety reads."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Existing deterministic social controls/scheduler: retain minute scheduled publishing and all approval/CAS gates; idle ticks use one eligibility read and no write, recovery targets observed stale claims only, visible workspace polls only enabled scheduled/in-flight jobs and stops hidden/unmounted. This administrative workflow is not activation or permission expansion of the policy class."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (engineering executor; no competency evaluation)",
+        "why": "Existing deterministic social controls/scheduler: retain minute scheduled publishing and all approval/CAS gates; idle ticks use one eligibility read and no write, recovery targets observed stale claims only, visible workspace polls only enabled scheduled/in-flight jobs and stops hidden/unmounted. This administrative workflow is not activation or permission expansion of the policy class. Request effects are estimates; no measured bandwidth or billing savings.",
+        "version": "2026-10-22 single idle-traffic batch; exact release identity in linked handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/beastfusion/blob/7437aedb40873a0f6f7cb43703d07b2744d00504/state/shared-agent-registry.json",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Idle-traffic engineering and single-batch release verification handoff",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6353916826",
+        "kind": "code review",
+        "reviewer": "Codex engineering executor; no independent competency review",
+        "date": "2026-10-22",
+        "version": "2026-10-22 single idle-traffic batch; exact release identity in linked handoff"
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-22",
+        "version": "Idle-traffic operating behavior \u2014 exact release status in handoff",
+        "summary": "Source-revision operating behavior update. The linked permanent handoff records preparation/confirmed deployment status and is updated after release without a second deployment. No competency level or agent activation inferred.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6353916826"
+      }
+    ]
   }
 }
