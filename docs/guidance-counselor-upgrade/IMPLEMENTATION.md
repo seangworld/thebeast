@@ -1,3 +1,11 @@
+# Current native-research candidate — October 21
+
+Owner rejected the separate search-vendor proposal. No Serper integration or activation is authorized or implemented. The current candidate retains OpenAI-native discovery/verification, adds goal/location-led discovery and practical private schooling-plan synthesis, and corrects the emitted-versus-processed tool validation assumption under an explicit new evaluation policy. All six historical ledgers remain immutable.
+
+Current implementation, local checks and the ONE proposed unchanged GC05T1/T2 end-to-end regression: [native schooling readiness](evaluation/native-schooling-preparation-20261021/REPORT.md). No paid assessment has executed on this candidate. Goal-led discovery remains unverified live; the proposed school comparison/correction does not certify it. Historical implementation notes below predate this correction.
+
+---
+
 # Guidance Counselor — specific official-source research
 
 Tracking issue: https://github.com/seangworld/thebeast/issues/272 · Draft PR: https://github.com/seangworld/thebeast/pull/273

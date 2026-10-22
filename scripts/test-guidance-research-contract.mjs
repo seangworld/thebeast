@@ -31,9 +31,10 @@ test('exact 52b9bbd3 discovery: emitted/completed/search counts remain distinct;
  const s=x.guard.summary();assert.deepEqual(s.entries[0].response,discovery);assert.equal(s.entries[0].status,'unknown');assert.equal(s.accountedNanoUsd,2576000000);assert.equal(s.entries[0].contractDiagnostic.completedActions,4);assert.throws(()=>x.guard.ready());
  }finally{x.cleanup();}
 });
-for(const mode of ['recorded-discovery','good','verify-missing-usage','verify-failed','verify-disconnected','verify-source-failure','verify-forged-proof','synthesis-incomplete','synthesis-missing-usage','synthesis-foreign-citation','safety-missing-usage','safety-unsafe'])test('guarded recorded-private + mocked full research path: '+mode,async()=>{
+for(const mode of ['recorded-discovery','native-recorded-discovery','good','verify-missing-usage','verify-failed','verify-disconnected','verify-source-failure','verify-forged-proof','synthesis-incomplete','synthesis-missing-usage','synthesis-foreign-citation','safety-missing-usage','safety-unsafe'])test('guarded recorded-private + mocked full research path: '+mode,async()=>{
  const x=setup(),oldFetch=globalThis.fetch,oldKey=process.env.OPENAI_API_KEY;
  process.env.OPENAI_API_KEY='sk-proj-SYNTHETIC_NO_NETWORK_CONTRACT_ONLY_123456789';
+ if(mode==='native-recorded-discovery')x.guard.policy.webAccounting='processed-actions-conservative-v1';
  const stages=[],delivered=[];let outputScreenSeen=false;
  globalThis.fetch=async(_url,init)=>{
   assert.equal(String(_url),'https://api.openai.com/v1/responses');
@@ -42,7 +43,7 @@ for(const mode of ['recorded-discovery','good','verify-missing-usage','verify-fa
   assert.equal(x.guard.summary().entries.at(-1).status,'reserved');
   let p;
   if(stages.length<=3)p=structuredClone(recorded[stages.length-1].response);
-  else if(stage==='discover'&&mode==='recorded-discovery')p=structuredClone(discovery);
+  else if(stage==='discover'&&['recorded-discovery','native-recorded-discovery'].includes(mode))p=structuredClone(discovery);
   else p=stagePayload(stage);
   if(request.tools)assert.doesNotMatch(request.input,/Alex Example|202-555-0147|123 Example Lane|caregiving|weekly_hours/);
   if(stage==='verify'){
@@ -73,7 +74,7 @@ for(const mode of ['recorded-discovery','good','verify-missing-usage','verify-fa
   if(unknown){await assert.rejects(run());const s=x.guard.summary();assert.equal(s.entries.at(-1).status,'unknown');assert.equal(s.results.length,0);assert.equal(delivered.length,0);assert.equal(s.entries.length,mode==='recorded-discovery'?4:mode.startsWith('verify')?5:mode.startsWith('synthesis')?6:7);assert.ok(s.halted);if(mode==='safety-missing-usage'){assert.equal(s.undeliveredResults.length,1);assert.ok(s.undeliveredResults[0].result.response);}}
   else{
    const result=await run();assert.equal(delivered.join(''),result.response);assert.equal(x.guard.summary().results[0].result.response,result.response);assert.ok(x.guard.summary().entries.every(e=>e.status==='settled'));
-   if(mode==='good'){assert.equal(result.response,answer);assert.equal(stages.length,7);assert.deepEqual(stages,['semantic-input','brief','privacy','discover','verify','synthesis','semantic-output']);assert.equal(result.researchSources[0].url,source);}
+   if(['good','native-recorded-discovery'].includes(mode)){assert.equal(result.response,answer);assert.equal(stages.length,7);assert.deepEqual(stages,['semantic-input','brief','privacy','discover','verify','synthesis','semantic-output']);assert.equal(result.researchSources[0].url,source);}
    else{assert.notEqual(result.response,answer);if(mode.startsWith('verify'))assert.ok(!stages.includes('synthesis'));}
   }
  }finally{globalThis.fetch=oldFetch;if(oldKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=oldKey;x.cleanup();}
@@ -93,4 +94,39 @@ test('unpriced multimodal inputs, tool options, provider meters and outputs cann
  for(const patch of [{tool_usage:{image_gen:{total_tokens:1}}},{tool_usage:{unknown_tool:{calls:0}}},{output:[{type:'image_generation_call'}]},{output:[{type:'message',content:[{type:'output_audio'}]}]}]){
   const x=setup();try{x.guard.startTurn('GC-04-T1');await assert.rejects(x.guard.dispatch(recorded[3].request,'GC-04-T1-guidance-discover',async()=>({...payload('synthetic'),...patch})));assert.equal(x.guard.summary().entries[0].status,'unknown');}finally{x.cleanup();}
  }
+});
+
+test('new native policy replays exact captured discovery using processed ceiling and ALL search fees; history unchanged',async()=>{
+ const x=setup();x.guard.policy.webAccounting='processed-actions-conservative-v1';
+ try{
+  x.guard.startTurn('GC-04-T1');await x.guard.dispatch(recorded[3].request,'GC-04-T1-guidance-discover',async()=>structuredClone(discovery));
+  const e=x.guard.summary().entries[0];assert.equal(e.status,'settled');assert.equal(e.contractDiagnostic.emittedItems,5);assert.equal(e.processedWebContract.completedActions,4);assert.equal(e.processedWebContract.trailingNonterminalAttempts,1);
+  assert.equal(e.accountedNanoUsd,18870*1250+2956*10000+4*10000000); // Not the lower reported3.
+  assert.equal(e.processedWebContract.unfinishedItemsUsedAsEvidence,false);assert.match(e.accountingBasis,/ALL configured/);
+  assert.deepEqual(e.response,discovery);assert.equal(e.processedWebContract.billingCertainty.includes('Not invoice'),true);x.guard.ready();
+ }finally{x.cleanup();}
+});
+
+test('native policy still rejects real processed excess, missing usage, unfinished work before quota, failed actions, duplicate IDs and meter overflow',async()=>{
+ for(const kind of ['processed-excess','missing-usage','below-quota','failed-action','duplicate-id','meter-overflow','wrong-echo','reasoning-only-no-usage']){
+  const x=setup();x.guard.policy.webAccounting='processed-actions-conservative-v1';
+  try{
+   const p=structuredClone(discovery),tools=p.output.filter(x=>x.type==='web_search_call');
+   if(kind==='processed-excess')tools.at(-1).status='completed';
+   if(kind==='missing-usage'||kind==='reasoning-only-no-usage')delete p.usage;
+   if(kind==='below-quota')p.output=p.output.filter(x=>x!==tools[0]);
+   if(kind==='failed-action')tools.at(-1).status='failed';
+   if(kind==='duplicate-id')tools.at(-1).id=tools[0].id;
+   if(kind==='meter-overflow')p.tool_usage.web_search.num_requests=5;
+   if(kind==='wrong-echo')p.max_tool_calls=5;
+   x.guard.startTurn('GC-04-T1');await assert.rejects(x.guard.dispatch(recorded[3].request,'GC-04-T1-guidance-discover',async()=>p));assert.equal(x.guard.summary().entries[0].status,'unknown');assert.equal(x.guard.summary().accountedNanoUsd,2576000000);assert.throws(()=>x.guard.ready());
+  }finally{x.cleanup();}
+ }
+});
+
+test('accepted native excess-attempt metadata never promotes unfinished source URLs into evidence',async()=>{
+ const {guidanceObservedUrls,guidanceCandidates}=await import('../.test-dist/src/lib/digitalStaffRuntime/guidanceDiscovery.js');
+ const p=structuredClone(discovery),last=p.output.filter(x=>x.type==='web_search_call').at(-1);
+ const unsupported='https://unverified.example.edu/unfinished-source';last.action.url=unsupported;last.action.sources=[{url:unsupported}];
+ const seen=guidanceObservedUrls(p);assert.equal(seen.has(unsupported),false);assert.deepEqual(guidanceCandidates({candidates:[{target:0,url:unsupported}]},seen,1),[]);
 });

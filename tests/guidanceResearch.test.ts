@@ -205,7 +205,7 @@ test("ambiguous or personally identifying brief never reaches public search; cla
       assert.equal(await executeGuidanceDiscovery({ model: "gpt-5", privateContext: JSON.stringify(ctx), onCall: () => {} }), null);
       assert.equal(calls, proposed.targets[0]?.organization === "Alex Example" ? 2 : 1);
     }
-    assert.match(guidanceResearchUnavailable, /please name the institution, credential or public program/);
+    assert.match(guidanceResearchUnavailable, /please name the study goal or institution\/program/);
   } finally { globalThis.fetch = originalFetch; if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key; }
 });
 

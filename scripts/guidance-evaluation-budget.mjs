@@ -4,6 +4,7 @@ import {dirname,isAbsolute} from 'node:path';
 const integer=x=>Number.isSafeInteger(x)&&x>=0;
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 export function guidanceCallBound(original,policy,now=Date.now()){
+ check(policy.webAccounting===undefined||policy.webAccounting==='processed-actions-conservative-v1','Unknown web accounting policy');
  check(Number.isFinite(Date.parse(policy.expiresAt))&&now<Date.parse(policy.expiresAt),'Pricing expired');
  const body=structuredClone(original),rate=policy.models[body.model];
  check(rate&&[rate.context,rate.inputNano,rate.outputNano].every(x=>integer(x)&&x>0),'Unknown model/pricing');
@@ -45,6 +46,27 @@ export function guidanceWebObservations(payload) {
   reportedBillableSearches:payload?.tool_usage?.web_search?.num_requests??null,
   billableCountVerified:false,
  };
+}
+// Opt-in contract revision for NEW manifests only. Historical ledgers/policies
+// remain immutable. max_tool_calls limits processed actions, not emitted attempts.
+export function guidanceProcessedWebContract(payload, ceiling) {
+ const items=payload.output.filter(x=>x?.type==='web_search_call');
+ const completed=items.filter(x=>x.status==='completed');
+ const ids=items.map(x=>x.id).filter(x=>x!==undefined);
+ const firstUnfinished=items.findIndex(x=>x.status!=='completed');
+ const trailing=firstUnfinished<0?[]:items.slice(firstUnfinished);
+ const valid=completed.length<=ceiling
+  &&ids.every(id=>typeof id==='string'&&id.length>0)&&new Set(ids).size===ids.length
+  &&items.every(x=>['search','open_page','find_in_page'].includes(x.action?.type))
+  &&(trailing.length===0||(completed.length===ceiling
+   &&trailing.every(x=>['in_progress','searching'].includes(x.status))))
+  &&(payload.max_tool_calls===undefined||payload.max_tool_calls===ceiling||(ceiling===0&&payload.max_tool_calls===null))
+  &&payload.error==null&&payload.incomplete_details==null;
+ return {valid,processedCeiling:ceiling,completedActions:completed.length,
+  trailingNonterminalAttempts:trailing.length,
+  unfinishedItemsUsedAsEvidence:false,
+  billingCertainty:'Not invoice-reconciled; charge all configured search fees',
+  basis:'Responses max_tool_calls bounds total processed built-in calls; excess attempts are ignored by contract. Emitted length is not the processed count.'};
 }
 function unpricedProviderOutput(payload) {
  if(!Array.isArray(payload?.output)||payload.output.some(x=>!['message','reasoning','web_search_call'].includes(x?.type)))return true;
@@ -103,14 +125,18 @@ export class GuidanceEvaluationBudget {
   const input=p?.usage?.input_tokens,output=p?.usage?.output_tokens;
   entry.contractDiagnostic=guidanceWebObservations(p);
   const calls=Array.isArray(p?.output)?entry.contractDiagnostic.emittedItems:Infinity;
+  const native=this.policy.webAccounting==='processed-actions-conservative-v1';
+  if(native&&Array.isArray(p?.output))entry.processedWebContract=guidanceProcessedWebContract(p,bound.calls);
+  const toolContractInvalid=native?!entry.processedWebContract?.valid:(calls>bound.calls||entry.contractDiagnostic.unfinishedItems>0);
   const reportedSearches=p?.tool_usage?.web_search?.num_requests;
   if(reportedSearches!==undefined&&(!integer(reportedSearches)||reportedSearches>bound.calls)){this.unknown(entry);throw Error('Reported tool usage exceeds reservation');}
-  if(p?.status!=='completed'||unpricedProviderOutput(p)||!integer(input)||!integer(output)||input>bound.rate.context*(bound.calls+1)||output>bound.body.max_output_tokens||calls>bound.calls||entry.contractDiagnostic.unfinishedItems>0||entry.contractDiagnostic.unsupportedActions>0||!bound.rate.returned.includes(p.model)||(p.service_tier!==undefined&&p.service_tier!=='default')||p.output.some(x=>x.type?.endsWith('_call')&&x.type!=='web_search_call')){
+  if(p?.status!=='completed'||unpricedProviderOutput(p)||!integer(input)||!integer(output)||input>bound.rate.context*(bound.calls+1)||output>bound.body.max_output_tokens||toolContractInvalid||entry.contractDiagnostic.unsupportedActions>0||!bound.rate.returned.includes(p.model)||(p.service_tier!==undefined&&p.service_tier!=='default')||p.output.some(x=>x.type?.endsWith('_call')&&x.type!=='web_search_call')){
    this.unknown(entry);throw Error('Unverified usage/model/tools');
   }
   // No cache discounts; retain all reserved search charges.
   const accounted=input*bound.rate.inputNano+output*bound.rate.outputNano+bound.calls*this.policy.searchNano;
   if(!integer(accounted)||accounted>entry.maximumNanoUsd){this.unknown(entry);throw Error('Usage exceeds reservation');}
+  if(native)entry.accountingBasis='Validated complete token usage plus ALL configured search fees, not reported search count; conservative estimate, not invoice';
   entry.response=structuredClone(p);entry.accountedNanoUsd=accounted;entry.status='settled';this.save();
  }
  async dispatch(body,id,transport){const ticket=this.reserve(body,id);try{const result=await transport(ticket.body);ticket.settle(result);return result;}catch(error){ticket.unknown();throw error;}}
