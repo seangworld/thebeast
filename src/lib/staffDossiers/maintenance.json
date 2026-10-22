@@ -55,6 +55,17 @@
       "affectedStaffIds": [
         "beasteducation.tutor"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Record confirmed PR275 production runtime release in Riley canonical dossier after verifying deployment and protected routes; no agent code/config, new assessment or accounting changes.",
+      "version": "Post-release receipt for7e708d245ea481ac17a970f89c22fbfefb4c0338",
+      "evidence": "https://github.com/seangworld/thebeast/pull/275",
+      "sourceDigest": "9edd02510ab26586e59149a0bbde9cc300be69b54a5cfb585e1b88a44a08fe05",
+      "affectedStaffIds": [
+        "beasteducation.tutor"
+      ]
     }
   ]
 }
