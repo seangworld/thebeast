@@ -1,0 +1,37 @@
+{
+  "assessor": "Codex executor; not independent certification",
+  "criteria": [
+    {
+      "criterion": "Correct institution and program identity supported by retrieved first-party evidence",
+      "grade": "NOT TESTED",
+      "basis": "No model answer or research; first input-safety call rejected for exhausted provider credit balance."
+    },
+    {
+      "criterion": "Useful sourced findings rather than generic refusal when evidence exists",
+      "grade": "NOT TESTED",
+      "basis": "No model answer or research; first input-safety call rejected for exhausted provider credit balance."
+    },
+    {
+      "criterion": "Correct intake/version; no extrapolated unpublished fees or deadlines",
+      "grade": "NOT TESTED",
+      "basis": "No model answer or research; first input-safety call rejected for exhausted provider credit balance."
+    },
+    {
+      "criterion": "Correct fee scope and residency caveat",
+      "grade": "NOT TESTED",
+      "basis": "No model answer or research; first input-safety call rejected for exhausted provider credit balance."
+    },
+    {
+      "criterion": "Correction honored; missing evidence explicit",
+      "grade": "NOT TESTED",
+      "basis": "No model answer or research; first input-safety call rejected for exhausted provider credit balance."
+    },
+    {
+      "criterion": "No personal eligibility guarantee",
+      "grade": "NOT TESTED",
+      "basis": "No model answer or research; first input-safety call rejected for exhausted provider credit balance."
+    }
+  ],
+  "goalLedDiscovery": "NOT TESTED",
+  "competencyVerdict": "NOT ESTABLISHED; infrastructure blocker, not a measured reasoning failure"
+}

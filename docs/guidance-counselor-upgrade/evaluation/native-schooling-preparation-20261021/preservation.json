@@ -1,0 +1,40 @@
+{
+  "sixLedgerReceiptsUnchanged": [
+    {
+      "runId": "gc-20261021-pr273-assessment-v2",
+      "sha256": "5dbbc8d18328d520c8070a681cd84c50bea5dc6781f117405b0f9005774abe2c",
+      "accountedNanoUsd": 565628670
+    },
+    {
+      "runId": "gc-20261021-pr273-remediation-assessment",
+      "sha256": "e3bfcba843960581ce99c6915d3b26170d7445184c97b0e289279150ad374b10",
+      "accountedNanoUsd": 558551460
+    },
+    {
+      "runId": "gc-20261021-pr273-gc04-routing-assessment",
+      "sha256": "c0607629595efe092f5c73502be29df493e649594b5365959d68d95d22ee95e4",
+      "accountedNanoUsd": 516520000
+    },
+    {
+      "runId": "gc-20261021-pr273-private-brief-probe",
+      "sha256": "ec0fd349708df9591edbad3b074cc8522bce1ca044df9641cdefd203a9c8e180",
+      "accountedNanoUsd": 4715000
+    },
+    {
+      "runId": "gc-20261021-pr273-question-contract-probe",
+      "sha256": "73a359168b6e66dc89979fdb60635f8ddebf9acdb895af4b40a06f27abf46538",
+      "accountedNanoUsd": 15825000
+    },
+    {
+      "runId": "gc-20261021-pr273-consolidated-e2e",
+      "sha256": "837c5dbd38777b676ab2c00b9c85029a83613c14b41e7ca3a3ccd01f9ea08624",
+      "accountedNanoUsd": 2590353750
+    }
+  ],
+  "accountedNanoUsd": 4251593880,
+  "unresolvedNanoUsd": 4152000000,
+  "historicalEvidenceAndTaylorUnchanged": true,
+  "paidCalls": 0,
+  "metadataCalls": 0,
+  "newRunLedgers": 0
+}

@@ -1,0 +1,143 @@
+{
+  "status": "PREPARED; OWNER SPENDING APPROVAL REQUIRED; NOT EXECUTED",
+  "runId": "gc-20261021-pr273-assessment-v2",
+  "applicationCommit": "cc98fcb77b476e5b63919126628cbfe574d8856e",
+  "resumedPublishedHead": "e4aa8091195583b4198da2db0642c60d35e1eb6b",
+  "applicationSrcTree": "0e324f52da4ad50b24a16b442ee97a199cea525b",
+  "sourceFilesSha256": "fc6694bb00f1b3180404575d32f05d920528f11962149570272b5fab81fb625d",
+  "compiledRuntimeSha256": "85eb3ea791ccbede09231646a38663ac93c195a20728ddec1ca825ba73550bdb",
+  "fixturePath": "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json",
+  "fileHashes": {
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json": "a2a6b43ee1241c3273884baee5bf24e0a8238d4cd558bb58a82618365a6e3d03",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets.json": "ba1e8a32aa088d03c40896824b6296a42600effcce3675f9deb6b3a2d54ba1aa",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/GRADING-RULES.md": "1b6fed5a2f20ec9b2f8aa8b8fba5fa45ae7b367aef8b77a106d15c761ab476fb",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/SOURCE-BASELINE.md": "8af9212ccc7ec60c164c84c437643d314405de1f264bb3ea84305ff5ce24144c",
+    "docs/guidance-counselor-upgrade/EVALUATION-PLAN.md": "1f8af8f256577329782dc633511c9c07408f8ea8d57b29f7172e82f60b966524",
+    "package-lock.json": "9eb4c807a2ace258dd8a78682c38bdb66b958aa298a4ec9bbe712d083c96a3f5",
+    "tsconfig.test.json": "85980c3a9bc3afc7224c950272894c607c4c529bbfbcb2900815a252859d6b78",
+    "scripts/guidance-evaluation-budget.mjs": "0797bf4ef2b8603e34b45a3ac87eb920a358b524e5592f2199464079790f32a3",
+    "scripts/guidance-evaluation-session.mjs": "a1fa8b79418c0bbae0c4702d4f0180587404f45979d6db5ae02bd8904b7ffcb3",
+    "scripts/guidance-evaluation-dispatch.mjs": "665a1413f70b7119fe20198eb58b3a27a31fe5ea4867f962c4242a017bc952ad",
+    "scripts/run-guidance-evaluation-dev.py": "414a73d0208d542d8d73bef9b3a65f747cf65a89504ef577ef62f37397783658",
+    "scripts/verify-guidance-evaluation-preparation.mjs": "7fd98d8f165015d47628bd7edcd55aff66cf9faf2df7c0e256cb36d11bbd76c5",
+    "scripts/test-guidance-evaluation-budget.mjs": "932f577ca9fed5532ba1404e5c7ac74a2c69e53bd258bc6ea5238887e2a202ce"
+  },
+  "turnModels": {
+    "GC-01-T1": "gpt-5.6-luna",
+    "GC-01-T2": "gpt-5.6-luna",
+    "GC-02-T1": "gpt-5.6-luna",
+    "GC-03-T1": "gpt-5.6-luna",
+    "GC-03-T2": "gpt-5.6-luna",
+    "GC-04-T1": "gpt-5",
+    "GC-05-T1": "gpt-5",
+    "GC-05-T2": "gpt-5",
+    "GC-05-T3": "gpt-5",
+    "GC-06-T1": "gpt-5.6-luna",
+    "GC-07-T1": "gpt-5.6-luna"
+  },
+  "policy": {
+    "reviewedAt": "2026-10-21T20:15:00Z",
+    "expiresAt": "2026-10-23T04:00:00Z",
+    "searchNano": 10000000,
+    "models": {
+      "gpt-5": {
+        "context": 400000,
+        "inputNano": 1250,
+        "outputNano": 10000,
+        "returned": [
+          "gpt-5",
+          "gpt-5-2025-08-07"
+        ]
+      },
+      "gpt-5.6-luna": {
+        "context": 1050000,
+        "inputNano": 550,
+        "outputNano": 1980,
+        "returned": [
+          "gpt-5.6-luna"
+        ]
+      }
+    },
+    "sources": [
+      "https://developers.openai.com/api/docs/models/gpt-5",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "https://developers.openai.com/api/docs/pricing"
+    ],
+    "assumptions": "Standard tier on official global Responses endpoint; no cache discounts. Luna ceiling includes long-context 2x input/1.5x output, 1.25x cache writes and 10% regional uplift; no 12-hour caching requested. Only web_search is permitted; reserve every maximum tool fee."
+  },
+  "capNanoUsd": 10000000000,
+  "maximumInferenceAttempts": 88,
+  "metadataAttempts": 2,
+  "metadataReceipt": {
+    "checkedAt": "2026-10-21T20:15:57.495Z",
+    "inferenceCalls": 0,
+    "metadataAttempts": 2,
+    "results": [
+      {
+        "requested": "gpt-5",
+        "status": 200,
+        "available": true
+      },
+      {
+        "requested": "gpt-5.6-luna",
+        "status": 200,
+        "available": true
+      }
+    ]
+  },
+  "maximumDirectProviderAttempts": 90,
+  "expectedInferenceAttempts": 53,
+  "scenarioFamilies": 7,
+  "turns": 11,
+  "uniqueCriteria": 24,
+  "maximumCallsPerTurn": 8,
+  "maximumToolActionsPerRequest": 4,
+  "maximumToolActionsPerTurn": 8,
+  "maximumWholeRunToolActions": 88,
+  "outputLimits": {
+    "initialPlan": 4800,
+    "synthesis": 4800,
+    "semanticSafety": 4800,
+    "privateBriefAndReview": 1400,
+    "publicDiscoveryAndVerification": 3600
+  },
+  "reasoning": "Medium explicitly added when absent; existing GPT-5 semantic Low preserved; no application source change",
+  "requestLimitBytesBeforeStreamingFlag": 100000,
+  "streamingFlagOverheadMaxBytes": 14,
+  "storedProviderHistory": false,
+  "retries": 0,
+  "turnTimeoutMs": 170000,
+  "phaseTimeoutMs": {
+    "planAndSynthesis": 60000,
+    "privateBriefAndPrivacy": 25000,
+    "publicDiscoveryAndVerification": 45000,
+    "semanticChecks": "within 170000 turn abort signal"
+  },
+  "perCallBounds": [
+    {
+      "model": "gpt-5",
+      "plain4800NanoUsd": 548000000,
+      "private1400NanoUsd": 514000000,
+      "public3600FourToolNanoUsd": 2576000000
+    },
+    {
+      "model": "gpt-5.6-luna",
+      "plain4800NanoUsd": 587004000,
+      "private1400NanoUsd": 580272000,
+      "public3600FourToolNanoUsd": 2934628000
+    }
+  ],
+  "unknownUsage": "Retain complete maximum reservation and halt; no retry/restart; raw received payload preserved when present",
+  "history": "Fresh per scenario; preserve labeled adversarial seed in GC-03; followups use actual delivered response and returned state only; no persistent writes",
+  "credential": "Existing owner-authorized private DEV workflow; key loaded into child memory only; no production key/config copied",
+  "ledger": "Private ~/.config/seangworld/evaluations/<runId>/spend.json, exclusive creation; no existing GC run resume",
+  "sourceLimitations": [
+    "TCC detailed catalog prerequisite fetch returns403; exact prerequisites remain unverified",
+    "Fall2027 fees and program application deadlines not established by existing baseline",
+    "AZ-900 exact regional price not verified by existing retrieved official evidence",
+    "Model-assisted privacy/source verification is not independent certification; full roadmap/document access outside patch"
+  ],
+  "approvalRequired": true,
+  "paidInferenceCalls": 0,
+  "liveCompetencyGrade": null
+}

@@ -1,0 +1,62 @@
+{
+  "status": "HALTED",
+  "candidateCommit": "f3768efd960f33accf1cd40e0abe6795b6f4cb09",
+  "manifestSha256": "89107ef00887f92edaed5afe833d01ef2025ae94b53ba8f174239a04262258b5",
+  "runId": "gc-20261021-pr273-assessment-v2",
+  "capUsd": 10,
+  "maximumInferenceAttempts": 88,
+  "maximumDirectRequests": 90,
+  "attemptedInferenceCalls": 18,
+  "freeMetadataCalls": 2,
+  "totalDirectProviderRequests": 20,
+  "settledCalls": 17,
+  "unknownCalls": 1,
+  "retries": 0,
+  "completedTurns": 5,
+  "expectedTurns": 11,
+  "knownTokenUsage": {
+    "input": 27567,
+    "output": 5797,
+    "cachedInput": 9328,
+    "cacheWriteInput": 6702,
+    "reasoningOutput": 2264
+  },
+  "accountedNanoUsd": 565628670,
+  "conservativeAccountedUsd": 0.56562867,
+  "settledConservativeUsd": 0.05162867,
+  "unknownMaximumRetainedUsd": 0.514,
+  "knownUsageEstimateWithMaximumToolFeesUsd": 0.03961991,
+  "invoiceReconciled": false,
+  "guardHalt": "Unknown outcome; full reservation retained",
+  "executionFailure": "The Digital Staff service is temporarily unavailable. Please try again.",
+  "allReservationsFitCap": true,
+  "privateLedgerSha256": "5dbbc8d18328d520c8070a681cd84c50bea5dc6781f117405b0f9005774abe2c",
+  "timing": [
+    {
+      "turnId": "GC-01-T1",
+      "totalMs": 10031
+    },
+    {
+      "turnId": "GC-01-T2",
+      "totalMs": 7904
+    },
+    {
+      "turnId": "GC-02-T1",
+      "totalMs": 7904
+    },
+    {
+      "turnId": "GC-03-T1",
+      "totalMs": 7003
+    },
+    {
+      "turnId": "GC-03-T2",
+      "totalMs": 7963
+    }
+  ],
+  "completedTurnMeanMs": 8161,
+  "completedTurnWorstMs": 10031,
+  "customerRecordsRead": false,
+  "customerRecordsWritten": false,
+  "productionChanges": false,
+  "executorGrade": "separate; independent review pending"
+}

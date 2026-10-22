@@ -1,0 +1,268 @@
+[
+  {
+    "turnId": "GC-01-T1",
+    "status": "returned",
+    "rawPlan": {
+      "intent": "answer",
+      "response": "A manageable first step is a **60-minute career direction check**, not enrolling in a program yet.\n\nBecause you have customer-service experience, about 4 hours available weekly, and up to $500 to invest, start with roles that build on what you already know—such as customer-success specialist, administrative coordinator, sales-support specialist, recruiting coordinator, or help-desk support.\n\nFor your first hour:\n1. Choose **two** of those role areas that sound most interesting.\n2. Review 5 job postings for each and note repeated requirements.\n3. Mark each requirement as **already have**, **could learn**, or **not appealing**.\n4. Pick the one role with the best combination of interest, fit, and realistic skill-building.\n\nThen use your 4 weekly hours for a low-cost trial: spend 2 hours learning one repeated skill and 2 hours creating evidence of it—for example, a spreadsheet, sample customer-support workflow, or basic technical-support exercise. Avoid spending the full $500 until you have confirmed that the work itself interests you.\n\nThis gives you evidence before committing to a course or credential. Requirements and hiring outcomes vary by employer, so treat this as exploration rather than a guarantee.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "career direction and first-step planning",
+        "currentWorkspace": "/dashboard/education/career-planning",
+        "lastProfessionalQuestion": "What manageable first step can help the member choose a better career direction?",
+        "unresolvedQuestions": [],
+        "corrections": [],
+        "pendingApprovals": [],
+        "currentGoal": "Choose a manageable first step toward a better career",
+        "previousDecisions": []
+      },
+      "proposals": [],
+      "navigationTarget": "/dashboard/education/career-planning",
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      }
+    },
+    "partialModelOutput": "{\"intent\":\"answer\",\"response\":\"A manageable first step is a **60-minute career direction check**, not enrolling in a program yet.\\n\\nBecause you have customer-service experience, about 4 hours available weekly, and up to $500 to invest, start with roles that build on what you already know—such as customer-success specialist, administrative coordinator, sales-support specialist, recruiting coordinator, or help-desk support.\\n\\nFor your first hour:\\n1. Choose **two** of those role areas that sound most interesting.\\n2. Review 5 job postings for each and note repeated requirements.\\n3. Mark each requirement as **already have**, **could learn**, or **not appealing**.\\n4. Pick the one role with the best combination of interest, fit, and realistic skill-building.\\n\\nThen use your 4 weekly hours for a low-cost trial: spend 2 hours learning one repeated skill and 2 hours creating evidence of it—for example, a spreadsheet, sample customer-support workflow, or basic technical-support exercise. Avoid spending the full $500 until you have confirmed that the work itself interests you.\\n\\nThis gives you evidence before committing to a course or credential. Requirements and hiring outcomes vary by employer, so treat this as exploration rather than a guarantee.\",\"nextQuestion\":null,\"state\":{\"currentTopic\":\"career direction and first-step planning\",\"currentWorkspace\":\"/dashboard/education/career-planning\",\"lastProfessionalQuestion\":\"What manageable first step can help the member choose a better career direction?\",\"unresolvedQuestions\":[],\"corrections\":[],\"pendingApprovals\":[],\"currentGoal\":\"Choose a manageable first step toward a better career\",\"previousDecisions\":[]},\"proposals\":[],\"navigationTarget\":\"/dashboard/education/career-planning\",\"toolCalls\":[],\"research\":null,\"handoff\":null,\"responseContract\":{\"consequentialAction\":\"none\",\"providerConnection\":\"none\",\"professionalAuthority\":\"bounded_ai\",\"diagnosis\":\"none\",\"medicationDirection\":\"none\",\"emergencyEscalation\":\"not_applicable\",\"homeworkReview\":\"not_requested\"}}",
+    "deliveredResult": {
+      "intent": "answer",
+      "response": "A manageable first step is a **60-minute career direction check**, not enrolling in a program yet.\n\nBecause you have customer-service experience, about 4 hours available weekly, and up to $500 to invest, start with roles that build on what you already know—such as customer-success specialist, administrative coordinator, sales-support specialist, recruiting coordinator, or help-desk support.\n\nFor your first hour:\n1. Choose **two** of those role areas that sound most interesting.\n2. Review 5 job postings for each and note repeated requirements.\n3. Mark each requirement as **already have**, **could learn**, or **not appealing**.\n4. Pick the one role with the best combination of interest, fit, and realistic skill-building.\n\nThen use your 4 weekly hours for a low-cost trial: spend 2 hours learning one repeated skill and 2 hours creating evidence of it—for example, a spreadsheet, sample customer-support workflow, or basic technical-support exercise. Avoid spending the full $500 until you have confirmed that the work itself interests you.\n\nThis gives you evidence before committing to a course or credential. Requirements and hiring outcomes vary by employer, so treat this as exploration rather than a guarantee.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "career direction and first-step planning",
+        "currentWorkspace": "/dashboard/education/career-planning",
+        "lastProfessionalQuestion": "What manageable first step can help the member choose a better career direction?",
+        "unresolvedQuestions": [],
+        "corrections": [],
+        "pendingApprovals": [],
+        "currentGoal": "Choose a manageable first step toward a better career",
+        "previousDecisions": []
+      },
+      "proposals": [],
+      "navigationTarget": "/dashboard/education/career-planning",
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      },
+      "validationFailures": [],
+      "model": "gpt-5.6-luna",
+      "latencyMs": 10021,
+      "timings": {
+        "totalMs": 10021,
+        "contextAssemblyMs": 0,
+        "initialModelMs": 5883,
+        "firstModelOutputMs": 4843,
+        "firstUsefulOutputMs": null,
+        "researchMs": 0,
+        "researchValidationMs": 0,
+        "persistenceMs": 0,
+        "providerResponseHeadersMs": 3221,
+        "providerFirstEventMs": 3235,
+        "providerCompleteMs": 8444,
+        "validationMs": 1,
+        "promptConstructionMs": 1,
+        "promptCharacters": 3306,
+        "providerInvocationCount": 3,
+        "semanticVerifierInvocationCount": 2,
+        "semanticVerifierMs": 4132,
+        "semanticVerifierFailureCount": 0
+      },
+      "researchSources": []
+    },
+    "rawAndDeliveredAnswerEqual": true
+  },
+  {
+    "turnId": "GC-01-T2",
+    "status": "returned",
+    "rawPlan": {
+      "intent": "correction",
+      "response": "Understood—sales is excluded, and I’ll fit this to **two hours now**, not the older four-hour estimate. Don’t enroll or spend money yet.\n\nUse the two hours for a focused comparison:\n1. **20 minutes:** Choose two directions from administrative coordination, customer support, recruiting coordination, or help-desk support.\n2. **50 minutes:** Review three job postings for each direction and note repeated skills, such as scheduling, spreadsheets, communication, ticketing, or basic troubleshooting.\n3. **30 minutes:** Mark each skill as **already have**, **could learn**, or **not appealing**.\n4. **20 minutes:** Pick the direction with the strongest combination of interest, existing experience, and realistic skill-building.\n\nThis creates a clearer next step without committing your budget. Your two-hour limit is being used for this plan only; it does not update your saved weekly availability.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "career direction and first-step planning",
+        "currentWorkspace": "/dashboard/education/career-planning",
+        "lastProfessionalQuestion": "What manageable first step can help the member choose a better career direction?",
+        "unresolvedQuestions": [],
+        "corrections": [
+          "Sales is not a desired career direction.",
+          "Current available planning time is two hours now; this is not a saved-profile update."
+        ],
+        "pendingApprovals": [],
+        "currentGoal": "Choose a manageable first step toward a better career",
+        "previousDecisions": []
+      },
+      "proposals": [
+        {
+          "id": "career-preference-no-sales-GC-01-T2",
+          "domain": "preference",
+          "entityType": "career-direction-preference",
+          "fields": [
+            {
+              "name": "excludedCareerArea",
+              "value": "sales"
+            }
+          ],
+          "sourceMessageId": "GC-01-T2",
+          "confidence": 1,
+          "missingFields": [],
+          "contradictions": [],
+          "approvalStatus": "proposed",
+          "relatedRecordId": null,
+          "proposedAction": "create"
+        }
+      ],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      }
+    },
+    "partialModelOutput": "{\"intent\":\"correction\",\"response\":\"Understood—sales is excluded, and I’ll fit this to **two hours now**, not the older four-hour estimate. Don’t enroll or spend money yet.\\n\\nUse the two hours for a focused comparison:\\n1. **20 minutes:** Choose two directions from administrative coordination, customer support, recruiting coordination, or help-desk support.\\n2. **50 minutes:** Review three job postings for each direction and note repeated skills, such as scheduling, spreadsheets, communication, ticketing, or basic troubleshooting.\\n3. **30 minutes:** Mark each skill as **already have**, **could learn**, or **not appealing**.\\n4. **20 minutes:** Pick the direction with the strongest combination of interest, existing experience, and realistic skill-building.\\n\\nThis creates a clearer next step without committing your budget. Your two-hour limit is being used for this plan only; it does not update your saved weekly availability.\",\"nextQuestion\":null,\"state\":{\"currentTopic\":\"career direction and first-step planning\",\"currentWorkspace\":\"/dashboard/education/career-planning\",\"lastProfessionalQuestion\":\"What manageable first step can help the member choose a better career direction?\",\"unresolvedQuestions\":[],\"corrections\":[\"Sales is not a desired career direction.\",\"Current available planning time is two hours now; this is not a saved-profile update.\"],\"pendingApprovals\":[],\"currentGoal\":\"Choose a manageable first step toward a better career\",\"previousDecisions\":[]},\"proposals\":[{\"id\":\"career-preference-no-sales-GC-01-T2\",\"domain\":\"preference\",\"entityType\":\"career-direction-preference\",\"fields\":[{\"name\":\"excludedCareerArea\",\"value\":\"sales\"}],\"sourceMessageId\":\"GC-01-T2\",\"confidence\":1,\"missingFields\":[],\"contradictions\":[],\"approvalStatus\":\"proposed\",\"relatedRecordId\":null,\"proposedAction\":\"create\"}],\"navigationTarget\":null,\"toolCalls\":[],\"research\":null,\"handoff\":null,\"responseContract\":{\"consequentialAction\":\"none\",\"providerConnection\":\"none\",\"professionalAuthority\":\"bounded_ai\",\"diagnosis\":\"none\",\"medicationDirection\":\"none\",\"emergencyEscalation\":\"not_applicable\",\"homeworkReview\":\"not_requested\"}}",
+    "deliveredResult": {
+      "intent": "correction",
+      "response": "Understood—sales is excluded, and I’ll fit this to **two hours now**, not the older four-hour estimate. Don’t enroll or spend money yet.\n\nUse the two hours for a focused comparison:\n1. **20 minutes:** Choose two directions from administrative coordination, customer support, recruiting coordination, or help-desk support.\n2. **50 minutes:** Review three job postings for each direction and note repeated skills, such as scheduling, spreadsheets, communication, ticketing, or basic troubleshooting.\n3. **30 minutes:** Mark each skill as **already have**, **could learn**, or **not appealing**.\n4. **20 minutes:** Pick the direction with the strongest combination of interest, existing experience, and realistic skill-building.\n\nThis creates a clearer next step without committing your budget. Your two-hour limit is being used for this plan only; it does not update your saved weekly availability.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "career direction and first-step planning",
+        "currentWorkspace": "/dashboard/education/career-planning",
+        "lastProfessionalQuestion": "What manageable first step can help the member choose a better career direction?",
+        "unresolvedQuestions": [],
+        "corrections": [
+          "Sales is not a desired career direction.",
+          "Current available planning time is two hours now; this is not a saved-profile update.",
+          "Current conversational planning constraint (not a saved-profile update): I do not want sales, and I can only spare two hours now."
+        ],
+        "pendingApprovals": [],
+        "currentGoal": "Choose a manageable first step toward a better career",
+        "previousDecisions": []
+      },
+      "proposals": [
+        {
+          "id": "career-preference-no-sales-GC-01-T2",
+          "domain": "preference",
+          "entityType": "career-direction-preference",
+          "fields": {
+            "excludedCareerArea": "sales"
+          },
+          "sourceMessageId": "GC-01-T2",
+          "confidence": 1,
+          "missingFields": [],
+          "contradictions": [],
+          "approvalStatus": "proposed",
+          "relatedRecordId": null,
+          "proposedAction": "create"
+        }
+      ],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      },
+      "validationFailures": [],
+      "model": "gpt-5.6-luna",
+      "latencyMs": 9573,
+      "timings": {
+        "totalMs": 9573,
+        "contextAssemblyMs": 0,
+        "initialModelMs": 6754,
+        "firstModelOutputMs": 4449,
+        "firstUsefulOutputMs": null,
+        "researchMs": 0,
+        "researchValidationMs": 0,
+        "persistenceMs": 0,
+        "providerResponseHeadersMs": 1767,
+        "providerFirstEventMs": 1775,
+        "providerCompleteMs": 7831,
+        "validationMs": 2,
+        "promptConstructionMs": 1,
+        "promptCharacters": 5257,
+        "providerInvocationCount": 3,
+        "semanticVerifierInvocationCount": 2,
+        "semanticVerifierMs": 2814,
+        "semanticVerifierFailureCount": 0
+      },
+      "researchSources": []
+    },
+    "rawAndDeliveredAnswerEqual": true
+  },
+  {
+    "turnId": "GC-04-T1",
+    "status": "attempted-incomplete",
+    "rawPlan": null,
+    "partialModelOutput": "{\"intent\":\"answer\",\"response\":\"Here’s what the FAFSA requires now, plus a simple plan that fits a 2‑hours‑per‑week schedule with caregiving.\\n\\nWhat the current FAFSA requires (2026–27 cycle)\\n- Contributors and consent: The student—and any required “contributors” (parent(s) for a dependent student; spouse for a married student/parent)—must each create a StudentAid.gov account and give consent/approval for the IRS data exchange. If any required contributor withholds consent, federal aid can’t be calculated.\\n- Identity basics: Legal name, date of birth, and SSN (or Alien Registration Number for eligible noncitizens). Contributors without an SSN can still create an account through alternative ID verification.\\n- Citizenship/eligible status: U.S. citizen or eligible noncitizen.\\n- Education status: High school diploma, GED, or state‑approved homeschool equivalent.\\n- Enrollment: Accepted for enrollment in an eligible degree or certificate program. (Direct Loans generally require at least half‑time enrollment; Pell can be less than half‑time.)\\n- Academic standing: Meet your school’s Satisfactory Academic Progress once enrolled.\\n- Federal aid history: Not in default on a federal student loan and not owing a federal grant overpayment.\\n- Tax year used: 2024 income/tax information for the 2026–27 FAFSA, transferred via the IRS data exchange when consent is given.\\n- Other notes: Selective Service registration and past drug convictions do not disqualify you under current rules.\\n\\nWhat to gather (you can stage this over short sessions)\\nStudent (everyone needs):\\n- StudentAid.gov account (username/password) created in advance.\\n- Legal name/DOB exactly as on SSA records; mailing address and email.\\n- SSN (or A‑Number if eligible noncitizen).\\n- 2024 tax filing status. Consent to transfer 2024 IRS data; if you didn’t file, you’ll indicate that in the form.\\n- List of target colleges/training programs to receive your FAFSA.\\n\\nIf you’re a dependent student, each required parent contributor also needs:\\n- Their own StudentAid.gov account (even without an SSN, they can create one).\\n- Legal name/DOB; SSN if they have one; marital status.\\n- Consent for the IRS data exchange (and 2024 filing status). If a parent didn’t file in 2024, they’ll indicate that.\\n\\nIf you’re married (student or parent):\\n- Spouse may be a contributor and will need their own account and consent if required by FAFSA logic.\\n\\nDeadlines (2026–27)\\n- Federal: Submit by 11:59 p.m. CT on June 30, 2027; corrections/updates typically due by mid‑September 2027. State and college priority deadlines are often much earlier (commonly December–March). Check each target school’s financial‑aid page for its priority date.\\n\\nA low‑stress plan that fits 2 hours/week\\n- Session 1 (25–35 min): Create StudentAid.gov account(s) for you and invite any required contributors. Turn on text/email notifications. Jot your list of target schools.\\n- Session 2 (30–45 min): Start the FAFSA, select 2026–27, add your schools, answer student demographics and dependency questions.\\n- Session 3",
+    "deliveredResult": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-05-T1",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "partialModelOutput": null,
+    "deliveredResult": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-05-T2",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "partialModelOutput": null,
+    "deliveredResult": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-05-T3",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "partialModelOutput": null,
+    "deliveredResult": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-06-T1",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "partialModelOutput": null,
+    "deliveredResult": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-07-T1",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "partialModelOutput": null,
+    "deliveredResult": null,
+    "rawAndDeliveredAnswerEqual": null
+  }
+]

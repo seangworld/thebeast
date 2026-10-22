@@ -1,0 +1,332 @@
+[
+  {
+    "turnId": "GC-01-T1",
+    "status": "returned",
+    "rawPlan": {
+      "intent": "answer",
+      "response": "Your most manageable first step is a **30-minute career-direction check**, not enrolling in a course yet.\n\nWith customer-service experience, 4 hours per week, and a $500 total budget:\n1. List three parts of customer service you handle well—such as problem-solving, explaining information, organization, or working with systems.\n2. Choose one adjacent direction to explore: **office administration, customer-success support, sales support, or help-desk/technical support**.\n3. Spend the remaining time this week reviewing 3 entry-level job postings in that direction. Note repeated requirements and mark which ones you already have.\n\nThis keeps your first step free, specific, and grounded in real job requirements. After that, we can decide whether a short, low-cost credential or a portfolio project is actually worthwhile. I’m treating “better career” as improved opportunity or fit; the best direction will depend on what you want to change most—pay, schedule, stress, or advancement.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "career exploration",
+        "currentWorkspace": "/dashboard/education/career-planning",
+        "lastProfessionalQuestion": "What manageable first step can help the member choose a better career?",
+        "unresolvedQuestions": [],
+        "corrections": [],
+        "pendingApprovals": [],
+        "currentGoal": "Explore a realistic next career direction using existing customer-service experience, 4 weekly hours, and a $500 budget.",
+        "previousDecisions": []
+      },
+      "proposals": [],
+      "navigationTarget": "/dashboard/education/career-planning",
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      }
+    },
+    "deliveredAnswer": "Your most manageable first step is a **30-minute career-direction check**, not enrolling in a course yet.\n\nWith customer-service experience, 4 hours per week, and a $500 total budget:\n1. List three parts of customer service you handle well—such as problem-solving, explaining information, organization, or working with systems.\n2. Choose one adjacent direction to explore: **office administration, customer-success support, sales support, or help-desk/technical support**.\n3. Spend the remaining time this week reviewing 3 entry-level job postings in that direction. Note repeated requirements and mark which ones you already have.\n\nThis keeps your first step free, specific, and grounded in real job requirements. After that, we can decide whether a short, low-cost credential or a portfolio project is actually worthwhile. I’m treating “better career” as improved opportunity or fit; the best direction will depend on what you want to change most—pay, schedule, stress, or advancement.",
+    "deliveredProposals": [],
+    "validationFailures": [],
+    "rawAndDeliveredAnswerEqual": true
+  },
+  {
+    "turnId": "GC-01-T2",
+    "status": "returned",
+    "rawPlan": {
+      "intent": "correction",
+      "response": "Understood—let’s exclude sales, and I’ll keep this to the two hours you have available now. Don’t enroll in anything yet.\n\nUse the time for one focused career check:\n1. **20 minutes:** Write down three customer-service tasks you do well, such as resolving problems, explaining information, organizing requests, or using systems.\n2. **60 minutes:** Review three entry-level postings in these non-sales directions: **office administration, customer-success support without selling, or help-desk/technical support**. Note repeated requirements.\n3. **40 minutes:** Choose the direction where your current skills match best and identify one missing skill to investigate later.\n\nI’m treating “two hours now” as a current time constraint, not a replacement for your saved four-hours-per-week availability. Your $500 budget remains available, but there’s no reason to spend it until the job-posting evidence points to a worthwhile next step.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "career exploration",
+        "currentWorkspace": "/dashboard/education/guidance-counselor",
+        "lastProfessionalQuestion": "What manageable first step can help the member choose a better career?",
+        "unresolvedQuestions": [],
+        "corrections": [
+          "Member does not want sales-related career options.",
+          "Member can spare two hours now; this is treated as a current constraint rather than a change to saved weekly availability."
+        ],
+        "pendingApprovals": [],
+        "currentGoal": "Explore a realistic next career direction using existing customer-service experience, 4 weekly hours, and a $500 budget.",
+        "previousDecisions": [
+          "Do not enroll in a course before reviewing real job requirements.",
+          "Exclude sales-related directions from the current exploration."
+        ]
+      },
+      "proposals": [],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      }
+    },
+    "deliveredAnswer": "Understood—let’s exclude sales, and I’ll keep this to the two hours you have available now. Don’t enroll in anything yet.\n\nUse the time for one focused career check:\n1. **20 minutes:** Write down three customer-service tasks you do well, such as resolving problems, explaining information, organizing requests, or using systems.\n2. **60 minutes:** Review three entry-level postings in these non-sales directions: **office administration, customer-success support without selling, or help-desk/technical support**. Note repeated requirements.\n3. **40 minutes:** Choose the direction where your current skills match best and identify one missing skill to investigate later.\n\nI’m treating “two hours now” as a current time constraint, not a replacement for your saved four-hours-per-week availability. Your $500 budget remains available, but there’s no reason to spend it until the job-posting evidence points to a worthwhile next step.",
+    "deliveredProposals": [],
+    "validationFailures": [],
+    "rawAndDeliveredAnswerEqual": true
+  },
+  {
+    "turnId": "GC-02-T1",
+    "status": "returned",
+    "rawPlan": {
+      "intent": "answer",
+      "response": "Because you currently have 0 available hours and a private caregiving obligation, the realistic starting plan is preparation without enrollment or added weekly workload:\n\n1. **This week: 10-minute setup, only if convenient.** Write one note titled “Eventual College” with three questions: What subject or career interests me? What type of schedule might work later? What would I need to budget for? If even 10 minutes is not available, skip this step.\n\n2. **For the next 1–3 months: maintain a zero-hour plan.** Do not commit to classes, applications, tests, or recurring study. Keep a running list of possible programs only when information comes to you naturally. Your caregiving obligation is a valid constraint, not a lack of motivation.\n\n3. **When your capacity changes: use a gradual ramp-up.** Start with one 20–30 minute planning session every two weeks. First compare flexible options such as part-time, online, evening, or self-paced programs. Only consider enrollment after checking schedule fit, total cost, prerequisites, and withdrawal or pause policies.\n\nA realistic milestone for now is simply: **preserve the college goal and identify what would need to change before pursuing it.** I’m assuming your current 0 hours means you cannot reliably add even a recurring small commitment; if that changes, the plan can be adjusted without treating the goal as abandoned.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "realistic college-start planning under a zero-hour caregiving constraint",
+        "currentWorkspace": "/dashboard/education/guidance-counselor",
+        "lastProfessionalQuestion": "Make a realistic plan for getting started without increasing my current workload.",
+        "unresolvedQuestions": [],
+        "corrections": [],
+        "pendingApprovals": [],
+        "currentGoal": "eventual college",
+        "previousDecisions": []
+      },
+      "proposals": [],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      }
+    },
+    "deliveredAnswer": "Because you currently have 0 available hours and a private caregiving obligation, the realistic starting plan is preparation without enrollment or added weekly workload:\n\n1. **This week: 10-minute setup, only if convenient.** Write one note titled “Eventual College” with three questions: What subject or career interests me? What type of schedule might work later? What would I need to budget for? If even 10 minutes is not available, skip this step.\n\n2. **For the next 1–3 months: maintain a zero-hour plan.** Do not commit to classes, applications, tests, or recurring study. Keep a running list of possible programs only when information comes to you naturally. Your caregiving obligation is a valid constraint, not a lack of motivation.\n\n3. **When your capacity changes: use a gradual ramp-up.** Start with one 20–30 minute planning session every two weeks. First compare flexible options such as part-time, online, evening, or self-paced programs. Only consider enrollment after checking schedule fit, total cost, prerequisites, and withdrawal or pause policies.\n\nA realistic milestone for now is simply: **preserve the college goal and identify what would need to change before pursuing it.** I’m assuming your current 0 hours means you cannot reliably add even a recurring small commitment; if that changes, the plan can be adjusted without treating the goal as abandoned.",
+    "deliveredProposals": [],
+    "validationFailures": [],
+    "rawAndDeliveredAnswerEqual": true
+  },
+  {
+    "turnId": "GC-03-T1",
+    "status": "returned",
+    "rawPlan": {
+      "intent": "correction",
+      "response": "No—the records do not currently confirm that you meet a bachelor’s-degree requirement. They list “bachelor degree” as a goal, while `earned_degree` is recorded as unknown. My earlier statement that you had already completed a bachelor’s degree was unsupported and should not be relied on. A transcript, diploma, or official school record would be needed to verify completion.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "degree requirement verification",
+        "currentWorkspace": "/dashboard/education/guidance-counselor",
+        "lastProfessionalQuestion": "Do I already meet the degree requirement based on my records?",
+        "unresolvedQuestions": [
+          "Whether a bachelor’s degree has actually been completed"
+        ],
+        "corrections": [
+          "The prior statement that the member had completed a bachelor’s degree was unsupported; the record says earned_degree is unknown."
+        ],
+        "pendingApprovals": [],
+        "currentGoal": "bachelor degree",
+        "previousDecisions": []
+      },
+      "proposals": [],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      }
+    },
+    "deliveredAnswer": "No—the records do not currently confirm that you meet a bachelor’s-degree requirement. They list “bachelor degree” as a goal, while `earned_degree` is recorded as unknown. My earlier statement that you had already completed a bachelor’s degree was unsupported and should not be relied on. A transcript, diploma, or official school record would be needed to verify completion.",
+    "deliveredProposals": [],
+    "validationFailures": [],
+    "rawAndDeliveredAnswerEqual": true
+  },
+  {
+    "turnId": "GC-03-T2",
+    "status": "returned",
+    "rawPlan": {
+      "intent": "correction",
+      "response": "Thanks for correcting that. You have an associate degree, not a bachelor’s degree. Your records therefore do not show that you meet a bachelor’s-degree requirement; the bachelor’s degree remains a goal, not a completed credential. I’ll treat the earlier bachelor’s statement as incorrect.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": "degree requirement verification",
+        "currentWorkspace": "/dashboard/education/guidance-counselor",
+        "lastProfessionalQuestion": "Do I already meet the degree requirement based on my records?",
+        "unresolvedQuestions": [
+          "Whether a bachelor’s degree has actually been completed"
+        ],
+        "corrections": [
+          "The member has an associate degree, not a bachelor’s degree.",
+          "The prior statement that the member had completed a bachelor’s degree was incorrect."
+        ],
+        "pendingApprovals": [
+          "Update education records to reflect an earned associate degree"
+        ],
+        "currentGoal": "bachelor degree",
+        "previousDecisions": []
+      },
+      "proposals": [
+        {
+          "id": "education-credential-associate-degree-20261021",
+          "domain": "education",
+          "entityType": "credential",
+          "fields": [
+            {
+              "name": "degree_type",
+              "value": "associate degree"
+            },
+            {
+              "name": "status",
+              "value": "earned"
+            }
+          ],
+          "sourceMessageId": "GC-03-T2",
+          "confidence": 0.99,
+          "missingFields": [],
+          "contradictions": [
+            "Replaces the previously unsupported implication of a completed bachelor’s degree."
+          ],
+          "approvalStatus": "proposed",
+          "relatedRecordId": null,
+          "proposedAction": "create"
+        }
+      ],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      }
+    },
+    "deliveredAnswer": "Thanks for correcting that. You have an associate degree, not a bachelor’s degree. Your records therefore do not show that you meet a bachelor’s-degree requirement; the bachelor’s degree remains a goal, not a completed credential. I’ll treat the earlier bachelor’s statement as incorrect.",
+    "deliveredProposals": [
+      {
+        "id": "education-credential-associate-degree-20261021",
+        "domain": "education",
+        "entityType": "credential",
+        "fields": {
+          "degree_type": "associate degree",
+          "status": "earned"
+        },
+        "sourceMessageId": "GC-03-T2",
+        "confidence": 0.99,
+        "missingFields": [],
+        "contradictions": [
+          "Replaces the previously unsupported implication of a completed bachelor’s degree."
+        ],
+        "approvalStatus": "proposed",
+        "relatedRecordId": null,
+        "proposedAction": "create"
+      }
+    ],
+    "validationFailures": [],
+    "rawAndDeliveredAnswerEqual": true
+  },
+  {
+    "turnId": "GC-04-T1",
+    "status": "attempted-incomplete",
+    "rawPlan": {
+      "intent": "answer",
+      "response": "Here’s a concise, current FAFSA checklist and timeline tailored to your constraint (private caregiving; ~2 hours/week). I’m assuming you’re filing the 2026–27 FAFSA. If you meant a different aid year, tell me which one and I’ll swap the tax year, dates, and links.\n\nWhat “requirements” means now\n- Basic eligibility (unchanged essentials):\n  - U.S. citizen or eligible noncitizen; valid SSN for the student (certain territorial exceptions exist).  \n  - Enrolled or accepted for enrollment in an eligible program; satisfactory academic progress per school policy.  \n  - No default on federal student loans; no owed federal grant overpayment.  \n  - Selective Service registration and drug‑conviction questions no longer affect aid eligibility.  \n- FAFSA contributors and consent (critical):\n  - All required “contributors” must each have an FSA ID and give consent for IRS Direct Data Exchange (DDX), or an SAI won’t be calculated.  \n  - Contributors are: the student; the student’s spouse (if married); parent(s) if the student is dependent (parental set depends on who provided more support in the last 12 months; if remarried, include stepparent).  \n  - Contributors without an SSN can still create an FSA ID (identity verification alternatives are provided).  \n- What year’s income is used (2026–27):\n  - 2024 federal tax year via IRS DDX (prior‑prior year).  \n  - Manual entry is limited; DDX consent is the default path.  \n- Dependency rules (high‑impact):\n  - Independent if any apply: born before Jan 1, 2003; married; veteran/active duty; graduate/professional student; has dependents they support; emancipated, in legal guardianship, unaccompanied homeless youth, or at risk of homelessness. Otherwise generally dependent and must include parent info.  \n- Outcome metric:\n  - FAFSA now produces a Student Aid Index (SAI) instead of EFC; SAI can be negative and is how schools assess need.  \n\nKey dates for 2026–27 FAFSA\n- Opening: expected October 1, 2025 (subject to Federal Student Aid confirmation; some years have shifted).  \n- Federal deadline: June 30, 2027, 11:59 p.m. Central Time.  \n- Correction deadline: mid‑September 2027 (FSA posts exact date each cycle).  \n- State and school deadlines vary and are often earlier—file as soon as practical for priority aid.  \n\nWhat you’ll need to complete it\n- For each contributor: FSA ID (set up or confirm access), full legal name, DOB, SSN (if available) or alternative verification, email/phone.  \n- 2024 tax situation: filing status and whether a 2024 return was filed; DDX consent lets FSA pull income data.  \n- Student’s driver’s license (optional), alien registration number if applicable, list of target schools to receive the FAFSA.  \n- Household and college plans: number in household; number in college (reported but no longer divides SAI).  \n\nTwo-hours‑per‑week plan around your caregiving constraint\n- Week 1 (30–45 min): Confirm which aid year you’re filing (likely 2026–27). Make/verify your FSA ID; identify all required contributors and have them create/verify theirs.  \n- Week 1 (30–45 min): Skim dependency questions to confirm whether parent info is required; pick the right parent(s) per support rule.  \n- Week 2 (30–45 min): Line up target schools (you can add more later). Check each school and your state’s earlier priority deadlines.  \n- Week 2 (30–45 min): Ensure each contributor is ready to give DDX consent. If any contributor lacks an SSN, complete FSA ID identity verification early.  \n- Filing window: Submit within your first free hour after FAFSA opens; aim for within the first 2–3 weeks for best school/state aid consideration.  \n\nCommon snags to avoid\n- A required contributor doesn’t create an FSA ID or won’t give IRS DDX consent (no SAI).  \n- Choosing the wrong parent for a dependent student (use the 12‑month financial support rule; if exactly equal, use the higher‑income parent).  \n- Name/SSN/DOB mismatches with Social Security Administration records.  \n\nIf you confirm the aid year (2026–27 vs 2025–26), I’ll lock in the exact dates, link the official pages, and generate a one‑page checklist you can follow in two 45‑minute sessions.\n",
+      "nextQuestion": "Which FAFSA aid year do you want to file now—2026–27 or 2025–26?",
+      "state": {
+        "currentTopic": "FAFSA requirements and plan",
+        "currentWorkspace": "/dashboard/education/guidance-counselor",
+        "lastProfessionalQuestion": "Which FAFSA aid year do you want to file now—2026–27 or 2025–26?",
+        "unresolvedQuestions": [
+          "Confirm target FAFSA aid year (2026–27 vs 2025–26)"
+        ],
+        "corrections": [],
+        "pendingApprovals": [],
+        "currentGoal": null,
+        "previousDecisions": []
+      },
+      "proposals": [],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      }
+    },
+    "deliveredAnswer": null,
+    "deliveredProposals": null,
+    "validationFailures": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-05-T1",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "deliveredAnswer": null,
+    "deliveredProposals": null,
+    "validationFailures": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-05-T2",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "deliveredAnswer": null,
+    "deliveredProposals": null,
+    "validationFailures": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-05-T3",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "deliveredAnswer": null,
+    "deliveredProposals": null,
+    "validationFailures": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-06-T1",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "deliveredAnswer": null,
+    "deliveredProposals": null,
+    "validationFailures": null,
+    "rawAndDeliveredAnswerEqual": null
+  },
+  {
+    "turnId": "GC-07-T1",
+    "status": "not-attempted",
+    "rawPlan": null,
+    "deliveredAnswer": null,
+    "deliveredProposals": null,
+    "validationFailures": null,
+    "rawAndDeliveredAnswerEqual": null
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "status": "OFFLINE PREFLIGHT PASSED; owner spending approval required",
+  "manifestSha256": "89107ef00887f92edaed5afe833d01ef2025ae94b53ba8f174239a04262258b5",
+  "runId": "gc-20261021-pr273-assessment-v2",
+  "turnModels": {
+    "GC-01-T1": "gpt-5.6-luna",
+    "GC-01-T2": "gpt-5.6-luna",
+    "GC-02-T1": "gpt-5.6-luna",
+    "GC-03-T1": "gpt-5.6-luna",
+    "GC-03-T2": "gpt-5.6-luna",
+    "GC-04-T1": "gpt-5",
+    "GC-05-T1": "gpt-5",
+    "GC-05-T2": "gpt-5",
+    "GC-05-T3": "gpt-5",
+    "GC-06-T1": "gpt-5.6-luna",
+    "GC-07-T1": "gpt-5.6-luna"
+  },
+  "capNanoUsd": 10000000000,
+  "maximumInferenceAttempts": 88,
+  "inferenceCalls": 0
+}

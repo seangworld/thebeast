@@ -1,0 +1,57 @@
+[
+  {
+    "turnId": "GC-05-T1",
+    "result": {
+      "intent": "answer",
+      "response": "The Digital Staff service is temporarily unavailable. Please try again.",
+      "nextQuestion": null,
+      "state": {
+        "currentTopic": null,
+        "currentWorkspace": null,
+        "lastProfessionalQuestion": null,
+        "unresolvedQuestions": [],
+        "corrections": [],
+        "pendingApprovals": [],
+        "currentGoal": null,
+        "previousDecisions": []
+      },
+      "proposals": [],
+      "navigationTarget": null,
+      "toolCalls": [],
+      "research": null,
+      "handoff": null,
+      "responseContract": {
+        "consequentialAction": "none",
+        "providerConnection": "none",
+        "professionalAuthority": "bounded_ai",
+        "diagnosis": "none",
+        "medicationDirection": "none",
+        "emergencyEscalation": "not_applicable",
+        "homeworkReview": "not_requested"
+      },
+      "model": "semantic-safety-verifier",
+      "latencyMs": 1380,
+      "timings": {
+        "totalMs": 1380,
+        "contextAssemblyMs": 0,
+        "initialModelMs": 0,
+        "firstModelOutputMs": null,
+        "firstUsefulOutputMs": 0,
+        "researchMs": 0,
+        "researchValidationMs": 0,
+        "persistenceMs": 0,
+        "validationMs": 0,
+        "promptConstructionMs": 0,
+        "promptCharacters": 0,
+        "providerInvocationCount": 1,
+        "semanticVerifierInvocationCount": 1,
+        "semanticVerifierMs": 1379,
+        "semanticVerifierFailureCount": 1
+      },
+      "researchSources": [],
+      "validationFailures": [
+        "semantic-verifier-unavailable"
+      ]
+    }
+  }
+]

@@ -40,7 +40,7 @@ test("context loading preserves query failures instead of inventing an empty suc
 
 test("counselor instructions preserve practical planning, source grounding and approval boundaries", () => {
   const prompt = authoritativeProfessionalPrompt("beasteducation.guidance-counselor");
-  for (const rule of ["Zero available hours", "not an earned credential", "Respect declined paths", "relevant official source", "Never invent degrees", "Do not submit applications", "existing approval path", "no more than three"]) {
+  for (const rule of ["Zero available hours", "not an earned credential", "Respect declined paths", "official-source discovery", "Never invent degrees", "Do not submit applications", "existing approval path", "no more than three"]) {
     assert.ok(prompt.includes(rule), rule);
   }
   assert.ok(!authoritativeProfessionalPrompt("beastmoney.money-coach").includes("discovery_answers"));

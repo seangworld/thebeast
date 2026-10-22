@@ -1,0 +1,16 @@
+Digital Staff request failed. {
+  scope: 'openai-responses',
+  requestId: 'GC-05-T1-semantic-input',
+  category: 'provider_quota_exhausted',
+  detail: 'OpenAI Responses API returned status 429 (type=insufficient_quota, code=credit_balance_exhausted).'
+}
+file:///private/tmp/jordan-guidance-upgrade/scripts/guidance-evaluation-dispatch.mjs:113
+ if(failure)throw Error('Assessment stopped; inspect private receipts; no retry');
+                  ^
+
+Error: Assessment stopped; inspect private receipts; no retry
+    at dispatchApproved (file:///private/tmp/jordan-guidance-upgrade/scripts/guidance-evaluation-dispatch.mjs:113:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///private/tmp/jordan-guidance-upgrade/scripts/guidance-evaluation-dispatch.mjs:118:43
+
+Node.js v24.19.0

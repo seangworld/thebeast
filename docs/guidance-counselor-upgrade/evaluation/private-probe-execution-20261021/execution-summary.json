@@ -1,0 +1,47 @@
+{
+  "status": "STOPPED_EARLY_INVALID_BRIEF; PRIVATE PROBE UNSUCCESSFUL",
+  "manifestSha256": "56b9f68a3d34b5f5f98c0be3a033c9106ee56409a31a23320958e564367e8c64",
+  "candidateCommit": "212d3cdd0e59b9f20cc145ff0bb030c624facb76",
+  "runId": "gc-20261021-pr273-private-brief-probe",
+  "inferenceAttempts": 2,
+  "freeMetadataChecks": 1,
+  "totalDirectProviderRequests": 3,
+  "metadataEvidence": {
+    "attempts": [
+      {
+        "model": "gpt-5",
+        "status": "available",
+        "startedAt": "2026-10-21T21:55:48.248Z",
+        "httpStatus": 200
+      }
+    ]
+  },
+  "settledCalls": 2,
+  "unknownCalls": 0,
+  "privateReviewAttempted": false,
+  "publicSearches": 0,
+  "laterStageCalls": 0,
+  "memberAnswers": 0,
+  "completedRuntimeTurns": 0,
+  "recordedProbeOutcomes": 1,
+  "successfulPrivateProbes": 0,
+  "inputTokens": 1828,
+  "outputTokens": 243,
+  "reasoningTokens": 128,
+  "briefReasoningTokens": 0,
+  "inputSafetyLatencyMs": 4381,
+  "briefLatencyMs": 1525,
+  "newConservativeAccountedUsd": 0.004715,
+  "newCapUsd": 1.58,
+  "priorConservativeAccountedUsd": 1.64070013,
+  "combinedConservativeAccountedUsd": 1.64541513,
+  "combinedCapUsd": 3.22070013,
+  "priorUnresolvedReservationsUsd": 1.576,
+  "newUnresolvedReservationsUsd": 0,
+  "knownTokenCostEstimateUsd": 0.004715,
+  "invoiceReconciled": false,
+  "allReservationsFitCap": true,
+  "retries": 0,
+  "originalEndToEndCriteria": "4 NOT TESTED",
+  "privateLedgerSha256": "ec0fd349708df9591edbad3b074cc8522bce1ca044df9641cdefd203a9c8e180"
+}

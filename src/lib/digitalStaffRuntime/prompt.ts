@@ -1,3 +1,4 @@
+import { guidancePlanningConstraint, guidancePlanningState } from "./guidancePlanning";
 import { moneyCoachReasoningSchemaFor } from "../moneyCoachReasoning";
 import { moneyEvidenceCatalog, moneyPriorityFields } from "../moneyCoachEvidence";
 import type { ProfessionalConfig } from "./config";
@@ -46,7 +47,8 @@ export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeCo
   return JSON.stringify({
     ...(config.id === "beastmoney.money-coach" ? { financialEvidence: moneyEvidenceCatalog(context), supportedFinancialProposals: { entityTypes: ["priority","goal","preference"], fields: moneyPriorityFields, destination: "Owner-approved Money priority only; no debt, income, bill, APR, payment or account edits." } } : {}),
     currentMessage: context.message,
-    conversationState: context.state,
+    conversationState: guidancePlanningState(context, context.state),
+    ...(config.id === "beasteducation.guidance-counselor" ? { currentPlanningConstraint: guidancePlanningConstraint(context) } : {}),
     recentConversation: context.recentMessages.slice(productSupport ? -4 : config.id === "beasthealth.health-advisor" ? -32 : -8),
     relevantMemory: productSupport ? [] : context.memories.slice(0, config.id === "beasthealth.health-advisor" ? 16 : 8),
     structuredRecords: productSupport ? [] : structuredRecords,

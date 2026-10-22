@@ -1,3 +1,4 @@
+import { consumeResponseStream, newStreamDiagnostic } from "./providerStream";
 import { prepareEvaluationCall } from "./evaluationProviderHook";
 import {
   classifyDigitalStaffFailure,
@@ -64,9 +65,12 @@ export async function requestOpenAIResponse<T>(
     signal?: AbortSignal;
   } = {}
 ) {
+  // An expired caller has no authority to reserve or dispatch another call.
+  options.signal?.throwIfAborted();
   const requestId = options.requestId || crypto.randomUUID();
   const reservation = prepareEvaluationCall(body, requestId);
   const guardedBody = reservation?.body ?? body;
+  const diagnostic: { httpStatus: number | null; providerRequestId: string | null; failure?: { message: string } } = { httpStatus: null, providerRequestId: null };
   try {
     const response = await (options.fetchImpl || fetch)(openAIResponsesEndpoint, {
       method: "POST",
@@ -74,25 +78,24 @@ export async function requestOpenAIResponse<T>(
       body: JSON.stringify(guardedBody),
       signal: options.signal,
     });
+    diagnostic.httpStatus = response.status;
+    diagnostic.providerRequestId = response.headers.get("x-request-id")?.slice(0, 256) || null;
     if (!response.ok) {
-      throw await openAIProviderStatusError(response);
+      const error = await openAIProviderStatusError(response);
+      // Sanitized status/type/code only, never the raw error body or credentials.
+      diagnostic.failure = { message: error.message };
+      throw error;
     }
     const payload = (await response.json()) as T;
     reservation?.settle(payload);
     return payload;
   } catch (error) {
-    reservation?.unknown();
+    reservation?.unknown(diagnostic);
     const category = classifyDigitalStaffFailure("openai-responses", error);
     reportDigitalStaffError("openai-responses", error, requestId);
     throw new DigitalStaffServiceError(requestId, category);
   }
 }
-
-type OpenAIStreamEvent = {
-  type?: string;
-  delta?: string;
-  response?: unknown;
-};
 
 export async function requestOpenAIResponseStream<T>(
   body: unknown,
@@ -109,12 +112,15 @@ export async function requestOpenAIResponseStream<T>(
     onComplete?: () => void;
   } = {}
 ) {
+  // An expired caller has no authority to reserve or dispatch another call.
+  options.signal?.throwIfAborted();
   const requestId = options.requestId || crypto.randomUUID();
   const reservation = prepareEvaluationCall(body, requestId);
   const guardedBody = reservation?.body ?? body;
   const controller = new AbortController();
   const timeoutMs = options.timeoutMs ?? digitalStaffProviderTimeoutMs;
   let timedOut = false;
+  const diagnostic = newStreamDiagnostic();
   const abortFromCaller = () => controller.abort(options.signal?.reason);
   if (options.signal?.aborted) abortFromCaller();
   else options.signal?.addEventListener("abort", abortFromCaller, { once: true });
@@ -129,47 +135,26 @@ export async function requestOpenAIResponseStream<T>(
       body: JSON.stringify({ ...(guardedBody as Record<string, unknown>), stream: true }),
       signal: controller.signal,
     });
+    diagnostic.httpStatus = response.status;
+    diagnostic.providerRequestId = response.headers.get("x-request-id")?.slice(0, 256) || null;
     if (!response.ok || !response.body) {
       throw await openAIProviderStatusError(response);
     }
     options.onResponseHeaders?.();
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let completed: T | null = null;
-    let sawOutput = false;
-    let sawEvent = false;
-    while (true) {
-      const { done, value } = await reader.read();
-      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
-      const frames = buffer.split("\n\n");
-      buffer = frames.pop() || "";
-      for (const frame of frames) {
-        for (const line of frame.split("\n")) {
-          if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
-          const event = JSON.parse(line.slice(6)) as OpenAIStreamEvent;
-          if (!sawEvent) {
-            sawEvent = true;
-            options.onFirstEvent?.();
-          }
-          if (event.type === "response.output_text.delta" && event.delta) {
-            if (!sawOutput) {
-              sawOutput = true;
-              options.onFirstOutput?.();
-            }
-            await options.onOutputTextDelta?.(event.delta);
-          }
-          if (event.type === "response.completed" && event.response) completed = event.response as T;
-        }
-      }
-      if (done) break;
-    }
-    if (!completed) throw new Error("OpenAI streaming response did not complete safely.");
+    const completed = await consumeResponseStream<T>(response.body.getReader(), diagnostic, {
+      onFirstEvent: options.onFirstEvent,
+      onFirstOutput: options.onFirstOutput,
+      onDelta: options.onOutputTextDelta,
+    });
+    reservation?.diagnostic?.(diagnostic);
     reservation?.settle(completed);
     options.onComplete?.();
     return completed;
   } catch (error) {
-    reservation?.unknown();
+    diagnostic.failure ??= { name: error instanceof Error ? error.name.slice(0, 100) : "UnknownError", message: error instanceof Error ? error.message.slice(0, 2048) : "Non-Error provider failure" };
+    if (timedOut) diagnostic.outcome = "timeout";
+    else if (options.signal?.aborted) diagnostic.outcome = "caller_abort";
+    reservation?.unknown(diagnostic);
     const reported = timedOut
       ? new Error(`OpenAI provider timed out after ${timeoutMs}ms.`)
       : options.signal?.aborted

@@ -1,0 +1,221 @@
+{
+  "status": "FROZEN PROPOSED TWO-TURN NATIVE E2E REGRESSION; NO PAID AUTHORIZATION OR EXECUTION",
+  "runId": "gc-20261021-pr273-native-schooling-regression",
+  "applicationCommit": "247ca3d26b706d8049096b5f969c9e19078f0fe7",
+  "applicationSrcTree": "391db629c4a4605e192edc0390030eaa0267d344",
+  "sourceFilesSha256": "65789649840331592972d2012e61d1e747e3bdde4ffbce8d9a5a2b6e208c82ce",
+  "compiledRuntimeSha256": "8bd36c246f2a2d95ebe7b851c23bdb1249e8af3af5173f882c934d9f59f7a055",
+  "fixturePath": "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json",
+  "fileHashes": {
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json": "a2a6b43ee1241c3273884baee5bf24e0a8238d4cd558bb58a82618365a6e3d03",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets.json": "ba1e8a32aa088d03c40896824b6296a42600effcce3675f9deb6b3a2d54ba1aa",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/GRADING-RULES.md": "1b6fed5a2f20ec9b2f8aa8b8fba5fa45ae7b367aef8b77a106d15c761ab476fb",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/SOURCE-BASELINE.md": "8af9212ccc7ec60c164c84c437643d314405de1f264bb3ea84305ff5ce24144c",
+    "docs/guidance-counselor-upgrade/EVALUATION-PLAN.md": "1f8af8f256577329782dc633511c9c07408f8ea8d57b29f7172e82f60b966524",
+    "package-lock.json": "9eb4c807a2ace258dd8a78682c38bdb66b958aa298a4ec9bbe712d083c96a3f5",
+    "tsconfig.test.json": "85980c3a9bc3afc7224c950272894c607c4c529bbfbcb2900815a252859d6b78",
+    "scripts/guidance-evaluation-budget.mjs": "40e93861e1bd482b95ea63da0de5c2e1fe21c46236b9136c1403ffb21b18e143",
+    "scripts/guidance-evaluation-session.mjs": "ec0b618e5ddc3291cbec1b86c752384a80b7055e02a292ef7de8f56e4271c225",
+    "scripts/guidance-evaluation-dispatch.mjs": "6aba552ed96227dca8e55083fbc566b2d710939d8226e7b930bd0105feee948e",
+    "scripts/run-guidance-evaluation-dev.py": "414a73d0208d542d8d73bef9b3a65f747cf65a89504ef577ef62f37397783658",
+    "scripts/verify-guidance-evaluation-preparation.mjs": "07e7d2343d4e01aea334d270955cd340830844fcb38e9e606578c2ab14123bce",
+    "scripts/test-guidance-evaluation-budget.mjs": "b8806ba1111195e1052c32f256a7f5769e677a476b71529605e26f0468bd2e33",
+    "src/lib/digitalStaffRuntime/providerStream.ts": "4f615451dc445b3d5cc769768ecc88eafa8b8bfda5343a659cc1d95cc3d617a7",
+    "src/lib/digitalStaffRuntime/guidancePlanning.ts": "d3202b5f9a0701ac2f16d6bb7ec5736746294f98815a3c4664a6d8eebf4e4576",
+    "tests/providerStreamDiagnostics.test.ts": "f10efa26980a2aa3eeef9a74297a1dde586bfe44cce9b481a2ca2f5213473bf4",
+    "tests/guidancePlanningConstraint.test.ts": "a3e5c46cc8bba821f66d9711b77662862e10b7555b6243bef3bcacb5d5350faa",
+    "src/lib/digitalStaffRuntime/runtime.ts": "66273d4cbc09b13f5a7d556fdf3dad5f296e4366fff1e3ce6dae68022844482e",
+    "tests/guidanceResearch.test.ts": "d50fdb00c609a45d9ca590c9e8ae8d4be87e135df5122398c1ffb0aaa08ffb93",
+    "src/lib/digitalStaffRuntime/guidanceDiscovery.ts": "e5f13438aa10fa91c083b2c0e75266f5b0bd075eab4928551d7159b19f9b679a",
+    "src/lib/digitalStaffRuntime/guidanceResearch.ts": "622c4cb9f372c3a46708d93d4f866740b58c9fa08e98bdeaaf4d600ce01bbe3b",
+    "docs/guidance-counselor-upgrade/evaluation/private-probe-execution-20261021/call-accounting.json": "649bb285174dfa4dbcbb4b481a7c8e05f287cba53f9429f00ebbd4cefca5d3ae",
+    "src/lib/memberAgentSemanticVerifier.ts": "c66f3e02458e00e6cb3d06a71bf5efdfb2b10e262f76f697902b17d363d91d43",
+    "src/lib/health/answerSources.ts": "f501eb7154ec70f90805b0bdf8484c16cd358a73ad8cb36991dc9700b7c804e0",
+    "tests/guidanceResearchFlow.test.ts": "17c2844d1708afa963d6a549b09b9c571a6f2e5c7116ff055d3d2f7106a24a17",
+    "src/app/api/digital-staff/runtime/route.ts": "aac94a679340297f6a1f3e4bd21f12b73596ed08ac509afc0349f6dace60cf9a",
+    "docs/guidance-counselor-upgrade/evaluation/consolidated-preparation-20261021/selected-original-packets.json": "77fe1c554f4f5fc30603a6a9f2bee87619216f81c52b9582b80a06462f38f3bd",
+    "docs/guidance-counselor-upgrade/evaluation/consolidated-preparation-20261021/original-criteria.json": "29989f9d8b981f38942d461ef4dcbc9f343228a46b6e33ee3932ba89e044e097",
+    "scripts/test-guidance-research-contract.mjs": "a8da874ce6ba2caa81bbf168c0b5dc597b059b11eeaa72f22dd0958cefc4f483",
+    "scripts/test-guidance-school-regression.mjs": "34033e03d6585b7d6a712ea73314aff73591dd269264353738c11fc27067f21e",
+    "tests/guidanceNativeSchoolPlan.test.ts": "7199c360a036bf5bb8a53405158976de490ef6c320dc2cc60fd296fb1e8bbffc",
+    "docs/guidance-counselor-upgrade/evaluation/native-schooling-preparation-20261021/selected-original-packets.json": "84993714f53e4680a1d094f1aa67aca0c487bd285e1bfd3c3fbd87fa916ad312",
+    "docs/guidance-counselor-upgrade/evaluation/native-schooling-preparation-20261021/original-criteria.json": "4583ef1cf9985d05934083ba320e247ef393d2e6968346f4a7d03aabff7bb88d"
+  },
+  "selectedTurnIds": [
+    "GC-05-T1",
+    "GC-05-T2"
+  ],
+  "turnModels": {
+    "GC-05-T1": "gpt-5",
+    "GC-05-T2": "gpt-5"
+  },
+  "policy": {
+    "reviewedAt": "2026-10-22T00:03:05Z",
+    "expiresAt": "2026-10-24T00:03:05Z",
+    "searchNano": 10000000,
+    "allowWebSearch": true,
+    "webAccounting": "processed-actions-conservative-v1",
+    "turnAttemptLimits": {
+      "GC-05-T1": 7,
+      "GC-05-T2": 7
+    },
+    "allowedRequestSuffixes": [
+      "-semantic-input",
+      "-guidance-brief",
+      "-guidance-privacy",
+      "-guidance-discover",
+      "-guidance-verify",
+      "-synthesis",
+      "-semantic-output"
+    ],
+    "models": {
+      "gpt-5": {
+        "context": 400000,
+        "inputNano": 1250,
+        "outputNano": 10000,
+        "returned": [
+          "gpt-5",
+          "gpt-5-2025-08-07"
+        ]
+      }
+    },
+    "sources": [
+      "https://developers.openai.com/api/docs/models/gpt-5",
+      "https://developers.openai.com/api/docs/pricing",
+      "https://developers.openai.com/api/reference/python/resources/responses/methods/create",
+      "https://developers.openai.com/api/docs/guides/tools-web-search"
+    ],
+    "assumptions": "Global standard Responses endpoint; GPT5 published1.25/M input10/M output,400k context; no cache discounts. Full model context reserved per maximum possible processed tool step plus output and ALL configured search fees; conservative usage estimates, not invoice reconciliation. Completed actions bounded by documented max_tool_calls, not emitted-item length. Extra nonterminal attempts accepted only as trailing suffix after full completed quota, never used for source evidence. Missing usage/noncompleted response/unknown prices/tools/models or actual processed overflow retain full reservation and halt. No external vendor, retries, substitutions or extra stages."
+  },
+  "capNanoUsd": 5740000000,
+  "maximumInferenceAttempts": 14,
+  "metadataAttempts": 1,
+  "metadataReceipt": null,
+  "requireFreshMetadata": true,
+  "maximumDirectProviderAttempts": 15,
+  "expectedInferenceAttempts": 14,
+  "scenarioFamilies": 1,
+  "turns": 2,
+  "uniqueCriteria": 6,
+  "maximumCallsPerTurn": 7,
+  "maximumToolActionsPerRequest": 4,
+  "maximumToolActionsPerTurn": 8,
+  "maximumWholeRunToolActions": 16,
+  "outputLimits": {
+    "mandatoryInitialPlan": 0,
+    "semanticSafety": 4800,
+    "privateBriefAndReview": 1400,
+    "publicDiscoveryAndVerification": 3600,
+    "synthesis": 4800
+  },
+  "reasoning": "GPT5 Low input/output; Minimal brief; Medium privacy/discovery/verification/contextual synthesis. No model substitution.",
+  "requestLimitBytesBeforeStreamingFlag": 100000,
+  "streamingFlagOverheadMaxBytes": 14,
+  "storedProviderHistory": false,
+  "retries": 0,
+  "turnTimeoutMs": 170000,
+  "phaseTimeoutMs": {
+    "semanticChecks": 45000,
+    "privateBriefAndPrivacy": 25000,
+    "publicDiscoveryAndVerification": 45000,
+    "synthesis": 60000
+  },
+  "perCallBounds": [
+    {
+      "model": "gpt-5",
+      "plain4800NanoUsd": 548000000,
+      "private1400NanoUsd": 514000000,
+      "public3600FourToolNanoUsd": 2576000000
+    }
+  ],
+  "maximumAllStagesReservationSumNanoUsd": 15648000000,
+  "perTurnMaximumReservationsNanoUsd": {
+    "GC-05-T1": 7824000000,
+    "GC-05-T2": 7824000000
+  },
+  "unknownUsage": "Full reservation retained on incomplete/failed/disconnected/missing usage; halt, no retry/restart. No old reservation release.",
+  "history": "GC05T2 uses actual new delivered T1 response/state through contextFor. Original prompts, records, seed policy and criteria unchanged.",
+  "credential": "Existing private owner-authorized DEV workflow; no new key or account and no credential modification",
+  "ledger": "Private exclusive fresh ledger; no previous run may restart",
+  "sourceLimitations": [
+    "Prior TCC catalog403; no invented prerequisites or access bypass",
+    "Fall2027 fees and application cutoffs not previously established; do not extrapolate Spring figures or substitute payment deadlines",
+    "Native source identity/facts/excerpts model-assisted, not independent page-byte verification; inspect claim support and citations in live packet",
+    "Goal-led discovery remains unverified live and is NOT assessed by these named-school turns"
+  ],
+  "approvalRequired": true,
+  "paidInferenceCalls": 0,
+  "newProviderMetadataCalls": 0,
+  "liveCompetencyGrade": null,
+  "priorAccounting": {
+    "receipts": [
+      {
+        "runId": "gc-20261021-pr273-assessment-v2",
+        "ledgerSha256": "5dbbc8d18328d520c8070a681cd84c50bea5dc6781f117405b0f9005774abe2c",
+        "accountedNanoUsd": 565628670,
+        "conservativeSettledNanoUsd": 51628670,
+        "unknownMaximumRetainedNanoUsd": 514000000
+      },
+      {
+        "runId": "gc-20261021-pr273-remediation-assessment",
+        "ledgerSha256": "e3bfcba843960581ce99c6915d3b26170d7445184c97b0e289279150ad374b10",
+        "accountedNanoUsd": 558551460,
+        "conservativeSettledNanoUsd": 10551460,
+        "unknownMaximumRetainedNanoUsd": 548000000
+      },
+      {
+        "runId": "gc-20261021-pr273-gc04-routing-assessment",
+        "ledgerSha256": "c0607629595efe092f5c73502be29df493e649594b5365959d68d95d22ee95e4",
+        "accountedNanoUsd": 516520000,
+        "conservativeSettledNanoUsd": 2520000,
+        "unknownMaximumRetainedNanoUsd": 514000000
+      },
+      {
+        "runId": "gc-20261021-pr273-private-brief-probe",
+        "ledgerSha256": "ec0fd349708df9591edbad3b074cc8522bce1ca044df9641cdefd203a9c8e180",
+        "accountedNanoUsd": 4715000,
+        "conservativeSettledNanoUsd": 4715000,
+        "unknownMaximumRetainedNanoUsd": 0,
+        "completionSha256": "4dcc1b325f48b76e2182530df56c3a9d099a02991629ef5d467f884663c1f07b",
+        "manifestSha256": "56b9f68a3d34b5f5f98c0be3a033c9106ee56409a31a23320958e564367e8c64"
+      },
+      {
+        "runId": "gc-20261021-pr273-question-contract-probe",
+        "ledgerSha256": "73a359168b6e66dc89979fdb60635f8ddebf9acdb895af4b40a06f27abf46538",
+        "accountedNanoUsd": 15825000,
+        "conservativeSettledNanoUsd": 15825000,
+        "unknownMaximumRetainedNanoUsd": 0,
+        "completionSha256": "ef84f967af19196678426c0add0e13207a43263f7247dd41a82354271224d033",
+        "manifestSha256": "ec5c2028439143bc777b997f6542973d698c41c994f0a6305aa83a106d5e3c46"
+      },
+      {
+        "runId": "gc-20261021-pr273-consolidated-e2e",
+        "ledgerSha256": "837c5dbd38777b676ab2c00b9c85029a83613c14b41e7ca3a3ccd01f9ea08624",
+        "accountedNanoUsd": 2590353750,
+        "conservativeSettledNanoUsd": 14353750,
+        "unknownMaximumRetainedNanoUsd": 2576000000,
+        "completionSha256": "b3839cb1e704ce27726fc85d5980cce53b9948d386fbcfbd767afe1a06bac7b1",
+        "manifestSha256": "e4d27fc06d42c7de77df6311cd80e9b9d0984ae76ce0b17b419b98a4acf1e4be"
+      }
+    ],
+    "ledgerSha256": "592fafd68da3bff2a73960bac561d59248c291c7c10992c230ce410033713f18",
+    "accountedNanoUsd": 4251593880,
+    "conservativeSettledNanoUsd": 99593880,
+    "unknownMaximumRetainedNanoUsd": 4152000000,
+    "inferenceAttempts": 37,
+    "metadataAttempts": 9
+  },
+  "maximumCumulativeAccountedNanoUsd": 9991593880,
+  "maximumCumulativeInferenceAttempts": 51,
+  "maximumCumulativeDirectProviderAttempts": 61,
+  "reusedFixturesAreNotHeldOut": true,
+  "modelVisibility": "One fresh free durably recorded metadata check after exact owner approval; unavailable/unknown deprecated GPT5 halts with no substitution",
+  "mode": "end-to-end",
+  "successCriteria": [
+    "All six original GC05 criteria across both turns, unchanged; grade unavailable work NOT TESTED",
+    "Evaluate actual delivered useful comparison/correction and practical planning, not internal-stage validity; no blanket refusal PASS where official findings exist",
+    "Critical privacy/authorization/fabrication/false completion failures are material regardless of aggregate count",
+    "Prepare original raw responses, public tool/source traces, actual history/state and usage plus blinded packets; executor review is not independent grading"
+  ],
+  "stopOnSafetyFailure": true
+}

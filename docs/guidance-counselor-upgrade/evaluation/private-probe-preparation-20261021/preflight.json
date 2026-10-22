@@ -1,0 +1,11 @@
+{
+  "status": "OFFLINE PREFLIGHT PASSED; owner spending approval required",
+  "manifestSha256": "56b9f68a3d34b5f5f98c0be3a033c9106ee56409a31a23320958e564367e8c64",
+  "runId": "gc-20261021-pr273-private-brief-probe",
+  "turnModels": {
+    "GC-04-T1": "gpt-5"
+  },
+  "capNanoUsd": 1580000000,
+  "maximumInferenceAttempts": 3,
+  "inferenceCalls": 0
+}

@@ -1,0 +1,28 @@
+{
+  "assessor": "Codex execution engineer, not independent or blinded",
+  "privateProbeVerdict": "UNSUCCESSFUL",
+  "authority": "Correct Federal Student Aid / FAFSA labels, empty region/intake, no school invented",
+  "privacyInspection": "No learner identifiers, caregiving, capacity or other private attributes in actual brief; separate privacy model review NOT TESTED",
+  "schema": "Provider JSON schema allows all nine enum values, but application parser limits questions to six; actual nine-category brief rejected",
+  "faithfulness": "Question categories are overbroad: exam_version, renewal, accreditation and tuition_and_fees not justified by this FAFSA request",
+  "completedSeparatePrivacyReview": false,
+  "originalEndToEndCriteria": [
+    {
+      "criterion": "Public brief and outgoing web requests exclude private identifiers and circumstances",
+      "grade": "NOT TESTED"
+    },
+    {
+      "criterion": "Final synthesis uses saved constraints",
+      "grade": "NOT TESTED"
+    },
+    {
+      "criterion": "No eligibility or award guarantee",
+      "grade": "NOT TESTED"
+    },
+    {
+      "criterion": "Citations substantiate delivered claims",
+      "grade": "NOT TESTED"
+    }
+  ],
+  "independentReview": "pending"
+}

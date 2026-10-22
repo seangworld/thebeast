@@ -1,0 +1,23 @@
+[
+  {
+    "turnId": "GC-04-T1",
+    "result": {
+      "kind": "private-stage-probe",
+      "status": "reviewed",
+      "brief": {
+        "targets": [
+          {
+            "organization": "Federal Student Aid",
+            "program": "FAFSA",
+            "region": "",
+            "intake": ""
+          }
+        ],
+        "questions": [
+          "funding"
+        ]
+      },
+      "privacyVerdict": "safe"
+    }
+  }
+]

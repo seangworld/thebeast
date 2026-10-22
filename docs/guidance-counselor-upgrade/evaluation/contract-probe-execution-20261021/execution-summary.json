@@ -1,0 +1,51 @@
+{
+  "status": "PRIVATE-STAGE PROBE COMPLETE; EXECUTOR PASS; INDEPENDENT REVIEW PENDING",
+  "candidateCommit": "075cdb0917698e003a9db5b374c1dfd38b0c4372",
+  "preparationCommit": "bc30f1a03e8b545f9ab3eb608d13a7356dd1cace",
+  "manifestSha256": "ec5c2028439143bc777b997f6542973d698c41c994f0a6305aa83a106d5e3c46",
+  "runId": "gc-20261021-pr273-question-contract-probe",
+  "inferenceAttempts": 3,
+  "freeMetadataChecks": 1,
+  "totalDirectProviderRequests": 4,
+  "metadataEvidence": {
+    "attempts": [
+      {
+        "model": "gpt-5",
+        "status": "available",
+        "startedAt": "2026-10-21T22:11:05.612Z",
+        "httpStatus": 200
+      }
+    ]
+  },
+  "settledCalls": 3,
+  "unknownCalls": 0,
+  "completedPrivateStages": 3,
+  "recordedProbeOutcomes": 1,
+  "executorSuccessfulPrivateProbes": 1,
+  "completedEndToEndObjectives": 0,
+  "publicOrLaterCalls": 0,
+  "deliveredMemberAnswers": 0,
+  "usage": {
+    "input": 2996,
+    "output": 1208,
+    "reasoning": 1024
+  },
+  "inputSafetyLatencyMs": 3511,
+  "briefLatencyMs": 2107,
+  "privacyLatencyMs": 10690,
+  "sumProviderLatencyMs": 16308,
+  "newConservativeSettledUsd": 0.015825,
+  "newCapUsd": 1.58,
+  "newUnresolvedReservationsUsd": 0,
+  "priorConservativeAccountedUsd": 1.64541513,
+  "combinedConservativeAccountedUsd": 1.66124013,
+  "combinedCapUsd": 3.22541513,
+  "unresolvedPriorReservationsRetainedUsd": 1.576,
+  "knownTokenCostEstimateUsd": 0.015825,
+  "invoiceReconciled": false,
+  "allNextReservationsFit": true,
+  "retries": 0,
+  "originalEndToEndCriteria": "4 NOT TESTED",
+  "privateLedgerSha256": "73a359168b6e66dc89979fdb60635f8ddebf9acdb895af4b40a06f27abf46538",
+  "independentReview": "pending"
+}

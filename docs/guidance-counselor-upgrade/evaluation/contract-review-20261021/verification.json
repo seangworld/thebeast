@@ -1,0 +1,38 @@
+{
+  "conclusion": 2,
+  "paidAssessmentReady": false,
+  "liveCompetencyEstablished": false,
+  "paidInferenceCalls": 0,
+  "providerMetadataCalls": 0,
+  "freshEvaluationLedgers": 0,
+  "applicationTests": {
+    "passed": 2547,
+    "failed": 0,
+    "freshCompiledRuntime": true
+  },
+  "guardAndReplayTests": {
+    "passed": 47,
+    "failed": 0,
+    "newRecordedAndFullFlowCases": 15
+  },
+  "lint": "PASS; existing next lint deprecation notice",
+  "typeScript": "PASS",
+  "securityGatedBuild": "PASS;221 pages",
+  "securityRegressionsPassed": 22,
+  "npmAuditVulnerabilities": 0,
+  "originalFixtures": "UNCHANGED",
+  "oldManifestOfflineCheck": "EXPECTED REJECTION: Application candidate changed; no dispatch",
+  "logSha256": {
+    "applicationTests": "080e821b6e599816ff4ac4f3f6bd6fbf054aade4365cea231ffe0ead154087d2",
+    "guardAndRecordedReplayTests": "4389283242ea2444b8b7fd281cd62eef61238c0a8b96c09b2bbba07a93dace86",
+    "lint": "f7c69f72fcf5e8a84910af02c9637a078d237796f0894891bb20b3af4fd45fe0",
+    "typeScript": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "securityGatedBuild": "e42c08c5ce0530dc5b221f97f10414de0bcd4017544fce6a3cad02f521ea18cb",
+    "originalFixtures": "6a3886256d6fc8c9f588ac51edbbb367c223ea5a71ae5eadedafe8a16d46b2bd",
+    "oldManifestRejection": "a797c89ac719615a33c8d7a481545c60e1dbd89c0214601b3d23fbeb26ed8ea1"
+  },
+  "visualChecks": "Not applicable: no UI/style/layout changes",
+  "preservedAccountingUsd": "4.25159388",
+  "unresolvedReservationsUsd": "4.152",
+  "independentGrading": "No new live answers or competency grading; engineering replay only"
+}

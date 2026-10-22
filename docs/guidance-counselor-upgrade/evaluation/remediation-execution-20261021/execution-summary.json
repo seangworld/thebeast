@@ -1,0 +1,71 @@
+{
+  "status": "HALTED",
+  "candidateCommit": "54e99fe9",
+  "dispatchCommit": "7464d5e8",
+  "manifestSha256": "cf4ffc18bae7aa744e0ec2103faedad7667954310148275e175cff33fd5859db",
+  "runId": "gc-20261021-pr273-remediation-assessment",
+  "capUsd": 9.43,
+  "maximumInferenceAttempts": 64,
+  "maximumDirectRequests": 66,
+  "attemptedInferenceCalls": 8,
+  "freeMetadataCalls": 2,
+  "totalDirectProviderRequests": 10,
+  "metadataEvidence": {
+    "attempts": [
+      {
+        "model": "gpt-5.6-luna",
+        "status": "available",
+        "startedAt": "2026-10-21T21:09:34.907Z",
+        "httpStatus": 200
+      },
+      {
+        "model": "gpt-5",
+        "status": "available",
+        "startedAt": "2026-10-21T21:09:35.722Z",
+        "httpStatus": 200
+      }
+    ]
+  },
+  "settledCalls": 7,
+  "unknownCalls": 1,
+  "retries": 0,
+  "completedTurns": 2,
+  "expectedTurns": 8,
+  "knownTokenUsage": {
+    "input": 10816,
+    "output": 1556,
+    "cachedInput": 2474,
+    "cacheWriteInput": 4430,
+    "reasoningOutput": 497
+  },
+  "accountedNanoUsd": 558551460,
+  "conservativeAccountedUsd": 0.55855146,
+  "priorAccountedNanoUsd": 565628670,
+  "cumulativeAccountedNanoUsd": 1124180130,
+  "cumulativeConservativeAccountedUsd": 1.12418013,
+  "priorUnknownRetainedUsd": 0.514,
+  "settledConservativeUsd": 0.01055146,
+  "unknownMaximumRetainedUsd": 0.548,
+  "knownUsageEstimateWithMaximumToolFeesUsd": 0.00567258,
+  "invoiceReconciled": false,
+  "guardHalt": "Unknown outcome; full reservation retained",
+  "executionFailure": "The Digital Staff service is temporarily unavailable. Please try again.",
+  "allReservationsFitCap": true,
+  "privateLedgerSha256": "e3bfcba843960581ce99c6915d3b26170d7445184c97b0e289279150ad374b10",
+  "timing": [
+    {
+      "turnId": "GC-01-T1",
+      "totalMs": 10021
+    },
+    {
+      "turnId": "GC-01-T2",
+      "totalMs": 9573
+    }
+  ],
+  "completedTurnMeanMs": 9797,
+  "completedTurnWorstMs": 10021,
+  "customerRecordsRead": false,
+  "customerRecordsWritten": false,
+  "productionChanges": false,
+  "executorGrade": "separate; independent review pending"
+}

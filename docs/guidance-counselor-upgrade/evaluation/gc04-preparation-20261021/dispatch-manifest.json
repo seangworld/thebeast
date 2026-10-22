@@ -1,0 +1,181 @@
+{
+  "status": "FROZEN PROPOSAL; OWNER APPROVAL REQUIRED; NO EXECUTION",
+  "runId": "gc-20261021-pr273-gc04-routing-assessment",
+  "applicationCommit": "6f47bffa6b42aaa1949de6679a668bb929b14bb3",
+  "resumedPublishedHead": "6f47bffa6b42aaa1949de6679a668bb929b14bb3",
+  "applicationSrcTree": "d7b20c9c100adb85cabcb78a50d2581a468a0404",
+  "sourceFilesSha256": "13900025f0b28a96ebe2e2051357f920ac84a8b3cfa737d6bd13133566da1e2a",
+  "compiledRuntimeSha256": "64703207dba0531ca3ac41084c168be56b8b297b60f6b2f1b94bc253a570ed19",
+  "fixturePath": "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json",
+  "fileHashes": {
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets-v2.json": "a2a6b43ee1241c3273884baee5bf24e0a8238d4cd558bb58a82618365a6e3d03",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/scenario-packets.json": "ba1e8a32aa088d03c40896824b6296a42600effcce3675f9deb6b3a2d54ba1aa",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/GRADING-RULES.md": "1b6fed5a2f20ec9b2f8aa8b8fba5fa45ae7b367aef8b77a106d15c761ab476fb",
+    "docs/guidance-counselor-upgrade/evaluation/preparation-20261020/SOURCE-BASELINE.md": "8af9212ccc7ec60c164c84c437643d314405de1f264bb3ea84305ff5ce24144c",
+    "docs/guidance-counselor-upgrade/EVALUATION-PLAN.md": "1f8af8f256577329782dc633511c9c07408f8ea8d57b29f7172e82f60b966524",
+    "package-lock.json": "9eb4c807a2ace258dd8a78682c38bdb66b958aa298a4ec9bbe712d083c96a3f5",
+    "tsconfig.test.json": "85980c3a9bc3afc7224c950272894c607c4c529bbfbcb2900815a252859d6b78",
+    "scripts/guidance-evaluation-budget.mjs": "e032d7bbb926f0aac241a1b7887a799017636e0255a18fc93eee4d81a84bb0e7",
+    "scripts/guidance-evaluation-session.mjs": "a1fa8b79418c0bbae0c4702d4f0180587404f45979d6db5ae02bd8904b7ffcb3",
+    "scripts/guidance-evaluation-dispatch.mjs": "ec9349efed2054c10b9194538517c8bb5946b7ece91d7f6b7d45ef88c873ad2b",
+    "scripts/run-guidance-evaluation-dev.py": "414a73d0208d542d8d73bef9b3a65f747cf65a89504ef577ef62f37397783658",
+    "scripts/verify-guidance-evaluation-preparation.mjs": "07e7d2343d4e01aea334d270955cd340830844fcb38e9e606578c2ab14123bce",
+    "scripts/test-guidance-evaluation-budget.mjs": "0755a351395dbbe4774e7ec004351f39babea433545bbe2ce0076694e5ec65df",
+    "src/lib/digitalStaffRuntime/providerStream.ts": "4f615451dc445b3d5cc769768ecc88eafa8b8bfda5343a659cc1d95cc3d617a7",
+    "src/lib/digitalStaffRuntime/guidancePlanning.ts": "d3202b5f9a0701ac2f16d6bb7ec5736746294f98815a3c4664a6d8eebf4e4576",
+    "tests/providerStreamDiagnostics.test.ts": "f10efa26980a2aa3eeef9a74297a1dde586bfe44cce9b481a2ca2f5213473bf4",
+    "tests/guidancePlanningConstraint.test.ts": "a3e5c46cc8bba821f66d9711b77662862e10b7555b6243bef3bcacb5d5350faa",
+    "src/lib/digitalStaffRuntime/runtime.ts": "78b576e2f233ccbe2aeb8db8b40a4133ebbc84c2970f0f9a2a9a5d82a1b005da",
+    "tests/guidanceResearch.test.ts": "26f24ceda1e61246fad4b45e76d632da9b1b873b498c8308cc0730ed6a91ed1a"
+  },
+  "turnModels": {
+    "GC-04-T1": "gpt-5"
+  },
+  "policy": {
+    "reviewedAt": "2026-10-21T21:30:02Z",
+    "expiresAt": "2026-10-23T21:30:02Z",
+    "searchNano": 10000000,
+    "models": {
+      "gpt-5": {
+        "context": 400000,
+        "inputNano": 1250,
+        "outputNano": 10000,
+        "returned": [
+          "gpt-5",
+          "gpt-5-2025-08-07"
+        ]
+      }
+    },
+    "sources": [
+      "https://developers.openai.com/api/docs/models/gpt-5",
+      "https://developers.openai.com/api/docs/pricing"
+    ],
+    "assumptions": "Official global Responses endpoint, standard tier; no cache discounts, no cache-write option. Reserve full context per possible tool step and every maximum tool fee. GPT-5 is documented deprecated: one fresh metadata check must succeed before inference; no substitute."
+  },
+  "capNanoUsd": 3000000000,
+  "maximumInferenceAttempts": 7,
+  "metadataAttempts": 1,
+  "metadataReceipt": null,
+  "maximumDirectProviderAttempts": 8,
+  "expectedInferenceAttempts": 7,
+  "scenarioFamilies": 1,
+  "turns": 1,
+  "uniqueCriteria": 4,
+  "maximumCallsPerTurn": 7,
+  "maximumToolActionsPerRequest": 4,
+  "maximumToolActionsPerTurn": 8,
+  "maximumWholeRunToolActions": 8,
+  "outputLimits": {
+    "initialPlan": 0,
+    "synthesis": 4800,
+    "semanticSafety": 4800,
+    "privateBriefAndReview": 1400,
+    "publicDiscoveryAndVerification": 3600
+  },
+  "reasoning": "GPT-5: semantic input/output Low; private brief/privacy, public discovery/verification and contextual synthesis Medium. Initial plan is deterministic, no inference.",
+  "requestLimitBytesBeforeStreamingFlag": 100000,
+  "streamingFlagOverheadMaxBytes": 14,
+  "storedProviderHistory": false,
+  "retries": 0,
+  "turnTimeoutMs": 170000,
+  "phaseTimeoutMs": {
+    "synthesis": 60000,
+    "privateBriefAndPrivacy": 25000,
+    "publicDiscoveryAndVerification": 45000,
+    "semanticChecks": "within 170000 turn abort signal"
+  },
+  "perCallBounds": [
+    {
+      "model": "gpt-5",
+      "plain4800NanoUsd": 548000000,
+      "private1400NanoUsd": 514000000,
+      "public3600FourToolNanoUsd": 2576000000
+    }
+  ],
+  "unknownUsage": "Capture bounded terminal diagnostics and any reported usage; retain full maximum on incomplete/failed/error/disconnection or missing usage and halt; no retry or restart",
+  "history": "One unchanged original GC-04-T1; fresh isolated synthetic context, original synthetic record and empty seed history; no authored answer or changed criteria.",
+  "credential": "Existing owner-authorized private DEV workflow; key loaded into child memory only; no production key/config copied",
+  "ledger": "Private ~/.config/seangworld/evaluations/<runId>/spend.json, exclusive creation; no existing GC run resume",
+  "sourceLimitations": [
+    "Current FAFSA facts and claim-specific citations remain unverified by a completed live research turn. Official discovery and privacy/source judgments remain model-assisted.",
+    "Original prompt has no specified award year. Context and source applicability must be stated honestly; no guaranteed eligibility or award.",
+    "This is the original previously exposed scenario, not held-out proof or independent certification.",
+    "The $3 cap can stop early: next full reservation must fit remaining balance. Seven-call maximum-reservation sum is $7.824, not an authorized amount."
+  ],
+  "approvalRequired": true,
+  "paidInferenceCalls": 0,
+  "liveCompetencyGrade": null,
+  "selectedTurnIds": [
+    "GC-04-T1"
+  ],
+  "requireFreshMetadata": true,
+  "priorAccounting": {
+    "receipts": [
+      {
+        "runId": "gc-20261021-pr273-assessment-v2",
+        "ledgerSha256": "5dbbc8d18328d520c8070a681cd84c50bea5dc6781f117405b0f9005774abe2c",
+        "accountedNanoUsd": 565628670,
+        "conservativeSettledNanoUsd": 51628670,
+        "unknownMaximumRetainedNanoUsd": 514000000
+      },
+      {
+        "runId": "gc-20261021-pr273-remediation-assessment",
+        "ledgerSha256": "e3bfcba843960581ce99c6915d3b26170d7445184c97b0e289279150ad374b10",
+        "accountedNanoUsd": 558551460,
+        "conservativeSettledNanoUsd": 10551460,
+        "unknownMaximumRetainedNanoUsd": 548000000
+      }
+    ],
+    "ledgerSha256": "fd7a8821f1027d43a56e7e1eaba17f493ed1c7ffcedaede734464939f9c47ef4",
+    "accountedNanoUsd": 1124180130,
+    "conservativeSettledNanoUsd": 62180130,
+    "unknownMaximumRetainedNanoUsd": 1062000000,
+    "inferenceAttempts": 26,
+    "metadataAttempts": 4
+  },
+  "maximumCumulativeAccountedNanoUsd": 4124180130,
+  "maximumCumulativeInferenceAttempts": 33,
+  "maximumCumulativeDirectProviderAttempts": 38,
+  "reusedFixturesAreNotHeldOut": true,
+  "newProviderMetadataCalls": 0,
+  "modelVisibility": "No new metadata request in preparation. One fresh durably recorded free check after approval; failure/uncertainty halts, no retry.",
+  "originalManifestSha256": "89107ef00887f92edaed5afe833d01ef2025ae94b53ba8f174239a04262258b5",
+  "stages": [
+    {
+      "name": "input semantic safety",
+      "effort": "low",
+      "maximumNanoUsd": 548000000
+    },
+    {
+      "name": "private brief",
+      "effort": "medium",
+      "maximumNanoUsd": 514000000
+    },
+    {
+      "name": "privacy review",
+      "effort": "medium",
+      "maximumNanoUsd": 514000000
+    },
+    {
+      "name": "public discovery",
+      "effort": "medium",
+      "maximumNanoUsd": 2576000000
+    },
+    {
+      "name": "public verification",
+      "effort": "medium",
+      "maximumNanoUsd": 2576000000
+    },
+    {
+      "name": "contextual synthesis",
+      "effort": "medium",
+      "maximumNanoUsd": 548000000
+    },
+    {
+      "name": "output semantic safety",
+      "effort": "low",
+      "maximumNanoUsd": 548000000
+    }
+  ],
+  "maximumAllStagesReservationSumNanoUsd": 7824000000
+}

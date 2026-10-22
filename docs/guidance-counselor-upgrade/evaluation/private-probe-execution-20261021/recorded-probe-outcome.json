@@ -1,0 +1,11 @@
+[
+  {
+    "turnId": "GC-04-T1",
+    "result": {
+      "kind": "private-stage-probe",
+      "status": "invalid-brief",
+      "brief": null,
+      "privacyVerdict": null
+    }
+  }
+]

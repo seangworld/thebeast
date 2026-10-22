@@ -1,0 +1,13 @@
+{
+  "GRADING.md": "9f4ec90dd80749567e0a849457f233866e422f6f19f91a7e0222fff23e777ced",
+  "REPORT.md": "a207a47b33be1197e75794334d31dc12fa4c91813ee26b8192b037313b4eb99b",
+  "call-accounting.json": "4e7e9f199f83cf9de23ff82600c4ab7ea6cab58f81cdc0646a3dc701cb4b8944",
+  "completion-receipt.json": "bb9aca34fe2b035f9187f6463f5e52cf8ac66e953932ed65d1797620985dc650",
+  "execution-summary.json": "37d827248c2954e5cfaf0c354ab427c1c3b112ecd82527205b472ce4709cb26d",
+  "executor-grading.json": "32cc572a2890915ba8b2ce69ae4b7da42c60cfe2508afa816b05850844d24eb8",
+  "original-delivered-results.json": "d8bc96ba0b76d81f2d809d2a49bb6435558c6b762bec0939555ecf6780814785",
+  "postrun-verification.json": "95dcc3b5eae669bbc972ad9a6feba360f1a22492efd866faf50064052b194304",
+  "raw-vs-delivered.json": "68378563e470e5b13ee74b10aa06639e0847fcde9eb1853ea6d5bbe254cc6a20",
+  "readable-delivered-answers.md": "8a18e2e3275802a609e28a8eb6dbc3ec30a7f034312a59512897b88546e26156",
+  "ungraded-review-packets.json": "a52ef021b7ce822539674cdb05056f9a90883071f7a0560b289d07c126ba3ae9"
+}

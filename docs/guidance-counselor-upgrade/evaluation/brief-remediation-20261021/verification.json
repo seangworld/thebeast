@@ -1,0 +1,28 @@
+{
+  "applicationTests": {
+    "pass": 2536,
+    "fail": 0,
+    "freshCompiledRuntime": true
+  },
+  "guardIntegrationTests": {
+    "pass": 22,
+    "fail": 0
+  },
+  "securityRegressionTests": {
+    "pass": 22,
+    "fail": 0
+  },
+  "auditVulnerabilities": 0,
+  "requiredSecurityGatedBuild": "PASS",
+  "lint": "PASS",
+  "typescript": "PASS",
+  "fixturesOnlyVerifier": "BOTH PACKETS VERIFIED; PAID DISPATCH NOT READY; source changed",
+  "privateBriefGpt5Effort": "minimal",
+  "privateBriefOtherConfiguredModelsEffort": "low",
+  "tokenAndTimeLimitsIncreased": false,
+  "privacyReviewSeparate": true,
+  "newPaidCalls": 0,
+  "livePerformanceVerified": false,
+  "historicalConservativeUsd": "1.64070013",
+  "historicalUnresolvedReservationsUsd": "1.576"
+}
