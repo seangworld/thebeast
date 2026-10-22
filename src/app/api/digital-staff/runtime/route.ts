@@ -6,6 +6,9 @@ import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
 import { buildMemberSpecialistContextPacket, isMemberSpecialistId } from "@/lib/memberAgentCapabilityFramework";
 
+import { loadSelectedVeteranClaim } from "@/lib/health/veteranClaimsPersistence";
+import { scopeVeteransHistory, type VeteransTurnSelection } from "@/lib/health/veteransContext";
+import { VeteransEvidenceUnavailable, veteransEvidenceFailureCode, VeteransSaveUnconfirmed, veteransSaveFailureCode } from "@/lib/health/veteransSave";
 import { loadAdvisorDocuments, parseAdvisorDocumentIds } from "@/lib/health/advisorDocuments";
 import { guidanceCounselorContextQueries } from "@/lib/digitalStaffRuntime/educationContext";
 export const maxDuration = 180;
@@ -18,7 +21,7 @@ function privateJson(body: unknown, init?: number | ResponseInit) {
 }
 const emptyState: ConversationState = { currentTopic: null, currentWorkspace: null, lastProfessionalQuestion: null, unresolvedQuestions: [], corrections: [], pendingApprovals: [], currentGoal: null, previousDecisions: [] };
 
-type MessageRow = { id: string; sender: { kind?: string }; content: string | { text?: string; runtime?: { proposals?: StructuredKnowledgeProposal[] } }; created_at: string };
+type MessageRow = { id: string; sender: { kind?: string }; content: string | { text?: string; runtime?: { proposals?: StructuredKnowledgeProposal[]; veteransSelection?: VeteransTurnSelection; sourceMessageId?:string } }; created_at: string };
 
 function messageText(content: MessageRow["content"]) { return typeof content === "string" ? content : typeof content?.text === "string" ? content.text : ""; }
 
@@ -191,7 +194,7 @@ export async function POST(request: Request) {
   // These reads are independent and intentionally overlap the conversation authorization read.
   const now = new Date().toISOString();
   const message: RuntimeMessage = { id: crypto.randomUUID(), role: "user", text, createdAt: now };
-  const summary = conversation.summary as { runtimeState?: ConversationState } | null;
+  const summary = conversation.summary as { runtimeState?: ConversationState; veteransSelection?:VeteransTurnSelection|null } | null;
   const executeTurn = async (observer: RuntimeObserver = {}) => {
     await contextObserverActivity(observer, "loading_context");
     const contextResult = contextPromise ? await contextPromise : null;
@@ -200,15 +203,21 @@ export async function POST(request: Request) {
     const memoryResult = contextResult.memory.result;
     const structuredResult = contextResult.structured.result;
     const structuredRecords = [...structuredResult.records];
-    const selectedDocuments = await loadAdvisorDocuments(supabase, user.id, documentIds);
-    if (professionalId === "beasthealth.health-advisor" && body.veteranClaimId) {
-      if (typeof body.veteranClaimId !== "string" || !/^[0-9a-f-]{36}$/i.test(body.veteranClaimId)) throw new Error("Invalid selected claim.");
-      const { data: claim, error: claimError } = await supabase.from("beast_veteran_claims")
-        .select("id,title,claim_type,stage,next_action_date,details,updated_at")
-        .eq("id", body.veteranClaimId).eq("owner_id", user.id).maybeSingle();
-      if (claimError || !claim) throw new Error("Selected claim is unavailable.");
-      structuredRecords.push({ domain: "health", record: { ...claim, contextType: "member_reported_veteran_claim", clinicalVerification: "unverified; not a diagnosis", filingEnabled: false }, updatedAt: claim.updated_at });
+    const isVeterans = professionalId === "beasthealth.health-advisor" && (body.workspace === "/dashboard/health/veterans" || Boolean(body.veteranClaimId));
+    let selectedDocuments: Awaited<ReturnType<typeof loadAdvisorDocuments>>;
+    let selectedClaim: Awaited<ReturnType<typeof loadSelectedVeteranClaim>> | null;
+    try {
+      selectedDocuments = await loadAdvisorDocuments(supabase, user.id, documentIds);
+      selectedClaim = isVeterans && body.veteranClaimId ? await loadSelectedVeteranClaim(supabase,user.id,body.veteranClaimId) : null;
+    } catch(error) {
+      if(isVeterans)throw new VeteransEvidenceUnavailable();
+      throw error;
     }
+    const veteransSelection:VeteransTurnSelection|null = isVeterans ? {version:1,
+      claim:selectedClaim ? {id:selectedClaim.claim.id,revision:selectedClaim.claim.revision,updatedAt:selectedClaim.updatedAt} : null,
+      documents:selectedDocuments.map(doc=>({id:doc.id,sha256:doc.provenance?.sha256 || null,updatedAt:doc.provenance?.updatedAt || null})).sort((a,b)=>a.id.localeCompare(b.id)),
+    } : null;
+    const scopedHistory = scopeVeteransHistory(([...(historyResult.data || [])] as MessageRow[]).reverse(),veteransSelection,summary?.veteransSelection,summary?.runtimeState || emptyState);
     if (historyResult.error || memoryResult.error) throw new Error("Relevant conversation context is temporarily unavailable.");
     if (structuredResult.error) throw new Error("Canonical context query failed.");
     const contextLoadMs = contextResult.durationMs;
@@ -222,19 +231,20 @@ export async function POST(request: Request) {
     };
     const result = await runDigitalStaffRuntime({
       ownerId: user.id, professionalId: professionalId as ProfessionalId, conversationId, message, requestId, signal: AbortSignal.any([request.signal, AbortSignal.timeout(170_000)]),
-      recentMessages: ([...(historyResult.data || [])] as MessageRow[]).reverse().map((row) => ({ id: row.id, role: row.sender?.kind === "user" ? "user" : "assistant", text: messageText(row.content), createdAt: row.created_at })),
-      state: summary?.runtimeState || emptyState,
-      memories: (memoryResult.data || []).map((row) => ({ key: String(row.memory_key), value: row.value, updatedAt: String(row.updated_at) })),
+      recentMessages: professionalId === "beasthealth.health-advisor" ? scopedHistory.messages : ([...(historyResult.data || [])] as MessageRow[]).reverse().map((row) => ({ id: row.id, role: row.sender?.kind === "user" ? "user" : "assistant", text: messageText(row.content), createdAt: row.created_at })),
+      state: professionalId === "beasthealth.health-advisor" ? scopedHistory.state : summary?.runtimeState || emptyState,
+      memories: (veteransSelection ? [] : memoryResult.data || []).map((row) => ({ key: String(row.memory_key), value: row.value, updatedAt: String(row.updated_at) })),
       structuredRecords,
       documents: selectedDocuments,
+      ...(veteransSelection ? {veterans:{selection:veteransSelection,memberClaim:selectedClaim?.claim || null}} : {}),
       contextBoundary: isMemberSpecialistId(professionalId)
         ? buildMemberSpecialistContextPacket({
             config: requireProfessionalConfig(professionalId),
             ageBand: ageEntitlement.decision.ageStatus,
             sources: [
               ...structuredRecords.slice(0, 20).map((record) => ({ domain: record.domain, provenance: "canonical-record" as const, updatedAt: record.updatedAt || null })),
-              ...(historyResult.data || []).slice(-1).map((record) => ({ domain: professionalId, provenance: "current-conversation" as const, updatedAt: String(record.created_at) })),
-              ...(memoryResult.data || []).slice(0, 1).map((record) => ({ domain: professionalId, provenance: "current-agent-memory" as const, updatedAt: String(record.updated_at) })),
+              ...(veteransSelection ? scopedHistory.messages.slice(-1).map(record=>({domain:professionalId,provenance:"current-conversation" as const,updatedAt:record.createdAt})) : (historyResult.data || []).slice(-1).map((record) => ({ domain: professionalId, provenance: "current-conversation" as const, updatedAt: String(record.created_at) }))),
+              ...(veteransSelection ? [] : (memoryResult.data || []).slice(0, 1).map((record) => ({ domain: professionalId, provenance: "current-agent-memory" as const, updatedAt: String(record.updated_at) }))),
             ],
             canonicalRecordsComplete: structuredResult.canonicalRecordsComplete,
             recentConversationCount: Number(conversation.message_count || 0),
@@ -247,18 +257,36 @@ export async function POST(request: Request) {
     const persistenceStartedAt = Date.now();
     const assistantMessageId = crypto.randomUUID();
     const persistedAt = new Date().toISOString();
-    const { error: messageError } = await supabase.from("agent_conversation_messages").insert([
+    const messageInsert = supabase.from("agent_conversation_messages").insert([
       { id: message.id, owner_id: user.id, conversation_id: conversationId, sender: { kind: "user", id: user.id }, recipient: { kind: "agent", id: professionalId }, content: text, created_at: message.createdAt },
-      { id: assistantMessageId, owner_id: user.id, conversation_id: conversationId, sender: { kind: "agent", id: professionalId }, recipient: { kind: "module", id: professionalId.split(".")[0] }, content: { text: result.response, runtime: { intent: result.intent, proposals: result.proposals, navigationTarget: result.navigationTarget, toolCalls: result.toolCalls, researchSources: result.researchSources, handoff: result.handoff, validationFailures: result.validationFailures, ...(professionalId === "beastmoney.money-coach" ? { financialAnalysis: result.financialAnalysis, financialEvidenceAsOf: (structuredRecords.find(record => record.domain === "beastmoney.money-coach:canonical-affordability")?.record as {asOf?:string} | undefined)?.asOf || null } : {}), model: result.model, latencyMs: result.latencyMs } }, created_at: persistedAt },
+      { id: assistantMessageId, owner_id: user.id, conversation_id: conversationId, sender: { kind: "agent", id: professionalId }, recipient: { kind: "module", id: professionalId.split(".")[0] }, content: { text: result.response, runtime: { ...(veteransSelection ? {veteransSelection,sourceMessageId:message.id} : {}), intent: result.intent, proposals: result.proposals, navigationTarget: result.navigationTarget, toolCalls: result.toolCalls, researchSources: result.researchSources, handoff: result.handoff, validationFailures: result.validationFailures, ...(professionalId === "beastmoney.money-coach" ? { financialAnalysis: result.financialAnalysis, financialEvidenceAsOf: (structuredRecords.find(record => record.domain === "beastmoney.money-coach:canonical-affordability")?.record as {asOf?:string} | undefined)?.asOf || null } : {}), model: result.model, latencyMs: result.latencyMs } }, created_at: persistedAt },
     ]);
-    if (messageError) throw new Error("The generated response could not be persisted.");
+    const messageSave = veteransSelection ? await messageInsert.select("id,owner_id,conversation_id") : await messageInsert;
+    if (messageSave.error || (veteransSelection && (!messageSave.data || messageSave.data.length!==2 || new Set(messageSave.data.map(row=>row.id)).size!==2 || messageSave.data.some(row=>![message.id,assistantMessageId].includes(row.id) || row.owner_id!==user.id || row.conversation_id!==conversationId)))) {
+      if(veteransSelection)throw new VeteransSaveUnconfirmed();
+      throw new Error("The generated response could not be persisted.");
+    }
+    let confirmedMessageCount = Number(conversation.message_count || 0) + 2;
+    if(veteransSelection){
+      // A previous interrupted save may already have inserted messages. Recount,
+      // rather than fabricating an old summary count + two as the actual total.
+      const countResult=await supabase.from("agent_conversation_messages").select("id",{count:"exact",head:true}).eq("owner_id",user.id).eq("conversation_id",conversationId);
+      if(countResult.error || !Number.isSafeInteger(countResult.count) || countResult.count! < confirmedMessageCount)throw new VeteransSaveUnconfirmed();
+      confirmedMessageCount=countResult.count!;
+    }
     const previousSummary = conversation.summary as Record<string, unknown> | null;
-    const { error: summaryError } = await supabase.from("agent_conversations").update({
-      message_count: Number(conversation.message_count || 0) + 2,
-      summary: { ...(previousSummary || {}), overview: result.response.slice(0, 500), decisions: result.state.previousDecisions, unresolvedFollowUps: result.state.unresolvedQuestions, runtimeState: result.state, updatedAt: persistedAt },
+    const summaryUpdate = supabase.from("agent_conversations").update({
+      message_count: confirmedMessageCount,
+      summary: { ...(previousSummary || {}), ...(professionalId === "beasthealth.health-advisor" ? {veteransSelection} : {}), overview: result.response.slice(0, 500), decisions: result.state.previousDecisions, unresolvedFollowUps: result.state.unresolvedQuestions, runtimeState: result.state, updatedAt: persistedAt },
       related_action_ids: [result.navigationTarget, ...result.toolCalls.map((call) => call.name)].filter(Boolean), updated_at: persistedAt,
     }).eq("id", conversationId).eq("owner_id", user.id).eq("agent_id", professionalId);
-    if (summaryError) throw new Error("The conversation continuity state could not be persisted.");
+    if(veteransSelection){
+      const saved = await summaryUpdate.eq("message_count",Number(conversation.message_count || 0)).select("id,message_count").maybeSingle();
+      if(saved.error || !saved.data || saved.data.id!==conversationId || saved.data.message_count!==confirmedMessageCount)throw new VeteransSaveUnconfirmed();
+    } else {
+      const {error:summaryError}=await summaryUpdate;
+      if(summaryError)throw new Error("The conversation continuity state could not be persisted.");
+    }
     result.timings.contextAssemblyMs = contextLoadMs;
     result.timings.persistenceMs = Date.now() - persistenceStartedAt;
     result.timings.totalMs = Date.now() - requestStartedAt;
@@ -281,7 +309,7 @@ export async function POST(request: Request) {
       historyCount: (historyResult.data || []).length,
       memoryCount: (memoryResult.data || []).length,
       structuredRecordCount: structuredRecords.length,
-      databaseQueryCount: 6 + structuredResult.queryCount,
+      databaseQueryCount: 6 + structuredResult.queryCount + (veteransSelection ? 1 : 0),
       initialModelMs: result.timings.initialModelMs,
       firstModelOutputMs: result.timings.firstModelOutputMs,
       providerResponseHeadersMs: result.timings.providerResponseHeadersMs || null,
@@ -344,7 +372,7 @@ export async function POST(request: Request) {
               record: failedTelemetry,
             });
           }
-          send({ type: "error", ...safeDigitalStaffFailure("runtime-stream", error, requestId) });
+          send({ type: "error", ...safeDigitalStaffFailure("runtime-stream", error, requestId), ...(error instanceof VeteransSaveUnconfirmed ? {code:veteransSaveFailureCode} : error instanceof VeteransEvidenceUnavailable ? {code:veteransEvidenceFailureCode} : {}) });
         } finally {
           requestLease.release();
           controller.close();
@@ -373,7 +401,7 @@ export async function POST(request: Request) {
         record: failedTelemetry,
       });
     }
-    return privateJson(safeDigitalStaffFailure("runtime-route", error, requestId), 502);
+    return privateJson({...safeDigitalStaffFailure("runtime-route", error, requestId), ...(error instanceof VeteransSaveUnconfirmed ? {code:veteransSaveFailureCode} : error instanceof VeteransEvidenceUnavailable ? {code:veteransEvidenceFailureCode} : {})}, 502);
   } finally {
     requestLease.release();
   }

@@ -44,6 +44,7 @@ export type RuntimeMessage = {
   role: "user" | "assistant";
   text: string;
   createdAt: string;
+  veteransSelection?: import("../health/veteransContext").VeteransTurnSelection;
 };
 
 export type RuntimeContext = {
@@ -56,7 +57,8 @@ export type RuntimeContext = {
   memories: Array<{ key: string; value: unknown; updatedAt: string }>;
   structuredRecords: Array<{ domain: string; record: unknown; updatedAt?: string }>;
   contextBoundary?: import("../memberAgentCapabilityFramework").MemberSpecialistContextPacket;
-  documents?: Array<{ id: string; title: string; content: Record<string, unknown> }>;
+  documents?: Array<{ id: string; title: string; content: Record<string, unknown>; provenance?: {sha256:string;updatedAt:string|null;source:"selected-member-original"} }>;
+  veterans?: import("../health/veteransContext").VeteransContext;
   workspace: string | null;
   executionMode?: "conversation" | "historical_reconciliation";
   requestId?: string;

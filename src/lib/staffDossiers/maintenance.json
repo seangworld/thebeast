@@ -66,6 +66,39 @@
       "affectedStaffIds": [
         "beasteducation.tutor"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "VA Claims Aide improvement within Taylor: exact selected-source provenance, claim/revision scope, private factual-source checking and save acknowledgement; reuse historical H-C evidence separately without a new assessment. Extend gate over veterans helpers/organizer.",
+      "version": "VA selected-claim/source/save improvement pass",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274",
+      "sourceDigest": "c742e7a680e2097e2719e36760b743bd3f55fb712adfcaaee5529a9cbd850d8d",
+      "affectedStaffIds": [
+        "beasthealth.health-advisor"
+      ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Final complete-flow VA review: reproduce and prevent rejected/withheld draft state and proposals entering continuity after prose rejection; preserve prior scoped context. No paid inference or changed historical assessment.",
+      "version": "PR #279 final rejected-plan persistence safeguard",
+      "evidence": "https://github.com/seangworld/thebeast/pull/279",
+      "sourceDigest": "790fb1237f6ae74ea91847a778a3a85e56b5dc27a5da3b67ce359e162141e8a7",
+      "affectedStaffIds": [
+        "beasthealth.health-advisor"
+      ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Final VA provenance consistency: do not list excluded other-claim history/unscoped memories as supplied evidence. Dossier history and local assertion updated; no new competency evaluation.",
+      "version": "PR #279 context provenance alignment",
+      "evidence": "https://github.com/seangworld/thebeast/pull/279",
+      "sourceDigest": "b7c80c52460696ae4f21faae7df6098122f8f76716f8779dd79428e50f98e38c",
+      "affectedStaffIds": [
+        "beasthealth.health-advisor"
+      ]
     }
   ]
 }
