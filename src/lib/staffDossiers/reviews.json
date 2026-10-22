@@ -672,6 +672,11 @@
             "criterion": "No filing, representation, account access, diagnosis/nexus or rating guarantees",
             "result": "partial",
             "reason": "Existing scope/approval/safety protections retained; no new authority or tools. Local rejection/contract checks are not a new live safety certification."
+          },
+          {
+            "criterion": "Rejected draft facts/proposals cannot be promoted into saved continuity",
+            "result": "pass",
+            "reason": "A local regression reproduced unsafe generated state surviving prose rejection; VA-specific return now retains prior scoped state and withholds generated proposals/action hints. No live competence grade."
           }
         ],
         "evidence": [
@@ -765,6 +770,12 @@
         "executor": "Codex",
         "why": "VA specialization current-main review and bounded provenance/context/save remediation; historical Taylor/H-C results preserved, distinct current VA evidence limitations and target requirements recorded.",
         "version": "VA selected-claim/originals/save improvement pass"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex",
+        "why": "Final whole-flow review reproduced rejected VA plan state being returned for persistence. Prevent rejected/withheld prose from promoting derived facts, proposals or action hints; local before/after regression only.",
+        "version": "PR #279 final source-to-saved-state safeguard"
       }
     ],
     "departments": [

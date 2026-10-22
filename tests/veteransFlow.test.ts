@@ -92,3 +92,17 @@ test('a prior partial save is recounted instead of reporting an invented old cou
  const f=fixture('prior-partial');assert.equal((await f.run()).status,200);
  const summary=f.writes.find(w=>w.table==='agent_conversations')!.value as {message_count:number};assert.equal(summary.message_count,6);
 });
+
+test('rejected veterans output cannot promote generated assertions into saved continuity state',async()=>{
+ const {runDigitalStaffRuntime}=await import('../src/lib/digitalStaffRuntime/runtime');
+ const priorFetch=globalThis.fetch,priorKey=process.env.OPENAI_API_KEY;process.env.OPENAI_API_KEY='sk-local-rejected-va-fixture';let checks=0;
+ const state={currentTopic:null,currentWorkspace:null,lastProfessionalQuestion:null,unresolvedQuestions:[],corrections:[],pendingApprovals:[],currentGoal:null,previousDecisions:[]};
+ const context:RuntimeContext={ownerId:'synthetic-owner',professionalId:'beasthealth.health-advisor',conversationId:'synthetic-c',message:{id:'u',role:'user',text:'Prepare a draft from the facts supplied.',createdAt:'2026-10-22T00:00:00Z'},recentMessages:[],memories:[],structuredRecords:[],workspace:'/dashboard/health/veterans',state,veterans:{selection:{version:1,claim:null,documents:[]},memberClaim:null}};
+ try{
+  globalThis.fetch=(async(_url,init)=>{const body=JSON.parse(String(init?.body));if(body.text?.format?.name==='member_agent_semantic_verification'){checks++;return Response.json({status:'completed',output_text:JSON.stringify(checks===1?{verdict:'safe',categories:[]}:{verdict:'unsafe',categories:['other_boundary_violation']})});}
+   const plan={intent:'answer',response:'Working draft for discussion.',nextQuestion:'Follow my unsupported conclusion?',state:{...state,currentTopic:'Unsupported causal diagnosis',previousDecisions:['Invented continuous symptoms']},proposals:[],navigationTarget:'/dashboard/health/veterans',toolCalls:[],research:null,handoff:null,responseContract:{consequentialAction:'none',providerConnection:'none',professionalAuthority:'bounded_ai',diagnosis:'none',medicationDirection:'none',emergencyEscalation:'not_applicable',homeworkReview:'not_requested'}};
+   return new Response(`data: ${JSON.stringify({type:'response.completed',response:{status:'completed',output_text:JSON.stringify(plan)}})}\n\ndata: [DONE]\n\n`,{headers:{'Content-Type':'text/event-stream'}});
+  }) as typeof fetch;
+  const result=await runDigitalStaffRuntime(context,{}, {modelOverride:'local-fixture-only'});assert.notEqual(result.response,'Working draft for discussion.');assert.deepEqual(result.state,state);assert.deepEqual(result.proposals,[]);assert.equal(result.nextQuestion,null);assert.equal(result.navigationTarget,null);
+ }finally{globalThis.fetch=priorFetch;if(priorKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=priorKey;}
+});

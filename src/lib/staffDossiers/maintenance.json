@@ -77,6 +77,17 @@
       "affectedStaffIds": [
         "beasthealth.health-advisor"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Final complete-flow VA review: reproduce and prevent rejected/withheld draft state and proposals entering continuity after prose rejection; preserve prior scoped context. No paid inference or changed historical assessment.",
+      "version": "PR #279 final rejected-plan persistence safeguard",
+      "evidence": "https://github.com/seangworld/thebeast/pull/279",
+      "sourceDigest": "790fb1237f6ae74ea91847a778a3a85e56b5dc27a5da3b67ce359e162141e8a7",
+      "affectedStaffIds": [
+        "beasthealth.health-advisor"
+      ]
     }
   ]
 }

@@ -486,6 +486,11 @@ export async function runDigitalStaffRuntime(
   const totalMs = Date.now() - startedAt;
   return {
     ...validated,
+    // Withholding unsafe/unsupported VA prose must also withhold the plan's
+    // derived facts/actions; otherwise the next turn can inherit rejected data.
+    ...(executionContext.veterans && (!responseSafety.safe || !veteransGrounding.safe)
+      ? {intent:"answer" as const,state:executionContext.state,proposals:[],toolCalls:[],navigationTarget:null,handoff:null,nextQuestion:null}
+      : {}),
     response: responseSafety.response,
     validationFailures: [...validated.validationFailures, ...(rejectedContextCount ? [`Rejected ${rejectedContextCount} untrusted context item(s) containing instruction-override content.`] : []), ...veteransGrounding.failures, ...responseSafety.failures],
     model,
