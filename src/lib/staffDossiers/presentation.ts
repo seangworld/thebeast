@@ -14,3 +14,7 @@ export function currentLevelLabel(d:Pick<Dossier,'demonstrated'|'lastEvaluatedAt
  return d.demonstrated || (d.lastEvaluatedAt ? 'Level mapping pending' : 'Unassessed');
 }
 export function targetLevelLabel(d:Pick<Dossier,'target'>) {return d.target || 'Requirement pending';}
+
+export function releasedLevelLabel(d:Pick<Dossier,'released'|'recordKind'|'lastEvaluatedAt'|'releases'>) {
+ return d.released || (d.recordKind!=='planned'&&(d.lastEvaluatedAt||d.releases.length)?'Level mapping pending':'Unassessed');
+}
