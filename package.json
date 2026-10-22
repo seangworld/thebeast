@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run audit:ci && next build",
+    "build": "npm run check:staff-dossiers && npm run audit:ci && next build",
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
     "test:responsive": "playwright test",
     "start": "next start",
@@ -28,7 +28,8 @@
     "supabase:release-plan": "node scripts/supabase-migration-guard.mjs release-plan",
     "audit:ci": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs && npm audit",
     "audit:prod": "npm audit --omit=dev",
-    "test:braces-fork": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs"
+    "test:braces-fork": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs",
+    "check:staff-dossiers": "node scripts/check-staff-dossiers.mjs"
   },
   "dependencies": {
     "@fontsource/source-serif-4": "5.2.8",
