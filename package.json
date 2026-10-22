@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run audit:ci && next build",
+    "build": "npm run check:staff-dossiers && npm run audit:ci && next build",
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
     "test:responsive": "playwright test",
     "start": "next start",
@@ -28,7 +28,8 @@
     "supabase:release-plan": "node scripts/supabase-migration-guard.mjs release-plan",
     "audit:ci": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs && npm audit",
     "audit:prod": "npm audit --omit=dev",
-    "test:braces-fork": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs"
+    "test:braces-fork": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs",
+    "check:staff-dossiers": "node scripts/check-staff-dossiers.mjs"
   },
   "dependencies": {
     "@fontsource/source-serif-4": "5.2.8",
@@ -40,7 +41,7 @@
     "docx": "9.6.1",
     "google-auth-library": "^11.0.2",
     "jszip": "3.10.1",
-    "next": "15.5.27",
+    "next": "15.5.28",
     "pdf-lib": "1.17.1",
     "react": "^18",
     "react-dom": "^18",
@@ -58,7 +59,7 @@
     "@types/web-push": "3.6.4",
     "autoprefixer": "^10",
     "eslint": "^8",
-    "eslint-config-next": "15.5.27",
+    "eslint-config-next": "15.5.28",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.23",
     "supabase": "^2.109.1",
@@ -78,7 +79,7 @@
     "source-map-js": "1.2.2",
     "baseline-browser-mapping": "2.11.0",
     "postcss-selector-parser": "7.1.6",
-    "next@15.5.27": {
+    "next@15.5.28": {
       "postcss": "8.5.23",
       "sharp": "0.35.5"
     },

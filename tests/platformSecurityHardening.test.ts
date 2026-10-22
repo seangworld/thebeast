@@ -36,9 +36,13 @@ test("SEC-001 CSP reflects Beast runtime dependencies without browser-side provi
 });
 
 test("SEC-001 pins patched direct and transitive security dependencies", () => {
-  assert.equal(packageJson.dependencies.next, "15.5.27");
-  assert.equal(packageJson.devDependencies["eslint-config-next"], "15.5.27");
+  assert.equal(packageJson.dependencies.next, "15.5.28");
+  assert.equal(packageJson.devDependencies["eslint-config-next"], "15.5.28");
   assert.equal(packageJson.devDependencies.postcss, "^8.5.23");
+  assert.deepEqual(packageJson.overrides[`next@${packageJson.dependencies.next}`], {
+    postcss: "8.5.23",
+    sharp: "0.35.5",
+  }, "the active Next.js version must retain its patched transitive dependencies");
   assert.equal(packageJson.overrides.ws, "8.21.0");
   assert.equal(packageJson.overrides.nanoid, "3.3.18");
   assert.equal(packageJson.overrides["js-yaml"], "4.3.2");

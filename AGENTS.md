@@ -68,3 +68,13 @@ When handing work back to Dot or ChatGPT, record:
 - **Next concrete action**
 
 Keep the status in repository issues, PRs, or documentation accessible to the other assistants; do not assume shared conversation memory.
+
+## Mandatory central staff dossier completion gate
+
+SW HQ `/dashboard/operations/staff` is the single canonical dossier home for all SEANGWORLD staff (Issue #274). Any change to an agent's duties, abilities, assignment, tool/data permissions, behavioral prompts, model/routing configuration, limitations, assessment or lifecycle/release must update that dossier in the same work. Reuse existing profiles; do not create competing product dossiers.
+
+- Update `src/lib/staffDossiers/reviews.json` or the imported source profile as appropriate; append dated executor/reviewer, reason, affected version/commit/PR, evidence and limitations to history. Update release history again after confirmed deployment; record rollback, pause or failure without deleting prior entries.
+- Update `maintenance.json` with an appended receipt and reviewed source digest (`node scripts/check-staff-dossiers.mjs --digest`). Never refresh a digest instead of reviewing/updating the affected dossier. The offline build gate detects tracked agent-source drift; extend its watch roots for new agent implementations.
+- Completion checks: `npm run check:staff-dossiers`; `node scripts/check-staff-dossiers.mjs --base origin/main`; applicable tests/security/build; verify HQ synchronization and include canonical dossier links in the PR/handoff. External-repository changes require a same-work HQ patch/PR; explicitly label synchronization pending until deployed.
+- Keep target, demonstrated and released competency separate; unsupported levels are unassessed, not L0. Preserve role-specific criteria, evidence date/version and executor vs independent review. Knight/autonomy levels must not be mapped to the staff scale.
+- Keep estimates, invoice-confirmed charges and unresolved reservations separate. Never include private member records or secrets. No further paid agent testing/evaluation, credit purchases, added evaluation services or paid-test approval loops. Defer validation gaps without claiming local tests prove live competence.
