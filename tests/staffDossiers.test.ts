@@ -49,3 +49,24 @@ test('prior result/evaluation dates remain distinct from dossier updates and sco
  const a=getStaffDossier('fusion-director')!;assert.equal(a.latestAssessment?.title,'23/24 PARTIAL-PASS');assert.equal(a.lastEvaluatedAt,'2026-10-18');assert.equal(a.reviewedAt,'2026-10-21');assert.match(a.latestAssessment!.note,/locally/);assert.equal(a.demonstrated,'L3');assert.equal(a.target,'L4');assert.match(a.levelMapping!.rationale,/Cancellation/);
  const tutor=getStaffDossier('tutor')!;assert.equal(tutor.lastEvaluatedAt,'2026-08-30');assert.equal(tutor.latestAssessment?.title,'7/7 source turns accepted');assert.equal(tutor.demonstrated,null);assert.match(tutor.levelMapping!.rationale,/Knight/);assert.ok(tutor.assessments.some(a=>a.evidence.some(e=>e.date==='2026-08-30')));
 });
+
+test('Product Specialist remains a planned policy record with duties mapped to existing staff and no inferred authority',()=>{
+ const specialist=getStaffDossier('product_specialist')!;
+ assert.equal(specialist.id,'beastfusion.policy.product_specialist');
+ assert.equal(specialist.recordKind,'planned');assert.equal(specialist.lifecycle,'planned');
+ assert.match(specialist.role,/Duties covered by existing staff/);
+ for(const dimension of ['target','demonstrated','released'] as const)assert.equal(specialist[dimension],null);
+ assert.equal(specialist.lastEvaluatedAt,null);
+ assert.match(specialist.assignment,/Sean retains authorization/);
+ for(const id of ['orchestrator-3','developer-agent','proposal-agent','reviewer-agent']){
+  const dossier=getStaffDossier('beastfusion.'+id)!;
+  const profile=developmentAgentProfiles.find(p=>p.id===id)!;
+  assert.equal(dossier.recordKind,'staff');
+  for(const duty of profile.responsibilities)assert.ok(dossier.duties.includes(duty));
+  assert.ok(dossier.duties.some(d=>d.includes('Product Specialist')||d.includes('product-scoped Developer')));
+  assert.ok(dossier.permissions.includes(profile.authorityBoundary));
+  assert.ok(dossier.history.some(h=>h.version.includes('PR #282 responsibility mapping')));
+  assert.ok(specialist.duties.some(d=>d.includes(dossier.id)));
+ }
+ assert.match(specialist.deferred[0].requiredWork,/No new agent work is scheduled/);
+});
