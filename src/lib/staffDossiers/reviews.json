@@ -402,7 +402,14 @@
         "status": "Implemented and locally verified 10/22; no live model retest."
       }
     ],
-    "releases": [],
+    "releases": [
+      {
+        "date": "2026-10-22",
+        "version": "7e708d245ea481ac17a970f89c22fbfefb4c0338",
+        "summary": "PR275 bounded Tutor runtime released; production dpl_BGnokcC2ehf7qQJTmF1nfiNnDuss Ready and canonical alias verified. No new teaching assessment or numeric-level certification.",
+        "url": "https://github.com/seangworld/thebeast/pull/275"
+      }
+    ],
     "assignment": "Provide bounded private guided tutoring and shown-work correction, preserving learner control; no expansion of grading or institutional authority.",
     "history": [
       {
@@ -422,6 +429,12 @@
         "executor": "Codex",
         "why": "PR275 current-main review and no-cost runtime remediation; preserve 08/30 historical assessment and separate current L3 evidence limits. No new model testing or migration.",
         "version": "PR #275 Tutor reliability remediation"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex",
+        "why": "Post-deployment confirmation: canonical production alias serves the verified Tutor runtime release; sign-in protection checked. No paid inference, new evaluation or assessment-date change.",
+        "version": "7e708d245ea481ac17a970f89c22fbfefb4c0338 / dpl_BGnokcC2ehf7qQJTmF1nfiNnDuss"
       }
     ],
     "lastEvaluatedAt": "2026-08-30",
@@ -455,6 +468,10 @@
       ]
     },
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Bounded Tutor reliability release confirmed in production; original 08/30 assessment and current L3 evidence limits preserved."
+      },
       {
         "date": "2026-10-22",
         "summary": "Local runtime reliability fixes: cancellation, finite provider work, incomplete-response rejection, private checker evidence and truthful completion. Historical 7/7 remains unchanged."

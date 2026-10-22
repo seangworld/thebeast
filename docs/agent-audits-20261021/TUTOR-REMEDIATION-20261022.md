@@ -52,3 +52,7 @@ Full audit/build, regression suite, TypeScript/lint, responsive fixture results,
 - Full application suite2,569 PASS; maintenance guard2 PASS; TypeScript and lint PASS. Existing success fixtures were updated to include actual provider terminal metadata; rejection expectations were not relaxed.
 - Actual TutorWorkspace in an isolated browser fixture at1440px and390px: Stop aborts the request; no automatic retry or answer persistence;4,000-character input bound; no horizontal overflow. Avatar/auth/repository are synthetic fixture substitutes; all HTTP traffic blocked. This is not a hosted owner walkthrough or real model response.
 - Dossier source/history completion check against main PASS; historical assessment snapshot unchanged; no historical ledger files touched.
+
+### Confirmed application release
+
+PR #275 merged as `7e708d245ea481ac17a970f89c22fbfefb4c0338`; exact `src` tree matches tested candidate `7202d6fe4e740ee2ae87c712ae3d474af98b615b`. Production `dpl_BGnokcC2ehf7qQJTmF1nfiNnDuss` is Ready and served by `thebeast.seangworld.com`. Public home200; Tutor and canonical Riley dossier307 to normal sign-in. No learner request or paid inference submitted. Hosted authenticated teaching/visual behavior remains unverified. This post-release dossier receipt records that application deployment; it does not alter implementation, evaluation date or competency level.
