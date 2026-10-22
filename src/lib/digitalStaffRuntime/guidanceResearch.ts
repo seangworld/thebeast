@@ -1,6 +1,10 @@
 import { citationUrlsInAnswer, sourcesCitedInAnswer } from "../health/answerSources";
 import type { RuntimeResearchRequest } from "./types";
 
+// Shared runtime ceilings, including ordinary app requests without an evaluation hook.
+// Phase timeouts are maxima inside this deadline, never additive allowances.
+export const guidanceRuntimeLimits = Object.freeze({ timeoutMs: 170_000, safetyOutputTokens: 4800, synthesisOutputTokens: 4800 });
+
 export const guidanceResearchUnavailable = "I could not establish sufficiently clear official-source evidence for this request. I can help compare your options or prepare questions using the information you provide, but any current eligibility, costs, or deadlines remain unverified. If the intended target is unclear, please name the study goal or institution/program, the requested study area, and any relevant year. No application or record change was made.";
 
 export function isGuidanceResearchSource(value: string, domains: readonly string[]) {

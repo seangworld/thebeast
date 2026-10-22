@@ -20,6 +20,7 @@ test("two-institution research preserves fee applicability and private context; 
   globalThis.fetch = async (_url, init) => {
    const request = JSON.parse(String(init?.body)), name = request.text?.format?.name, id = new Headers(init?.headers).get("X-Client-Request-Id") || "";
    if (name === "member_agent_semantic_verification") {
+    assert.equal(request.max_output_tokens, 4800); // App calls have the same bound without a harness hook.
     const input = JSON.parse(request.input); stages.push(`safety-${input.phase}`);
     if (input.phase === "output") { outputChecks++;
      if (!["unsafe-privacy", "forged-proof"].includes(mode)) { assert.ok(input.guidanceResearchEvidence); assert.match(JSON.stringify(input.guidanceResearchEvidence), /Private caregiving/); assert.match(input.guidanceResearchEvidence.retrievedEvidence, /residency unknown/); }

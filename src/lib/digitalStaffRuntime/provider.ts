@@ -65,9 +65,12 @@ export async function requestOpenAIResponse<T>(
     signal?: AbortSignal;
   } = {}
 ) {
+  // An expired caller has no authority to reserve or dispatch another call.
+  options.signal?.throwIfAborted();
   const requestId = options.requestId || crypto.randomUUID();
   const reservation = prepareEvaluationCall(body, requestId);
   const guardedBody = reservation?.body ?? body;
+  const diagnostic: { httpStatus: number | null; providerRequestId: string | null; failure?: { message: string } } = { httpStatus: null, providerRequestId: null };
   try {
     const response = await (options.fetchImpl || fetch)(openAIResponsesEndpoint, {
       method: "POST",
@@ -75,14 +78,19 @@ export async function requestOpenAIResponse<T>(
       body: JSON.stringify(guardedBody),
       signal: options.signal,
     });
+    diagnostic.httpStatus = response.status;
+    diagnostic.providerRequestId = response.headers.get("x-request-id")?.slice(0, 256) || null;
     if (!response.ok) {
-      throw await openAIProviderStatusError(response);
+      const error = await openAIProviderStatusError(response);
+      // Sanitized status/type/code only, never the raw error body or credentials.
+      diagnostic.failure = { message: error.message };
+      throw error;
     }
     const payload = (await response.json()) as T;
     reservation?.settle(payload);
     return payload;
   } catch (error) {
-    reservation?.unknown();
+    reservation?.unknown(diagnostic);
     const category = classifyDigitalStaffFailure("openai-responses", error);
     reportDigitalStaffError("openai-responses", error, requestId);
     throw new DigitalStaffServiceError(requestId, category);
@@ -104,6 +112,8 @@ export async function requestOpenAIResponseStream<T>(
     onComplete?: () => void;
   } = {}
 ) {
+  // An expired caller has no authority to reserve or dispatch another call.
+  options.signal?.throwIfAborted();
   const requestId = options.requestId || crypto.randomUUID();
   const reservation = prepareEvaluationCall(body, requestId);
   const guardedBody = reservation?.body ?? body;

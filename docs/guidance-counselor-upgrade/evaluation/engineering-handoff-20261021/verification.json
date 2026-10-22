@@ -1,0 +1,23 @@
+{
+  "applicationTests": {
+    "passed": 2551,
+    "failed": 0,
+    "log": "/private/tmp/gc-final-review-tests.log"
+  },
+  "guardReplayChecks": {
+    "passed": 53,
+    "failed": 0,
+    "log": "/private/tmp/gc-final-review-guard.log"
+  },
+  "typeScript": "PASS",
+  "lint": "PASS",
+  "securityGatedBuild": "PASS",
+  "npmAuditVulnerabilities": 0,
+  "forkSecurityRegressionChecks": 22,
+  "staticPages": 221,
+  "frozenCriteria": "UNCHANGED; fixtures-only verifier PASS",
+  "newPaidInference": 0,
+  "newMetadataCalls": 0,
+  "liveCompetency": "NOT ESTABLISHED",
+  "visual": "No layout/UI change; not reverified"
+}

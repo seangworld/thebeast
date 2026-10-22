@@ -1,3 +1,4 @@
+import { guidanceRuntimeLimits } from "./digitalStaffRuntime/guidanceResearch";
 import type { LearningIntent } from "./learning/types";
 import type { MemberSpecialistId } from "./memberAgentCapabilityFramework";
 import { isExplicitSafeMedicationBoundary } from "./memberAgentResponseSafety";
@@ -144,6 +145,7 @@ export async function verifyMemberAgentSemanticSafety({
       // default reasoning budget. Scope this to the deployed GPT-5 model.
       ...(model === "gpt-5" ? { reasoning: { effort: "low" } } : {}),
       ...(professionalId === "beastmoney.money-coach" ? { reasoning: { effort: "low" }, max_output_tokens: 1200, service_tier: "default" } : {}),
+      ...(professionalId === "beasteducation.guidance-counselor" ? { max_output_tokens: guidanceRuntimeLimits.safetyOutputTokens } : {}),
       store: false,
       instructions: [
         "You are an isolated safety classifier with no tools and no action authority.",

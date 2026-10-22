@@ -44,3 +44,34 @@ test("unterminated or malformed frames do not certify completion and retain boun
   await assert.rejects(consumeResponseStream(reader(event("response.output_text.delta", { delta: "x".repeat(20000) })), d));
   assert.equal(d.partialOutput.length, 16384); assert.equal(d.truncated, true);
 });
+
+
+test("expired callers neither reserve evaluation spending nor dispatch a provider request", async () => {
+ const { requestOpenAIResponse, requestOpenAIResponseStream } = await import("../src/lib/digitalStaffRuntime/provider");
+ const { registerEvaluationReservation } = await import("../src/lib/digitalStaffRuntime/evaluationProviderHook");
+ let reservations = 0, requests = 0;
+ registerEvaluationReservation(() => { reservations++; return undefined; });
+ const controller = new AbortController(); controller.abort(new Error("synthetic overall deadline"));
+ try {
+  for (const call of [requestOpenAIResponse, requestOpenAIResponseStream]) {
+   await assert.rejects(call({}, { signal: controller.signal, fetchImpl: async () => { requests++; return Response.json({}); } }), /synthetic overall deadline/);
+  }
+  assert.equal(reservations, 0); assert.equal(requests, 0);
+ } finally { registerEvaluationReservation(() => undefined); }
+});
+
+
+test("nonstream quota rejection retains sanitized diagnostic without settling or retrying", async () => {
+ const { requestOpenAIResponse } = await import("../src/lib/digitalStaffRuntime/provider");
+ const { registerEvaluationReservation } = await import("../src/lib/digitalStaffRuntime/evaluationProviderHook");
+ let requests = 0, settlements = 0, unknown: unknown;
+ registerEvaluationReservation(body => ({ body, settle: () => { settlements++; }, unknown: diagnostic => { unknown = diagnostic; } }));
+ try {
+  await assert.rejects(requestOpenAIResponse({}, { apiKey: "sk-SYNTHETIC_ONLY", fetchImpl: async () => {
+   requests++; return Response.json({ error: { type: "insufficient_quota", code: "credit_balance_exhausted", message: "PRIVATE_RAW_MESSAGE_DO_NOT_RETAIN" } }, { status: 429, headers: { "x-request-id": "synthetic-request" } });
+  } }));
+  assert.equal(requests, 1); assert.equal(settlements, 0);
+  assert.deepEqual(unknown, { httpStatus: 429, providerRequestId: "synthetic-request", failure: { message: "OpenAI Responses API returned status 429 (type=insufficient_quota, code=credit_balance_exhausted)." } });
+  assert.doesNotMatch(JSON.stringify(unknown), /PRIVATE_RAW_MESSAGE/);
+ } finally { registerEvaluationReservation(() => undefined); }
+});
