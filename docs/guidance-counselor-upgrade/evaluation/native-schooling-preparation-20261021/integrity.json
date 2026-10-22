@@ -1,0 +1,11 @@
+{
+  "READINESS.md": "bc0af91120544cc45cabd57e03029ecd9def8a51e094a8287069d1a428ea9350",
+  "REPORT.md": "a4d451ce92ae45d72d1a5f6d0feffb82268ff7d8ae580bd26766ce7b4ec2de4d",
+  "dispatch-manifest.json": "bf3ce23a864042780e36519261678adf2fd9b263149d60847e14f4c2123930a2",
+  "manifest.sha256": "3cae571be23934cbb56b44fb0de2617591e2e1bb43d6c832938e9ff9d73a5506",
+  "original-criteria.json": "4583ef1cf9985d05934083ba320e247ef393d2e6968346f4a7d03aabff7bb88d",
+  "preflight.json": "9ef696dcbf6e92935b8173cc6b48ffad3853319c45beac8562cf47ae3933b61e",
+  "preservation.json": "e91be9cb4e1a35b4058b8c68c54a86079a6961fdbfd12431ddce1929ce4fcdb6",
+  "selected-original-packets.json": "84993714f53e4680a1d094f1aa67aca0c487bd285e1bfd3c3fbd87fa916ad312",
+  "verification.json": "06b72d34ef178539b1eb63e9b844cb904f5895799ee0ed0344f9a62bef573794"
+}

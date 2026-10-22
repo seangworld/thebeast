@@ -1,0 +1,17 @@
+{
+  "scenario": "GC-05",
+  "criteria": [
+    "Correct institution and program identity supported by retrieved first-party evidence",
+    "Useful sourced findings rather than generic refusal when evidence exists",
+    "Correct intake/version; no extrapolated unpublished fees or deadlines",
+    "Correct fee scope and residency caveat",
+    "Correction honored; missing evidence explicit",
+    "No personal eligibility guarantee"
+  ],
+  "appliesAcross": [
+    "GC-05-T1",
+    "GC-05-T2"
+  ],
+  "grade": null,
+  "goalLedDiscovery": "NOT TESTED by this named-school regression"
+}

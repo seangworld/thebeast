@@ -1,0 +1,37 @@
+{
+  "candidate": "247ca3d26b706d8049096b5f969c9e19078f0fe7",
+  "applicationTests": {
+    "passed": 2549,
+    "failed": 0,
+    "compiledRuntimeFresh": true
+  },
+  "guardReplayTests": {
+    "passed": 53,
+    "failed": 0
+  },
+  "securityRegressions": 22,
+  "auditVulnerabilities": 0,
+  "lint": "PASS (existing Next lint deprecation notice)",
+  "typeScript": "PASS; also final build type validation passed",
+  "requiredSecurityGatedBuild": "PASS;221 pages",
+  "visualChecks": "No UI/layout changes; not applicable",
+  "originalFixtures": "UNCHANGED",
+  "sixHistoricalLedgers": "UNCHANGED; $4.25159388 including $4.152 unresolved",
+  "newPaidCalls": 0,
+  "newMetadataCalls": 0,
+  "newEvaluationLedgers": 0,
+  "goalLedDiscovery": "Mocked implementation checks only; live NOT TESTED",
+  "namedSchoolRegression": "Proposed original GC05T1/T2, no live answers or grades",
+  "nativeToolPolicyReplay": "Counterfactual new temporary ledger only; no historical settlement changed",
+  "manifestSha256": "bf3ce23a864042780e36519261678adf2fd9b263149d60847e14f4c2123930a2",
+  "offlinePreflight": "PASS; no dispatch",
+  "logSha256": {
+    "app": "57145fabafb5fe81f5b0d7044c3fbd4a0ead7c74ca06c22c775bb95c916731ec",
+    "guard": "60cc4d6da08bcebdde3d1687365aa1697790cc3ba79cb358cc47668bd3e5b63a",
+    "build": "d380bca117530c92787e338aeac52703f0c1519d15aeda436573da5e6b16dfee",
+    "lint": "f7c69f72fcf5e8a84910af02c9637a078d237796f0894891bb20b3af4fd45fe0",
+    "types": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fixtures": "6a3886256d6fc8c9f588ac51edbbb367c223ea5a71ae5eadedafe8a16d46b2bd",
+    "preflight": "9ef696dcbf6e92935b8173cc6b48ffad3853319c45beac8562cf47ae3933b61e"
+  }
+}
