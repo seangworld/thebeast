@@ -1128,14 +1128,16 @@
   "beastfusion.policy.product_specialist": {
     "recordKind": "planned",
     "lifecycle": "planned",
-    "role": "Planned product-scoped policy class \u2014 consolidation recommended",
-    "mission": "Preserve source-product ownership and owner-approved package/repository boundaries; no separately operational Product Specialist is established.",
-    "assignment": "None. Recommendation: consolidate product implementation responsibilities into Developer Agent with Orchestrator intake and independent Reviewer; preserve this policy-only record for traceability. No activation authorized.",
+    "role": "Historical / planned policy class \u2014 Duties covered by existing staff",
+    "mission": "Duties covered by existing staff. Historical/planned product-scoped policy record; no separately operational Product Specialist implementation is established.",
+    "assignment": "Duties covered by existing staff: Orchestrator 3.0 / existing Orchestrator 2.x intake owns approved scope and product context; Developer Agent owns bounded implementation and validation evidence; Research + Planning / Proposal Agent owns bounded research when needed; Reviewer Agent owns independent exact-candidate and Product Completeness checks. Sean retains authorization, material decisions, acceptance and release authority. No Product Specialist assignment or activation.",
     "availability": "Unknown \u2014 no separate Product Specialist runtime, assignment, or live execution evidence found in reviewed sources.",
     "duties": [
-      "Work only within an owner-approved product package and product-owned repository.",
-      "Preserve product business logic ownership and protected UI approval gates.",
-      "Return required validation and attributable evidence through existing governed staff; this is a recommended responsibility mapping, not a new permission grant."
+      "Approved product/package/repository intake and Product Truth context \u2192 beastfusion.orchestrator-3 via existing Orchestrator 2.x intake.",
+      "Bounded product-owned repository implementation, ownership preservation and validation evidence \u2192 beastfusion.developer-agent.",
+      "Bounded product requirements research/options, only if needed \u2192 beastfusion.proposal-agent.",
+      "Independent exact-candidate acceptance, evidence and Product Completeness checks \u2192 beastfusion.reviewer-agent.",
+      "Scope approval, protected UI/material exceptions, destructive actions and release authority \u2192 Sean, through existing gates."
     ],
     "target": null,
     "demonstrated": null,
@@ -1145,6 +1147,10 @@
     "latestAssessment": null,
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Duties covered by existing staff. Responsibility mapping completed in the four existing staff dossiers; historical/planned policy_only record retained. No activation, authority expansion or competency increase."
+      },
       {
         "date": "2026-10-22",
         "summary": "No-cost source audit: policy_only remains planned; consolidate overlapping duties with existing staff. No new agent, implementation, activation or competency assessment."
@@ -1163,7 +1169,7 @@
     ],
     "blockers": [
       "No unique missing operational responsibility or approved activation package identified.",
-      "HQ source update prepared; deployment/synchronization pending. No release or operational activation claimed."
+      "Responsibility mapping source updated in PR #282; HQ synchronization pending confirmed production deployment."
     ],
     "assessments": [
       {
@@ -1257,14 +1263,14 @@
     "evidence": [],
     "deferred": [
       {
-        "title": "Consolidate responsibility mapping; add no new agent",
-        "priority": "normal",
+        "title": "No separate Product Specialist development required",
+        "priority": "low",
         "desiredLevel": null,
-        "gap": "Policy class has only scope/prohibitions; no distinct missing capability established.",
-        "requiredWork": "Next development step: in a separately scoped governance documentation change, explicitly map Product Specialist product implementation duties to Developer, intake/context to Orchestrator, bounded research to Proposal, and independent acceptance checks to Reviewer. Preserve policy_only and owner gates. Only if a reproducible context omission is found, specify a deterministic product-context completeness check inside existing intake, with missing/stale Product Truth, wrong repository and protected UI fixtures; do not activate a separate worker.",
-        "success": "Traceable responsibility mapping with no orphan duty, no expanded authority, unchanged independent review; any proposed helper addresses an observed gap and fails closed in offline fixtures.",
-        "cost": "This audit: no paid calls, purchases or services. Documentation/local fixture work requires no new service; engineering effort not estimated. Future inference/recurring costs unknown and not authorized.",
-        "status": "Recommendation recorded; no implementation or activation initiated."
+        "gap": "No unique missing capability demonstrated after responsibility mapping.",
+        "requiredWork": "Responsibility mapping is complete in the existing Orchestrator, Developer, Proposal and Reviewer dossiers. No new agent work is scheduled. If an actual product-context omission is later reproduced, first scope a deterministic completeness check in existing Orchestrator intake; missing/stale Product Truth, wrong repository and protected UI gates need offline acceptance fixtures before any implementation.",
+        "success": "Any future work identifies a reproducible unowned requirement, preserves current scope/owner/reviewer gates, and supplies source-bound offline evidence.",
+        "cost": "No new inference, purchase or service for this audit/mapping. Future implementation effort and operating costs unknown; paid testing remains prohibited.",
+        "status": "Mapping complete; future engineering only if an evidence-backed gap is found."
       }
     ],
     "history": [
@@ -1279,6 +1285,224 @@
         "executor": "Codex (executor; independent review pending)",
         "why": "Owner-requested no-cost code/registry/evidence audit; recommend consolidation, define future role requirements and next documentation step. Actual implementation absent in reviewed scope; no live competency or release claim.",
         "version": "BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb; HQ base 63ced770; codex/product-specialist-audit"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (executor; no independent competency review)",
+        "why": "Owner authorized completing consolidation now: duties mapped in existing staff dossiers, retaining historical/planned policy_only Product Specialist explicitly labeled Duties covered by existing staff. No runtime/authority or numeric assessment changes.",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      }
+    ]
+  },
+  "beastfusion.orchestrator-3": {
+    "duties": [
+      "Coordinate Observe through Recommend lifecycle stages",
+      "Route evidence-backed proposals to the owner gate",
+      "Hand approved proposals to existing Orchestrator 2.x validation",
+      "Preserve lifecycle provenance and stop conditions",
+      "Own the Product Specialist intake/context responsibility within existing Orchestrator authority: require the owner-approved product/package, permitted repository/files, Product Truth, architecture/dependencies, exclusions, validation/evidence contract and owner gates before Developer dispatch.",
+      "Route missing/stale product context or material scope/UI/release decisions to the owner; preserve source-product ownership."
+    ],
+    "reviewedAt": "2026-10-22",
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Product Specialist duty coverage \u2014 approved intake and product context. Responsibility mapping only; no runtime, permissions, activation or competency change."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (executor; no independent competency review)",
+        "why": "Product Specialist duty coverage \u2014 approved intake and product context. Coordinates existing Orchestrator 2.x intake; cannot self-authorize product work, expand permissions or assume implementation/reviewer authority. Duties covered by existing staff; historical Product Specialist record remains planned/policy_only.",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/developmentAgentProfiles.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Product Specialist duty coverage \u2014 approved intake and product context",
+        "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/orchestrator-2.mjs",
+        "kind": "code review",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-22",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      }
+    ]
+  },
+  "beastfusion.developer-agent": {
+    "duties": [
+      "Build only the package and repository scope assigned by Orchestrator",
+      "Protect pre-existing workspace changes and preserve exact candidate identity",
+      "Run required validation and return structured implementation evidence",
+      "Correct ordinary in-scope defects before returning the candidate",
+      "Own the Product Specialist implementation responsibility within existing Developer authority: inspect and implement only the assigned owner-approved product package and product-owned repository/files using supplied Product Truth and architecture context.",
+      "Preserve product business logic ownership and pre-existing changes; enforce protected UI and material-decision gates, validate the exact candidate and return attributable evidence to independent Reviewer."
+    ],
+    "reviewedAt": "2026-10-22",
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Product Specialist duty coverage \u2014 bounded product implementation. Responsibility mapping only; no runtime, permissions, activation or competency change."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (executor; no independent competency review)",
+        "why": "Product Specialist duty coverage \u2014 bounded product implementation. Cannot choose roadmap work, authorize writes outside the assignment, transfer product ownership, independently review itself or release. Duties covered by existing staff; historical Product Specialist record remains planned/policy_only.",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/developmentAgentProfiles.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Product Specialist duty coverage \u2014 bounded product implementation",
+        "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/developer-agent.mjs",
+        "kind": "code review",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-22",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      }
+    ]
+  },
+  "beastfusion.proposal-agent": {
+    "duties": [
+      "Research only the bounded investigated question",
+      "Present alternatives and tradeoffs",
+      "Identify assumptions, unknowns, cost, risk, and dependencies",
+      "Stop every proposal at owner approval",
+      "Own the Product Specialist research/planning responsibility only when a bounded product question needs investigation: identify source-backed requirements, alternatives, assumptions, unknowns, dependencies, validation and rollback for owner consideration.",
+      "Keep research recommendations non-executable; product implementation remains with Developer after owner approval and governed intake."
+    ],
+    "reviewedAt": "2026-10-22",
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Product Specialist duty coverage \u2014 bounded product research. Responsibility mapping only; no runtime, permissions, activation or competency change."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (executor; no independent competency review)",
+        "why": "Product Specialist duty coverage \u2014 bounded product research. Cannot turn product expertise or a proposal into authorization, implement its own recommendation or invent Product Truth. Duties covered by existing staff; historical Product Specialist record remains planned/policy_only.",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/developmentAgentProfiles.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Product Specialist duty coverage \u2014 bounded product research",
+        "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/proposal-agent.mjs",
+        "kind": "code review",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-22",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      }
+    ]
+  },
+  "beastfusion.reviewer-agent": {
+    "duties": [
+      "Inspect the exact candidate, changed files, tests, evidence, and unresolved risks",
+      "Verify the authorized objective and acceptance criteria",
+      "Return precise findings and a governed verdict to Orchestrator",
+      "Re-review bounded remediation without becoming the implementer",
+      "Own the independent check of product-scoped Developer work: bind findings to the exact candidate, approved scope, Product Truth, acceptance criteria, tests and evidence, including Product Completeness and applicable cross-product impacts.",
+      "Verify source-product ownership, protected UI approval and repository boundaries; return findings or an owner decision for gaps without silently repairing the candidate or waiving failures."
+    ],
+    "reviewedAt": "2026-10-22",
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Product Specialist duty coverage \u2014 independent product acceptance checks. Responsibility mapping only; no runtime, permissions, activation or competency change."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (executor; no independent competency review)",
+        "why": "Product Specialist duty coverage \u2014 independent product acceptance checks. Reviewer remains separate from Developer; PASS is not owner acceptance, merge or release authority. Duties covered by existing staff; historical Product Specialist record remains planned/policy_only.",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/developmentAgentProfiles.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Product Specialist duty coverage \u2014 independent product acceptance checks",
+        "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/reviewer-agent.mjs",
+        "kind": "code review",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-22",
+        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
       }
     ]
   }

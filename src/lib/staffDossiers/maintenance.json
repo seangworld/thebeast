@@ -121,6 +121,21 @@
       "affectedStaffIds": [
         "beastfusion.policy.product_specialist"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Complete owner-authorized Product Specialist responsibility mapping in Orchestrator, Developer, Proposal and Reviewer dossiers. Retain historical/planned Product Specialist: Duties covered by existing staff. Preserve permissions, runtime, assessments and prior history; no activation or paid testing.",
+      "version": "PR #282 responsibility mapping",
+      "evidence": "https://github.com/seangworld/thebeast/pull/282",
+      "sourceDigest": "ec91d22484194f4aecab328de5f69f235a3213c78e0cf9102da2fb9c75b3de05",
+      "affectedStaffIds": [
+        "beastfusion.policy.product_specialist",
+        "beastfusion.orchestrator-3",
+        "beastfusion.developer-agent",
+        "beastfusion.proposal-agent",
+        "beastfusion.reviewer-agent"
+      ]
     }
   ]
 }
