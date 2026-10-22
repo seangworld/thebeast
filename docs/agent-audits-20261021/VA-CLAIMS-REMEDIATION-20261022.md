@@ -51,3 +51,7 @@ Rollback is the preceding application deployment. No production database migrati
 ### Completed local verification
 
 Clean lockfile install and unchanged security-gated production build PASS; full npm audit zero vulnerabilities;22 maintained-fork checks PASS. TypeScript and lint PASS. Full application suite2,584 PASS;33 focused VA/selected-document fixtures and2 dossier-maintenance tests PASS. Source/history completion gate against main PASS. Actual source-extracted selection-control fixture at1440/390px PASS; screenshots reviewed, no overflow. No authenticated hosted model/Storage flow was exercised. Original Taylor assessment arrays/date/Health mapping/cost fields, all other dossiers and historical evaluation files are preserved. These tests verify engineering mechanics, not VA reasoning competence.
+
+### Confirmed application release
+
+PR #279 merged as `c581e867db82c620fcc01e7807752be1025365a0`; its src tree matches final verified candidate `d57fcf77edc9f224cc51cfb27bfb176259eadc5d`. Production `dpl_8Jy58eaRHPcnAESsNHZrvfW2qayX` is Ready, GitHub status Success, and canonical alias `thebeast.seangworld.com` verified. Home200; Veterans organizer, Taylor veterans-mode URL and canonical Taylor dossier307 to normal sign-in. No claimant request, customer data access or model call was submitted. Authenticated hosted RLS/Storage/interpretation remain unverified; this receipt is not a new competency assessment.
