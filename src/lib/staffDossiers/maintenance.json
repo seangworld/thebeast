@@ -66,6 +66,17 @@
       "affectedStaffIds": [
         "beasteducation.tutor"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "VA Claims Aide improvement within Taylor: exact selected-source provenance, claim/revision scope, private factual-source checking and save acknowledgement; reuse historical H-C evidence separately without a new assessment. Extend gate over veterans helpers/organizer.",
+      "version": "VA selected-claim/source/save improvement pass",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274",
+      "sourceDigest": "c742e7a680e2097e2719e36760b743bd3f55fb712adfcaaee5529a9cbd850d8d",
+      "affectedStaffIds": [
+        "beasthealth.health-advisor"
+      ]
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { veteransEvidenceBoundary } from "../health/veteransContext";
 import { guidancePlanningConstraint, guidancePlanningState } from "./guidancePlanning";
 import { moneyCoachReasoningSchemaFor } from "../moneyCoachReasoning";
 import { moneyEvidenceCatalog, moneyPriorityFields } from "../moneyCoachEvidence";
@@ -47,6 +48,7 @@ export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeCo
   return JSON.stringify({
     ...(config.id === "beastmoney.money-coach" ? { financialEvidence: moneyEvidenceCatalog(context), supportedFinancialProposals: { entityTypes: ["priority","goal","preference"], fields: moneyPriorityFields, destination: "Owner-approved Money priority only; no debt, income, bill, APR, payment or account edits." } } : {}),
     currentMessage: context.message,
+    ...(context.veterans ? {veteransContext:{...context.veterans,filingEnabled:false,clinicalVerification:"Member-entered claim; unverified, not a diagnosis or VA status confirmation"},veteransEvidenceBoundary} : {}),
     conversationState: guidancePlanningState(context, context.state),
     ...(config.id === "beasteducation.guidance-counselor" ? { currentPlanningConstraint: guidancePlanningConstraint(context) } : {}),
     recentConversation: context.recentMessages.slice(productSupport ? -4 : config.id === "beasthealth.health-advisor" ? -32 : -8),
@@ -63,7 +65,7 @@ export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeCo
           healthEvidenceQualityBoundary: "This is deterministic metadata triage, not clinical reconciliation. Source labels are unverified; age since a record update does not establish whether a health fact is current or stale. Treat listed differences as possible discrepancies only, inspect the cited same-owner records, preserve both versions and uncertainty, and ask the member to verify with the source or clinician when needed. Member-reported VA claim context is kept out of clinical discrepancy checks.",
         }
       : {}),
-    selectedDocuments: (context.documents || []).map(({id,title}) => ({id,title})),
+    selectedDocuments: (context.documents || []).map(({id,title,provenance}) => ({id,title,provenance})),
     documentBoundary: "Only attached originals were supplied this turn. Metadata and previous summaries are not a fresh reading of an original. Report unreadable or missing pages; cite document title and page only when visible.",
     contextBoundary: context.contextBoundary || null,
     currentWorkspace: context.workspace,

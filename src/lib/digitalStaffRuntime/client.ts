@@ -1,3 +1,4 @@
+import { veteransEvidenceFailureCode, veteransEvidenceFailureMessage, veteransSaveFailureCode, veteransSaveFailureMessage } from "../health/veteransSave";
 import type { DigitalStaffActivity, ProfessionalId, RuntimeMessage, RuntimeResult } from "./types";
 import type { HistoricalKnowledgeProposal, HistoricalReconciliationState } from "./reconciliation";
 import { digitalStaffUnavailableMessage } from "./security";
@@ -7,8 +8,8 @@ export type DigitalStaffRuntimeResponse = { assistantMessageId: string; result: 
 export class DigitalStaffClientError extends Error {
   readonly requestId: string | null;
 
-  constructor(requestId?: string) {
-    super(digitalStaffUnavailableMessage);
+  constructor(requestId?: string, code?:string) {
+    super(code === veteransSaveFailureCode ? veteransSaveFailureMessage : code === veteransEvidenceFailureCode ? veteransEvidenceFailureMessage : digitalStaffUnavailableMessage);
     this.name = "DigitalStaffClientError";
     this.requestId = requestId || null;
   }
@@ -39,8 +40,8 @@ export async function requestDigitalStaffResponse(input: { professionalId: Profe
     observer.onSubmitted?.();
     const response = await fetch("/api/digital-staff/runtime", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", Accept: "application/x-ndjson" }, body: JSON.stringify(input) });
     if (!response.ok) {
-      const failure = await response.json().catch(() => ({})) as { requestId?: string };
-      throw new DigitalStaffClientError(failure.requestId);
+      const failure = await response.json().catch(() => ({})) as { requestId?: string; code?:string };
+      throw new DigitalStaffClientError(failure.requestId,failure.code);
     }
     if (!response.headers.get("content-type")?.includes("application/x-ndjson")) {
       const payload = await response.json() as DigitalStaffRuntimeResponse | { requestId?: string };
@@ -65,7 +66,7 @@ export async function requestDigitalStaffResponse(input: { professionalId: Profe
           | { type: "activity"; activity: DigitalStaffActivity }
           | { type: "response_delta"; delta: string }
           | { type: "complete"; payload: DigitalStaffRuntimeResponse }
-          | { type: "error"; requestId?: string };
+          | { type: "error"; requestId?: string; code?:string };
         if (event.type === "acknowledged") observer.onAcknowledged?.(event.message);
         if (event.type === "activity") observer.onActivity?.(event.activity);
         if (event.type === "response_delta") {
@@ -77,7 +78,7 @@ export async function requestDigitalStaffResponse(input: { professionalId: Profe
           observer.onResponseDelta?.(event.delta);
         }
         if (event.type === "complete") completed = event.payload;
-        if (event.type === "error") throw new DigitalStaffClientError(event.requestId);
+        if (event.type === "error") throw new DigitalStaffClientError(event.requestId,event.code);
       }
       if (done) break;
     }

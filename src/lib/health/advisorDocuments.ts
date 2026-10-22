@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { healthFileInput, maximumHealthFileBytes } from './documentFileExtraction';
 import type { RuntimeContext } from '../digitalStaffRuntime/types';
@@ -12,8 +13,9 @@ export function parseAdvisorDocumentIds(value: unknown, professionalId: string):
 /** Download only explicitly selected, member-owned active Health originals through their authenticated client. */
 export async function loadAdvisorDocuments(supabase: SupabaseClient, ownerId: string, ids: string[]): Promise<NonNullable<RuntimeContext['documents']>> {
   if (!ids.length) return [];
-  const {data, error} = await supabase.from('beast_documents').select('id,title,storage_bucket,storage_path,mime_type,size_bytes,status').eq('owner_id',ownerId).eq('category','Health').in('id',ids).not('status','in','(Archived,Deleted)');
+  const {data, error} = await supabase.from('beast_documents').select('id,owner_id,category,title,storage_bucket,storage_path,mime_type,size_bytes,status,updated_at').eq('owner_id',ownerId).eq('category','Health').in('id',ids).not('status','in','(Archived,Deleted)');
   if (error || !data || data.length !== ids.length) throw new Error('Selected Health document unavailable.');
+  if (new Set(data.map(doc=>doc.id)).size !== ids.length || data.some(doc=>!ids.includes(doc.id) || doc.owner_id!==ownerId || doc.category!=='Health' || ['Archived','Deleted'].includes(doc.status))) throw new Error('Selected Health document unavailable.');
   if (data.reduce((sum, doc) => sum + Number(doc.size_bytes || 0),0) > maximumHealthFileBytes) throw new Error('Selected documents exceed 10 MB.');
   const documents: NonNullable<RuntimeContext['documents']> = [];
   let totalBytes = 0;
@@ -22,8 +24,9 @@ export async function loadAdvisorDocuments(supabase: SupabaseClient, ownerId: st
     if (downloadError || !file) throw new Error('Selected original could not be read.');
     totalBytes += file.size;
     if (totalBytes > maximumHealthFileBytes) throw new Error('Selected documents exceed 10 MB.');
-    const content = healthFileInput(new Uint8Array(await file.arrayBuffer()),doc.mime_type);
-    documents.push({id:doc.id,title:doc.title,content});
+    const bytes=new Uint8Array(await file.arrayBuffer());
+    const content = healthFileInput(bytes,doc.mime_type);
+    documents.push({id:doc.id,title:doc.title,content,provenance:{source:'selected-member-original',sha256:createHash('sha256').update(bytes).digest('hex'),updatedAt:typeof doc.updated_at==='string'?doc.updated_at:null}});
   }
   return documents;
 }

@@ -96,7 +96,7 @@ test('researched health answer is synthesized with private context, never passed
 test('selected original reaches private model input and oversized content fails',async()=>{
   const id='11111111-1111-1111-1111-111111111111';
   let file=new Blob(['%PDF-1.4 synthetic fixture'],{type:'application/pdf'});
-  const query={select:()=>query,eq:()=>query,in:()=>query,not:async()=>({data:[{id,title:'Decision letter',storage_bucket:'private',storage_path:'member/letter.pdf',mime_type:'application/pdf',size_bytes:20}],error:null})};
+  const query={select:()=>query,eq:()=>query,in:()=>query,not:async()=>({data:[{id,owner_id:'member',category:'Health',status:'Active',updated_at:'2026-10-20T00:00:00Z',title:'Decision letter',storage_bucket:'private',storage_path:'member/letter.pdf',mime_type:'application/pdf',size_bytes:20}],error:null})};
   const client={from:()=>query,storage:{from:()=>({download:async()=>({data:file,error:null})})}};
   const documents=await loadAdvisorDocuments(client as unknown as Parameters<typeof loadAdvisorDocuments>[0],'member',[id]);
   assert.equal(documents[0].content.type,'input_file');

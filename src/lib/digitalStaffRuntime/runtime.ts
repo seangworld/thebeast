@@ -351,10 +351,11 @@ export async function runDigitalStaffRuntime(
   const recentContextSafety = filterMemberAgentContextItems(context.recentMessages);
   const memoryContextSafety = filterMemberAgentContextItems(context.memories);
   const recordContextSafety = filterMemberAgentContextItems(context.structuredRecords);
+  const veteransContextSafety = filterMemberAgentContextItems(context.veterans ? [context.veterans] : []);
   const currentMessageSafety = sanitizeUntrustedMemberText(context.message.text);
-  const rejectedContextCount = recentContextSafety.rejectedCount + memoryContextSafety.rejectedCount + recordContextSafety.rejectedCount + (currentMessageSafety.quarantined ? 1 : 0);
+  const rejectedContextCount = recentContextSafety.rejectedCount + memoryContextSafety.rejectedCount + recordContextSafety.rejectedCount + veteransContextSafety.rejectedCount + (currentMessageSafety.quarantined ? 1 : 0);
   const executionContext: RuntimeContext = isMemberSpecialistId(context.professionalId)
-    ? { ...context, message: { ...context.message, text: currentMessageSafety.value }, recentMessages: recentContextSafety.accepted, memories: memoryContextSafety.accepted, structuredRecords: recordContextSafety.accepted }
+    ? { ...context, message: { ...context.message, text: currentMessageSafety.value }, recentMessages: recentContextSafety.accepted, memories: memoryContextSafety.accepted, structuredRecords: recordContextSafety.accepted, ...(context.veterans ? {veterans:veteransContextSafety.accepted[0]} : {}) }
     : context;
   await observer.onActivity?.("thinking");
   let firstModelOutputMs: number | null = null;
@@ -465,6 +466,7 @@ export async function runDigitalStaffRuntime(
       phase: "output",
       memberMessage: context.message.text,
       candidateResponse: responseSafety.response,
+      ...(executionContext.veterans ? {veteransEvidence:{context:JSON.parse(runtimeInput),documents:executionContext.documents || []}} : {}),
       ...(context.professionalId === "beasteducation.guidance-counselor" && research ? { guidanceResearchEvidence: { memberContext: JSON.parse(runtimeInput), retrievedEvidence: research.answer, retrievedSources: research.sources } } : {}),
       model,
       requestId: context.requestId,
