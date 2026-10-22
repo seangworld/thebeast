@@ -136,6 +136,21 @@
         "beastfusion.proposal-agent",
         "beastfusion.reviewer-agent"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Post-release receipt: confirmed PR #282 Ready production and authenticated live HQ mapping in all five affected dossiers; public health 200 and anonymous HQ sign-in redirects. Record documentation synchronization only, preserve historical/planned Product Specialist and all staff authority/competency/accounting. Audit closed.",
+      "version": "Post-release receipt for c24c82e97228d01c90dc53115e66325df082cdce; dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb",
+      "evidence": "https://github.com/seangworld/thebeast/pull/282",
+      "sourceDigest": "0b0381c01a00d9a4bf02f0a8cb7bb4f0cd81daac1a09339fd7f956a4a1fa4bfe",
+      "affectedStaffIds": [
+        "beastfusion.policy.product_specialist",
+        "beastfusion.orchestrator-3",
+        "beastfusion.developer-agent",
+        "beastfusion.proposal-agent",
+        "beastfusion.reviewer-agent"
+      ]
     }
   ]
 }
