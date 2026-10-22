@@ -31,7 +31,7 @@ export default function OperationsPage() {
     </section>
     <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 p-5" aria-label="Shared team">
       <div><h2 className="text-lg font-bold">Your shared team</h2><p className="mt-1 text-base text-slate-400">Review agent work, blockers, and decisions across the businesses.</p></div>
-      <Link href="/dashboard/operations/staff" className="min-h-11 rounded-xl border border-cyan-200/30 px-4 py-3 text-sm font-bold text-cyan-200">Agents & approvals</Link>
+      <Link href="/dashboard/operations/staff" className="min-h-11 rounded-xl border border-cyan-200/30 px-4 py-3 text-sm font-bold text-cyan-200">Staff Management</Link>
     </section>
   </OperationsWorkspaceShell>;
 }

@@ -22,6 +22,28 @@
         "beastfusion.reviewer-agent",
         "beastfusion.outcome-agent"
       ]
+    },
+    {
+      "date": "2026-10-21",
+      "executor": "Codex",
+      "reason": "Owner-facing Staff Management refinement: preserve historical evaluation dates/results, scoped rationale-based competency mappings and role requirements; no new competency testing or agent configuration change. Completion gate now also covers dossier source records and historical member assessment projection.",
+      "version": "Staff Management owner-facing refinement",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274",
+      "sourceDigest": "11f255268a9840599c23034287f4881b0b393cd313cf78b25fa3eaae70cb20b0",
+      "affectedStaffIds": [
+        "beastfusion.fusion-director",
+        "beastmoney.money-coach",
+        "beasthealth.health-advisor",
+        "beasteducation.guidance-counselor",
+        "beasteducation.tutor",
+        "atlas",
+        "beastfusion.orchestrator-3",
+        "beastfusion.observer-agent",
+        "beastfusion.proposal-agent",
+        "beastfusion.developer-agent",
+        "beastfusion.reviewer-agent",
+        "beastfusion.outcome-agent"
+      ]
     }
   ]
 }

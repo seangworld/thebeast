@@ -158,7 +158,7 @@
     "blockers": [
       "Latest DEV inference returned credit_balance_exhausted; production quota is unknown. No paid testing is authorized."
     ],
-    "assignment": "Maintain released native research flow; no new assessment cycle.",
+    "assignment": "Provide education/career guidance and identify the limits of unverified research.",
     "releases": [
       {
         "date": "2026-10-21",
@@ -168,6 +168,16 @@
       }
     ],
     "deferred": [
+      {
+        "title": "Review remaining research evidence gaps",
+        "priority": "normal",
+        "desiredLevel": "L4",
+        "gap": "Actual earlier replies provide routine directed career steps and record/constraint corrections. This supports bounded L2 guidance. Core researched schooling plans remain unverified, so role-wide L3/L4 is not established despite local research-path checks.",
+        "requiredWork": "Preserve existing source/privacy corrections and replay evidence. Inspect any existing substantive output; no new paid assessment or fabricated answer.",
+        "success": "Practical sourced schooling plan and intake correction supported by actual evidence; ordinary L2 evidence alone cannot establish research competence.",
+        "cost": "Engineering effort and further validation cost not estimated. No paid inference, purchase or new service authorized. Historical assessment costs are not a forecast.",
+        "status": "Deferred \u2014 prioritize no-cost engineering/evidence review only."
+      },
       {
         "title": "Unverified researched plan",
         "priority": "normal",
@@ -191,6 +201,43 @@
         "executor": "Codex",
         "why": "Issue274 reconciliation of historical evidence, role-specific gaps and confirmed release history. No new grading or paid tests.",
         "version": "Issue #274; Jordan #273; audits #275"
+      },
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
+        "version": "Staff Management refinement"
+      }
+    ],
+    "lastEvaluatedAt": "2026-10-21",
+    "latestAssessment": {
+      "title": "Incomplete \u2014 ordinary guidance demonstrated",
+      "date": "2026-10-21",
+      "reviewer": "Codex executor review",
+      "note": "Earlier ordinary/correction answers retained; no delivered researched plan.",
+      "url": "https://github.com/seangworld/thebeast/blob/main/docs/guidance-counselor-upgrade/evaluation/engineering-handoff-20261021/REPORT.md"
+    },
+    "reviewedAt": "2026-10-21",
+    "demonstrated": "L2",
+    "target": "L4",
+    "levelMapping": {
+      "reviewedAt": "2026-10-21",
+      "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
+      "rationale": "Actual earlier replies provide routine directed career steps and record/constraint corrections. This supports bounded L2 guidance. Core researched schooling plans remain unverified, so role-wide L3/L4 is not established despite local research-path checks.",
+      "scope": "Ordinary directed guidance only; research capability remains unverified.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/thebeast/blob/main/docs/guidance-counselor-upgrade/evaluation/engineering-handoff-20261021/REPORT.md"
+      ]
+    },
+    "targetRequirement": "The intended job includes complex official-source school/program comparison, intake correction and a practical contextual schooling plan.",
+    "recentChanges": [
+      {
+        "date": "2026-10-21",
+        "summary": "Guidance implementation released; researched-answer competency remains unverified."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Private brief, source checks and cancellation handling corrected locally."
       }
     ]
   },
@@ -231,13 +278,65 @@
             "version": "PR #275; docs-only audit"
           }
         ]
+      },
+      {
+        "role": "Tutor \u2014 historical controlled Production-model assessment",
+        "summary": "7/7 source turns accepted on08/30/2026; remediation_pass. This source self-assessment is prior evidence, not new testing. Knight L2 stays separate. Current deployed model/prompt binding has not been reconciled to this historical candidate.",
+        "criteria": [
+          {
+            "criterion": "shown-work first-error diagnosis",
+            "result": "pass",
+            "reason": "Retained08/30 controlled-model assessment reports this demonstrated strength; exact historical binding only."
+          },
+          {
+            "criterion": "learner-correction acknowledgment",
+            "result": "pass",
+            "reason": "Retained08/30 controlled-model assessment reports this demonstrated strength; exact historical binding only."
+          },
+          {
+            "criterion": "alternate-method recognition",
+            "result": "pass",
+            "reason": "Retained08/30 controlled-model assessment reports this demonstrated strength; exact historical binding only."
+          },
+          {
+            "criterion": "targeted practice",
+            "result": "pass",
+            "reason": "Retained08/30 controlled-model assessment reports this demonstrated strength; exact historical binding only."
+          },
+          {
+            "criterion": "insufficient-evidence boundary",
+            "result": "pass",
+            "reason": "Retained08/30 controlled-model assessment reports this demonstrated strength; exact historical binding only."
+          },
+          {
+            "criterion": "academic-integrity refusal",
+            "result": "pass",
+            "reason": "Retained08/30 controlled-model assessment reports this demonstrated strength; exact historical binding only."
+          },
+          {
+            "criterion": "task-complete handoff receiver",
+            "result": "pass",
+            "reason": "Retained08/30 controlled-model assessment reports this demonstrated strength; exact historical binding only."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "BF-AGT-016 retained assessment",
+            "url": "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json",
+            "kind": "live answer",
+            "reviewer": "Historical manual criteria self-assessment; not independent certification",
+            "date": "2026-08-30",
+            "version": "c24dd3e1c83903aabf1557edfdde66754e4720ca"
+          }
+        ]
       }
     ],
     "limitations": [
       "Generation/transcription direct fetch calls lack explicit deadline/caller cancellation and output-token bounds.",
       "Provider finish_reason and usage not retained by learning adapter.",
       "Completed telemetry emitted before final output safety.",
-      "Output verifier lacks full worksheet/transcription evidence."
+      "Output verifier lacks full worksheet/transcription evidence.",
+      "Historical 7/7 accepted turns do not prove the current model/configuration matches that assessment; competency level mapping remains pending."
     ],
     "deferred": [
       {
@@ -252,13 +351,58 @@
       }
     ],
     "releases": [],
-    "assignment": "Next engineering priority: bounded adapter/completion correction, not new paid evaluation.",
+    "assignment": "Guide learning and review shown work; prioritize bounded provider and completion handling.",
     "history": [
       {
         "date": "2026-10-21",
         "executor": "Codex",
         "why": "Issue274 reconciliation of historical evidence, role-specific gaps and confirmed release history. No new grading or paid tests.",
         "version": "Issue #274; Jordan #273; audits #275"
+      },
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
+        "version": "Staff Management refinement"
+      }
+    ],
+    "lastEvaluatedAt": "2026-08-30",
+    "latestAssessment": {
+      "title": "7/7 source turns accepted",
+      "date": "2026-08-30",
+      "reviewer": "Historical controlled-model self-assessment",
+      "note": "10/21 code audit is not a new evaluation; current model binding unreconciled.",
+      "url": "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json"
+    },
+    "reviewedAt": "2026-10-21",
+    "target": "L3",
+    "targetRequirement": "Core guided-learning work: inspect shown attempts, guide correction, recognize equivalent methods and preserve academic-integrity/privacy boundaries.",
+    "strengths": [
+      "Historical 08/30 result: shown-work first-error diagnosis",
+      "Historical 08/30 result: learner-correction acknowledgment",
+      "Historical 08/30 result: alternate-method recognition",
+      "Historical 08/30 result: targeted practice",
+      "Historical 08/30 result: insufficient-evidence boundary",
+      "Historical 08/30 result: academic-integrity refusal",
+      "Historical 08/30 result: task-complete handoff receiver"
+    ],
+    "levelMapping": {
+      "reviewedAt": "2026-10-21",
+      "reviewer": "Codex evidence reconciliation",
+      "rationale": "Guided correction evidence exists, but current configuration binding is unreconciled. Do not translate Knight L2 or the 7/7 count mechanically into a staff competency level.",
+      "scope": "Historical teaching behavior preserved; current staff-scale mapping pending.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json"
+      ]
+    },
+    "recentChanges": [
+      {
+        "date": "2026-10-21",
+        "summary": "Code audit identified provider-bound and completion-accounting gaps."
+      },
+      {
+        "date": "2026-08-30",
+        "summary": "Historical controlled-model assessment accepted 7/7 source turns."
       }
     ]
   },
@@ -388,6 +532,16 @@
     ],
     "deferred": [
       {
+        "title": "Harden selected-document and VA evidence handling",
+        "priority": "normal",
+        "desiredLevel": "L4",
+        "gap": "Retained responses demonstrate contextual source-grounded trend review, preparation advice and correction within explicit health boundaries. Scoped L3 is supported; a focused executor-reviewed sample does not establish reliable broad complex-document workflows (L4) or clinical/legal expertise.",
+        "requiredWork": "Use existing retained evidence/local fixtures to verify selected-claim/source provenance and unsupported-claim rejection. No duplicate agent or paid test.",
+        "success": "Source-bound interpretation and clear clinical/legal limits; do not infer general VA competence from focused health results.",
+        "cost": "Engineering effort and further validation cost not estimated. No paid inference, purchase or new service authorized. Historical assessment costs are not a forecast.",
+        "status": "Deferred \u2014 prioritize no-cost engineering/evidence review only."
+      },
+      {
         "title": "VA selected-evidence interpretation",
         "priority": "normal",
         "desiredLevel": null,
@@ -410,12 +564,53 @@
         "executor": "Codex",
         "why": "Issue274 reconciliation of historical evidence, role-specific gaps and confirmed release history. No new grading or paid tests.",
         "version": "Issue #274; Jordan #273; audits #275"
+      },
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
+        "version": "Staff Management refinement"
       }
     ],
     "departments": [
       "BeastHealth",
       "Veterans claims"
-    ]
+    ],
+    "lastEvaluatedAt": "2026-10-20",
+    "latestAssessment": {
+      "title": "10/10 focused criteria PASS",
+      "date": "2026-10-20",
+      "reviewer": "Codex executor review",
+      "note": "Focused H-B/H-C sample; not clinical certification. VA audit is separate.",
+      "url": "https://github.com/seangworld/thebeast/blob/main/docs/taylor-health-advisor-upgrade/evaluation/quality-regression-20261020/REPORT.md"
+    },
+    "reviewedAt": "2026-10-21",
+    "demonstrated": "L3",
+    "target": "L4",
+    "levelMapping": {
+      "reviewedAt": "2026-10-21",
+      "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
+      "rationale": "Retained responses demonstrate contextual source-grounded trend review, preparation advice and correction within explicit health boundaries. Scoped L3 is supported; a focused executor-reviewed sample does not establish reliable broad complex-document workflows (L4) or clinical/legal expertise.",
+      "scope": "Focused tested health review/preparation only; VA Claims Aide competency is not implied.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/thebeast/blob/main/docs/taylor-health-advisor-upgrade/evaluation/quality-regression-20261020/REPORT.md"
+      ]
+    },
+    "targetRequirement": "The job requires reliable contextual review of selected records/documents and official evidence while preserving clinical, permission and uncertainty boundaries.",
+    "strengths": [
+      "Focused historical sample accurately compared supplied ranges and delivered bounded, evidence-grounded preparation advice."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-21",
+        "summary": "VA specialization audit retained; no separate agent created."
+      },
+      {
+        "date": "2026-10-20",
+        "summary": "Focused health regression completed; evidence-grounded review released."
+      }
+    ],
+    "assignment": "Review selected health records and prepare questions; provide bounded veterans assistance when requested."
   },
   "beastmoney.money-coach": {
     "assessments": [
@@ -482,7 +677,7 @@
       }
     ],
     "strengths": [
-      "Independent bounded financial-family review recorded in Issue #268."
+      "Independent review accepted the exercised financial reasoning, changed-record handling and checkpoint-correction families."
     ],
     "limitations": [
       "No autonomous payments/investments or account changes.",
@@ -508,8 +703,58 @@
         "executor": "Codex",
         "why": "Issue274 reconciliation of historical evidence, role-specific gaps and confirmed release history. No new grading or paid tests.",
         "version": "Issue #274; Jordan #273; audits #275"
+      },
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
+        "version": "Staff Management refinement"
       }
-    ]
+    ],
+    "lastEvaluatedAt": "2026-10-18",
+    "latestAssessment": {
+      "title": "8/8 financial families PASS",
+      "date": "2026-10-18",
+      "reviewer": "Independent ChatGPT review",
+      "note": "Attack stopped by input safeguard; plan-model attack judgment not established.",
+      "url": "https://github.com/seangworld/thebeast/blob/main/docs/money-coach-upgrade/release-preparation/REPORT.md"
+    },
+    "reviewedAt": "2026-10-21",
+    "demonstrated": "L3",
+    "target": "L4",
+    "levelMapping": {
+      "reviewedAt": "2026-10-21",
+      "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
+      "rationale": "The independent review covers cash flow, debt choices, changed records, missing assumptions and checkpoint correction with explicit boundaries. That supports contextual financial coaching (L3). It does not establish broad integrated reliability or attack-path plan judgment required for L4.",
+      "scope": "Bounded financial coaching in the exercised families; no transaction authority.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/thebeast/blob/main/docs/money-coach-upgrade/release-preparation/REPORT.md"
+      ]
+    },
+    "targetRequirement": "The role must reliably combine financial records, canonical calculations and Director checkpoint evidence across complex objectives.",
+    "deferred": [
+      {
+        "title": "Strengthen integrated boundary evidence",
+        "priority": "normal",
+        "desiredLevel": "L4",
+        "gap": "The independent review covers cash flow, debt choices, changed records, missing assumptions and checkpoint correction with explicit boundaries. That supports contextual financial coaching (L3). It does not establish broad integrated reliability or attack-path plan judgment required for L4.",
+        "requiredWork": "Review existing unsafe-input and checkpoint evidence; keep canonical arithmetic and permission regressions. Do not repeat competency testing.",
+        "success": "Consistent complex-context evidence with honest uncertainty and no unsupported transaction authority.",
+        "cost": "Engineering effort and further validation cost not estimated. No paid inference, purchase or new service authorized. Historical assessment costs are not a forecast.",
+        "status": "Deferred \u2014 prioritize no-cost engineering/evidence review only."
+      }
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-21",
+        "summary": "Existing financial assessment and scoped competency rationale reconciled."
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Grounded financial analysis and Director integration released."
+      }
+    ],
+    "assignment": "Explain member finances and support evidence-based planning."
   },
   "beastfusion.fusion-director": {
     "assessments": [
@@ -561,7 +806,7 @@
       }
     ],
     "limitations": [
-      "Folio63 independent result3/4; cancellation-contract corrections later local-only verified.",
+      "Folio 63 independent result 3/4; cancellation-contract corrections later local-only verified.",
       "Local security gates are not independent reasoning competence."
     ],
     "releases": [
@@ -584,11 +829,68 @@
         "executor": "Codex",
         "why": "Issue274 reconciliation of historical evidence, role-specific gaps and confirmed release history. No new grading or paid tests.",
         "version": "Issue #274; Jordan #273; audits #275"
+      },
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
+        "version": "Staff Management refinement"
       }
     ],
     "departments": [
       "BeastOS / Cross-product Digital Staff",
       "BeastFusion"
-    ]
+    ],
+    "lastEvaluatedAt": "2026-10-18",
+    "latestAssessment": {
+      "title": "23/24 PARTIAL-PASS",
+      "date": "2026-10-18",
+      "reviewer": "Independent ChatGPT review",
+      "note": "Later cancellation corrections verified locally; original grade unchanged.",
+      "url": "https://github.com/seangworld/thebeast/blob/main/docs/avery-release-readiness/report.md"
+    },
+    "reviewedAt": "2026-10-21",
+    "demonstrated": "L3",
+    "target": "L4",
+    "levelMapping": {
+      "reviewedAt": "2026-10-21",
+      "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
+      "rationale": "Contextual delegation, evidence correction, recovery and permission handling were demonstrated across the frozen Folios. This supports bounded contextual Director workflows (L3). Cancellation scored 3/4 and later fixes were local-only; reliable complex integrated operation (L4) is not established.",
+      "scope": "Bounded tested Director workflows; not a universal intelligence score.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/thebeast/blob/main/docs/avery-release-readiness/report.md"
+      ]
+    },
+    "targetRequirement": "Reliable complex multi-specialist planning, delegation, evidence verification and recovery are the Director job requirement.",
+    "strengths": [
+      "Historical assessment supports conditional delegation, identifying incorrect specialist results, recovery and permission boundaries."
+    ],
+    "deferred": [
+      {
+        "title": "Close cancellation reliability gap",
+        "priority": "normal",
+        "desiredLevel": "L4",
+        "gap": "Contextual delegation, evidence correction, recovery and permission handling were demonstrated across the frozen Folios. This supports bounded contextual Director workflows (L3). Cancellation scored3/4 and later fixes were local-only; reliable complex integrated operation (L4) is not established.",
+        "requiredWork": "Retain locally corrected cancellation behavior and independently inspect existing receipts; do not change the historical23/24 grade.",
+        "success": "No action after cancellation; local recovery and cancellation evidence remains consistent. L4 needs reliable representative evidence, not a score conversion.",
+        "cost": "Engineering effort and further validation cost not estimated. No paid inference, purchase or new service authorized. Historical assessment costs are not a forecast.",
+        "status": "Deferred \u2014 prioritize no-cost engineering/evidence review only."
+      }
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-21",
+        "summary": "Existing 23/24 result and bounded level rationale made visible."
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Cancellation/recovery corrections checked locally; no fresh model grade."
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Director upgrade released."
+      }
+    ],
+    "assignment": "Coordinate permitted specialist work and owner-approved objectives."
   }
 }
