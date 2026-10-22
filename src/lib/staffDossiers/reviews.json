@@ -1301,6 +1301,12 @@
         "executor": "Codex (release executor; no independent competency evaluation)",
         "why": "Confirmed main c24c82e97228d01c90dc53115e66325df082cdce Ready in production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb; verified live authenticated HQ responsibility mapping in Product Specialist and all four existing staff dossiers. Audit/mapping complete. Documentation synchronization only; policy_only/planned status, staff permissions and all competency/accounting evidence preserved.",
         "version": "PR #282 confirmed production dossier synchronization; c24c82e97228d01c90dc53115e66325df082cdce"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex",
+        "why": "Keep the released-competency display Unassessed for historical/planned policy records even when their documentation has a release receipt. Documentation release history does not establish an operational agent or a competency assessment.",
+        "version": "PR #283 planned-policy documentation release label correction"
       }
     ],
     "releases": [

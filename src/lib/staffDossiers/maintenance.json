@@ -151,6 +151,17 @@
         "beastfusion.proposal-agent",
         "beastfusion.reviewer-agent"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Prevent documentation release history from implying released competency for planned policy records; retain Unassessed label and planned Product Specialist, with regression coverage. No agent runtime, assessment or authority changes.",
+      "version": "PR #283 planned documentation release label correction",
+      "evidence": "https://github.com/seangworld/thebeast/pull/283",
+      "sourceDigest": "9b3a0b23f674cbeb6365d3c768b64115e4b9817d5945c7fea2d9940c37505e5a",
+      "affectedStaffIds": [
+        "beastfusion.policy.product_specialist"
+      ]
     }
   ]
 }
