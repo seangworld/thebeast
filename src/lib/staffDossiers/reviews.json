@@ -776,6 +776,12 @@
         "executor": "Codex",
         "why": "Final whole-flow review reproduced rejected VA plan state being returned for persistence. Prevent rejected/withheld prose from promoting derived facts, proposals or action hints; local before/after regression only.",
         "version": "PR #279 final source-to-saved-state safeguard"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex",
+        "why": "Align VA context provenance metadata with the history/memory actually forwarded after claim scoping; excluded sources are not listed as evidence. Local route assertion added; no new model assessment.",
+        "version": "PR #279 final context provenance alignment"
       }
     ],
     "departments": [

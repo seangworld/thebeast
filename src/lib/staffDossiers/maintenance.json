@@ -88,6 +88,17 @@
       "affectedStaffIds": [
         "beasthealth.health-advisor"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Final VA provenance consistency: do not list excluded other-claim history/unscoped memories as supplied evidence. Dossier history and local assertion updated; no new competency evaluation.",
+      "version": "PR #279 context provenance alignment",
+      "evidence": "https://github.com/seangworld/thebeast/pull/279",
+      "sourceDigest": "b7c80c52460696ae4f21faae7df6098122f8f76716f8779dd79428e50f98e38c",
+      "affectedStaffIds": [
+        "beasthealth.health-advisor"
+      ]
     }
   ]
 }

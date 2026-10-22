@@ -243,8 +243,8 @@ export async function POST(request: Request) {
             ageBand: ageEntitlement.decision.ageStatus,
             sources: [
               ...structuredRecords.slice(0, 20).map((record) => ({ domain: record.domain, provenance: "canonical-record" as const, updatedAt: record.updatedAt || null })),
-              ...(historyResult.data || []).slice(-1).map((record) => ({ domain: professionalId, provenance: "current-conversation" as const, updatedAt: String(record.created_at) })),
-              ...(memoryResult.data || []).slice(0, 1).map((record) => ({ domain: professionalId, provenance: "current-agent-memory" as const, updatedAt: String(record.updated_at) })),
+              ...(veteransSelection ? scopedHistory.messages.slice(-1).map(record=>({domain:professionalId,provenance:"current-conversation" as const,updatedAt:record.createdAt})) : (historyResult.data || []).slice(-1).map((record) => ({ domain: professionalId, provenance: "current-conversation" as const, updatedAt: String(record.created_at) }))),
+              ...(veteransSelection ? [] : (memoryResult.data || []).slice(0, 1).map((record) => ({ domain: professionalId, provenance: "current-agent-memory" as const, updatedAt: String(record.updated_at) }))),
             ],
             canonicalRecordsComplete: structuredResult.canonicalRecordsComplete,
             recentConversationCount: Number(conversation.message_count || 0),
