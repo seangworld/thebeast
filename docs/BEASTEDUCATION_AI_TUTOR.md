@@ -42,3 +42,7 @@ The existing protected raw telemetry policy retains the actor UUID solely for re
 - If OpenAI is not configured or temporarily unavailable, the route returns an explicit bounded unavailable/error response.
 - The Tutor cannot modify school records or claim a submitted assignment is officially graded.
 - One additive telemetry-taxonomy migration is required. It contains no student content or backfill. No storage bucket, new paid provider, money movement, or external school integration is required.
+
+## October 22 reliability correction
+
+The existing Tutor now bounds provider work, propagates caller cancellation, rejects incomplete output, and counts a completed turn only after final safety validation. The final checker privately receives bounded teaching history and ephemeral worksheet text, without raw images or profile identifiers. See [the evidence and limitations](agent-audits-20261021/TUTOR-REMEDIATION-20261022.md). Historical 08/30 assessment evidence is preserved; local fixtures are not a new teaching competency grade.

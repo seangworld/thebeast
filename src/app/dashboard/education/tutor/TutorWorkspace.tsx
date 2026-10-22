@@ -9,6 +9,7 @@ import {
 import type { AgentConversationThread } from "@/lib/platform/agents/conversationPersistence";
 import type { AgentMessage } from "@/lib/platform/agents/types";
 import type { LearningImageAttachment, OpenAILearningMessage } from "@/lib/learning/types";
+import { maximumLearningRequestCharacters } from "@/lib/learning/conversationBounds";
 import { buildPersistedTutorAnswer, maximumTutorImageBytes } from "@/lib/learning/tutorRequest";
 import {
   ProfessionalConversationAvatar,
@@ -58,6 +59,7 @@ export default function TutorWorkspace() {
   const [attachment, setAttachment] = useState<LearningImageAttachment>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const activeRequest = useRef<AbortController | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const conversationMessages = useMemo<OpenAILearningMessage[]>(() => turns.slice(-12).map((turn) => ({ role: turn.role === "assistant" ? "assistant" : "user", content: turn.text })), [turns]);
 
@@ -78,11 +80,11 @@ export default function TutorWorkspace() {
       }
     }
     void load();
-    return () => { active = false; };
+    return () => { active = false; activeRequest.current?.abort(); };
   }, []);
 
   async function startNewConversation() {
-    if (!repository || !ownerId || busy) return;
+    if (!repository || !ownerId || busy || activeRequest.current) return;
     const next = await repository.create({ ownerId, agentId: tutorId, title: "Tutor session", tags: ["beasteducation", "tutor"] });
     setThread(next); setTurns([]); setRequest(""); setAttachment(undefined); setError("");
   }
@@ -95,7 +97,9 @@ export default function TutorWorkspace() {
 
   async function send() {
     const text = request.trim() || (attachment ? "Help me understand this assignment. Start by telling me what you can clearly read, then guide me through the first step." : "");
-    if (!text || !repository || !thread || !ownerId || busy) return;
+    if (!text || !repository || !thread || !ownerId || busy || activeRequest.current) return;
+    const controller = new AbortController();
+    activeRequest.current = controller;
     setBusy(true); setError("");
     const timestamp = new Date().toISOString();
     const userMessage: AgentMessage = { id: crypto.randomUUID(), threadId: thread.id, sender: { kind: "user", id: ownerId }, recipient: { kind: "agent", id: tutorId }, content: text, timestamp };
@@ -103,17 +107,19 @@ export default function TutorWorkspace() {
     setTurns((current) => [...current, pendingTurn]); setRequest("");
     try {
       await repository.append(ownerId, thread.id, [userMessage]);
-      const response = await fetch("/api/learning/ai", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userRequest: text, subject: "Homework", goal: attachment ? "Review the provided homework image through guided reasoning" : "Teach for understanding", messages: [...conversationMessages, { role: "user", content: text }], imageAttachment: attachment }) });
+      controller.signal.throwIfAborted();
+      const response = await fetch("/api/learning/ai", { method: "POST", signal:controller.signal, credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userRequest: text, subject: "Homework", goal: attachment ? "Review the provided homework image through guided reasoning" : "Teach for understanding", messages: [...conversationMessages, { role: "user", content: text }], imageAttachment: attachment }) });
       const payload = await response.json() as { error?: string; response?: { content?: string; status?: string } };
       if (!response.ok || !payload.response?.content) throw new Error(payload.error || "Your Tutor could not respond.");
+      controller.signal.throwIfAborted();
       const answer = payload.response.content;
       const agentMessage: AgentMessage = { id: crypto.randomUUID(), threadId: thread.id, sender: { kind: "agent", id: tutorId }, recipient: { kind: "module", id: "beasteducation" }, content: buildPersistedTutorAnswer(answer, attachment?.fileName), timestamp: new Date().toISOString() };
       const updated = await repository.append(ownerId, thread.id, [agentMessage]);
       setThread(updated); setTurns(turnsFromThread(updated)); setAttachment(undefined);
       if (fileInput.current) fileInput.current.value = "";
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Your Tutor could not respond.");
-    } finally { setBusy(false); }
+      setError(controller.signal.aborted ? "Tutoring stopped. Your question remains in this session; no automatic retry was made." : cause instanceof Error ? cause.message : "Your Tutor could not respond.");
+    } finally { activeRequest.current = null; setBusy(false); }
   }
 
   return (
@@ -132,7 +138,7 @@ export default function TutorWorkspace() {
 
         <section className="rounded-2xl border border-white/10 bg-[#111827] p-5" data-tour-step="tutor-upload">
           <label className="block text-sm font-black text-white" htmlFor="tutor-request">Ask Riley</label>
-          <textarea id="tutor-request" className="beast-input mt-2 min-h-28 w-full" value={request} onChange={(event) => setRequest(event.target.value)} placeholder="Example: I tried question 4. Can you find the first step where my work went wrong?" maxLength={8000} />
+          <textarea id="tutor-request" className="beast-input mt-2 min-h-28 w-full" value={request} onChange={(event) => setRequest(event.target.value)} placeholder="Example: I tried question 4. Can you find the first step where my work went wrong?" maxLength={maximumLearningRequestCharacters} />
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <label className="beast-button-secondary cursor-pointer"><input ref={fileInput} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void chooseImage(event.target.files?.[0])} />Take or attach a homework photo</label>
             {attachment ? <span className="text-sm text-indigo-200">Attached: {attachment.fileName}</span> : null}
@@ -141,6 +147,7 @@ export default function TutorWorkspace() {
           <p className="mt-3 text-xs leading-5 text-slate-400">JPEG, PNG, or WebP up to 3 MB. The image is sent only for this tutoring request and is not saved in Tutor conversation history. Riley will say when text is unreadable.</p>
           {error ? <p role="alert" className="mt-3 rounded-xl border border-rose-300/30 bg-rose-300/10 p-3 text-sm text-rose-100">{error}</p> : null}
           <button type="button" className="beast-button mt-4" disabled={busy || (!request.trim() && !attachment) || !thread} onClick={() => void send()} data-analytics-event="call_to_action_selected" data-analytics-category="ai_tutor" data-analytics-status="started">{busy ? "Riley is working…" : "Start tutoring"}</button>
+          {busy ? <button type="button" className="beast-button-secondary ml-3 mt-4" onClick={() => activeRequest.current?.abort()}>Stop tutoring</button> : null}
         </section>
 
         <aside className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm leading-6 text-amber-50"><strong>Learning first:</strong> Riley gives hints, examples, and guided corrections before simply revealing an answer. Check important graded work against your teacher’s instructions or official answer key.</aside>

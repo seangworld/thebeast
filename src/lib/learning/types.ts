@@ -1562,4 +1562,6 @@ export type OpenAILearningResponse = {
   content: string;
   model: string;
   safetyContract?: import("../memberAgentResponseSafety").MemberAgentResponseContract;
+  /** Ephemeral private evidence; never serialize to client/history/telemetry. */
+  worksheetTranscription?: string;
 };

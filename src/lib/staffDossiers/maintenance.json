@@ -44,6 +44,17 @@
         "beastfusion.reviewer-agent",
         "beastfusion.outcome-agent"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "PR275 Tutor no-cost reliability remediation and original historical binding review; finite provider work, private checker evidence, cancellation and truthful completion. Current L3 remains unverified; historical assessment unchanged. Completion gate now includes Tutor workspace.",
+      "version": "PR #275 Tutor runtime reliability correction",
+      "evidence": "https://github.com/seangworld/thebeast/pull/275",
+      "sourceDigest": "55a35c0a64dfab0abc971044edc2d9c1449061ddfe4c7c4c140b190b7494e7e4",
+      "affectedStaffIds": [
+        "beasteducation.tutor"
+      ]
     }
   ]
 }
