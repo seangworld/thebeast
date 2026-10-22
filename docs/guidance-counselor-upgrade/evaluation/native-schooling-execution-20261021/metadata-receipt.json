@@ -1,0 +1,10 @@
+{
+  "attempts": [
+    {
+      "model": "gpt-5",
+      "status": "available",
+      "startedAt": "2026-10-22T00:10:44.850Z",
+      "httpStatus": 200
+    }
+  ]
+}
