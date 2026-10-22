@@ -18,8 +18,8 @@ test('one canonical dossier per real profile; VA is Taylor specialization, scout
  assert.equal(getStaffDossier('atlas')?.lifecycle,'paused');
  assert.ok(staffDossiers.some(d=>d.id.startsWith('news.workflow.')&&d.lifecycle==='planned'));
 });
-test('unsupported levels stay unassessed; release, local evidence, autonomy and accounting cannot imply competency',()=>{
- for(const d of staffDossiers){assert.equal(d.target,null);assert.equal(d.demonstrated,null);assert.equal(d.released,null);assert.ok(d.duties.length);assert.ok(d.assessments.length);assert.ok(d.history.length);assert.match(d.availability,/Unknown/);for(const e of d.evidence){assert.ok(e.date);assert.ok(e.reviewer);assert.ok(e.version);assert.match(e.url,/^https:\/\/github.com\/seangworld\//);}}
+test('levels require scoped rationale and role requirements; release and accounting cannot imply competency',()=>{
+ for(const d of staffDossiers){assert.equal(d.released,null);if(d.demonstrated){assert.ok(d.levelMapping?.rationale);assert.ok(d.levelMapping?.evidenceUrls.length);}if(d.target)assert.notEqual(d.targetRequirement,'Role requirement not yet established.');assert.ok(d.duties.length);assert.ok(d.assessments.length);assert.ok(d.history.length);assert.match(d.availability,/Unknown/);for(const e of d.evidence){assert.ok(e.date);assert.ok(e.reviewer);assert.ok(e.version);assert.match(e.url,/^https:\/\/github.com\/seangworld\//);}}
  const jordan=getStaffDossier('guidance-counselor')!;assert.equal(jordan.releases[0].version,'498bfa974658f6a1ad4e68a5cd0a5e509201ac27');assert.equal(jordan.costs.confirmedChargesUsd,null);assert.equal(jordan.costs.unresolvedReservationsUsd,4.7);assert.equal(jordan.assessments[0].criteria.length,24);
  assert.ok(jordan.assessments[0].criteria.some(c=>c.result==='not tested'));
  assert.ok(getStaffDossier('beastfusion.developer-agent')?.autonomy);
@@ -29,7 +29,7 @@ test('roster filters work with canonical names, alias, department, paused state 
  assert.equal(filterStaffDossiers(staffDossiers,{query:'VA Claims Aide'})[0].id,'beasthealth.health-advisor');
  const news=filterStaffDossiers(staffDossiers,{department:'SEANGWORLD News',lifecycle:'paused'});assert.equal(news.length,2);
  assert.equal(filterStaffDossiers(staffDossiers,{competency:'L5'}).length,0);
- for(const dimension of ['target','demonstrated','released'] as const)assert.equal(filterStaffDossiers(staffDossiers,{dimension,competency:'unassessed'}).length,staffDossiers.length);
+ for(const dimension of ['target','demonstrated','released'] as const)assert.equal(filterStaffDossiers(staffDossiers,{dimension,competency:'unassessed'}).length,staffDossiers.filter(d=>!d[dimension]).length);
  assert.equal(filterStaffDossiers(staffDossiers,{query:'nonexistentstaff'}).length,0);
 });
 test('dossier server authorization denies anonymous, member, editable metadata, missing role and profile errors before payload',async()=>{
@@ -42,4 +42,10 @@ test('dossier server authorization denies anonymous, member, editable metadata, 
  }
  for(const path of ['src/app/dashboard/operations/staff/page.tsx','src/app/dashboard/operations/staff/[staffId]/page.tsx']){const s=readFileSync(path,'utf8');assert.ok(s.indexOf('await requireStaffDossierOwner()')<s.indexOf('return <'));assert.match(s,/force-dynamic/);}
  const client=readFileSync('src/app/dashboard/operations/staff/StaffRoster.tsx','utf8');assert.doesNotMatch(client,/import \{[^}]*\bstaffDossiers\b[^}]*\}/);assert.doesNotMatch(client,/fetch\(|useEffect/);
+});
+
+
+test('prior result/evaluation dates remain distinct from dossier updates and score-to-level shortcuts',()=>{
+ const a=getStaffDossier('fusion-director')!;assert.equal(a.latestAssessment?.title,'23/24 PARTIAL-PASS');assert.equal(a.lastEvaluatedAt,'2026-10-18');assert.equal(a.reviewedAt,'2026-10-21');assert.match(a.latestAssessment!.note,/locally/);assert.equal(a.demonstrated,'L3');assert.equal(a.target,'L4');assert.match(a.levelMapping!.rationale,/Cancellation/);
+ const tutor=getStaffDossier('tutor')!;assert.equal(tutor.lastEvaluatedAt,'2026-08-30');assert.equal(tutor.latestAssessment?.title,'7/7 source turns accepted');assert.equal(tutor.demonstrated,null);assert.match(tutor.levelMapping!.rationale,/Knight/);assert.ok(tutor.assessments.some(a=>a.evidence.some(e=>e.date==='2026-08-30')));
 });

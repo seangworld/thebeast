@@ -1,0 +1,36 @@
+{
+  "repository": "seangworld/beastfusion",
+  "sourcePath": "evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json",
+  "sourceCommit": "7437aed",
+  "sha256": "79f69aa4e768154522c13eb54b4839d9ccacbb938045213d5d6178e0ae31128b",
+  "capturedAt": "2026-08-30",
+  "assessmentId": "BF-AGT-016-PROD-EVAL-001",
+  "applicationCommit": "c24dd3e1c83903aabf1557edfdde66754e4720ca",
+  "tutor": {
+    "id": "ai_tutor",
+    "tested_level": "L2",
+    "confidence": "high",
+    "source_turns": 7,
+    "accepted_turns": 7,
+    "result": "remediation_pass",
+    "strengths": [
+      "shown-work first-error diagnosis",
+      "learner-correction acknowledgment",
+      "alternate-method recognition",
+      "targeted practice",
+      "insufficient-evidence boundary",
+      "academic-integrity refusal",
+      "task-complete handoff receiver"
+    ],
+    "gaps": [
+      "unreadable-work handling remains intentionally generic and fail-closed"
+    ],
+    "next_level_unsatisfied": [
+      "no grading or institutional authority"
+    ]
+  },
+  "levelChange": {
+    "supported": false,
+    "result": "All four specialists remain environment-bound Knight L2 collaborators; BF-AGT-016 increases Health and Tutor confidence to high without expanding authority."
+  }
+}

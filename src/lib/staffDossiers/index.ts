@@ -11,6 +11,8 @@ const issue = 'https://github.com/seangworld/thebeast/issues/274';
 export const inventorySources = inventory.sources;
 export const inventoryReconciliation = inventory.reconciliation;
 const base = (id: string, name: string, role: string, departments: string[], duties: string[], permissions: string[], limitations: string[], source: string): Dossier => ({
+ recentChanges:[{date:'2026-10-21',summary:'Existing role recorded; no new abilities or activation.'}],
+ recordKind:'system',lastEvaluatedAt:null,latestAssessment:null,targetRequirement:'Role requirement not yet established.',levelMapping:null,
  id, name, role, departments, products: departments, aliases: [], reportsTo: 'Sean — Owner', mission: role, duties, permissions,
  lifecycle: 'limited', assignment: 'Maintain existing approved duties; no new activation.', availability: 'Unknown — static source review, not live telemetry.',
  target: null, demonstrated: null, released: null, assessments: [], strengths: [], limitations, blockers: [], releases: [],
@@ -22,18 +24,19 @@ const base = (id: string, name: string, role: string, departments: string[], dut
 const staff: Dossier[] = digitalProfessionals.map(p => {
  const config = professionalConfigs[p.canonicalId as keyof typeof professionalConfigs];
  const d = base(p.canonicalId,p.name,p.role,[p.team],[...p.responsibilities],[...config.allowedTools.map(x=>'Tool: '+x),...config.dataDomains.map(x=>'Permissioned data: '+x),...config.approvalRequiredTools.map(x=>'Owner approval required: '+x)], [...p.limitations,...p.unavailableData.map(x=>'Unavailable data: '+x),...config.prohibitedActions.map(x=>'Prohibited: '+x)],'https://github.com/seangworld/thebeast/blob/main/src/lib/digitalStaff.ts');
- d.aliases=[p.id,config.name];d.products=[...p.assignedModules];d.reportsTo=p.reportsTo;d.mission=p.mission;d.lifecycle='active';
+ d.recordKind='staff';d.aliases=[p.id,config.name];d.products=[...p.assignedModules];d.reportsTo=p.reportsTo;d.mission=p.mission;d.lifecycle='active';
  return d;
 });
 for (const p of developmentAgentProfiles) {
  const d=base('beastfusion.'+p.id,p.name,p.role,['BeastFusion'],[...p.responsibilities],[p.authorityBoundary],[...p.limitations],'https://github.com/seangworld/thebeast/blob/main/src/lib/developmentAgentProfiles.ts');
- d.aliases=[p.id,...(p.id==='orchestrator-3'?['ecosystem_orchestrator']:p.id==='reviewer-agent'?['validation_reviewer','reviewer_agent']:[p.id.replace(/-/g,'_')])];d.mission=p.purpose;
+ d.recordKind='staff';d.aliases=[p.id,...(p.id==='orchestrator-3'?['ecosystem_orchestrator']:p.id==='reviewer-agent'?['validation_reviewer','reviewer_agent']:[p.id.replace(/-/g,'_')])];d.mission=p.purpose;
  const a=getDevelopmentAgentCapabilityAssessment(p.id);
- if(a){d.autonomy=JSON.stringify(a.autonomy);d.assessments=[{role:p.role,summary:'Existing BeastFusion assessment retained in its own autonomy/capability framework. Not mapped to staff competency L1–L5.',criteria:a.capability.map(c=>({criterion:JSON.stringify(c),result:'not applicable',reason:'Different framework; see preserved dimension verdict and evidence, not a new competency grade.'})),evidence:[{title:a.assessmentId,url:'https://github.com/seangworld/thebeast/blob/main/src/lib/development-agent-capability-projection.json',kind:'source registry',reviewer:'Canonical BeastFusion projection; independence not inferred',date:a.assessedAt,version:a.assessedVersion}]}];}
+ if(a){d.lastEvaluatedAt=a.assessedAt;d.latestAssessment={title:'Prior capability assessment',date:a.assessedAt,reviewer:'Historical BeastFusion source assessment',note:'Separate autonomy/capability framework; staff level mapping pending.',url:'https://github.com/seangworld/thebeast/blob/main/src/lib/development-agent-capability-projection.json'};d.autonomy=JSON.stringify(a.autonomy);d.assessments=[{role:p.role,summary:'Existing BeastFusion assessment retained in its own autonomy/capability framework. Not mapped to staff competency L1–L5.',criteria:a.capability.map(c=>({criterion:JSON.stringify(c),result:'not applicable',reason:'Different framework; see preserved dimension verdict and evidence, not a new competency grade.'})),evidence:[{title:a.assessmentId,url:'https://github.com/seangworld/thebeast/blob/main/src/lib/development-agent-capability-projection.json',kind:'source registry',reviewer:'Canonical BeastFusion projection; independence not inferred',date:a.assessedAt,version:a.assessedVersion}]}];}
  staff.push(d);
 }
 for (const p of inventory.staff) {
  const d=base(p.id,p.name,p.role,p.departments,[...p.duties],[...p.permissions],[...p.limitations],p.source);
+ d.recordKind=p.id.startsWith('support.')?'external':p.id==='atlas'||p.id.startsWith('agency.')?'planned':'system';
  d.lifecycle=p.lifecycle as Dossier['lifecycle'];d.aliases=[...p.aliases];d.mission=p.mission;staff.push(d);
 }
 for (const d of staff) {
