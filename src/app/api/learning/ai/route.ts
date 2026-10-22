@@ -9,7 +9,7 @@ import { createRouteClient } from "@/lib/supabase/server";
 import { acquireDigitalStaffRequestLease } from "@/lib/digitalStaffRuntime";
 import { digitalStaffTelemetryRecord, recordServerFirstPartyTelemetry } from "@/lib/server/firstPartyTelemetry";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
-import { firstPartyPerformanceBucket, type FirstPartyTelemetryErrorCategory } from "@/lib/firstPartyTelemetry";
+import { type FirstPartyTelemetryErrorCategory } from "@/lib/firstPartyTelemetry";
 import { buildTutorLearnerContext, requireAuthenticatedTutorMember, tutorProfessionalId, tutorResponseHeaders, validateTutorImageAttachment } from "@/lib/learning/tutorRequest";
 import type { LearningImageAttachment, MasteryProfile, OpenAILearningMessage } from "@/lib/learning/types";
 import { boundLearningConversationMessages, maximumLearningRequestCharacters } from "@/lib/learning/conversationBounds";
@@ -18,6 +18,9 @@ import { enforceMemberAgentResponseSafety, filterMemberAgentContextItems, member
 import { requireProfessionalConfig } from "@/lib/digitalStaffRuntime";
 import { verifyMemberAgentSemanticSafety } from "@/lib/memberAgentSemanticVerifier";
 
+import { tutorDeadline, tutorRuntimeLimits } from "@/lib/learning/providerBounds";
+
+export const maxDuration = 180;
 export const dynamic = "force-dynamic";
 function json(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: tutorResponseHeaders });
@@ -106,18 +109,19 @@ export async function POST(request: Request) {
   }
   void recordServerFirstPartyTelemetry({ actorId: user.id, record: tutorTelemetry("started", startedAt)! });
 
+  const deadline = tutorDeadline(request.signal, tutorRuntimeLimits.routeMs - (Date.now() - startedAt));
   try {
+    deadline.signal.throwIfAborted();
     const semanticInput = await verifyMemberAgentSemanticSafety({
       professionalId: tutorProfessionalId,
       phase: "input",
       memberMessage: userRequest,
       learningIntent: intent,
       model: learningProviderModel,
-      signal: request.signal,
+      signal: deadline.signal,
     });
     if (!semanticInput.valid || semanticInput.verdict !== "safe") {
-      const completed = tutorTelemetry("completed", startedAt);
-      if (completed) void recordServerFirstPartyTelemetry({ actorId: user.id, record: completed });
+      void recordServerFirstPartyTelemetry({ actorId:user.id, record:tutorTelemetry("failed", startedAt, "validation")! });
       return json({
         intent,
         professionalId: tutorProfessionalId,
@@ -132,14 +136,15 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
       .limit(1)
+      .abortSignal(deadline.signal)
       .maybeSingle(),
-      supabase.from("agent_conversations").select("id,message_count,updated_at").eq("owner_id", user.id).eq("agent_id", tutorProfessionalId).order("updated_at", { ascending: false }).limit(1),
+      supabase.from("agent_conversations").select("id,message_count,updated_at").eq("owner_id", user.id).eq("agent_id", tutorProfessionalId).order("updated_at", { ascending: false }).limit(1).abortSignal(deadline.signal),
     ]);
     const { data: learningProfile } = learningProfileResult;
     const { data: tutorThreads } = tutorThreadsResult;
     const tutorThread = tutorThreads?.[0];
     const serverHistoryResult = tutorThread
-      ? await supabase.from("agent_conversation_messages").select("sender,content,created_at").eq("owner_id", user.id).eq("conversation_id", tutorThread.id).order("created_at", { ascending: false }).limit(12)
+      ? await supabase.from("agent_conversation_messages").select("sender,content,created_at").eq("owner_id", user.id).eq("conversation_id", tutorThread.id).order("created_at", { ascending: false }).limit(12).abortSignal(deadline.signal)
       : { data: [], error: null };
     const { data: serverHistory } = serverHistoryResult;
     const learnerContext = buildTutorLearnerContext({
@@ -189,24 +194,26 @@ export async function POST(request: Request) {
     const specialistId = routed.selectedSpecialistIds[0] || "tutor";
     const specialist = getAISpecialistById(specialistId);
 
+    const teachingMessages = boundLearningConversationMessages([...serverMessages, { role: "user", content: sanitizedUserRequest }], sanitizedUserRequest);
     const aiResponse = await callOpenAILearningSpecialist({
       specialistId,
       specialistName: specialist?.name || "Tutor",
       conversationType,
-      messages: boundLearningConversationMessages([...serverMessages, { role: "user", content: sanitizedUserRequest }], sanitizedUserRequest),
+      messages: teachingMessages,
       context,
       homeworkPolicy: getHomeworkPolicyForRequest(sanitizedUserRequest),
       imageAttachment,
       outwardPersona: "tutor",
       contextBoundary,
-    });
+    }, {signal:deadline.signal, onReceipt: receipt => {
+      // No actor, profile, request, worksheet, image, filename or answer text.
+      console.info("tutor-provider-receipt", receipt);
+    }});
 
     if (aiResponse.status !== "ready") {
       void recordServerFirstPartyTelemetry({ actorId: user.id, record: tutorTelemetry("failed", startedAt, aiResponse.status === "unconfigured" ? "configuration" : "provider")! });
       return json({ error: aiResponse.content }, aiResponse.status === "unconfigured" ? 503 : 502);
     }
-    const completed = tutorTelemetry("completed", startedAt);
-    if (completed) void recordServerFirstPartyTelemetry({ actorId: user.id, record: { ...completed, performanceBucket: firstPartyPerformanceBucket(Date.now() - startedAt) } });
     let safety = enforceMemberAgentResponseSafety({ professionalId: tutorProfessionalId, memberMessage: userRequest, response: aiResponse.content, imageProvided: Boolean(imageAttachment), contract: aiResponse.safetyContract, learningIntent: intent });
     if (safety.safe) {
       const semanticOutput = await verifyMemberAgentSemanticSafety({
@@ -214,9 +221,10 @@ export async function POST(request: Request) {
         phase: "output",
         memberMessage: userRequest,
         candidateResponse: aiResponse.content,
+        tutorEvidence: {history:teachingMessages, worksheetTranscription:aiResponse.worksheetTranscription},
         learningIntent: intent,
         model: learningProviderModel,
-        signal: request.signal,
+        signal: deadline.signal,
       });
       if (!semanticOutput.valid || semanticOutput.verdict !== "safe") {
         safety = {
@@ -226,18 +234,22 @@ export async function POST(request: Request) {
         };
       }
     }
-    return json({
+    deadline.signal.throwIfAborted();
+    const finalResponse = json({
       intent,
       conversationType,
       routed,
       professionalId: tutorProfessionalId,
-      response: { ...aiResponse, content: safety.response, specialistId: tutorProfessionalId },
+      response: { status: aiResponse.status, model:aiResponse.model, content: safety.response, specialistId: tutorProfessionalId },
       validationFailures: [...(serverMessageSafety.rejectedCount ? [`Rejected ${serverMessageSafety.rejectedCount} untrusted Tutor history item(s) containing instruction-override content.`] : []), ...safety.failures],
     });
+    void recordServerFirstPartyTelemetry({actorId:user.id,record:tutorTelemetry(safety.safe ? "completed" : "failed", startedAt, safety.safe ? undefined : "validation")!});
+    return finalResponse;
   } catch {
     void recordServerFirstPartyTelemetry({ actorId: user.id, record: tutorTelemetry("failed", startedAt, "provider")! });
     return json({ error: "Your Tutor is temporarily unavailable. Please try again." }, 502);
   } finally {
+    deadline.dispose();
     requestLease.release();
   }
 }

@@ -329,16 +329,68 @@
             "version": "c24dd3e1c83903aabf1557edfdde66754e4720ca"
           }
         ]
+      },
+      {
+        "role": "Tutor L3 requirements \u2014 10/22 engineering/evidence review, not a live assessment",
+        "summary": "Runtime mechanics verified locally. Historical teaching evidence preserved; current L3 semantic competence is not certified.",
+        "criteria": [
+          {
+            "criterion": "Use actual shown work and latest correction in contextual feedback",
+            "result": "partial",
+            "reason": "Bounded teaching history and transcription now reach the private checker; historical strengths retained, current teaching judgment unverified."
+          },
+          {
+            "criterion": "Identify first supported error, accept equivalent methods, guide correction and targeted practice",
+            "result": "not tested",
+            "reason": "Original historical 7/7 covers these behaviors at its candidate. No inference under this work; changed prompts/runtime cannot inherit a fresh PASS."
+          },
+          {
+            "criterion": "Respect unreadable work, privacy and academic integrity",
+            "result": "partial",
+            "reason": "Existing deterministic/semantic protections retained; no raw image/profile or worksheet in telemetry; no new live visual or safety competence claim."
+          },
+          {
+            "criterion": "Bound work, stop on cancellation and reject incomplete teaching",
+            "result": "pass",
+            "reason": "Mocked cancellation/timeout/disconnect/finish/byte-limit regressions verify actual adapter mechanics without paid calls."
+          },
+          {
+            "criterion": "Report completion only after final safety validation",
+            "result": "pass",
+            "reason": "Local route fixture verifies rejected input/output, provider error and cancellation are failed, not completed. HTTP return preparation is not client receipt."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Tutor no-cost reliability remediation and binding review",
+            "url": "https://github.com/seangworld/thebeast/blob/codex/tutor-va-no-cost-audit-20261021/docs/agent-audits-20261021/TUTOR-REMEDIATION-20261022.md",
+            "kind": "code review",
+            "reviewer": "Codex executor; local fixtures only",
+            "date": "2026-10-22",
+            "version": "PR #275; main baseline9f1cbe12"
+          }
+        ]
       }
     ],
     "limitations": [
-      "Generation/transcription direct fetch calls lack explicit deadline/caller cancellation and output-token bounds.",
-      "Provider finish_reason and usage not retained by learning adapter.",
-      "Completed telemetry emitted before final output safety.",
-      "Output verifier lacks full worksheet/transcription evidence.",
-      "Historical 7/7 accepted turns do not prove the current model/configuration matches that assessment; competency level mapping remains pending."
+      "Current live teaching accuracy, first-error diagnosis and adaptation are not newly assessed; historical 7/7 remains bound to the 08/30 candidate.",
+      "Historical evidence reports aggregate returned models for all specialists, not a Tutor-turn model binding. Configured fallback is unchanged, but prompts/context and runtime bounds differ; current L3 mapping remains pending.",
+      "The final checker receives private bounded academic history/transcription, not the original image; it cannot independently prove visual transcription accuracy.",
+      "Cancellation stops local work and later dispatches; upstream processing/billing may already have occurred. Missing usage is recorded unknown, never zero.",
+      "Completed telemetry means a validated reply was prepared for HTTP return, not proof the learner received, saved or understood it.",
+      "No grading, institutional authority, dishonest assignment completion or school-record actions. Important work still needs teacher/official verification."
     ],
     "deferred": [
+      {
+        "title": "Resolve current L3 evidence and transcription limitations from existing records",
+        "priority": "normal",
+        "desiredLevel": "L3",
+        "gap": "Current model/turn binding and live visual/teaching performance cannot be certified from aggregate historical evidence or mocks.",
+        "requiredWork": "Reconcile additional already-existing sanitized per-turn receipts if available; review legitimate owner-provided teaching feedback and academic examples locally. No new paid assessment cycle or authority expansion.",
+        "success": "Claims remain scoped to dated bound evidence; unsupported visual or teaching judgments stay explicitly unverified.",
+        "cost": "No new service or paid testing. Conditional configured-fallback pricing: $0.40/M input and $1.60/M output; actual hosted model/input/image usage unknown, so no actual per-turn charge or full dollar cap inferred.",
+        "status": "Deferred evidence limitation; not an automatic release blocker for bounded guided tutoring."
+      },
       {
         "title": "Bound provider and completion handling",
         "priority": "high",
@@ -346,12 +398,12 @@
         "gap": "Demonstrated cancellation/token/finish/usage and premature completion telemetry gaps.",
         "requiredWork": "Narrow existing adapter/telemetry correction; mocked abort, truncation and delivery checks. No model upgrade or paid test.",
         "success": "No dispatch after cancellation; incomplete teaching not delivered; telemetry matches final outcome.",
-        "cost": "Unknown; no paid testing or services authorized.",
-        "status": "Deferred \u2014 owner prioritization; paid work only if Sean independently revisits spending."
+        "cost": "No paid inference or new services; engineering time not priced.",
+        "status": "Implemented and locally verified 10/22; no live model retest."
       }
     ],
     "releases": [],
-    "assignment": "Guide learning and review shown work; prioritize bounded provider and completion handling.",
+    "assignment": "Provide bounded private guided tutoring and shown-work correction, preserving learner control; no expansion of grading or institutional authority.",
     "history": [
       {
         "date": "2026-10-21",
@@ -364,6 +416,12 @@
         "executor": "Codex",
         "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
         "version": "Staff Management refinement"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex",
+        "why": "PR275 current-main review and no-cost runtime remediation; preserve 08/30 historical assessment and separate current L3 evidence limits. No new model testing or migration.",
+        "version": "PR #275 Tutor reliability remediation"
       }
     ],
     "lastEvaluatedAt": "2026-08-30",
@@ -371,10 +429,10 @@
       "title": "7/7 source turns accepted",
       "date": "2026-08-30",
       "reviewer": "Historical controlled-model self-assessment",
-      "note": "10/21 code audit is not a new evaluation; current model binding unreconciled.",
+      "note": "Historical 08/30 result preserved. 10/22 code review/local fixtures corrected runtime reliability; not a new teaching assessment. Aggregate historical model counts do not bind each Tutor turn; current prompts differ.",
       "url": "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json"
     },
-    "reviewedAt": "2026-10-21",
+    "reviewedAt": "2026-10-22",
     "target": "L3",
     "targetRequirement": "Core guided-learning work: inspect shown attempts, guide correction, recognize equivalent methods and preserve academic-integrity/privacy boundaries.",
     "strengths": [
@@ -387,15 +445,20 @@
       "Historical 08/30 result: task-complete handoff receiver"
     ],
     "levelMapping": {
-      "reviewedAt": "2026-10-21",
-      "reviewer": "Codex evidence reconciliation",
-      "rationale": "Guided correction evidence exists, but current configuration binding is unreconciled. Do not translate Knight L2 or the 7/7 count mechanically into a staff competency level.",
-      "scope": "Historical teaching behavior preserved; current staff-scale mapping pending.",
+      "reviewedAt": "2026-10-22",
+      "reviewer": "Codex code/evidence review; not independent certification",
+      "rationale": "Historical teaching strengths address parts of the role-specific L3 requirement, but the source aggregate model counts cannot bind individual Tutor turns. Historical source fallback is unchanged; later prompt/context and runtime changes are real. Knight L2 is a separate scale. Neither the 7/7 score nor local fixtures establishes current L3 competence.",
+      "scope": "Release bounded guided-learning functionality; current demonstrated/released numeric level remains unassigned.",
       "evidenceUrls": [
-        "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json"
+        "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json",
+        "https://github.com/seangworld/thebeast/blob/codex/tutor-va-no-cost-audit-20261021/docs/agent-audits-20261021/TUTOR-REMEDIATION-20261022.md"
       ]
     },
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Local runtime reliability fixes: cancellation, finite provider work, incomplete-response rejection, private checker evidence and truthful completion. Historical 7/7 remains unchanged."
+      },
       {
         "date": "2026-10-21",
         "summary": "Code audit identified provider-bound and completion-accounting gaps."
@@ -404,6 +467,9 @@
         "date": "2026-08-30",
         "summary": "Historical controlled-model assessment accepted 7/7 source turns."
       }
+    ],
+    "blockers": [
+      "No known local runtime release blocker after checks; full current L3 teaching competence and hosted owner-session behavior remain unverified."
     ]
   },
   "beasthealth.health-advisor": {

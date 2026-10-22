@@ -23,7 +23,7 @@ test('levels require scoped rationale and role requirements; release and account
  const jordan=getStaffDossier('guidance-counselor')!;assert.equal(jordan.releases[0].version,'498bfa974658f6a1ad4e68a5cd0a5e509201ac27');assert.equal(jordan.costs.confirmedChargesUsd,null);assert.equal(jordan.costs.unresolvedReservationsUsd,4.7);assert.equal(jordan.assessments[0].criteria.length,24);
  assert.ok(jordan.assessments[0].criteria.some(c=>c.result==='not tested'));
  assert.ok(getStaffDossier('beastfusion.developer-agent')?.autonomy);
- assert.match(getStaffDossier('tutor')!.limitations.join(' '),/cancellation/);
+ assert.match(getStaffDossier('tutor')!.limitations.join(' '),/cancellation/i);
 });
 test('roster filters work with canonical names, alias, department, paused state and each competency dimension',()=>{
  assert.equal(filterStaffDossiers(staffDossiers,{query:'VA Claims Aide'})[0].id,'beasthealth.health-advisor');
