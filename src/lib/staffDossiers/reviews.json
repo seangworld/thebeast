@@ -1124,5 +1124,162 @@
       }
     ],
     "assignment": "Coordinate permitted specialist work and owner-approved objectives."
+  },
+  "beastfusion.policy.product_specialist": {
+    "recordKind": "planned",
+    "lifecycle": "planned",
+    "role": "Planned product-scoped policy class \u2014 consolidation recommended",
+    "mission": "Preserve source-product ownership and owner-approved package/repository boundaries; no separately operational Product Specialist is established.",
+    "assignment": "None. Recommendation: consolidate product implementation responsibilities into Developer Agent with Orchestrator intake and independent Reviewer; preserve this policy-only record for traceability. No activation authorized.",
+    "availability": "Unknown \u2014 no separate Product Specialist runtime, assignment, or live execution evidence found in reviewed sources.",
+    "duties": [
+      "Work only within an owner-approved product package and product-owned repository.",
+      "Preserve product business logic ownership and protected UI approval gates.",
+      "Return required validation and attributable evidence through existing governed staff; this is a recommended responsibility mapping, not a new permission grant."
+    ],
+    "target": null,
+    "demonstrated": null,
+    "released": null,
+    "targetRequirement": "No numeric competency target warranted for an unimplemented policy class. Any future implementation must have a named owner-approved product/package/repository, bounded tools/data/duration/revocation, current Product Truth and architecture context, explicit exclusions, validation and exact-candidate evidence, independent review, and separate release/destructive/UI gates. It must show a missing responsibility not already served by existing staff.",
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-22",
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "No-cost source audit: policy_only remains planned; consolidate overlapping duties with existing staff. No new agent, implementation, activation or competency assessment."
+      }
+    ],
+    "strengths": [
+      "Explicit policy boundaries already exist.",
+      "Developer assignment gate and commercial runner provide concrete implementation paths for bounded product work; this does not prove live staff competence."
+    ],
+    "limitations": [
+      "No dedicated Product Specialist executable, prompt, identity/profile, assignment adapter, tests, execution ledger or capability contract found in reviewed current-main sources.",
+      "Exact-name/id search in BeastFusion main found only the shared registry and its policy documentation; the checked commercial-runtime boundary lineage has the same references. Absence claim is limited to reviewed tracked sources.",
+      "Six HQ development profiles are Orchestrator, Observer, Proposal, Developer, Reviewer and Outcome; none is a Product Specialist profile.",
+      "Registry policy_only alone is not proof of absent implementation for every class: Developer and Orchestrator also retain that policy label but have concrete code. This finding depends on code and evidence reconciliation.",
+      "Product-specific expertise and reliable real-world performance remain unassessed; code and fixtures do not demonstrate them."
+    ],
+    "blockers": [
+      "No unique missing operational responsibility or approved activation package identified.",
+      "HQ source update prepared; deployment/synchronization pending. No release or operational activation claimed."
+    ],
+    "assessments": [
+      {
+        "role": "Product Specialist source/overlap audit \u2014 not a competency evaluation",
+        "summary": "Recommend consolidation with existing roles, retaining planned policy identity. No evidence justifies a new autonomous agent.",
+        "criteria": [
+          {
+            "criterion": "Dedicated implementation exists",
+            "result": "not applicable",
+            "reason": "Policy-only declaration found; no dedicated implementation/evidence found in audited sources. This records implementation status, not a failed live test."
+          },
+          {
+            "criterion": "Existing staff cover intended bounded product duties",
+            "result": "pass",
+            "reason": "Orchestrator supplies authorized scope/Product Truth and validation contract; Developer checks package, owner authorization, repository, permitted scope and preserved changes, then implements/validates. Proposal covers bounded research; Reviewer checks exact candidate and Product Completeness. Source-level responsibility coverage only, not live performance."
+          },
+          {
+            "criterion": "Separate Product Specialist live competency demonstrated",
+            "result": "not tested",
+            "reason": "No operational identity or historical role-specific execution evidence found; no paid or new inference testing performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Product Specialist policy and default-deny assignment gates",
+            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/state/shared-agent-registry.json",
+            "kind": "source registry",
+            "reviewer": "Codex source audit (executor; no independent review)",
+            "date": "2026-10-22",
+            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
+          },
+          {
+            "title": "Policy classes are not active identities",
+            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/docs/shared-agent-registry.md",
+            "kind": "source registry",
+            "reviewer": "Codex source audit (executor; no independent review)",
+            "date": "2026-10-22",
+            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
+          },
+          {
+            "title": "Developer bounded product implementation and Product Truth context",
+            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/docs/developer-agent.md",
+            "kind": "code review",
+            "reviewer": "Codex source audit (executor; no independent review)",
+            "date": "2026-10-22",
+            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
+          },
+          {
+            "title": "Concrete Developer assignment authorization and scope checks",
+            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/developer-agent.mjs",
+            "kind": "code review",
+            "reviewer": "Codex source audit (executor; no independent review)",
+            "date": "2026-10-22",
+            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
+          },
+          {
+            "title": "Orchestrator approved work planning",
+            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/orchestrator-2.mjs",
+            "kind": "code review",
+            "reviewer": "Codex source audit (executor; no independent review)",
+            "date": "2026-10-22",
+            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
+          },
+          {
+            "title": "Proposal research and planning",
+            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/proposal-agent.mjs",
+            "kind": "code review",
+            "reviewer": "Codex source audit (executor; no independent review)",
+            "date": "2026-10-22",
+            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
+          },
+          {
+            "title": "Independent review and Product Completeness requirements",
+            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/docs/reviewer-agent.md",
+            "kind": "code review",
+            "reviewer": "Codex source audit (executor; no independent review)",
+            "date": "2026-10-22",
+            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
+          },
+          {
+            "title": "Commercial runtime uses existing Developer and Reviewer",
+            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/customer-runtime/runner.mjs",
+            "kind": "code review",
+            "reviewer": "Codex source audit (executor; no independent review)",
+            "date": "2026-10-22",
+            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
+          }
+        ]
+      }
+    ],
+    "evidence": [],
+    "deferred": [
+      {
+        "title": "Consolidate responsibility mapping; add no new agent",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "Policy class has only scope/prohibitions; no distinct missing capability established.",
+        "requiredWork": "Next development step: in a separately scoped governance documentation change, explicitly map Product Specialist product implementation duties to Developer, intake/context to Orchestrator, bounded research to Proposal, and independent acceptance checks to Reviewer. Preserve policy_only and owner gates. Only if a reproducible context omission is found, specify a deterministic product-context completeness check inside existing intake, with missing/stale Product Truth, wrong repository and protected UI fixtures; do not activate a separate worker.",
+        "success": "Traceable responsibility mapping with no orphan duty, no expanded authority, unchanged independent review; any proposed helper addresses an observed gap and fails closed in offline fixtures.",
+        "cost": "This audit: no paid calls, purchases or services. Documentation/local fixture work requires no new service; engineering effort not estimated. Future inference/recurring costs unknown and not authorized.",
+        "status": "Recommendation recorded; no implementation or activation initiated."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Initial central import preserved policy-only planned lifecycle; no activation or competency inferred.",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (executor; independent review pending)",
+        "why": "Owner-requested no-cost code/registry/evidence audit; recommend consolidation, define future role requirements and next documentation step. Actual implementation absent in reviewed scope; no live competency or release claim.",
+        "version": "BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb; HQ base 63ced770; codex/product-specialist-audit"
+      }
+    ]
   }
 }
