@@ -712,6 +712,12 @@
         "version": "c50f21cca3a7d4e123cbaaff9154b558eb5e66fb",
         "url": "https://github.com/seangworld/thebeast/pull/271",
         "summary": "Released evidence-grounded review and cited-source filtering."
+      },
+      {
+        "date": "2026-10-22",
+        "version": "c581e867db82c620fcc01e7807752be1025365a0",
+        "url": "https://github.com/seangworld/thebeast/pull/279",
+        "summary": "VA specialization provenance, claim-switch, private source-checker and save-confirmation safeguards released. Production dpl_8Jy58eaRHPcnAESsNHZrvfW2qayX Ready and canonical domain verified. No new clinical/legal competency certification or authority."
       }
     ],
     "deferred": [
@@ -782,6 +788,12 @@
         "executor": "Codex",
         "why": "Align VA context provenance metadata with the history/memory actually forwarded after claim scoping; excluded sources are not listed as evidence. Local route assertion added; no new model assessment.",
         "version": "PR #279 final context provenance alignment"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex",
+        "why": "Confirmed PR279 production release and protected routes; append canonical release receipt. Preserve original10/20 assessment/date, scoped Health mapping and all prior accounting.",
+        "version": "c581e867db82c620fcc01e7807752be1025365a0 / dpl_8Jy58eaRHPcnAESsNHZrvfW2qayX"
       }
     ],
     "departments": [
@@ -813,6 +825,10 @@
       "Focused historical sample accurately compared supplied ranges and delivered bounded, evidence-grounded preparation advice."
     ],
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "VA-only reliability safeguards confirmed released under Taylor; current VA numeric competency mapping remains pending, not inferred from local tests."
+      },
       {
         "date": "2026-10-22",
         "summary": "VA-only provenance, claim-switch, original-evidence checker and save-confirmation safeguards locally verified; historical assessment dates/grades unchanged."

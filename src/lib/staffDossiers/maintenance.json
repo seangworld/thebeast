@@ -99,6 +99,17 @@
       "affectedStaffIds": [
         "beasthealth.health-advisor"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Record confirmed VA specialization runtime release in Taylor canonical dossier after production/route verification; no new code/configuration, competency evaluation or accounting change.",
+      "version": "Post-release receipt for c581e867db82c620fcc01e7807752be1025365a0",
+      "evidence": "https://github.com/seangworld/thebeast/pull/279",
+      "sourceDigest": "425e908ca4247d42480e377bc46e9733877e0c8746ccd5006de687fccbf6358e",
+      "affectedStaffIds": [
+        "beasthealth.health-advisor"
+      ]
     }
   ]
 }
