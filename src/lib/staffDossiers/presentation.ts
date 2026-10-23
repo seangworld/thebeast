@@ -6,15 +6,21 @@ export const staffGroups: readonly {kind:StaffRecordKind;label:string;descriptio
  {kind:'external',label:'External assistants',description:'Owner operating roles; not deployed BeastOS agents.'},
 ];
 export function formatStaffDate(date:string|null|undefined) {
- if(!date)return 'Not evaluated';
+ if(!date)return 'Not yet evaluated';
  const match=/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.exec(date);
  return match?`${match[2]}/${match[3]}/${match[1]}`:'Date not recorded';
 }
-export function currentLevelLabel(d:Pick<Dossier,'demonstrated'|'lastEvaluatedAt'>) {
- return d.demonstrated || (d.lastEvaluatedAt ? 'Level mapping pending' : 'Unassessed');
+export function currentLevelLabel(d:Pick<Dossier,'demonstrated'|'lastEvaluatedAt'|'recordKind'|'competency'>) {
+ if(d.recordKind!=='staff')return 'Not graded';
+ if(d.demonstrated)return d.demonstrated;
+ return d.competency?.status==='insufficient'||d.lastEvaluatedAt ? 'Evidence insufficient for level' : 'Not yet evaluated';
 }
-export function targetLevelLabel(d:Pick<Dossier,'target'>) {return d.target || 'Requirement pending';}
-
-export function releasedLevelLabel(d:Pick<Dossier,'released'|'recordKind'|'lastEvaluatedAt'|'releases'>) {
- return d.released || (d.recordKind!=='planned'&&(d.lastEvaluatedAt||d.releases.length)?'Level mapping pending':'Unassessed');
+export function targetLevelLabel(d:Pick<Dossier,'target'|'recordKind'>) {return d.recordKind!=='staff'?'Not applicable':d.target||'Requirement not established';}
+export function competencyEvidenceLabel(d:Pick<Dossier,'recordKind'|'competency'>) {
+ if(d.recordKind!=='staff')return 'Outside staff competency grading';
+ if(!d.competency)return 'No retained evaluation';
+ return `${d.competency.status==='mapped'?'Historical evidence':'Framework evidence'} ${formatStaffDate(d.competency.evidenceDate)} · current competence unverified`;
+}
+export function releasedLevelLabel(d:Pick<Dossier,'released'|'recordKind'>) {
+ return d.recordKind!=='staff'?'Not graded':d.released||'No competency certification';
 }

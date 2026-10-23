@@ -3,7 +3,14 @@ export type CriterionResult = 'pass' | 'partial' | 'fail' | 'not tested' | 'not 
 export type Evidence = { title: string; url: string; kind: 'live answer' | 'local replay' | 'code review' | 'release' | 'source registry'; reviewer: string; date: string; version: string };
 export type Assessment = { role: string; criteria: { criterion: string; result: CriterionResult; reason: string }[]; evidence: Evidence[]; summary: string };
 export type StaffRecordKind = 'staff' | 'planned' | 'system' | 'external';
+export type CompetencyReconciliation = {
+ status: 'mapped' | 'not_evaluated' | 'insufficient';
+ evidenceDate: string | null; scope: string; currentVerification: string; missingEvidence: string[];
+ auditPriority: number; nextAudit: string;
+ specializations?: {name:string;demonstrated:CompetencyLevel|null;target:CompetencyLevel|null;evidenceDate:string|null;scope:string;currentVerification:string}[];
+};
 export type Dossier = {
+ competency?: CompetencyReconciliation;
  recordKind: StaffRecordKind;
  recentChanges: {date:string;summary:string}[];
  lastEvaluatedAt: string | null;

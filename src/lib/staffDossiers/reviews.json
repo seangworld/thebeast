@@ -165,9 +165,25 @@
         "version": "498bfa974658f6a1ad4e68a5cd0a5e509201ac27",
         "url": "https://github.com/seangworld/thebeast/pull/273",
         "summary": "Production Ready dpl_F6fZDgoAEq5XsGWhQyhVbgTzWpx3; release is not live-competency certification."
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "deferred": [
+      {
+        "title": "Inspect existing incomplete research receipts and source/privacy failures; a complete cited, practical plan is the missing outcome.",
+        "priority": "high",
+        "desiredLevel": "L4",
+        "gap": "No complete researched schooling plan; private brief completion and mocked research flow do not establish delivered research competence.",
+        "requiredWork": "No-cost first: Inspect existing incomplete research receipts and source/privacy failures; a complete cited, practical plan is the missing outcome. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
+        "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
+        "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish no complete researched schooling plan; private brief completion and mocked research flow do not establish delivered research competence. No paid validation is executed, requested or scheduled.",
+        "status": "Retained-evidence audit recommendation only; no automatic execution."
+      },
       {
         "title": "Review remaining research evidence gaps",
         "priority": "normal",
@@ -207,6 +223,12 @@
         "executor": "Codex",
         "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
         "version": "Staff Management refinement"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "L2 historical: Directed ordinary career guidance, capacity constraints and credential correction in seven retained answers. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "lastEvaluatedAt": "2026-10-21",
@@ -217,20 +239,25 @@
       "note": "Earlier ordinary/correction answers retained; no delivered researched plan.",
       "url": "https://github.com/seangworld/thebeast/blob/main/docs/guidance-counselor-upgrade/evaluation/engineering-handoff-20261021/REPORT.md"
     },
-    "reviewedAt": "2026-10-21",
+    "reviewedAt": "2026-10-22",
     "demonstrated": "L2",
     "target": "L4",
     "levelMapping": {
-      "reviewedAt": "2026-10-21",
+      "reviewedAt": "2026-10-22",
       "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
       "rationale": "Actual earlier replies provide routine directed career steps and record/constraint corrections. This supports bounded L2 guidance. Core researched schooling plans remain unverified, so role-wide L3/L4 is not established despite local research-path checks.",
-      "scope": "Ordinary directed guidance only; research capability remains unverified.",
+      "scope": "Directed ordinary career guidance, capacity constraints and credential correction in seven retained answers.",
       "evidenceUrls": [
-        "https://github.com/seangworld/thebeast/blob/main/docs/guidance-counselor-upgrade/evaluation/engineering-handoff-20261021/REPORT.md"
+        "https://github.com/seangworld/thebeast/blob/main/docs/guidance-counselor-upgrade/evaluation/engineering-handoff-20261021/REPORT.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
       ]
     },
     "targetRequirement": "The intended job includes complex official-source school/program comparison, intake correction and a practical contextual schooling plan.",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "L2 historical: Directed ordinary career guidance, capacity constraints and credential correction in seven retained answers. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
       {
         "date": "2026-10-21",
         "summary": "Guidance implementation released; researched-answer competency remains unverified."
@@ -238,6 +265,35 @@
       {
         "date": "2026-10-21",
         "summary": "Private brief, source checks and cancellation handling corrected locally."
+      }
+    ],
+    "competency": {
+      "status": "mapped",
+      "evidenceDate": "2026-10-21",
+      "scope": "Directed ordinary career guidance, capacity constraints and credential correction in seven retained answers.",
+      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "missingEvidence": [
+        "No complete researched schooling plan; private brief completion and mocked research flow do not establish delivered research competence."
+      ],
+      "auditPriority": 4,
+      "nextAudit": "Inspect existing incomplete research receipts and source/privacy failures; a complete cited, practical plan is the missing outcome."
+    },
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/digitalStaff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
       }
     ]
   },
@@ -374,7 +430,7 @@
     ],
     "limitations": [
       "Current live teaching accuracy, first-error diagnosis and adaptation are not newly assessed; historical 7/7 remains bound to the 08/30 candidate.",
-      "Historical evidence reports aggregate returned models for all specialists, not a Tutor-turn model binding. Configured fallback is unchanged, but prompts/context and runtime bounds differ; current L3 mapping remains pending.",
+      "Historical report supports routine guided-learning L2 only. Aggregate returned models do not bind individual Tutor turns; current prompt/context and visual teaching accuracy remain unverified.",
       "The final checker receives private bounded academic history/transcription, not the original image; it cannot independently prove visual transcription accuracy.",
       "Cancellation stops local work and later dispatches; upstream processing/billing may already have occurred. Missing usage is recorded unknown, never zero.",
       "Completed telemetry means a validated reply was prepared for HTTP return, not proof the learner received, saved or understood it.",
@@ -382,13 +438,23 @@
     ],
     "deferred": [
       {
+        "title": "Locate existing per-turn teaching/model receipts or legitimate retained feedback before judging current explanations and first-error diagnosis.",
+        "priority": "high",
+        "desiredLevel": "L3",
+        "gap": "Raw per-turn Tutor answers/model bindings were not recovered in this reconciliation. Current teaching, visual transcription and adaptation are not verified after prompt/context changes.",
+        "requiredWork": "No-cost first: Locate existing per-turn teaching/model receipts or legitimate retained feedback before judging current explanations and first-error diagnosis. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
+        "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
+        "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish raw per-turn Tutor answers/model bindings were not recovered in this reconciliation. Current teaching, visual transcription and adaptation are not verified after prompt/context changes. No paid validation is executed, requested or scheduled.",
+        "status": "Retained-evidence audit recommendation only; no automatic execution."
+      },
+      {
         "title": "Resolve current L3 evidence and transcription limitations from existing records",
         "priority": "normal",
         "desiredLevel": "L3",
-        "gap": "Current model/turn binding and live visual/teaching performance cannot be certified from aggregate historical evidence or mocks.",
+        "gap": "Raw per-turn Tutor answers/model bindings were not recovered in this reconciliation. Current teaching, visual transcription and adaptation are not verified after prompt/context changes.",
         "requiredWork": "Reconcile additional already-existing sanitized per-turn receipts if available; review legitimate owner-provided teaching feedback and academic examples locally. No new paid assessment cycle or authority expansion.",
         "success": "Claims remain scoped to dated bound evidence; unsupported visual or teaching judgments stay explicitly unverified.",
-        "cost": "No new service or paid testing. Conditional configured-fallback pricing: $0.40/M input and $1.60/M output; actual hosted model/input/image usage unknown, so no actual per-turn charge or full dollar cap inferred.",
+        "cost": "Cost unknown: effective current model, image/input usage and representative required turns are not established. A future live check would establish current first-error teaching, adaptation and source/model binding; no paid test is executed or requested.",
         "status": "Deferred evidence limitation; not an automatic release blocker for bounded guided tutoring."
       },
       {
@@ -408,6 +474,12 @@
         "version": "7e708d245ea481ac17a970f89c22fbfefb4c0338",
         "summary": "PR275 bounded Tutor runtime released; production dpl_BGnokcC2ehf7qQJTmF1nfiNnDuss Ready and canonical alias verified. No new teaching assessment or numeric-level certification.",
         "url": "https://github.com/seangworld/thebeast/pull/275"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "assignment": "Provide bounded private guided tutoring and shown-work correction, preserving learner control; no expansion of grading or institutional authority.",
@@ -435,6 +507,12 @@
         "executor": "Codex",
         "why": "Post-deployment confirmation: canonical production alias serves the verified Tutor runtime release; sign-in protection checked. No paid inference, new evaluation or assessment-date change.",
         "version": "7e708d245ea481ac17a970f89c22fbfefb4c0338 / dpl_BGnokcC2ehf7qQJTmF1nfiNnDuss"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "L2 historical: Historical reported routine guided teaching: first-error correction, equivalent methods, targeted practice and bounded handoff at c24dd3e1. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "lastEvaluatedAt": "2026-08-30",
@@ -460,14 +538,19 @@
     "levelMapping": {
       "reviewedAt": "2026-10-22",
       "reviewer": "Codex code/evidence review; not independent certification",
-      "rationale": "Historical teaching strengths address parts of the role-specific L3 requirement, but the source aggregate model counts cannot bind individual Tutor turns. Historical source fallback is unchanged; later prompt/context and runtime changes are real. Knight L2 is a separate scale. Neither the 7/7 score nor local fixtures establishes current L3 competence.",
-      "scope": "Release bounded guided-learning functionality; current demonstrated/released numeric level remains unassigned.",
+      "rationale": "The dated evaluator report at an exact application candidate describes directed first-error guidance, acknowledgment of corrections, equivalent methods, targeted practice and a bounded worked example. Those reported behaviors support historical routine guided-learning L2 on the shared staff framework, independently of its Knight classification and 7/7 count. Primary per-turn outputs were not recovered here, so the mapping relies on attributed historical report evidence. Broader contextual accuracy/adaptation and current model/prompt binding needed for L3 are not established. Current verification remains unavailable; no current L2 certification is inferred.",
+      "scope": "Historical reported routine guided teaching: first-error correction, equivalent methods, targeted practice and bounded handoff at c24dd3e1.",
       "evidenceUrls": [
         "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json",
-        "https://github.com/seangworld/thebeast/blob/codex/tutor-va-no-cost-audit-20261021/docs/agent-audits-20261021/TUTOR-REMEDIATION-20261022.md"
+        "https://github.com/seangworld/thebeast/blob/codex/tutor-va-no-cost-audit-20261021/docs/agent-audits-20261021/TUTOR-REMEDIATION-20261022.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
       ]
     },
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "L2 historical: Historical reported routine guided teaching: first-error correction, equivalent methods, targeted practice and bounded handoff at c24dd3e1. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
       {
         "date": "2026-10-22",
         "summary": "Bounded Tutor reliability release confirmed in production; original 08/30 assessment and current L3 evidence limits preserved."
@@ -487,6 +570,36 @@
     ],
     "blockers": [
       "No known local runtime release blocker after checks; full current L3 teaching competence and hosted owner-session behavior remain unverified."
+    ],
+    "demonstrated": "L2",
+    "competency": {
+      "status": "mapped",
+      "evidenceDate": "2026-08-30",
+      "scope": "Historical reported routine guided teaching: first-error correction, equivalent methods, targeted practice and bounded handoff.",
+      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "missingEvidence": [
+        "Raw per-turn Tutor answers/model bindings were not recovered in this reconciliation. Current teaching, visual transcription and adaptation are not verified after prompt/context changes."
+      ],
+      "auditPriority": 5,
+      "nextAudit": "Locate existing per-turn teaching/model receipts or legitimate retained feedback before judging current explanations and first-error diagnosis."
+    },
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/digitalStaff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
+      }
     ]
   },
   "beasthealth.health-advisor": {
@@ -701,7 +814,7 @@
       "Focused historical sample is not clinical/legal certification.",
       "VA organizer tests do not establish document comprehension, claims eligibility or legal deadline interpretation.",
       "No filing, representation, VA account access or official rating decision.",
-      "Taylor\u2019s scoped Health L3 does not certify the VA specialization. VA current numeric mapping remains pending; one historical H-C letter sample does not establish broad claims competence.",
+      "VA has separate historical L2 evidence for one H-C decision-letter sample, not the Health L3 grade. Current VA readability, conflicting-source interpretation and factual drafting remain unverified.",
       "Older unlinked claim conversation turns remain visible but are excluded from selected-claim evidence; switching claim/revision resets cached state, and documents must be reselected for a different issue.",
       "Selected originals are member-owned inputs, not independently authenticated VA records. Live readability, clause-level draft accuracy, conflicting-source interpretation and legal deadline judgment remain unverified for this candidate.",
       "Conversation message/summary writes are not a single transaction. Unconfirmed saves may have stored some messages; review before retrying. No automatic retry, filing or representation."
@@ -718,14 +831,30 @@
         "version": "c581e867db82c620fcc01e7807752be1025365a0",
         "url": "https://github.com/seangworld/thebeast/pull/279",
         "summary": "VA specialization provenance, claim-switch, private source-checker and save-confirmation safeguards released. Production dpl_8Jy58eaRHPcnAESsNHZrvfW2qayX Ready and canonical domain verified. No new clinical/legal competency certification or authority."
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "deferred": [
       {
+        "title": "Prioritize VA selected-source readability, conflicting facts and factual draft attribution using existing originals/receipts; keep Health and VA evidence separate.",
+        "priority": "high",
+        "desiredLevel": "L4",
+        "gap": "Small executor-reviewed Health sample is not broad complex-document reliability, clinical/legal certification or current VA-source verification.",
+        "requiredWork": "No-cost first: Prioritize VA selected-source readability, conflicting facts and factual draft attribution using existing originals/receipts; keep Health and VA evidence separate. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
+        "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
+        "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish small executor-reviewed Health sample is not broad complex-document reliability, clinical/legal certification or current VA-source verification. No paid validation is executed, requested or scheduled.",
+        "status": "Retained-evidence audit recommendation only; no automatic execution."
+      },
+      {
         "title": "VA specialization: reconcile source-bound drafting evidence toward role target L3",
         "priority": "normal",
         "desiredLevel": "L3",
-        "gap": "Historical H-C covers one narrow letter sample. Current factual-clause interpretation, visual readability and complex conflicting evidence remain unverified; numeric VA mapping pending.",
+        "gap": "Historical H-C covers one narrow letter sample. Current factual-clause interpretation, visual readability and complex conflicting evidence remain unverified; current VA level not verified.",
         "requiredWork": "Review additional already-existing, legitimately available evidence/feedback locally where permitted; preserve exact original source and uncertainty. No duplicate agent, paid testing or autonomous authority. Consider atomic persistence only if real failure evidence justifies a separately scoped schema change.",
         "success": "Every claims statement remains attributable to supplied member/source evidence; missing/conflicting/unreadable evidence stays explicit, and save state is truthful.",
         "cost": "No new service or paid testing. Engineering effort unpriced. Reusing selected originals in the existing final check adds no provider request, but may add document input tokens; actual model/page/token usage is unknown, so a defensible dollar forecast is unavailable. Historical Taylor charges are not a forecast.",
@@ -794,6 +923,12 @@
         "executor": "Codex",
         "why": "Confirmed PR279 production release and protected routes; append canonical release receipt. Preserve original10/20 assessment/date, scoped Health mapping and all prior accounting.",
         "version": "c581e867db82c620fcc01e7807752be1025365a0 / dpl_8Jy58eaRHPcnAESsNHZrvfW2qayX"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "L3 historical: Focused Health trend explanation, symptom-context preparation and uncertainty in retained H-B answers. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "departments": [
@@ -812,12 +947,13 @@
     "demonstrated": "L3",
     "target": "L4",
     "levelMapping": {
-      "reviewedAt": "2026-10-21",
+      "reviewedAt": "2026-10-22",
       "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
       "rationale": "Retained responses demonstrate contextual source-grounded trend review, preparation advice and correction within explicit health boundaries. Scoped L3 is supported; a focused executor-reviewed sample does not establish reliable broad complex-document workflows (L4) or clinical/legal expertise.",
-      "scope": "Focused tested health review/preparation only; VA Claims Aide competency is not implied.",
+      "scope": "Focused Health trend explanation, symptom-context preparation and uncertainty in retained H-B answers.",
       "evidenceUrls": [
-        "https://github.com/seangworld/thebeast/blob/main/docs/taylor-health-advisor-upgrade/evaluation/quality-regression-20261020/REPORT.md"
+        "https://github.com/seangworld/thebeast/blob/main/docs/taylor-health-advisor-upgrade/evaluation/quality-regression-20261020/REPORT.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
       ]
     },
     "targetRequirement": "The job requires reliable contextual review of selected records/documents and official evidence while preserving clinical, permission and uncertainty boundaries. VA Claims Aide separately targets L3 contextual, member-directed preparation: exact selected issue/source provenance, truthful drafts, uncertainty and correction; no independent adjudication or filing authority.",
@@ -825,6 +961,10 @@
       "Focused historical sample accurately compared supplied ranges and delivered bounded, evidence-grounded preparation advice."
     ],
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "L3 historical: Focused Health trend explanation, symptom-context preparation and uncertainty in retained H-B answers. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
       {
         "date": "2026-10-22",
         "summary": "VA-only reliability safeguards confirmed released under Taylor; current VA numeric competency mapping remains pending, not inferred from local tests."
@@ -842,7 +982,46 @@
         "summary": "Focused health regression completed; evidence-grounded review released."
       }
     ],
-    "assignment": "Review selected health information; under veterans specialization explain selected claim/originals and prepare bounded factual drafts, with current-source/provenance and save-state limits."
+    "assignment": "Review selected health information; under veterans specialization explain selected claim/originals and prepare bounded factual drafts, with current-source/provenance and save-state limits.",
+    "competency": {
+      "status": "mapped",
+      "evidenceDate": "2026-10-20",
+      "scope": "Focused Health trend explanation, symptom-context preparation and uncertainty in retained H-B answers.",
+      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "missingEvidence": [
+        "Small executor-reviewed Health sample is not broad complex-document reliability, clinical/legal certification or current VA-source verification."
+      ],
+      "auditPriority": 6,
+      "nextAudit": "Prioritize VA selected-source readability, conflicting facts and factual draft attribution using existing originals/receipts; keep Health and VA evidence separate.",
+      "specializations": [
+        {
+          "name": "VA Claims Aide",
+          "demonstrated": "L2",
+          "target": "L3",
+          "evidenceDate": "2026-10-20",
+          "scope": "One historical H-C synthetic decision-letter sample: selected-source facts, laterality, missing evidence and bounded preparation with official links.",
+          "currentVerification": "Current VA clause interpretation/readability remains unverified after 10/22 source/checker changes; no broad claims, legal, filing or adjudication competence inferred."
+        }
+      ]
+    },
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/digitalStaff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
+      }
+    ]
   },
   "beastmoney.money-coach": {
     "assessments": [
@@ -921,6 +1100,12 @@
         "version": "0a22a7ef",
         "url": "https://github.com/seangworld/thebeast/pull/269",
         "summary": "Grounded financial analysis and verified Director integration merged; consult release packet for remaining boundaries."
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "costs": {
@@ -941,6 +1126,12 @@
         "executor": "Codex",
         "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
         "version": "Staff Management refinement"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "L3 historical: Contextual cash-flow/debt coaching, changed records and checkpoint correction in exercised financial families. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "lastEvaluatedAt": "2026-10-18",
@@ -951,20 +1142,31 @@
       "note": "Attack stopped by input safeguard; plan-model attack judgment not established.",
       "url": "https://github.com/seangworld/thebeast/blob/main/docs/money-coach-upgrade/release-preparation/REPORT.md"
     },
-    "reviewedAt": "2026-10-21",
+    "reviewedAt": "2026-10-22",
     "demonstrated": "L3",
     "target": "L4",
     "levelMapping": {
-      "reviewedAt": "2026-10-21",
+      "reviewedAt": "2026-10-22",
       "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
       "rationale": "The independent review covers cash flow, debt choices, changed records, missing assumptions and checkpoint correction with explicit boundaries. That supports contextual financial coaching (L3). It does not establish broad integrated reliability or attack-path plan judgment required for L4.",
-      "scope": "Bounded financial coaching in the exercised families; no transaction authority.",
+      "scope": "Contextual cash-flow/debt coaching, changed records and checkpoint correction in exercised financial families.",
       "evidenceUrls": [
-        "https://github.com/seangworld/thebeast/blob/main/docs/money-coach-upgrade/release-preparation/REPORT.md"
+        "https://github.com/seangworld/thebeast/blob/main/docs/money-coach-upgrade/release-preparation/REPORT.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
       ]
     },
     "targetRequirement": "The role must reliably combine financial records, canonical calculations and Director checkpoint evidence across complex objectives.",
     "deferred": [
+      {
+        "title": "Reconcile existing attack/checkpoint receipts and current source binding; preserve canonical arithmetic and no transaction authority.",
+        "priority": "normal",
+        "desiredLevel": "L4",
+        "gap": "Plan-model attack judgment and broad complex integrated reliability were not established; input rejection is a safeguard result.",
+        "requiredWork": "No-cost first: Reconcile existing attack/checkpoint receipts and current source binding; preserve canonical arithmetic and no transaction authority. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
+        "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
+        "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish plan-model attack judgment and broad complex integrated reliability were not established; input rejection is a safeguard result. No paid validation is executed, requested or scheduled.",
+        "status": "Retained-evidence audit recommendation only; no automatic execution."
+      },
       {
         "title": "Strengthen integrated boundary evidence",
         "priority": "normal",
@@ -978,6 +1180,10 @@
     ],
     "recentChanges": [
       {
+        "date": "2026-10-22",
+        "summary": "L3 historical: Contextual cash-flow/debt coaching, changed records and checkpoint correction in exercised financial families. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
+      {
         "date": "2026-10-21",
         "summary": "Existing financial assessment and scoped competency rationale reconciled."
       },
@@ -986,7 +1192,36 @@
         "summary": "Grounded financial analysis and Director integration released."
       }
     ],
-    "assignment": "Explain member finances and support evidence-based planning."
+    "assignment": "Explain member finances and support evidence-based planning.",
+    "competency": {
+      "status": "mapped",
+      "evidenceDate": "2026-10-18",
+      "scope": "Contextual cash-flow/debt coaching, changed records and checkpoint correction in exercised financial families.",
+      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "missingEvidence": [
+        "Plan-model attack judgment and broad complex integrated reliability were not established; input rejection is a safeguard result."
+      ],
+      "auditPriority": 8,
+      "nextAudit": "Reconcile existing attack/checkpoint receipts and current source binding; preserve canonical arithmetic and no transaction authority."
+    },
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/digitalStaff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
+      }
+    ]
   },
   "beastfusion.fusion-director": {
     "assessments": [
@@ -1047,6 +1282,12 @@
         "version": "8b199938",
         "url": "https://github.com/seangworld/thebeast/pull/265",
         "summary": "Director upgrade released before Money/Taylor/Jordan; current code retains it."
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "costs": {
@@ -1067,6 +1308,12 @@
         "executor": "Codex",
         "why": "Owner-facing reconciliation: preserved prior results/evaluation dates; separate dossier update date; no new assessment.",
         "version": "Staff Management refinement"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "L3 historical: Contextual delegation, contradictory evidence, recovery and permission handling in six frozen Director scenarios. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "departments": [
@@ -1081,16 +1328,17 @@
       "note": "Later cancellation corrections verified locally; original grade unchanged.",
       "url": "https://github.com/seangworld/thebeast/blob/main/docs/avery-release-readiness/report.md"
     },
-    "reviewedAt": "2026-10-21",
+    "reviewedAt": "2026-10-22",
     "demonstrated": "L3",
     "target": "L4",
     "levelMapping": {
-      "reviewedAt": "2026-10-21",
+      "reviewedAt": "2026-10-22",
       "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
       "rationale": "Contextual delegation, evidence correction, recovery and permission handling were demonstrated across the frozen Folios. This supports bounded contextual Director workflows (L3). Cancellation scored 3/4 and later fixes were local-only; reliable complex integrated operation (L4) is not established.",
-      "scope": "Bounded tested Director workflows; not a universal intelligence score.",
+      "scope": "Contextual delegation, contradictory evidence, recovery and permission handling in six frozen Director scenarios.",
       "evidenceUrls": [
-        "https://github.com/seangworld/thebeast/blob/main/docs/avery-release-readiness/report.md"
+        "https://github.com/seangworld/thebeast/blob/main/docs/avery-release-readiness/report.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
       ]
     },
     "targetRequirement": "Reliable complex multi-specialist planning, delegation, evidence verification and recovery are the Director job requirement.",
@@ -1098,6 +1346,16 @@
       "Historical assessment supports conditional delegation, identifying incorrect specialist results, recovery and permission boundaries."
     ],
     "deferred": [
+      {
+        "title": "Audit retained cancellation and current candidate bindings before seeking any broader reliability claim.",
+        "priority": "normal",
+        "desiredLevel": "L4",
+        "gap": "Cancellation reliability and current integrated reasoning after later local fixes remain unverified.",
+        "requiredWork": "No-cost first: Audit retained cancellation and current candidate bindings before seeking any broader reliability claim. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
+        "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
+        "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish cancellation reliability and current integrated reasoning after later local fixes remain unverified. No paid validation is executed, requested or scheduled.",
+        "status": "Retained-evidence audit recommendation only; no automatic execution."
+      },
       {
         "title": "Close cancellation reliability gap",
         "priority": "normal",
@@ -1111,6 +1369,10 @@
     ],
     "recentChanges": [
       {
+        "date": "2026-10-22",
+        "summary": "L3 historical: Contextual delegation, contradictory evidence, recovery and permission handling in six frozen Director scenarios. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
+      {
         "date": "2026-10-21",
         "summary": "Existing 23/24 result and bounded level rationale made visible."
       },
@@ -1123,7 +1385,36 @@
         "summary": "Director upgrade released."
       }
     ],
-    "assignment": "Coordinate permitted specialist work and owner-approved objectives."
+    "assignment": "Coordinate permitted specialist work and owner-approved objectives.",
+    "competency": {
+      "status": "mapped",
+      "evidenceDate": "2026-10-18",
+      "scope": "Contextual delegation, contradictory evidence, recovery and permission handling in six frozen Director scenarios.",
+      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "missingEvidence": [
+        "Cancellation reliability and current integrated reasoning after later local fixes remain unverified."
+      ],
+      "auditPriority": 7,
+      "nextAudit": "Audit retained cancellation and current candidate bindings before seeking any broader reliability claim."
+    },
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/digitalStaff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
+      }
+    ]
   },
   "beastfusion.orchestrator-3": {
     "duties": [
@@ -1136,6 +1427,10 @@
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Evidence insufficient for level: Approved product intake, context/dependency assembly, gated dispatch and supervised recovery. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
       {
         "date": "2026-10-22",
         "summary": "Removed the consolidated Product Specialist staff record by owner decision. Connect the outer strategy loop to the existing Orchestrator 2.x development and release workflow without inheriting owner authority. Absorbed Product Specialist responsibility: validate owner-approved product scope, repository and Product Truth before governed dispatch; escalate missing context and material decisions to Sean."
@@ -1177,6 +1472,12 @@
         "executor": "Codex (engineering executor; owner decision)",
         "why": "Removed the consolidated Product Specialist staff record by owner decision. Connect the outer strategy loop to the existing Orchestrator 2.x development and release workflow without inheriting owner authority. Absorbed Product Specialist responsibility: validate owner-approved product scope, repository and Product Truth before governed dispatch; escalate missing context and material decisions to Sean. Existing department, scope, permissions and competency evidence preserved; no site-wide authority or activation.",
         "version": "2026-10-22 consolidated role cleanup; exact release verification in linked handoff"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "Evidence insufficient for level: Approved product intake, context/dependency assembly, gated dispatch and supervised recovery. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "evidence": [
@@ -1203,6 +1504,14 @@
         "reviewer": "Codex engineering executor; no competency evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 owner-authorized staff cleanup"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
       }
     ],
     "releases": [
@@ -1217,10 +1526,63 @@
         "version": "Consolidated Product Specialist cleanup \u2014 exact release status in handoff",
         "summary": "Owner-facing descriptions and duties only; planned consolidated entry removed, no archived staff entry. The permanent handoff records confirmed deployment and live HQ synchronization after this single batch without a receipt deployment. No runtime/authority/competency change.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "role": "Coordinates evidence through owner proposal gates; absorbs approved product intake and context checks",
-    "mission": "Connect the outer strategy loop to the existing Orchestrator 2.x development and release workflow without inheriting owner authority. Absorbed Product Specialist responsibility: validate owner-approved product scope, repository and Product Truth before governed dispatch; escalate missing context and material decisions to Sean."
+    "mission": "Connect the outer strategy loop to the existing Orchestrator 2.x development and release workflow without inheriting owner authority. Absorbed Product Specialist responsibility: validate owner-approved product scope, repository and Product Truth before governed dispatch; escalate missing context and material decisions to Sean.",
+    "demonstrated": null,
+    "target": "L4",
+    "lastEvaluatedAt": null,
+    "latestAssessment": {
+      "title": "Historical framework review only",
+      "date": "2026-08-30",
+      "reviewer": "BeastFusion self-assessed source registry",
+      "note": "Dated code/capability/autonomy review preserved in supporting records. No role-bound behavioral competency evaluation established; 08/30 is not a new live-evaluation date.",
+      "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/state/agent-capability-assessment-registry.json"
+    },
+    "competency": {
+      "status": "insufficient",
+      "evidenceDate": "2026-08-30",
+      "scope": "Approved product intake, context/dependency assembly, gated dispatch and supervised recovery.",
+      "currentVerification": "Framework/code evidence only; no retained role-bound behavioral competency evaluation. Current live competence unverified.",
+      "missingEvidence": [
+        "A retained role-attributable plan/supervision trace showing correct dependencies, missing-context escalation and bounded recovery."
+      ],
+      "auditPriority": 2,
+      "nextAudit": "Inspect retained approved-package intake and dispatch traces; separate deterministic Orchestrator mechanics from model planning."
+    },
+    "targetRequirement": "L4 role requirement: Approved product intake, context/dependency assembly, gated dispatch and supervised recovery. Demonstrate accuracy, correction, uncertainty and current evidence within existing authority; this target grants no additional autonomy or permissions.",
+    "levelMapping": {
+      "reviewedAt": "2026-10-22",
+      "reviewer": "Codex retained-evidence reconciliation; no new test or independent certification",
+      "rationale": "The 08/30 evidence IDs resolve to role documentation and implementation scripts. Release receipts and local adversarial tests establish mechanics, not role-attributable reasoning quality. No shared staff level can be justified from these autonomy/capability self-classifications. A retained role-attributable plan/supervision trace showing correct dependencies, missing-context escalation and bounded recovery.",
+      "scope": "Approved product intake, context/dependency assembly, gated dispatch and supervised recovery.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/evidence/BF-AGT-013-completion.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+      ]
+    },
+    "strengths": [
+      "Implemented mechanics: Approved product intake, context/dependency assembly, gated dispatch and supervised recovery. Behavioral usefulness/accuracy is not graded by this source review."
+    ],
+    "deferred": [
+      {
+        "title": "Inspect retained approved-package intake and dispatch traces; separate deterministic Orchestrator mechanics from model planning.",
+        "priority": "high",
+        "desiredLevel": "L4",
+        "gap": "A retained role-attributable plan/supervision trace showing correct dependencies, missing-context escalation and bounded recovery.",
+        "requiredWork": "No-cost retained-record audit only. Inspect retained approved-package intake and dispatch traces; separate deterministic Orchestrator mechanics from model planning. Do not activate jobs, infer identity equivalence or run new model calls.",
+        "success": "Attributable original input/output, candidate/model context and role-specific correctness review support a scoped level; report failures and missing evidence.",
+        "cost": "Cost unknown. If original records do not exist, future live validation would establish the missing role-specific reasoning evidence. Models, tokens, trials and pricing scope are not fixed; no defensible dollar estimate or paid-test request is made.",
+        "status": "Recommendation only; no paid validation authorized or scheduled."
+      }
+    ]
   },
   "beastfusion.developer-agent": {
     "duties": [
@@ -1233,6 +1595,10 @@
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Evidence insufficient for level: Assigned product-owned repository implementation and exact-candidate validation. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
       {
         "date": "2026-10-22",
         "summary": "Removed the consolidated Product Specialist staff record by owner decision. Inspect, implement, correct ordinary defects, validate, and return reviewer-ready evidence inside one governed assignment. Absorbed Product Specialist responsibility: implement only the assigned product package and product-owned files using supplied Product Truth; preserve ownership and protected UI gates. No independent roadmap, cross-product write or release authority."
@@ -1274,6 +1640,12 @@
         "executor": "Codex (engineering executor; owner decision)",
         "why": "Removed the consolidated Product Specialist staff record by owner decision. Inspect, implement, correct ordinary defects, validate, and return reviewer-ready evidence inside one governed assignment. Absorbed Product Specialist responsibility: implement only the assigned product package and product-owned files using supplied Product Truth; preserve ownership and protected UI gates. No independent roadmap, cross-product write or release authority. Existing department, scope, permissions and competency evidence preserved; no site-wide authority or activation.",
         "version": "2026-10-22 consolidated role cleanup; exact release verification in linked handoff"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "Evidence insufficient for level: Assigned product-owned repository implementation and exact-candidate validation. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "evidence": [
@@ -1300,6 +1672,14 @@
         "reviewer": "Codex engineering executor; no competency evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 owner-authorized staff cleanup"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
       }
     ],
     "releases": [
@@ -1314,10 +1694,63 @@
         "version": "Consolidated Product Specialist cleanup \u2014 exact release status in handoff",
         "summary": "Owner-facing descriptions and duties only; planned consolidated entry removed, no archived staff entry. The permanent handoff records confirmed deployment and live HQ synchronization after this single batch without a receipt deployment. No runtime/authority/competency change.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "role": "Builds owner-authorized work assigned by Orchestrator; absorbs bounded product implementation",
-    "mission": "Inspect, implement, correct ordinary defects, validate, and return reviewer-ready evidence inside one governed assignment. Absorbed Product Specialist responsibility: implement only the assigned product package and product-owned files using supplied Product Truth; preserve ownership and protected UI gates. No independent roadmap, cross-product write or release authority."
+    "mission": "Inspect, implement, correct ordinary defects, validate, and return reviewer-ready evidence inside one governed assignment. Absorbed Product Specialist responsibility: implement only the assigned product package and product-owned files using supplied Product Truth; preserve ownership and protected UI gates. No independent roadmap, cross-product write or release authority.",
+    "demonstrated": null,
+    "target": "L4",
+    "lastEvaluatedAt": null,
+    "latestAssessment": {
+      "title": "Historical framework review only",
+      "date": "2026-08-30",
+      "reviewer": "BeastFusion self-assessed source registry",
+      "note": "Dated code/capability/autonomy review preserved in supporting records. No role-bound behavioral competency evaluation established; 08/30 is not a new live-evaluation date.",
+      "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/state/agent-capability-assessment-registry.json"
+    },
+    "competency": {
+      "status": "insufficient",
+      "evidenceDate": "2026-08-30",
+      "scope": "Assigned product-owned repository implementation and exact-candidate validation.",
+      "currentVerification": "Framework/code evidence only; no retained role-bound behavioral competency evaluation. Current live competence unverified.",
+      "missingEvidence": [
+        "A retained generated patch with original assignment, test diagnostics, correction and independent acceptance tied to this HQ role/candidate."
+      ],
+      "auditPriority": 3,
+      "nextAudit": "Recover existing patch/diagnostic/review artifacts; do not assign Codex engineering outputs or a separate commercial adapter run to this profile."
+    },
+    "targetRequirement": "L4 role requirement: Assigned product-owned repository implementation and exact-candidate validation. Demonstrate accuracy, correction, uncertainty and current evidence within existing authority; this target grants no additional autonomy or permissions.",
+    "levelMapping": {
+      "reviewedAt": "2026-10-22",
+      "reviewer": "Codex retained-evidence reconciliation; no new test or independent certification",
+      "rationale": "The 08/30 evidence IDs resolve to role documentation and implementation scripts. Release receipts and local adversarial tests establish mechanics, not role-attributable reasoning quality. No shared staff level can be justified from these autonomy/capability self-classifications. A retained generated patch with original assignment, test diagnostics, correction and independent acceptance tied to this HQ role/candidate.",
+      "scope": "Assigned product-owned repository implementation and exact-candidate validation.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/evidence/BF-AGT-013-completion.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+      ]
+    },
+    "strengths": [
+      "Implemented mechanics: Assigned product-owned repository implementation and exact-candidate validation. Behavioral usefulness/accuracy is not graded by this source review."
+    ],
+    "deferred": [
+      {
+        "title": "Recover existing patch/diagnostic/review artifacts; do not assign Codex engineering outputs or a separate commercial adapter run to this profile.",
+        "priority": "high",
+        "desiredLevel": "L4",
+        "gap": "A retained generated patch with original assignment, test diagnostics, correction and independent acceptance tied to this HQ role/candidate.",
+        "requiredWork": "No-cost retained-record audit only. Recover existing patch/diagnostic/review artifacts; do not assign Codex engineering outputs or a separate commercial adapter run to this profile. Do not activate jobs, infer identity equivalence or run new model calls.",
+        "success": "Attributable original input/output, candidate/model context and role-specific correctness review support a scoped level; report failures and missing evidence.",
+        "cost": "Cost unknown. If original records do not exist, future live validation would establish the missing role-specific reasoning evidence. Models, tokens, trials and pricing scope are not fixed; no defensible dollar estimate or paid-test request is made.",
+        "status": "Recommendation only; no paid validation authorized or scheduled."
+      }
+    ]
   },
   "beastfusion.proposal-agent": {
     "duties": [
@@ -1330,6 +1763,10 @@
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Evidence insufficient for level: Bounded product research, alternatives, uncertainties and non-executable recommendations. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
       {
         "date": "2026-10-22",
         "summary": "Removed the consolidated Product Specialist staff record by owner decision. Give the owner a traceable problem statement, evidence, assumptions, unknowns, options, tradeoffs, expected outcome, risk, cost, validation, and rollback. Absorbed Product Specialist responsibility: research product requirements and alternatives only for the bounded assigned question; recommendations remain non-executable and stop at owner approval."
@@ -1371,6 +1808,12 @@
         "executor": "Codex (engineering executor; owner decision)",
         "why": "Removed the consolidated Product Specialist staff record by owner decision. Give the owner a traceable problem statement, evidence, assumptions, unknowns, options, tradeoffs, expected outcome, risk, cost, validation, and rollback. Absorbed Product Specialist responsibility: research product requirements and alternatives only for the bounded assigned question; recommendations remain non-executable and stop at owner approval. Existing department, scope, permissions and competency evidence preserved; no site-wide authority or activation.",
         "version": "2026-10-22 consolidated role cleanup; exact release verification in linked handoff"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "Evidence insufficient for level: Bounded product research, alternatives, uncertainties and non-executable recommendations. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "evidence": [
@@ -1397,6 +1840,14 @@
         "reviewer": "Codex engineering executor; no competency evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 owner-authorized staff cleanup"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
       }
     ],
     "releases": [
@@ -1411,10 +1862,63 @@
         "version": "Consolidated Product Specialist cleanup \u2014 exact release status in handoff",
         "summary": "Owner-facing descriptions and duties only; planned consolidated entry removed, no archived staff entry. The permanent handoff records confirmed deployment and live HQ synchronization after this single batch without a receipt deployment. No runtime/authority/competency change.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "role": "Turns bounded investigations into options; absorbs product requirements research and planning",
-    "mission": "Give the owner a traceable problem statement, evidence, assumptions, unknowns, options, tradeoffs, expected outcome, risk, cost, validation, and rollback. Absorbed Product Specialist responsibility: research product requirements and alternatives only for the bounded assigned question; recommendations remain non-executable and stop at owner approval."
+    "mission": "Give the owner a traceable problem statement, evidence, assumptions, unknowns, options, tradeoffs, expected outcome, risk, cost, validation, and rollback. Absorbed Product Specialist responsibility: research product requirements and alternatives only for the bounded assigned question; recommendations remain non-executable and stop at owner approval.",
+    "demonstrated": null,
+    "target": "L3",
+    "lastEvaluatedAt": null,
+    "latestAssessment": {
+      "title": "Historical framework review only",
+      "date": "2026-08-30",
+      "reviewer": "BeastFusion self-assessed source registry",
+      "note": "Dated code/capability/autonomy review preserved in supporting records. No role-bound behavioral competency evaluation established; 08/30 is not a new live-evaluation date.",
+      "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/state/agent-capability-assessment-registry.json"
+    },
+    "competency": {
+      "status": "insufficient",
+      "evidenceDate": "2026-08-30",
+      "scope": "Bounded product research, alternatives, uncertainties and non-executable recommendations.",
+      "currentVerification": "Framework/code evidence only; no retained role-bound behavioral competency evaluation. Current live competence unverified.",
+      "missingEvidence": [
+        "An attributable completed research/proposal output with inspected sources, useful alternatives and an owner/reviewer judgment, rather than a schema fixture."
+      ],
+      "auditPriority": 10,
+      "nextAudit": "Recover existing proposal packets and source citations; distinguish contract validation from useful research judgment."
+    },
+    "targetRequirement": "L3 role requirement: Bounded product research, alternatives, uncertainties and non-executable recommendations. Demonstrate accuracy, correction, uncertainty and current evidence within existing authority; this target grants no additional autonomy or permissions.",
+    "levelMapping": {
+      "reviewedAt": "2026-10-22",
+      "reviewer": "Codex retained-evidence reconciliation; no new test or independent certification",
+      "rationale": "The 08/30 evidence IDs resolve to role documentation and implementation scripts. Release receipts and local adversarial tests establish mechanics, not role-attributable reasoning quality. No shared staff level can be justified from these autonomy/capability self-classifications. An attributable completed research/proposal output with inspected sources, useful alternatives and an owner/reviewer judgment, rather than a schema fixture.",
+      "scope": "Bounded product research, alternatives, uncertainties and non-executable recommendations.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/evidence/BF-AGT-013-completion.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+      ]
+    },
+    "strengths": [
+      "Implemented mechanics: Bounded product research, alternatives, uncertainties and non-executable recommendations. Behavioral usefulness/accuracy is not graded by this source review."
+    ],
+    "deferred": [
+      {
+        "title": "Recover existing proposal packets and source citations; distinguish contract validation from useful research judgment.",
+        "priority": "normal",
+        "desiredLevel": "L3",
+        "gap": "An attributable completed research/proposal output with inspected sources, useful alternatives and an owner/reviewer judgment, rather than a schema fixture.",
+        "requiredWork": "No-cost retained-record audit only. Recover existing proposal packets and source citations; distinguish contract validation from useful research judgment. Do not activate jobs, infer identity equivalence or run new model calls.",
+        "success": "Attributable original input/output, candidate/model context and role-specific correctness review support a scoped level; report failures and missing evidence.",
+        "cost": "Cost unknown. If original records do not exist, future live validation would establish the missing role-specific reasoning evidence. Models, tokens, trials and pricing scope are not fixed; no defensible dollar estimate or paid-test request is made.",
+        "status": "Recommendation only; no paid validation authorized or scheduled."
+      }
+    ]
   },
   "beastfusion.reviewer-agent": {
     "duties": [
@@ -1427,6 +1931,10 @@
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Evidence insufficient for level: Independent exact-candidate product acceptance and findings within assigned scope. Current live competence not reverified; targets and evaluation dates remain distinct."
+      },
       {
         "date": "2026-10-22",
         "summary": "Removed the consolidated Product Specialist staff record by owner decision. Bind review evidence to the exact Developer candidate and evaluate it against the authorized objective without trusting the completion claim by itself. Absorbed Product Specialist responsibility: independently check Product Truth, completeness, acceptance evidence, ownership and repository boundaries for the assigned product candidate. A review verdict grants no owner acceptance, merge or release authority."
@@ -1468,6 +1976,12 @@
         "executor": "Codex (engineering executor; owner decision)",
         "why": "Removed the consolidated Product Specialist staff record by owner decision. Bind review evidence to the exact Developer candidate and evaluate it against the authorized objective without trusting the completion claim by itself. Absorbed Product Specialist responsibility: independently check Product Truth, completeness, acceptance evidence, ownership and repository boundaries for the assigned product candidate. A review verdict grants no owner acceptance, merge or release authority. Existing department, scope, permissions and competency evidence preserved; no site-wide authority or activation.",
         "version": "2026-10-22 consolidated role cleanup; exact release verification in linked handoff"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "Evidence insufficient for level: Independent exact-candidate product acceptance and findings within assigned scope. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
       }
     ],
     "evidence": [
@@ -1494,6 +2008,14 @@
         "reviewer": "Codex engineering executor; no competency evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 owner-authorized staff cleanup"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
       }
     ],
     "releases": [
@@ -1508,10 +2030,63 @@
         "version": "Consolidated Product Specialist cleanup \u2014 exact release status in handoff",
         "summary": "Owner-facing descriptions and duties only; planned consolidated entry removed, no archived staff entry. The permanent handoff records confirmed deployment and live HQ synchronization after this single batch without a receipt deployment. No runtime/authority/competency change.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ],
     "role": "Independently checks Developer work; absorbs exact-candidate product completeness checks",
-    "mission": "Bind review evidence to the exact Developer candidate and evaluate it against the authorized objective without trusting the completion claim by itself. Absorbed Product Specialist responsibility: independently check Product Truth, completeness, acceptance evidence, ownership and repository boundaries for the assigned product candidate. A review verdict grants no owner acceptance, merge or release authority."
+    "mission": "Bind review evidence to the exact Developer candidate and evaluate it against the authorized objective without trusting the completion claim by itself. Absorbed Product Specialist responsibility: independently check Product Truth, completeness, acceptance evidence, ownership and repository boundaries for the assigned product candidate. A review verdict grants no owner acceptance, merge or release authority.",
+    "demonstrated": null,
+    "target": "L4",
+    "lastEvaluatedAt": null,
+    "latestAssessment": {
+      "title": "Historical framework review only",
+      "date": "2026-08-30",
+      "reviewer": "BeastFusion self-assessed source registry",
+      "note": "Dated code/capability/autonomy review preserved in supporting records. No role-bound behavioral competency evaluation established; 08/30 is not a new live-evaluation date.",
+      "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/state/agent-capability-assessment-registry.json"
+    },
+    "competency": {
+      "status": "insufficient",
+      "evidenceDate": "2026-08-30",
+      "scope": "Independent exact-candidate product acceptance and findings within assigned scope.",
+      "currentVerification": "Framework/code evidence only; no retained role-bound behavioral competency evaluation. Current live competence unverified.",
+      "missingEvidence": [
+        "Role-bound reviews of known defective and safe candidates, correct substantive findings, missed defects and human acceptance relevance."
+      ],
+      "auditPriority": 1,
+      "nextAudit": "Audit existing false-approval and human-relevance controls first; do not equate test pass or safe abstention with semantic review competence."
+    },
+    "targetRequirement": "L4 role requirement: Independent exact-candidate product acceptance and findings within assigned scope. Demonstrate accuracy, correction, uncertainty and current evidence within existing authority; this target grants no additional autonomy or permissions.",
+    "levelMapping": {
+      "reviewedAt": "2026-10-22",
+      "reviewer": "Codex retained-evidence reconciliation; no new test or independent certification",
+      "rationale": "The 08/30 evidence IDs resolve to role documentation and implementation scripts. Release receipts and local adversarial tests establish mechanics, not role-attributable reasoning quality. No shared staff level can be justified from these autonomy/capability self-classifications. Role-bound reviews of known defective and safe candidates, correct substantive findings, missed defects and human acceptance relevance.",
+      "scope": "Independent exact-candidate product acceptance and findings within assigned scope.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/evidence/BF-AGT-013-completion.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+      ]
+    },
+    "strengths": [
+      "Implemented mechanics: Independent exact-candidate product acceptance and findings within assigned scope. Behavioral usefulness/accuracy is not graded by this source review."
+    ],
+    "deferred": [
+      {
+        "title": "Audit existing false-approval and human-relevance controls first; do not equate test pass or safe abstention with semantic review competence.",
+        "priority": "high",
+        "desiredLevel": "L4",
+        "gap": "Role-bound reviews of known defective and safe candidates, correct substantive findings, missed defects and human acceptance relevance.",
+        "requiredWork": "No-cost retained-record audit only. Audit existing false-approval and human-relevance controls first; do not equate test pass or safe abstention with semantic review competence. Do not activate jobs, infer identity equivalence or run new model calls.",
+        "success": "Attributable original input/output, candidate/model context and role-specific correctness review support a scoped level; report failures and missing evidence.",
+        "cost": "Cost unknown. If original records do not exist, future live validation would establish the missing role-specific reasoning evidence. Models, tokens, trials and pricing scope are not fixed; no defensible dollar estimate or paid-test request is made.",
+        "status": "Recommendation only; no paid validation authorized or scheduled."
+      }
+    ]
   },
   "atlas": {
     "reviewedAt": "2026-10-22",
@@ -1669,6 +2244,198 @@
         "version": "Prelaunch marketing schedules disabled \u2014 exact release status in handoff",
         "summary": "Operating configuration only. The linked handoff records confirmed deployed configuration and live HQ synchronization after this single release, without a receipt deployment. Planned policy record remains planned; no activation or competency claim.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6354572829"
+      }
+    ]
+  },
+  "beastfusion.observer-agent": {
+    "demonstrated": null,
+    "target": "L3",
+    "reviewedAt": "2026-10-22",
+    "lastEvaluatedAt": null,
+    "latestAssessment": {
+      "title": "Historical framework review only",
+      "date": "2026-08-30",
+      "reviewer": "BeastFusion self-assessed source registry",
+      "note": "Dated code/capability/autonomy review preserved in supporting records. No role-bound behavioral competency evaluation established; 08/30 is not a new live-evaluation date.",
+      "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/state/agent-capability-assessment-registry.json"
+    },
+    "competency": {
+      "status": "insufficient",
+      "evidenceDate": "2026-08-30",
+      "scope": "Read-only approved-source change detection, baseline comparison and bounded findings.",
+      "currentVerification": "Framework/code evidence only; no retained role-bound behavioral competency evaluation. Current live competence unverified.",
+      "missingEvidence": [
+        "Retained attributable observations with actual baselines, material/noise distinctions and reviewer-confirmed findings; fixture outputs alone are insufficient."
+      ],
+      "auditPriority": 9,
+      "nextAudit": "Inspect existing observation runs and source/baseline provenance without running a new cycle or expanding sources."
+    },
+    "targetRequirement": "L3 role requirement: Read-only approved-source change detection, baseline comparison and bounded findings. Demonstrate accuracy, correction, uncertainty and current evidence within existing authority; this target grants no additional autonomy or permissions.",
+    "levelMapping": {
+      "reviewedAt": "2026-10-22",
+      "reviewer": "Codex retained-evidence reconciliation; no new test or independent certification",
+      "rationale": "The 08/30 evidence IDs resolve to role documentation and implementation scripts. Release receipts and local adversarial tests establish mechanics, not role-attributable reasoning quality. No shared staff level can be justified from these autonomy/capability self-classifications. Retained attributable observations with actual baselines, material/noise distinctions and reviewer-confirmed findings; fixture outputs alone are insufficient.",
+      "scope": "Read-only approved-source change detection, baseline comparison and bounded findings.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/evidence/BF-AGT-013-completion.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+      ]
+    },
+    "strengths": [
+      "Implemented mechanics: Read-only approved-source change detection, baseline comparison and bounded findings. Behavioral usefulness/accuracy is not graded by this source review."
+    ],
+    "deferred": [
+      {
+        "title": "Inspect existing observation runs and source/baseline provenance without running a new cycle or expanding sources.",
+        "priority": "normal",
+        "desiredLevel": "L3",
+        "gap": "Retained attributable observations with actual baselines, material/noise distinctions and reviewer-confirmed findings; fixture outputs alone are insufficient.",
+        "requiredWork": "No-cost retained-record audit only. Inspect existing observation runs and source/baseline provenance without running a new cycle or expanding sources. Do not activate jobs, infer identity equivalence or run new model calls.",
+        "success": "Attributable original input/output, candidate/model context and role-specific correctness review support a scoped level; report failures and missing evidence.",
+        "cost": "Cost unknown. If original records do not exist, future live validation would establish the missing role-specific reasoning evidence. Models, tokens, trials and pricing scope are not fixed; no defensible dollar estimate or paid-test request is made.",
+        "status": "Recommendation only; no paid validation authorized or scheduled."
+      }
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Evidence insufficient for level: Read-only approved-source change detection, baseline comparison and bounded findings. Current live competence not reverified; targets and evaluation dates remain distinct."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "Evidence insufficient for level: Read-only approved-source change detection, baseline comparison and bounded findings. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/developmentAgentProfiles.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
+      }
+    ]
+  },
+  "beastfusion.outcome-agent": {
+    "demonstrated": null,
+    "target": "L3",
+    "reviewedAt": "2026-10-22",
+    "lastEvaluatedAt": null,
+    "latestAssessment": {
+      "title": "Historical framework review only",
+      "date": "2026-08-30",
+      "reviewer": "BeastFusion self-assessed source registry",
+      "note": "Dated code/capability/autonomy review preserved in supporting records. No role-bound behavioral competency evaluation established; 08/30 is not a new live-evaluation date.",
+      "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/state/agent-capability-assessment-registry.json"
+    },
+    "competency": {
+      "status": "insufficient",
+      "evidenceDate": "2026-08-30",
+      "scope": "Exact-release baseline comparison and evidence-bounded outcome recommendations.",
+      "currentVerification": "Framework/code evidence only; no retained role-bound behavioral competency evaluation. Current live competence unverified.",
+      "missingEvidence": [
+        "Retained role-attributable post-release comparisons across declared windows with real measurements, uncertainty and reviewer judgment."
+      ],
+      "auditPriority": 11,
+      "nextAudit": "Inspect existing outcome windows and baseline receipts; deployment Ready alone is not evidence of product benefit or sound causal judgment."
+    },
+    "targetRequirement": "L3 role requirement: Exact-release baseline comparison and evidence-bounded outcome recommendations. Demonstrate accuracy, correction, uncertainty and current evidence within existing authority; this target grants no additional autonomy or permissions.",
+    "levelMapping": {
+      "reviewedAt": "2026-10-22",
+      "reviewer": "Codex retained-evidence reconciliation; no new test or independent certification",
+      "rationale": "The 08/30 evidence IDs resolve to role documentation and implementation scripts. Release receipts and local adversarial tests establish mechanics, not role-attributable reasoning quality. No shared staff level can be justified from these autonomy/capability self-classifications. Retained role-attributable post-release comparisons across declared windows with real measurements, uncertainty and reviewer judgment.",
+      "scope": "Exact-release baseline comparison and evidence-bounded outcome recommendations.",
+      "evidenceUrls": [
+        "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/evidence/BF-AGT-013-completion.md",
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+      ]
+    },
+    "strengths": [
+      "Implemented mechanics: Exact-release baseline comparison and evidence-bounded outcome recommendations. Behavioral usefulness/accuracy is not graded by this source review."
+    ],
+    "deferred": [
+      {
+        "title": "Inspect existing outcome windows and baseline receipts; deployment Ready alone is not evidence of product benefit or sound causal judgment.",
+        "priority": "normal",
+        "desiredLevel": "L3",
+        "gap": "Retained role-attributable post-release comparisons across declared windows with real measurements, uncertainty and reviewer judgment.",
+        "requiredWork": "No-cost retained-record audit only. Inspect existing outcome windows and baseline receipts; deployment Ready alone is not evidence of product benefit or sound causal judgment. Do not activate jobs, infer identity equivalence or run new model calls.",
+        "success": "Attributable original input/output, candidate/model context and role-specific correctness review support a scoped level; report failures and missing evidence.",
+        "cost": "Cost unknown. If original records do not exist, future live validation would establish the missing role-specific reasoning evidence. Models, tokens, trials and pricing scope are not fixed; no defensible dollar estimate or paid-test request is made.",
+        "status": "Recommendation only; no paid validation authorized or scheduled."
+      }
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Evidence insufficient for level: Exact-release baseline comparison and evidence-bounded outcome recommendations. Current live competence not reverified; targets and evaluation dates remain distinct."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (retained-evidence reconciliation; not independent testing)",
+        "why": "Evidence insufficient for level: Exact-release baseline comparison and evidence-bounded outcome recommendations. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
+        "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/developmentAgentProfiles.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Role-specific competency reconciliation and release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+        "kind": "code review",
+        "reviewer": "Codex engineering/evidence executor; no paid evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 evidence reconciliation"
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-22",
+        "version": "No-cost competency reconciliation \u2014 release status in handoff",
+        "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
       }
     ]
   }
