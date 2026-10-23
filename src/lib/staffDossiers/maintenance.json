@@ -220,6 +220,17 @@
         "beastfusion.proposal-agent",
         "beastfusion.outcome-agent"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Bounded Reviewer-only retained-evidence/source audit and companion canonical gate correction. Preserve historical assessments and L4 target; named judgment evidence insufficient, last behavioral evaluation unchanged. Record four reproduced mechanical fixes, role attribution limits, exact candidate/approval boundaries and deferred evidence; no paid tests, activation, other staff, permission or dependency changes. Confirm source merges and live HQ at permanent handoff without receipt deployment.",
+      "version": "Reviewer audit; BeastFusion c1d381e03d8176d8438f2c22c7cd2f75d0a43d64",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355798341",
+      "sourceDigest": "b71424696226fba15625437120729e12ec1e4a352cb3f53add28b34fefd2c5af",
+      "affectedStaffIds": [
+        "beastfusion.reviewer-agent"
+      ]
     }
   ]
 }

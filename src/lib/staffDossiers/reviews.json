@@ -1927,10 +1927,15 @@
       "Return precise findings and a governed verdict to Orchestrator",
       "Re-review bounded remediation without becoming the implementer",
       "Absorbed Product Specialist responsibility: Own the independent check of product-scoped Developer work: bind findings to the exact candidate, approved scope, Product Truth, acceptance criteria, tests and evidence, including Product Completeness and applicable cross-product impacts.",
-      "Verify source-product ownership, protected UI approval and repository boundaries; return findings or an owner decision for gaps without silently repairing the candidate or waiving failures."
+      "Verify source-product ownership, protected UI approval and repository boundaries; return findings or an owner decision for gaps without silently repairing the candidate or waiving failures.",
+      "Require explicit distinct Reviewer/Developer role declarations, substantive nonempty evidence for every review dimension, and verified check outcomes; do not waive High/Critical findings. Return a candidate-bound governed verdict, without treating declarations or passing tests as proof of independent judgment."
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Bounded Reviewer audit: four reproduced fail-open gate defects fixed; declared result attribution added. No defensible named-agent competency level; L4 target and historical assessments preserved. Code review/local fixtures only, not a new behavioral evaluation."
+      },
       {
         "date": "2026-10-22",
         "summary": "Evidence insufficient for level: Independent exact-candidate product acceptance and findings within assigned scope. Current live competence not reverified; targets and evaluation dates remain distinct."
@@ -1982,6 +1987,12 @@
         "executor": "Codex (retained-evidence reconciliation; not independent testing)",
         "why": "Evidence insufficient for level: Independent exact-candidate product acceptance and findings within assigned scope. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
         "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (audit/engineering executor; not named Reviewer)",
+        "why": "Audited exact role contract, implementation, retained review summaries and known patch outcomes. Fixed incomplete identity/evidence/check/severity fail-open paths and retained result role attribution. Preserved old framework bytes/hashes/assessments. Named-role reasoning attribution and missed-defect/verdict evidence remain insufficient; no paid testing, activation, scope/permissions or other staff change.",
+        "version": "BeastFusion c1d381e03d8176d8438f2c22c7cd2f75d0a43d64; single batch exact release/live status in permanent handoff"
       }
     ],
     "evidence": [
@@ -2016,6 +2027,14 @@
         "reviewer": "Codex engineering/evidence executor; no paid evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 evidence reconciliation"
+      },
+      {
+        "title": "Bounded Reviewer retained-evidence and gate correction audit",
+        "url": "https://github.com/seangworld/beastfusion/blob/c1d381e03d8176d8438f2c22c7cd2f75d0a43d64/docs/audits/reviewer-evidence-20261022/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex engineering executor; local fixtures, not named Reviewer evaluation",
+        "date": "2026-10-22",
+        "version": "BeastFusion c1d381e03d8176d8438f2c22c7cd2f75d0a43d64; baseline c0984f48403ef20bae952387ecbf63502e5f5abb"
       }
     ],
     "releases": [
@@ -2036,6 +2055,12 @@
         "version": "No-cost competency reconciliation \u2014 release status in handoff",
         "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "Bounded Reviewer contract correction \u2014 confirmed status in handoff",
+        "summary": "Canonical gate source plus same-work HQ evidence update. Permanent handoff records exact checked merges/deployment and live HQ synchronization without a receipt deployment. No named-agent judgment grade or existing-installer upgrade inferred.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355798341"
       }
     ],
     "role": "Independently checks Developer work; absorbs exact-candidate product completeness checks",
@@ -2053,29 +2078,41 @@
     "competency": {
       "status": "insufficient",
       "evidenceDate": "2026-08-30",
-      "scope": "Independent exact-candidate product acceptance and findings within assigned scope.",
-      "currentVerification": "Framework/code evidence only; no retained role-bound behavioral competency evaluation. Current live competence unverified.",
+      "scope": "Independent exact-candidate review: defects/scope, accurate evidence, independence, correction, uncertainty and justified governed verdicts.",
+      "currentVerification": "10/22 code audit and local replays verified stricter gate mechanics only. The named Reviewer\u2019s behavioral judgment remains unverified.",
       "missingEvidence": [
-        "Role-bound reviews of known defective and safe candidates, correct substantive findings, missed defects and human acceptance relevance."
+        "No attributable original named-Reviewer reasoning transcript is bound to a candidate, model/prompt/context and known-defect outcome. Ledger summaries corroborate some repaired defects but cannot establish who found them, false approvals, important misses or justified acceptance."
       ],
       "auditPriority": 1,
-      "nextAudit": "Audit existing false-approval and human-relevance controls first; do not equate test pass or safe abstention with semantic review competence."
+      "nextAudit": "Inspect legitimately retained named-Reviewer review/patch/correction traces with independent known-defect outcomes; do not rerun paid tests or borrow Codex/commercial grades."
     },
     "targetRequirement": "L4 role requirement: Independent exact-candidate product acceptance and findings within assigned scope. Demonstrate accuracy, correction, uncertainty and current evidence within existing authority; this target grants no additional autonomy or permissions.",
     "levelMapping": {
       "reviewedAt": "2026-10-22",
       "reviewer": "Codex retained-evidence reconciliation; no new test or independent certification",
-      "rationale": "The 08/30 evidence IDs resolve to role documentation and implementation scripts. Release receipts and local adversarial tests establish mechanics, not role-attributable reasoning quality. No shared staff level can be justified from these autonomy/capability self-classifications. Role-bound reviews of known defective and safe candidates, correct substantive findings, missed defects and human acceptance relevance.",
-      "scope": "Independent exact-candidate product acceptance and findings within assigned scope.",
+      "rationale": "The role contract and retained ledger/audits were reviewed against actual known patches. The recorded BF-AGT-009 taxonomy defect is corroborated by the before/after source, but summary metadata lacks original reasoning and authenticated attribution to this HQ Reviewer. The old framework references are docs/scripts. Separate commercial two-call acceptance and scripted D03/D06 controls cannot be transferred to this identity. Four fail-open mechanics were reproduced and fixed locally; neither their passing regressions nor Codex\u2019s audit demonstrate agent judgment. No defensible staff level can be assigned; L4 remains the requirement. Exact missing evidence: original candidate/model/prompt/context-bound reviews with independently checked correct findings, misses, correction and verdict outcomes.",
+      "scope": "Independent exact-candidate review: defects/scope, accurate evidence, independence, correction, uncertainty and justified governed verdicts.",
       "evidenceUrls": [
         "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/evidence/BF-AGT-013-completion.md",
-        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md",
+        "https://github.com/seangworld/beastfusion/blob/c1d381e03d8176d8438f2c22c7cd2f75d0a43d64/docs/audits/reviewer-evidence-20261022/REPORT.md"
       ]
     },
     "strengths": [
-      "Implemented mechanics: Independent exact-candidate product acceptance and findings within assigned scope. Behavioral usefulness/accuracy is not graded by this source review."
+      "Gate mechanics now block missing identity, blank/conflicting coverage, failed/unknown checks and attempted waiver of High/Critical findings.",
+      "Exact candidate/tree, scope, independent adapters and bounded re-review/owner gates remain locally verified; these are not demonstrated model judgment."
     ],
     "deferred": [
+      {
+        "title": "Recover attributable review judgment evidence, without new paid tests",
+        "priority": "high",
+        "desiredLevel": "L4",
+        "gap": "No attributable original named-Reviewer reasoning transcript is bound to a candidate, model/prompt/context and known-defect outcome. Ledger summaries corroborate some repaired defects but cannot establish who found them, false approvals, important misses or justified acceptance.",
+        "requiredWork": "Review existing or legitimately retained future original review/patch/correction records with known correct and defective outcomes, exact candidate and actor/model/prompt provenance. Keep Codex audits, deterministic fixtures and separate commercial roles labeled. Do not execute or request paid evaluation.",
+        "success": "Supported scope/level follows correct located findings, important misses, independent exact-candidate re-review and justified acceptance/uncertainty across representative L4 responsibilities; no grade inferred from autonomy or a single clean patch.",
+        "cost": "Cost unknown. This pass uses only retained records and local fixtures. Model/input/trial requirements are not fixed; no defensible paid-validation estimate, paid-test proposal or scheduled evaluation is made.",
+        "status": "Deferred evidence limitation; source corrections and truthful dossier remain useful below target."
+      },
       {
         "title": "Audit existing false-approval and human-relevance controls first; do not equate test pass or safe abstention with semantic review competence.",
         "priority": "high",
@@ -2084,7 +2121,101 @@
         "requiredWork": "No-cost retained-record audit only. Audit existing false-approval and human-relevance controls first; do not equate test pass or safe abstention with semantic review competence. Do not activate jobs, infer identity equivalence or run new model calls.",
         "success": "Attributable original input/output, candidate/model context and role-specific correctness review support a scoped level; report failures and missing evidence.",
         "cost": "Cost unknown. If original records do not exist, future live validation would establish the missing role-specific reasoning evidence. Models, tokens, trials and pricing scope are not fixed; no defensible dollar estimate or paid-test request is made.",
-        "status": "Recommendation only; no paid validation authorized or scheduled."
+        "status": "Completed bounded no-cost source/retained-evidence audit 10/22; useful gate fixes released through linked handoff. Judgment evidence remains insufficient."
+      }
+    ],
+    "limitations": [
+      "Cannot implement or silently repair the candidate it reviews",
+      "Cannot select, dispatch, approve, merge, deploy, or release work",
+      "Cannot expand the authorized scope or waive material findings",
+      "A PASS does not equal owner acceptance or release authorization",
+      "Declared Reviewer/Developer identities are contract labels, not authenticated model identities or proof of independent reasoning.",
+      "Nonempty evidence and passing tests can still be inaccurate or irrelevant; this correction does not prove semantic acceptance relevance.",
+      "Historical BF-AGT-009 summaries describe a correct taxonomy finding, but original reasoning/actor attribution is unavailable. Separate commercial and scripted D03/D06 results are not this named agent\u2019s measured performance.",
+      "Canonical source corrected; no existing customer installation or approved installer archive is activated, rebuilt or republished by this audit."
+    ],
+    "assessments": [
+      {
+        "role": "Independently checks Developer Agent work for Orchestrator",
+        "summary": "Existing BeastFusion assessment retained in its own autonomy/capability framework. Not mapped to staff competency L1\u2013L5.",
+        "criteria": [
+          {
+            "criterion": "{\"dimension\":\"goal-complexity\",\"label\":\"Goal complexity\",\"demonstrated\":\"Tests both technical acceptance and the actual user need.\",\"evidence\":[\"Sixteen-dimension review matrix\"],\"limitation\":\"A PASS is not owner acceptance or release authority.\"}",
+            "result": "not applicable",
+            "reason": "Different framework; see preserved dimension verdict and evidence, not a new competency grade."
+          },
+          {
+            "criterion": "{\"dimension\":\"environmental-complexity\",\"label\":\"Environmental complexity\",\"demonstrated\":\"Reviews cross-repository, authentication, authorization, RLS, privacy, mobile, accessibility, and Product Truth impact.\",\"evidence\":[\"Impact graph and Product Completeness evidence\"],\"limitation\":\"Review is bounded to available candidate and evidence.\"}",
+            "result": "not applicable",
+            "reason": "Different framework; see preserved dimension verdict and evidence, not a new competency grade."
+          },
+          {
+            "criterion": "{\"dimension\":\"adaptability\",\"label\":\"Adaptability\",\"demonstrated\":\"Returns precise findings and independently re-reviews remediated candidate identities.\",\"evidence\":[\"Re-review identity binding\"],\"limitation\":\"Cannot silently repair Developer work.\"}",
+            "result": "not applicable",
+            "reason": "Different framework; see preserved dimension verdict and evidence, not a new competency grade."
+          },
+          {
+            "criterion": "{\"dimension\":\"independent-execution\",\"label\":\"Independent execution\",\"demonstrated\":\"Runs the assigned review without relying on Developer's completion claim.\",\"evidence\":[\"Exact candidate plus evidence requirement\"],\"limitation\":\"Missing identity or evidence is a fail-closed finding.\"}",
+            "result": "not applicable",
+            "reason": "Different framework; see preserved dimension verdict and evidence, not a new competency grade."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "BF-AGT-013-ASMT-REV-001",
+            "url": "https://github.com/seangworld/thebeast/blob/main/src/lib/development-agent-capability-projection.json",
+            "kind": "source registry",
+            "reviewer": "Canonical BeastFusion projection; independence not inferred",
+            "date": "2026-08-30",
+            "version": "1.1.0"
+          }
+        ]
+      },
+      {
+        "role": "Reviewer gate mechanics audit \u2014 not a behavioral evaluation",
+        "summary": "Four fail-open contract defects and missing result attribution corrected with no-provider local regressions. Named Reviewer reasoning/recall/precision/verdict quality is NOT TESTED. Historical framework assessments are unchanged.",
+        "criteria": [
+          {
+            "criterion": "Substantive defects and scope",
+            "result": "partial",
+            "reason": "Known taxonomy patch corroborates historical summary; scope rejection mechanics pass. No attributable named-agent defect recall or missed-defect assessment."
+          },
+          {
+            "criterion": "Accurate evidence",
+            "result": "partial",
+            "reason": "Blank/nontext/conflicting dimension evidence now blocks. Semantic truth and relevance of nonempty evidence remain untested."
+          },
+          {
+            "criterion": "Exact candidate/version",
+            "result": "pass",
+            "reason": "Existing candidate/tree mismatch and scoped inspection regressions pass locally; no fresh agent reasoning evaluation."
+          },
+          {
+            "criterion": "Independence and approval",
+            "result": "pass",
+            "reason": "Missing/blank/equal role declarations block before adapters; result preserves declared identities and PASS grants no release authority. Labels do not authenticate independent model identity."
+          },
+          {
+            "criterion": "Corrections, uncertainty and incomplete evidence",
+            "result": "pass",
+            "reason": "Failed/unknown checks now block even without an adapter finding; existing bounded remediation/re-review and retry escalation still pass local fixtures."
+          },
+          {
+            "criterion": "Justified acceptance/rejection",
+            "result": "partial",
+            "reason": "High/Critical findings cannot be waived by blocking:false; deterministic verdict mechanics pass. No live justified-verdict or false-positive/negative rate established."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Bounded Reviewer retained-evidence and gate correction audit",
+            "url": "https://github.com/seangworld/beastfusion/blob/c1d381e03d8176d8438f2c22c7cd2f75d0a43d64/docs/audits/reviewer-evidence-20261022/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex engineering executor; local fixtures, not named Reviewer evaluation",
+            "date": "2026-10-22",
+            "version": "BeastFusion c1d381e03d8176d8438f2c22c7cd2f75d0a43d64; baseline c0984f48403ef20bae952387ecbf63502e5f5abb"
+          }
+        ]
       }
     ]
   },
