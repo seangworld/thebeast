@@ -46,7 +46,7 @@ import {
 } from "@/lib/learning/access";
 import { getBeastOSWorkspaceContext } from "@/lib/platform/identity";
 import { buildAuthLoginPath } from "@/lib/auth/experience";
-import { BEAST_ADMIN_MESSAGE_UNREAD_EVENT } from "@/lib/beastAdminMessaging";
+import { subscribeAdminMessageUnread } from "@/lib/adminMessageUnreadPolling";
 import { classifyMemberAge } from "@/lib/memberAgeEntitlements";
 import { GuidedTour, GuidedTourReplayButton } from "@/app/components/GuidedTour";
 import { resolveGuidedToursForPath } from "@/lib/guidedOnboarding";
@@ -170,44 +170,16 @@ export default function DashboardLayout({
       ...ownerNavigation,
     ]) || getTopLevelModuleForWorkspace(workspaceModule);
 
+  const showsAdminMessageBadge = !(pathname === "/dashboard/operations" || pathname.startsWith("/dashboard/operations/"));
   useEffect(() => {
-    let active = true;
-    async function loadAdminMessageUnreadCount() {
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase.rpc(
-          "get_beast_admin_message_unread_count"
-        );
-        if (
-          active &&
-          !error &&
-          typeof data === "number" &&
-          Number.isInteger(data) &&
-          data >= 0
-        ) {
-          setAdminMessageUnreadCount(data);
-        }
-      } catch {
-        if (active) setAdminMessageUnreadCount(0);
-      }
-    }
-
-    const refreshUnread = () => void loadAdminMessageUnreadCount();
-    void loadAdminMessageUnreadCount();
-    window.addEventListener(
-      BEAST_ADMIN_MESSAGE_UNREAD_EVENT,
-      refreshUnread
-    );
-    const interval = window.setInterval(refreshUnread, 60_000);
-    return () => {
-      active = false;
-      window.removeEventListener(
-        BEAST_ADMIN_MESSAGE_UNREAD_EVENT,
-        refreshUnread
-      );
-      window.clearInterval(interval);
-    };
-  }, [pathname]);
+    setAdminMessageUnreadCount(0);
+    if (!authenticatedMemberId || !showsAdminMessageBadge) return;
+    return subscribeAdminMessageUnread(authenticatedMemberId, setAdminMessageUnreadCount, async signal => {
+      const { data, error } = await createClient().rpc("get_beast_admin_message_unread_count").abortSignal(signal);
+      if (error || typeof data !== "number") throw new Error("Unread count unavailable.");
+      return data;
+    });
+  }, [authenticatedMemberId, showsAdminMessageBadge]);
 
   useEffect(() => {
     const syncLocationHash = () => setLocationHash(window.location.hash);

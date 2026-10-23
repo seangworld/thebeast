@@ -1,3 +1,4 @@
+import { ATLAS_PAUSED, ATLAS_PAUSED_MESSAGE } from '@/lib/atlas/operatingPolicy';
 import { NextResponse, after } from 'next/server';
 import { randomBytes } from 'node:crypto';
 import { atlasAuth, atlasDB, atlasSnapshot, hashAtlasToken, reserveAtlas, runAtlasTurn } from '@/lib/atlas/server';
@@ -15,6 +16,7 @@ async function boundedBody(request:Request,max=16000) {
  return JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string,unknown>;
 }
 export async function GET(request:Request,context:Context) {
+ if(ATLAS_PAUSED)return json({paused:true,error:ATLAS_PAUSED_MESSAGE},423);
  try {
   const {action}=await context.params; const owner=await atlasAuth(request,action==='devices'); if(!owner)return json({error:'Owner access required.'},403);
   if(action==='state') return json(await atlasSnapshot(owner));
@@ -23,6 +25,7 @@ export async function GET(request:Request,context:Context) {
  }catch{return json({error:'ATLAS is unavailable. Please try again shortly.'},503);}
 }
 export async function POST(request:Request,context:Context) {
+ if(ATLAS_PAUSED)return json({paused:true,error:ATLAS_PAUSED_MESSAGE},423);
  try {
   const {action}=await context.params; const owner=await atlasAuth(request,['pair','revoke','record'].includes(action)); if(!owner)return json({error:'Owner access required.'},403);
   const db=atlasDB();
