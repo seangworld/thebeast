@@ -199,6 +199,27 @@
         "beastfusion.proposal-agent",
         "beastfusion.reviewer-agent"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "No-cost evidence reconciliation for all 11 actual staff: preserve historical assessments/outputs/accounting; retain scoped Avery/Morgan/Health L3 and Jordan L2, assign historical reported routine Tutor L2 and separate H-C VA sample L2, without current certification. Six development roles have framework/code evidence insufficient for a competency level, with role-specific missing evidence and required targets. Correct framework-review vs behavioral-evaluation dates; exclude all nonstaff grading; replace generic pending labels and add prioritized retained-evidence audits. No paid calls/tests, activation, role consolidation/removal, permission or dependency changes. Confirm release/live HQ at permanent handoff without receipt deployment.",
+      "version": "2026-10-22 one-batch staff competency reconciliation",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018",
+      "sourceDigest": "d958e43f9b69f98d24f2f95782b53e627172c50b1fd2963df90237ef1b77e58a",
+      "affectedStaffIds": [
+        "beastfusion.fusion-director",
+        "beastmoney.money-coach",
+        "beasteducation.guidance-counselor",
+        "beasteducation.tutor",
+        "beasthealth.health-advisor",
+        "beastfusion.orchestrator-3",
+        "beastfusion.developer-agent",
+        "beastfusion.reviewer-agent",
+        "beastfusion.observer-agent",
+        "beastfusion.proposal-agent",
+        "beastfusion.outcome-agent"
+      ]
     }
   ]
 }
