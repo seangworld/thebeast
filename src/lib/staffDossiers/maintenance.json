@@ -281,6 +281,19 @@
         "news.workflow.copy-editor",
         "news.workflow.publishing-gate"
       ]
+    },
+    {
+      "date": "2026-10-23",
+      "executor": "Codex",
+      "reason": "Reconciled inactive private Cole/Leila presenter drafts and missing Agency release/configuration; classify Virtual Talent separately, reuse Agency workspace/navigation, add owner-controlled Cole manual workflow and local security/recovery fixtures. Leila deferred, no activation, paid calls or public publishing. Confirmed deployment receipt recorded in Issue292 at handoff.",
+      "version": "Cole Agency manual workflow v1 / Issue292",
+      "evidence": "https://github.com/seangworld/thebeast/issues/292",
+      "sourceDigest": "7fa7691006c695b04fe7e407c03ea4287057a8e469a11fc632a1e6aecac8cb97",
+      "affectedStaffIds": [
+        "agency.cole-mercer",
+        "agency.leila-bautista",
+        "beastfusion.policy.marketing_specialist"
+      ]
     }
   ]
 }

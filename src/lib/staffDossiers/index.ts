@@ -36,7 +36,7 @@ for (const p of developmentAgentProfiles) {
 }
 for (const p of inventory.staff) {
  const d=base(p.id,p.name,p.role,p.departments,[...p.duties],[...p.permissions],[...p.limitations],p.source);
- d.recordKind=p.id.startsWith('support.')?'external':p.id==='atlas'||p.id.startsWith('agency.')?'planned':'system';
+ d.recordKind=p.id.startsWith('support.')?'external':p.id.startsWith('agency.')?'virtual_talent':p.id==='atlas'?'planned':'system';
  d.lifecycle=p.lifecycle as Dossier['lifecycle'];d.aliases=[...p.aliases];d.mission=p.mission;staff.push(d);
 }
 for (const d of staff) {

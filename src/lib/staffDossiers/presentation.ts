@@ -1,6 +1,7 @@
 import type { Dossier, StaffRecordKind } from './types';
 export const staffGroups: readonly {kind:StaffRecordKind;label:string;description:string}[] = [
  {kind:'staff',label:'Actual staff',description:'Named specialists and governed development agents. Status is lifecycle, not verified availability.'},
+ {kind:'virtual_talent',label:'Virtual Talent',description:'Owner-controlled fictional brand identities, separate from operational agents. Cole setup first; Leila deferred.'},
  {kind:'planned',label:'Planned positions & prototypes',description:'Planned positions, historical policy records and backburner prototypes.'},
  {kind:'system',label:'Supporting systems & workflow roles',description:'Automation, governance and contract roles; not additional operational staff.'},
  {kind:'external',label:'External assistants',description:'Owner operating roles; not deployed BeastOS agents.'},

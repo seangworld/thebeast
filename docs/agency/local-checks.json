@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-23",
+  "baseline": "e8c30ad543d3d72550d63492c4a6c6ab58214c7c",
+  "checks": {
+    "exactLockfileInstall": "passed; application package.json/package-lock.json unchanged",
+    "typecheck": "passed",
+    "lint": "passed; no warnings/errors",
+    "applicationTests": "2638 passed, 0 failed",
+    "isolatedSql": "28 passed; retained PR259 tool lock/runtime",
+    "staffDossierCurrent": "passed",
+    "staffDossierBase": "passed against origin/main",
+    "build": "passed; Next 15.5.28",
+    "security": "npm audit gate passed, 0 vulnerabilities"
+  },
+  "limits": [
+    "No real account connection, binding, content/profile approval, public post, paid inference or metrics provider call.",
+    "Live Instagram behavior unverified; production app configuration/account/approved Cole JPEG missing."
+  ],
+  "releaseReceipt": "https://github.com/seangworld/thebeast/issues/292"
+}

@@ -2970,7 +2970,7 @@
     ]
   },
   "beastfusion.policy.marketing_specialist": {
-    "reviewedAt": "2026-10-22",
+    "reviewedAt": "2026-10-23",
     "duties": [
       "owner-approved campaigns",
       "approved public product and content facts",
@@ -2979,7 +2979,8 @@
       "platform-style ad previews",
       "internal provider-neutral distribution plans",
       "qualified traffic acquisition and distribution recommendations for existing assets",
-      "Scheduled marketing is disabled by owner decision before launch: marketing-social and marketing-growth have no recurring deployment schedules. Implementation, data, settings, approval rules and manual controls are retained. Both schedules must be explicitly restored by owner-authorized release when marketing launches; no agent activation is implied."
+      "Scheduled marketing is disabled by owner decision before launch: marketing-social and marketing-growth have no recurring deployment schedules. Implementation, data, settings, approval rules and manual controls are retained. Both schedules must be explicitly restored by owner-authorized release when marketing launches; no agent activation is implied.",
+      "Agency work is owner-directed: the private Agency service persists Cole drafts, exact revision/media/account approvals and manual publication receipts through the existing Meta adapter. This does not create or activate an operational Cole agent, restore marketing schedules or authorize the policy class to publish."
     ],
     "limitations": [
       "publish or schedule without owner approval",
@@ -2990,9 +2991,14 @@
       "treat unavailable metrics as zero",
       "Policy class, not evidence of a separately running agent.",
       "No staff activation or publishing authority is granted by polling/scheduler optimization. Exact revision approval and role/pause/account checks remain mandatory.",
-      "No automatic social publishing/recovery or growth cycles from these removed schedules. Manual authorized actions and visible workspace reads remain available; saved enabled settings do not restore a deployment schedule."
+      "No automatic social publishing/recovery or growth cycles from these removed schedules. Manual authorized actions and visible workspace reads remain available; saved enabled settings do not restore a deployment schedule.",
+      "Agency manual workflow mechanics do not prove live Instagram access or editorial competence; accounts/assets and Meta configuration remain missing. Leila workflow deferred."
     ],
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Cole Agency workflow explicitly separates Virtual Talent from the owner and deterministic services. Existing marketing automation stays disabled; no paid inference."
+      },
       {
         "date": "2026-10-22",
         "summary": "Scheduled marketing is disabled by owner decision before launch: marketing-social and marketing-growth have no recurring deployment schedules. Implementation, data, settings, approval rules and manual controls are retained. Both schedules must be explicitly restored by owner-authorized release when marketing launches; no agent activation is implied."
@@ -3064,6 +3070,12 @@
         "version": "Prelaunch marketing schedules disabled \u2014 exact release status in handoff",
         "summary": "Operating configuration only. The linked handoff records confirmed deployed configuration and live HQ synchronization after this single release, without a receipt deployment. Planned policy record remains planned; no activation or competency claim.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6354572829"
+      },
+      {
+        "date": "2026-10-23",
+        "version": "Cole Agency manual workflow v1",
+        "summary": "Owner-only Agency UI and local mechanical safeguards; no live Instagram publishing/metrics validation or agent activation. Exact confirmed deployment receipt is linked in Issue292.",
+        "url": "https://github.com/seangworld/thebeast/issues/292"
       }
     ]
   },
@@ -5045,5 +5057,165 @@
       "unresolvedReservationsUsd": null,
       "note": "No invoice-confirmed cost record. Unknown is not zero."
     }
+  },
+  "agency.cole-mercer": {
+    "role": "Virtual Talent",
+    "recordKind": "virtual_talent",
+    "mission": "Fictional brand identity under owner control; no autonomous staff authority.",
+    "assignment": "Cole is the current setup focus.",
+    "availability": "Existing inactive private presenter draft verified by read-only production inspection, 2026-10-23.",
+    "target": null,
+    "demonstrated": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "targetRequirement": "Not applicable: Virtual Talent is excluded from operational staff competency grading.",
+    "duties": [
+      "Retain the saved fictional identity, topics and AI disclosure for owner-controlled content.",
+      "Owner performs identity/asset review, approves each exact revision and separately authorizes each public post.",
+      "Existing private Agency workflow and Meta adapter perform deterministic persistence, account checks and receipt handling; no independently running talent agent."
+    ],
+    "strengths": [
+      "Existing private identity draft retained; no redesign or new generation."
+    ],
+    "limitations": [
+      "Cole is the current setup focus.",
+      "Instagram publishing and metrics not live-verified: no connected account; Meta app ID/secret/version missing in production.",
+      "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
+      "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment."
+    ],
+    "blockers": [
+      "Cole needs an owner-approved JPEG and explicit professional Instagram connection/binding before approval or public posting."
+    ],
+    "deferred": [
+      {
+        "title": "Owner setup and separate first-post decision",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "Live account/asset/publishing validation unavailable.",
+        "requiredWork": "Owner supplies approved assets and authorizes account setup separately. Review the exact saved first-post revision before any public post.",
+        "success": "Confirmed account identity, approved immutable content and retained provider receipt; no inferred success.",
+        "cost": "Cost unknown; no paid calls/tests or purchases authorized.",
+        "status": "Owner setup pending"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Cole Agency source/runtime reconciliation and local fixtures",
+        "url": "https://github.com/seangworld/thebeast/issues/292",
+        "kind": "code review",
+        "reviewer": "Codex (executor; not independent live evaluation)",
+        "date": "2026-10-23",
+        "version": "Cole Agency batch / PR259 preserved"
+      }
+    ],
+    "reviewedAt": "2026-10-23",
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Cole is the current setup focus. Classified as Virtual Talent; private inactive presenter draft confirmed. No activation or competency reassessment."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Initial unresolved identity record preserved; later read-only runtime reconciliation supersedes the earlier source-only limitation.",
+        "version": "Issue274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex",
+        "why": "Cole is the current setup focus. Owner-only Agency navigation and manual workflow mechanics; no live publishing or paid validation.",
+        "version": "Issue292"
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Cole Agency manual workflow v1",
+        "summary": "Owner-only Agency UI and local mechanical safeguards; no live Instagram publishing/metrics validation or agent activation. Exact confirmed deployment receipt is linked in Issue292.",
+        "url": "https://github.com/seangworld/thebeast/issues/292"
+      }
+    ]
+  },
+  "agency.leila-bautista": {
+    "role": "Virtual Talent",
+    "recordKind": "virtual_talent",
+    "mission": "Fictional brand identity under owner control; no autonomous staff authority.",
+    "assignment": "Leila remains deferred until Cole works reliably; no Leila operating workflow implemented.",
+    "availability": "Existing inactive private presenter draft verified by read-only production inspection, 2026-10-23.",
+    "target": null,
+    "demonstrated": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "targetRequirement": "Not applicable: Virtual Talent is excluded from operational staff competency grading.",
+    "duties": [
+      "Retain the saved fictional identity, topics and AI disclosure for owner-controlled content.",
+      "Owner performs identity/asset review, approves each exact revision and separately authorizes each public post.",
+      "Existing private Agency workflow and Meta adapter perform deterministic persistence, account checks and receipt handling; no independently running talent agent."
+    ],
+    "strengths": [
+      "Existing private identity draft retained; no redesign or new generation."
+    ],
+    "limitations": [
+      "Leila remains deferred until Cole works reliably; no Leila operating workflow implemented.",
+      "Instagram publishing and metrics not live-verified: no connected account; Meta app ID/secret/version missing in production.",
+      "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
+      "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment."
+    ],
+    "blockers": [
+      "Deferred by owner until Cole\u2019s workflow works reliably."
+    ],
+    "deferred": [
+      {
+        "title": "Leila workflow deferred",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "Live account/asset/publishing validation unavailable.",
+        "requiredWork": "Reuse Cole\u2019s proven configuration and workflow later with separately approved Leila identity and account. No implementation now.",
+        "success": "Confirmed account identity, approved immutable content and retained provider receipt; no inferred success.",
+        "cost": "Cost unknown; no paid calls/tests or purchases authorized.",
+        "status": "Deferred"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Cole Agency source/runtime reconciliation and local fixtures",
+        "url": "https://github.com/seangworld/thebeast/issues/292",
+        "kind": "code review",
+        "reviewer": "Codex (executor; not independent live evaluation)",
+        "date": "2026-10-23",
+        "version": "Cole Agency batch / PR259 preserved"
+      }
+    ],
+    "reviewedAt": "2026-10-23",
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Leila remains deferred until Cole works reliably; no Leila operating workflow implemented. Classified as Virtual Talent; private inactive presenter draft confirmed. No activation or competency reassessment."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Initial unresolved identity record preserved; later read-only runtime reconciliation supersedes the earlier source-only limitation.",
+        "version": "Issue274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex",
+        "why": "Leila remains deferred until Cole works reliably; no Leila operating workflow implemented. Owner-only Agency navigation and manual workflow mechanics; no live publishing or paid validation.",
+        "version": "Issue292"
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Cole Agency manual workflow v1",
+        "summary": "Owner-only Agency UI and local mechanical safeguards; no live Instagram publishing/metrics validation or agent activation. Exact confirmed deployment receipt is linked in Issue292.",
+        "url": "https://github.com/seangworld/thebeast/issues/292"
+      }
+    ]
   }
 }
