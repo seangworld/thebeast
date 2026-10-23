@@ -21,7 +21,7 @@ function boundedText(value: string | null | undefined, fallback: string) {
 function ageBand(birthday: string | null | undefined, today = new Date()) {
   if (!birthday || !/^\d{4}-\d{2}-\d{2}$/.test(birthday)) return "age not provided";
   const born = new Date(`${birthday}T00:00:00Z`);
-  if (Number.isNaN(born.getTime()) || born > today) return "age not provided";
+  if (Number.isNaN(born.getTime()) || born.toISOString().slice(0, 10) !== birthday || born > today) return "age not provided";
   let age = today.getUTCFullYear() - born.getUTCFullYear();
   const beforeBirthday = today.getUTCMonth() < born.getUTCMonth()
     || (today.getUTCMonth() === born.getUTCMonth() && today.getUTCDate() < born.getUTCDate());
@@ -56,7 +56,13 @@ export function validateTutorImageAttachment(value: unknown): LearningImageAttac
     throw new Error("Use a JPEG, PNG, or WebP homework image.");
   }
   const encoded = dataUrl.slice(dataUrl.indexOf(",") + 1);
-  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new Error("The homework image is not valid base64 data.");
+  if (encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new Error("The homework image is not valid base64 data.");
+  // Reject nonzero unused padding bits instead of silently accepting altered data.
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  if ((encoded.endsWith("==") && (alphabet.indexOf(encoded[encoded.length - 3]) & 15) !== 0)
+    || (encoded.endsWith("=") && !encoded.endsWith("==") && (alphabet.indexOf(encoded[encoded.length - 2]) & 3) !== 0)) {
+    throw new Error("The homework image is not valid base64 data.");
+  }
   const padding = encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0;
   const decodedBytes = Math.floor((encoded.length * 3) / 4) - padding;
   if (!encoded || decodedBytes > maximumTutorImageBytes) throw new Error("Homework images must be 3 MB or smaller.");

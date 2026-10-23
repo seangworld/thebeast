@@ -33,3 +33,18 @@ test("conversation-only correction survives followup and does not claim an appro
   assert.equal(guidancePlanningConstraint(followup)?.statement, context.message.text);
   assert.deepEqual(guidancePlanningState({ ...context, professionalId: "beasthealth.health-advisor" }, state), state);
 });
+
+
+test("latest explicit minute limit replaces older hours without altering saved availability", () => {
+  const prior = guidancePlanningState(context, state);
+  const current = { ...context, state: prior, recentMessages: [context.message], message: { ...context.message, id: "minute-correction", text: "I only have 30 minutes now." } };
+  assert.equal(guidancePlanningConstraint(current)?.sourceMessageId, "minute-correction");
+  assert.equal(guidancePlanningConstraint(current)?.statement, current.message.text);
+  assert.equal(guidancePlanningConstraint(current)?.duration, "not_inferred");
+  const updated = guidancePlanningState(current, { ...prior, currentGoal: "Use 90 minutes per week for IT." });
+  assert.doesNotMatch(updated.currentGoal!, /90 minutes per week/);
+  assert.equal(updated.corrections.filter(text => text.startsWith("Current conversational planning constraint")).length, 1);
+  assert.ok(updated.corrections.some(text => text.includes("30 minutes now")));
+  assert.deepEqual(current.structuredRecords, context.structuredRecords);
+  assert.equal(guidancePlanningConstraint({ ...current, professionalId: "beasteducation.tutor" }), null);
+});
