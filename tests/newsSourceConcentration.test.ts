@@ -41,21 +41,30 @@ test("missing, malformed, duplicate-lane and future evidence fail closed", () =>
 });
 
 test("staleness is computed from snapshot time rather than a server freshness claim", () => {
-  const value = payload(); value.generatedAt = "2026-09-14T11:44:00Z";
+  const value = payload(); value.generatedAt = "2026-09-14T11:39:00Z";
   assert.equal(parseNewsSourceConcentration({ ...value, freshness: "fresh" }, now)?.freshness, "stale");
 });
 
 
-test("20-story columns are accepted and overflow is rejected", () => {
+test("15-story columns are accepted and overflow is rejected", () => {
   const value = payload();
   for (const lane of value.lanes) {
-    lane.poolHeadlineCount = 20;
-    lane.visibleHeadlineCount = 20;
+    lane.poolHeadlineCount = 15;
+    lane.visibleHeadlineCount = 15;
     for (const key of ["publishers", "families", "poolPublishers", "poolFamilies"] as const) {
-      lane[key] = [{ name: "alpha", count: 15, share: 0.75 }, { name: "beta", count: 5, share: 0.25 }];
+      lane[key] = [{ name: "alpha", count: 10, share: 2 / 3 }, { name: "beta", count: 5, share: 1 / 3 }];
     }
   }
   assert.ok(parseNewsSourceConcentration(value, now));
-  value.lanes[0].visibleHeadlineCount = 21;
+  value.lanes[0].visibleHeadlineCount = 16;
   assert.equal(parseNewsSourceConcentration(value, now), null);
+});
+
+// The source allows cadence + worker runtime/jitter; HQ must use the same boundary.
+test("freshness preserves the existing twenty-minute source policy and rejects invalid clocks", () => {
+  const value = payload();
+  value.generatedAt = "2026-09-14T11:40:00Z";
+  assert.equal(parseNewsSourceConcentration(value, now)?.freshness, "fresh");
+  assert.equal(parseNewsSourceConcentration(value, new Date("2026-09-14T12:00:00.001Z"))?.freshness, "stale");
+  assert.equal(parseNewsSourceConcentration(value, new Date("invalid")), null);
 });

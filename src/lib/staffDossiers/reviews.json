@@ -3466,5 +3466,1584 @@
         ]
       }
     ]
+  },
+  "news.source-scout": {
+    "role": "Owner-paused source discovery workflow",
+    "mission": "Source discovery and candidate review",
+    "duties": [
+      "Source discovery and candidate review",
+      "Existing headline refresh remains separate from paused discovery.",
+      "source discovery",
+      "source health",
+      "coverage expansion",
+      "Retain existing source discovery and candidate qualification implementation; pause returns before registry/provider/network work. Readiness now reports paused and unscheduled even with configured credentials."
+    ],
+    "recordKind": "system",
+    "lifecycle": "paused",
+    "assignment": "Paused by owner; no discovery, new sources/geographies or automatic resumption.",
+    "availability": "Unknown live staff availability; Paused \u2014 deployed policy and configuration read-only verification in handoff.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting paused workflow; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain existing source discovery and candidate qualification implementation; pause returns before registry/provider/network work. Readiness now reports paused and unscheduled even with configured credentials."
+    ],
+    "limitations": [
+      "New source/geography discovery paused by owner; roster does not reactivate scouts.",
+      "Normal headline refresh must remain intact.",
+      "Newsroom Source Scout contract role is included here, not a second agent or activation.",
+      "Original attributable discovery/correction outputs with independently checked source qualification are not established by retained release summaries.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Owner pause remains in force."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain existing source discovery and candidate qualification implementation; pause returns before registry/provider/network work. Readiness now reports paused and unscheduled even with configured credentials. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain existing source discovery and candidate qualification implementation; pause returns before registry/provider/network work. Readiness now reports paused and unscheduled even with configured credentials. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/app/api/news/source-scout/route.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/app/api/news/source-scout/route.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Source discovery and candidate review",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "Source discovery and candidate review",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "Existing headline refresh remains separate from paused discovery.",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "source discovery",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "source health",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "coverage expansion",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/app/api/news/source-scout/route.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain existing source discovery and candidate qualification implementation; pause returns before registry/provider/network work. Readiness now reports paused and unscheduled even with configured credentials. No L1\u2013L5 staff level applies to this supporting record. Original attributable discovery/correction outputs with independently checked source qualification are not established by retained release summaries.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "Original attributable discovery/correction outputs with independently checked source qualification are not established by retained release summaries.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
+  },
+  "news.geo-scout": {
+    "role": "Owner-paused geography discovery workflow",
+    "mission": "Coverage/geography discovery",
+    "duties": [
+      "Coverage/geography discovery",
+      "Existing headline refresh remains separate from paused discovery.",
+      "Retain existing geography/coverage discovery implementation; pause returns before discovery/activation. Readiness denies scheduling and public activation while paused. No new geographies or sources."
+    ],
+    "recordKind": "system",
+    "lifecycle": "paused",
+    "assignment": "Paused by owner; no discovery, new sources/geographies or automatic resumption.",
+    "availability": "Unknown live staff availability; Paused \u2014 deployed policy and configuration read-only verification in handoff.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting paused workflow; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain existing geography/coverage discovery implementation; pause returns before discovery/activation. Readiness denies scheduling and public activation while paused. No new geographies or sources."
+    ],
+    "limitations": [
+      "New source/geography discovery paused by owner; roster does not reactivate scouts.",
+      "Normal headline refresh must remain intact.",
+      "Coverage calculations and authority labels do not establish original attributed geographic research or correction judgment.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Owner pause remains in force."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain existing geography/coverage discovery implementation; pause returns before discovery/activation. Readiness denies scheduling and public activation while paused. No new geographies or sources. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain existing geography/coverage discovery implementation; pause returns before discovery/activation. Readiness denies scheduling and public activation while paused. No new geographies or sources. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/app/api/news/geo-scout/route.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/app/api/news/geo-scout/route.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Coverage/geography discovery",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "Coverage/geography discovery",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "Existing headline refresh remains separate from paused discovery.",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/app/api/news/geo-scout/route.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain existing geography/coverage discovery implementation; pause returns before discovery/activation. Readiness denies scheduling and public activation while paused. No new geographies or sources. No L1\u2013L5 staff level applies to this supporting record. Coverage calculations and authority labels do not establish original attributed geographic research or correction judgment.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "Coverage calculations and authority labels do not establish original attributed geographic research or correction judgment.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
+  },
+  "news.workflow.assignment-desk": {
+    "role": "Contract-only newsroom intake and routing",
+    "mission": "Newsroom workflow / recommend",
+    "duties": [
+      "coverage gaps",
+      "story intake",
+      "cluster routing",
+      "Retain the non-executing intake/coverage/cluster-routing contract. Underlying deterministic headline collection remains quarter-hour with Top15 per column; no independent assignment agent is activated."
+    ],
+    "recordKind": "system",
+    "lifecycle": "planned",
+    "assignment": "Contract-only supporting workflow; not separately dispatched intelligent staff.",
+    "availability": "Unknown live staff availability; Non-executing contract; no independent operational staff availability.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting contract-only record; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain the non-executing intake/coverage/cluster-routing contract. Underlying deterministic headline collection remains quarter-hour with Top15 per column; no independent assignment agent is activated."
+    ],
+    "limitations": [
+      "Contract-only workflow role; not a separately deployed autonomous agent.",
+      "No public publishing, new source activation or paid research authority.",
+      "No independently executed role-attributable assignment/delivery assessment.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Contract-only record, not a separately deployed intelligent agent."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain the non-executing intake/coverage/cluster-routing contract. Underlying deterministic headline collection remains quarter-hour with Top15 per column; no independent assignment agent is activated. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain the non-executing intake/coverage/cluster-routing contract. Underlying deterministic headline collection remains quarter-hour with Top15 per column; no independent assignment agent is activated. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Newsroom workflow / recommend",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "coverage gaps",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "story intake",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "cluster routing",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain the non-executing intake/coverage/cluster-routing contract. Underlying deterministic headline collection remains quarter-hour with Top15 per column; no independent assignment agent is activated. No L1\u2013L5 staff level applies to this supporting record. No independently executed role-attributable assignment/delivery assessment.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "No independently executed role-attributable assignment/delivery assessment.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
+  },
+  "news.workflow.reporter-researcher": {
+    "role": "Contract-only newsroom research",
+    "mission": "Newsroom workflow / research",
+    "duties": [
+      "bounded research queries",
+      "cited URL discovery",
+      "cluster research",
+      "Retain bounded cited-research contract. Provider-capable Fact Desk components remain paused and do not establish this contract persona as operational staff."
+    ],
+    "recordKind": "system",
+    "lifecycle": "planned",
+    "assignment": "Contract-only supporting workflow; not separately dispatched intelligent staff.",
+    "availability": "Unknown live staff availability; Non-executing contract; no independent operational staff availability.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting contract-only record; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain bounded cited-research contract. Provider-capable Fact Desk components remain paused and do not establish this contract persona as operational staff."
+    ],
+    "limitations": [
+      "Contract-only workflow role; not a separately deployed autonomous agent.",
+      "No public publishing, new source activation or paid research authority.",
+      "No separately attributed original source-inspection, synthesis, correction and reviewed delivery packet.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Contract-only record, not a separately deployed intelligent agent."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain bounded cited-research contract. Provider-capable Fact Desk components remain paused and do not establish this contract persona as operational staff. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain bounded cited-research contract. Provider-capable Fact Desk components remain paused and do not establish this contract persona as operational staff. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Newsroom workflow / research",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "bounded research queries",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "cited URL discovery",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "cluster research",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain bounded cited-research contract. Provider-capable Fact Desk components remain paused and do not establish this contract persona as operational staff. No L1\u2013L5 staff level applies to this supporting record. No separately attributed original source-inspection, synthesis, correction and reviewed delivery packet.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "No separately attributed original source-inspection, synthesis, correction and reviewed delivery packet.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
+  },
+  "news.workflow.fact-checker": {
+    "role": "Contract-only newsroom verification",
+    "mission": "Newsroom workflow / verify",
+    "duties": [
+      "claim/source binding",
+      "evidence sufficiency",
+      "contradiction detection",
+      "Retain claim/source binding, evidence sufficiency and contradiction contract. Deterministic malformed-feed and freshness checks are implementation controls, not this role\u2019s editorial judgment."
+    ],
+    "recordKind": "system",
+    "lifecycle": "planned",
+    "assignment": "Contract-only supporting workflow; not separately dispatched intelligent staff.",
+    "availability": "Unknown live staff availability; Non-executing contract; no independent operational staff availability.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting contract-only record; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain claim/source binding, evidence sufficiency and contradiction contract. Deterministic malformed-feed and freshness checks are implementation controls, not this role\u2019s editorial judgment."
+    ],
+    "limitations": [
+      "Contract-only workflow role; not a separately deployed autonomous agent.",
+      "No public publishing, new source activation or paid research authority.",
+      "No original attributed defect/miss assessment and justified evidence-verification verdict.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Contract-only record, not a separately deployed intelligent agent."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain claim/source binding, evidence sufficiency and contradiction contract. Deterministic malformed-feed and freshness checks are implementation controls, not this role\u2019s editorial judgment. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain claim/source binding, evidence sufficiency and contradiction contract. Deterministic malformed-feed and freshness checks are implementation controls, not this role\u2019s editorial judgment. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Newsroom workflow / verify",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "claim/source binding",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "evidence sufficiency",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "contradiction detection",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain claim/source binding, evidence sufficiency and contradiction contract. Deterministic malformed-feed and freshness checks are implementation controls, not this role\u2019s editorial judgment. No L1\u2013L5 staff level applies to this supporting record. No original attributed defect/miss assessment and justified evidence-verification verdict.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "No original attributed defect/miss assessment and justified evidence-verification verdict.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
+  },
+  "news.workflow.standards-editor": {
+    "role": "Contract-only newsroom evidence standards",
+    "mission": "Newsroom workflow / block",
+    "duties": [
+      "rights qualification",
+      "evidence policy",
+      "standards gate",
+      "Retain evidence/rights blocking contract and existing publication boundaries. No licensed sources, new sources, geographies or permissions added."
+    ],
+    "recordKind": "system",
+    "lifecycle": "planned",
+    "assignment": "Contract-only supporting workflow; not separately dispatched intelligent staff.",
+    "availability": "Unknown live staff availability; Non-executing contract; no independent operational staff availability.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting contract-only record; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain evidence/rights blocking contract and existing publication boundaries. No licensed sources, new sources, geographies or permissions added."
+    ],
+    "limitations": [
+      "Contract-only workflow role; not a separately deployed autonomous agent.",
+      "No public publishing, new source activation or paid research authority.",
+      "Policy/rights gates and local fixtures do not establish attributable intelligent standards review.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Contract-only record, not a separately deployed intelligent agent."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain evidence/rights blocking contract and existing publication boundaries. No licensed sources, new sources, geographies or permissions added. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain evidence/rights blocking contract and existing publication boundaries. No licensed sources, new sources, geographies or permissions added. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Newsroom workflow / block",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "rights qualification",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "evidence policy",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "standards gate",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain evidence/rights blocking contract and existing publication boundaries. No licensed sources, new sources, geographies or permissions added. No L1\u2013L5 staff level applies to this supporting record. Policy/rights gates and local fixtures do not establish attributable intelligent standards review.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "Policy/rights gates and local fixtures do not establish attributable intelligent standards review.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
+  },
+  "news.workflow.fact-desk-editor": {
+    "role": "Contract-only Fact Desk review coordination",
+    "mission": "Newsroom workflow / prepare",
+    "duties": [
+      "Fact Brief candidate",
+      "revision lifecycle",
+      "review queue",
+      "Retain candidate/revision/review-queue contract. Fact Desk AI generation, automated QA and publishing stay paused; existing published archive reads remain available."
+    ],
+    "recordKind": "system",
+    "lifecycle": "planned",
+    "assignment": "Contract-only supporting workflow; not separately dispatched intelligent staff.",
+    "availability": "Unknown live staff availability; Non-executing contract; no independent operational staff availability.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting contract-only record; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain candidate/revision/review-queue contract. Fact Desk AI generation, automated QA and publishing stay paused; existing published archive reads remain available."
+    ],
+    "limitations": [
+      "Contract-only workflow role; not a separately deployed autonomous agent.",
+      "No public publishing, new source activation or paid research authority.",
+      "No separately attributable contextual editing, correction and independently verified outcome assessment.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Contract-only record, not a separately deployed intelligent agent."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain candidate/revision/review-queue contract. Fact Desk AI generation, automated QA and publishing stay paused; existing published archive reads remain available. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain candidate/revision/review-queue contract. Fact Desk AI generation, automated QA and publishing stay paused; existing published archive reads remain available. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Newsroom workflow / prepare",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "Fact Brief candidate",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "revision lifecycle",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "review queue",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain candidate/revision/review-queue contract. Fact Desk AI generation, automated QA and publishing stay paused; existing published archive reads remain available. No L1\u2013L5 staff level applies to this supporting record. No separately attributable contextual editing, correction and independently verified outcome assessment.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "No separately attributable contextual editing, correction and independently verified outcome assessment.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
+  },
+  "news.workflow.copy-editor": {
+    "role": "Contract-only newsroom copy quality",
+    "mission": "Newsroom workflow / block",
+    "duties": [
+      "headline spelling and grammar",
+      "entity-name correctness",
+      "facts-only tone",
+      "duplicate phrasing",
+      "Fact Brief proofreading",
+      "citation/source consistency",
+      "final editorial QA",
+      "Retain language/entity/facts-only QA contract. Feed text parsing and local duplicate geography isolation were corrected in deterministic processing, not performed by a new editorial agent."
+    ],
+    "recordKind": "system",
+    "lifecycle": "planned",
+    "assignment": "Contract-only supporting workflow; not separately dispatched intelligent staff.",
+    "availability": "Unknown live staff availability; Non-executing contract; no independent operational staff availability.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting contract-only record; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain language/entity/facts-only QA contract. Feed text parsing and local duplicate geography isolation were corrected in deterministic processing, not performed by a new editorial agent."
+    ],
+    "limitations": [
+      "Contract-only workflow role; not a separately deployed autonomous agent.",
+      "No public publishing, new source activation or paid research authority.",
+      "No role-attributed original copy-review outputs, factual misses/corrections or independent correctness evaluation.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Contract-only record, not a separately deployed intelligent agent."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain language/entity/facts-only QA contract. Feed text parsing and local duplicate geography isolation were corrected in deterministic processing, not performed by a new editorial agent. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain language/entity/facts-only QA contract. Feed text parsing and local duplicate geography isolation were corrected in deterministic processing, not performed by a new editorial agent. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Newsroom workflow / block",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "headline spelling and grammar",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "entity-name correctness",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "facts-only tone",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "duplicate phrasing",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "Fact Brief proofreading",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "citation/source consistency",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "final editorial QA",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain language/entity/facts-only QA contract. Feed text parsing and local duplicate geography isolation were corrected in deterministic processing, not performed by a new editorial agent. No L1\u2013L5 staff level applies to this supporting record. No role-attributed original copy-review outputs, factual misses/corrections or independent correctness evaluation.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "No role-attributed original copy-review outputs, factual misses/corrections or independent correctness evaluation.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
+  },
+  "news.workflow.publishing-gate": {
+    "role": "Contract-only newsroom publication eligibility",
+    "mission": "Newsroom workflow / gate",
+    "duties": [
+      "owner approval verification",
+      "content fingerprint verification",
+      "publication eligibility",
+      "Retain approval/fingerprint/evidence eligibility contract. No live publication probe or paid dispatch; headline refresh and existing watchdog continue without new publishing authority."
+    ],
+    "recordKind": "system",
+    "lifecycle": "planned",
+    "assignment": "Contract-only supporting workflow; not separately dispatched intelligent staff.",
+    "availability": "Unknown live staff availability; Non-executing contract; no independent operational staff availability.",
+    "demonstrated": null,
+    "target": null,
+    "released": null,
+    "lastEvaluatedAt": null,
+    "latestAssessment": null,
+    "reviewedAt": "2026-10-23",
+    "targetRequirement": "Not applicable \u2014 supporting contract-only record; excluded from intelligent staff competency grading. Authority/autonomy labels are not L1\u2013L5 ability.",
+    "levelMapping": null,
+    "strengths": [
+      "Retain approval/fingerprint/evidence eligibility contract. No live publication probe or paid dispatch; headline refresh and existing watchdog continue without new publishing authority."
+    ],
+    "limitations": [
+      "Contract-only workflow role; not a separately deployed autonomous agent.",
+      "No public publishing, new source activation or paid research authority.",
+      "Deterministic gate mechanics do not demonstrate intelligent editorial acceptance or grant publication authority.",
+      "October23 source review/local fixtures verify mechanics only, not live editorial judgment. Historical release evidence is preserved; no new behavioral evaluation."
+    ],
+    "blockers": [
+      "Contract-only record, not a separately deployed intelligent agent."
+    ],
+    "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Retain approval/fingerprint/evidence eligibility contract. No live publication probe or paid dispatch; headline refresh and existing watchdog continue without new publishing authority. Supporting-system classification and historical evidence retained; no competency grade or activation."
+      },
+      {
+        "date": "2026-10-21",
+        "summary": "Existing role recorded; no new abilities or activation."
+      }
+    ],
+    "history": [
+      {
+        "date": "2026-10-21",
+        "executor": "Codex",
+        "why": "Centralized existing identity and evidence without inferring competency or availability.",
+        "version": "Issue #274"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel workers and integration lead",
+        "why": "Retain approval/fingerprint/evidence eligibility contract. No live publication probe or paid dispatch; headline refresh and existing watchdog continue without new publishing authority. Reconciled actual implementation versus deterministic jobs and contract records; preserved existing permissions, aliases, accounting and null behavioral dates.",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f; exact deployed release in permanent handoff"
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "Existing profile / source",
+        "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+        "kind": "source registry",
+        "reviewer": "Codex source reconciliation (executor)",
+        "date": "2026-10-21",
+        "version": "Issue #274 initial import"
+      },
+      {
+        "title": "News bounded identity, workflow and source audit",
+        "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+      },
+      {
+        "title": "Coordinated News release and read-only deployed configuration verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+        "kind": "release",
+        "reviewer": "Codex integration lead; no agent dispatch",
+        "date": "2026-10-23",
+        "version": "Exact merge/deployment verification recorded after release"
+      }
+    ],
+    "assessments": [
+      {
+        "role": "Newsroom workflow / gate",
+        "summary": "Source-defined duties; acceptance remains unassessed. No test count or lifecycle is converted to a competency level.",
+        "criteria": [
+          {
+            "criterion": "owner approval verification",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "content fingerprint verification",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          },
+          {
+            "criterion": "publication eligibility",
+            "result": "not tested",
+            "reason": "No reviewed role-specific assessment linked for this criterion."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Existing profile / source",
+            "url": "https://github.com/seangworld/seangworld.com/blob/8eb8c87d034ec4e379b0ae0ddcba241aad4581a6/lib/news/newsroom-staff.ts",
+            "kind": "source registry",
+            "reviewer": "Codex source reconciliation (executor)",
+            "date": "2026-10-21",
+            "version": "Issue #274 initial import"
+          }
+        ]
+      },
+      {
+        "role": "Supporting workflow/contract source reconciliation \u2014 not behavioral grading",
+        "summary": "Retain approval/fingerprint/evidence eligibility contract. No live publication probe or paid dispatch; headline refresh and existing watchdog continue without new publishing authority. No L1\u2013L5 staff level applies to this supporting record. Deterministic gate mechanics do not demonstrate intelligent editorial acceptance or grant publication authority.",
+        "criteria": [
+          {
+            "criterion": "Source, configuration and mechanical controls",
+            "result": "not applicable",
+            "reason": "Engineering evidence is separate from intelligent role performance; no behavioral evaluation performed."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "News bounded identity, workflow and source audit",
+            "url": "https://github.com/seangworld/seangworld.com/blob/76f9da4760738b1f001116b8e7e8cbcbd926210f/docs/news-department-20261023/REPORT.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated workers and integration lead; not behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "76f9da4760738b1f001116b8e7e8cbcbd926210f"
+          }
+        ]
+      }
+    ],
+    "deferred": [
+      {
+        "title": "Preserve bounded workflow and attributable evidence requirements",
+        "priority": "normal",
+        "desiredLevel": null,
+        "gap": "Deterministic gate mechanics do not demonstrate intelligent editorial acceptance or grant publication authority.",
+        "requiredWork": "Preserve current pause/contract boundaries and legitimate retained evidence. Any future staff competency claim needs original role-attributed inputs/outputs, source provenance, corrections and independently known outcomes. No activation or paid evaluation requested.",
+        "success": "Operational/configuration claims match deployed evidence; deterministic jobs and contract-only records remain outside staff grading.",
+        "cost": "Cost unknown for future behavioral validation; no paid calls, tests or new services scheduled.",
+        "status": "Bounded no-cost audit complete; evidence limitation retained."
+      }
+    ],
+    "releases": [
+      {
+        "date": "2026-10-23",
+        "version": "Single coordinated News/HQ batch; exact status in handoff",
+        "summary": "Scoped deterministic source fixes, truthful paused/configured projections and same-batch canonical records. Quarter-hour headlines/Top15, paused scouts, existing watchdog and no expansion preserved. No installer publication or intelligent competency certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001"
+      }
+    ],
+    "costs": {
+      "confirmedChargesUsd": null,
+      "usageEstimateUsd": null,
+      "unresolvedReservationsUsd": null,
+      "note": "No invoice-confirmed cost record. Unknown is not zero."
+    }
   }
 }

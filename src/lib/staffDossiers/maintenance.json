@@ -262,6 +262,25 @@
         "beasteducation.tutor",
         "beasthealth.health-advisor"
       ]
+    },
+    {
+      "date": "2026-10-23",
+      "executor": "Codex isolated News workers and integration lead",
+      "reason": "Reconcile nine existing News supporting records with actual paused scout and contract-only implementation; preserve null behavioral grades/dates, permissions, aliases and accounting. Document bounded headline/pause/freshness and HQ projection fixes with no activation or source/geography expansion.",
+      "version": "News76f9da4760738b1f001116b8e7e8cbcbd926210f; coordinated HQ batch",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374912001",
+      "sourceDigest": "36d8fcd03deeac970222b9c9baf9f2d89480723ff9d187b9cb8e95368a6d394d",
+      "affectedStaffIds": [
+        "news.source-scout",
+        "news.geo-scout",
+        "news.workflow.assignment-desk",
+        "news.workflow.reporter-researcher",
+        "news.workflow.fact-checker",
+        "news.workflow.standards-editor",
+        "news.workflow.fact-desk-editor",
+        "news.workflow.copy-editor",
+        "news.workflow.publishing-gate"
+      ]
     }
   ]
 }

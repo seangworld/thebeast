@@ -42,13 +42,14 @@ export function parseNewsSourceConcentration(value: unknown, now = new Date()): 
     || ![record.totalHeadlineCount, record.totalFeedCount, record.totalPublisherCount].every(count)
     || !Array.isArray(record.lanes) || record.lanes.length !== 2) return null;
   const timestamp = Date.parse(record.generatedAt);
-  if (!Number.isFinite(timestamp) || timestamp > now.getTime()) return null;
+  const nowMs = now.getTime();
+  if (!Number.isFinite(timestamp) || !Number.isFinite(nowMs) || timestamp > nowMs) return null;
   const lanes: NewsSourceConcentration["lanes"] = [];
   for (const raw of record.lanes) {
     const lane = object(raw);
     if (!lane || (lane.scope !== "world" && lane.scope !== "usa") || lanes.some((row) => row.scope === lane.scope)
       || !count(lane.poolHeadlineCount) || !count(lane.poolFeedCount) || !count(lane.poolPublisherCount)
-      || !count(lane.visibleHeadlineCount) || lane.visibleHeadlineCount > 20 || !count(lane.visiblePublisherCount)
+      || !count(lane.visibleHeadlineCount) || lane.visibleHeadlineCount > 15 || !count(lane.visiblePublisherCount)
       || lane.visibleHeadlineCount > lane.poolHeadlineCount
       || !shares(lane.publishers, lane.visibleHeadlineCount) || !shares(lane.families, lane.visibleHeadlineCount)
       || !shares(lane.poolPublishers, lane.poolHeadlineCount) || !shares(lane.poolFamilies, lane.poolHeadlineCount)
@@ -58,7 +59,7 @@ export function parseNewsSourceConcentration(value: unknown, now = new Date()): 
       visiblePublisherCount: lane.visiblePublisherCount, publishers: lane.publishers, families: lane.families,
       poolPublishers: lane.poolPublishers, poolFamilies: lane.poolFamilies });
   }
-  return { generatedAt: record.generatedAt, freshness: now.getTime() - timestamp <= 15 * 60_000 ? "fresh" : "stale",
+  return { generatedAt: record.generatedAt, freshness: nowMs - timestamp <= 20 * 60_000 ? "fresh" : "stale",
     totalHeadlineCount: record.totalHeadlineCount as number, totalFeedCount: record.totalFeedCount as number,
     totalPublisherCount: record.totalPublisherCount as number, lanes };
 }
