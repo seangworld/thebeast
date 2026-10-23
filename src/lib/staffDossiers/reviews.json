@@ -1125,199 +1125,6 @@
     ],
     "assignment": "Coordinate permitted specialist work and owner-approved objectives."
   },
-  "beastfusion.policy.product_specialist": {
-    "recordKind": "planned",
-    "lifecycle": "planned",
-    "role": "Historical / planned policy class \u2014 Duties covered by existing staff",
-    "mission": "Duties covered by existing staff. Historical/planned product-scoped policy record; no separately operational Product Specialist implementation is established.",
-    "assignment": "Duties covered by existing staff: Orchestrator 3.0 / existing Orchestrator 2.x intake owns approved scope and product context; Developer Agent owns bounded implementation and validation evidence; Research + Planning / Proposal Agent owns bounded research when needed; Reviewer Agent owns independent exact-candidate and Product Completeness checks. Sean retains authorization, material decisions, acceptance and release authority. No Product Specialist assignment or activation.",
-    "availability": "Unknown \u2014 no separate Product Specialist runtime, assignment, or live execution evidence found in reviewed sources.",
-    "duties": [
-      "Approved product/package/repository intake and Product Truth context \u2192 beastfusion.orchestrator-3 via existing Orchestrator 2.x intake.",
-      "Bounded product-owned repository implementation, ownership preservation and validation evidence \u2192 beastfusion.developer-agent.",
-      "Bounded product requirements research/options, only if needed \u2192 beastfusion.proposal-agent.",
-      "Independent exact-candidate acceptance, evidence and Product Completeness checks \u2192 beastfusion.reviewer-agent.",
-      "Scope approval, protected UI/material exceptions, destructive actions and release authority \u2192 Sean, through existing gates."
-    ],
-    "target": null,
-    "demonstrated": null,
-    "released": null,
-    "targetRequirement": "No numeric competency target warranted for an unimplemented policy class. Any future implementation must have a named owner-approved product/package/repository, bounded tools/data/duration/revocation, current Product Truth and architecture context, explicit exclusions, validation and exact-candidate evidence, independent review, and separate release/destructive/UI gates. It must show a missing responsibility not already served by existing staff.",
-    "lastEvaluatedAt": null,
-    "latestAssessment": null,
-    "reviewedAt": "2026-10-22",
-    "recentChanges": [
-      {
-        "date": "2026-10-22",
-        "summary": "Confirmed live HQ synchronization of the completed responsibility mapping. Dossier documentation release only; no new agent, activation, authority or competency claim."
-      },
-      {
-        "date": "2026-10-22",
-        "summary": "Duties covered by existing staff. Responsibility mapping completed in the four existing staff dossiers; historical/planned policy_only record retained. No activation, authority expansion or competency increase."
-      },
-      {
-        "date": "2026-10-22",
-        "summary": "No-cost source audit: policy_only remains planned; consolidate overlapping duties with existing staff. No new agent, implementation, activation or competency assessment."
-      }
-    ],
-    "strengths": [
-      "Explicit policy boundaries already exist.",
-      "Developer assignment gate and commercial runner provide concrete implementation paths for bounded product work; this does not prove live staff competence."
-    ],
-    "limitations": [
-      "No dedicated Product Specialist executable, prompt, identity/profile, assignment adapter, tests, execution ledger or capability contract found in reviewed current-main sources.",
-      "Exact-name/id search in BeastFusion main found only the shared registry and its policy documentation; the checked commercial-runtime boundary lineage has the same references. Absence claim is limited to reviewed tracked sources.",
-      "Six HQ development profiles are Orchestrator, Observer, Proposal, Developer, Reviewer and Outcome; none is a Product Specialist profile.",
-      "Registry policy_only alone is not proof of absent implementation for every class: Developer and Orchestrator also retain that policy label but have concrete code. This finding depends on code and evidence reconciliation.",
-      "Product-specific expertise and reliable real-world performance remain unassessed; code and fixtures do not demonstrate them."
-    ],
-    "blockers": [
-      "No unique missing operational responsibility or approved activation package identified.",
-      "HQ synchronization confirmed for PR #282, main c24c82e97228d01c90dc53115e66325df082cdce, production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb. Audit closed; no separate agent development or activation scheduled."
-    ],
-    "assessments": [
-      {
-        "role": "Product Specialist source/overlap audit \u2014 not a competency evaluation",
-        "summary": "Recommend consolidation with existing roles, retaining planned policy identity. No evidence justifies a new autonomous agent.",
-        "criteria": [
-          {
-            "criterion": "Dedicated implementation exists",
-            "result": "not applicable",
-            "reason": "Policy-only declaration found; no dedicated implementation/evidence found in audited sources. This records implementation status, not a failed live test."
-          },
-          {
-            "criterion": "Existing staff cover intended bounded product duties",
-            "result": "pass",
-            "reason": "Orchestrator supplies authorized scope/Product Truth and validation contract; Developer checks package, owner authorization, repository, permitted scope and preserved changes, then implements/validates. Proposal covers bounded research; Reviewer checks exact candidate and Product Completeness. Source-level responsibility coverage only, not live performance."
-          },
-          {
-            "criterion": "Separate Product Specialist live competency demonstrated",
-            "result": "not tested",
-            "reason": "No operational identity or historical role-specific execution evidence found; no paid or new inference testing performed."
-          }
-        ],
-        "evidence": [
-          {
-            "title": "Product Specialist policy and default-deny assignment gates",
-            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/state/shared-agent-registry.json",
-            "kind": "source registry",
-            "reviewer": "Codex source audit (executor; no independent review)",
-            "date": "2026-10-22",
-            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
-          },
-          {
-            "title": "Policy classes are not active identities",
-            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/docs/shared-agent-registry.md",
-            "kind": "source registry",
-            "reviewer": "Codex source audit (executor; no independent review)",
-            "date": "2026-10-22",
-            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
-          },
-          {
-            "title": "Developer bounded product implementation and Product Truth context",
-            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/docs/developer-agent.md",
-            "kind": "code review",
-            "reviewer": "Codex source audit (executor; no independent review)",
-            "date": "2026-10-22",
-            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
-          },
-          {
-            "title": "Concrete Developer assignment authorization and scope checks",
-            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/developer-agent.mjs",
-            "kind": "code review",
-            "reviewer": "Codex source audit (executor; no independent review)",
-            "date": "2026-10-22",
-            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
-          },
-          {
-            "title": "Orchestrator approved work planning",
-            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/orchestrator-2.mjs",
-            "kind": "code review",
-            "reviewer": "Codex source audit (executor; no independent review)",
-            "date": "2026-10-22",
-            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
-          },
-          {
-            "title": "Proposal research and planning",
-            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/scripts/proposal-agent.mjs",
-            "kind": "code review",
-            "reviewer": "Codex source audit (executor; no independent review)",
-            "date": "2026-10-22",
-            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
-          },
-          {
-            "title": "Independent review and Product Completeness requirements",
-            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/docs/reviewer-agent.md",
-            "kind": "code review",
-            "reviewer": "Codex source audit (executor; no independent review)",
-            "date": "2026-10-22",
-            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
-          },
-          {
-            "title": "Commercial runtime uses existing Developer and Reviewer",
-            "url": "https://github.com/seangworld/beastfusion/blob/c0984f48403ef20bae952387ecbf63502e5f5abb/customer-runtime/runner.mjs",
-            "kind": "code review",
-            "reviewer": "Codex source audit (executor; no independent review)",
-            "date": "2026-10-22",
-            "version": "c0984f48403ef20bae952387ecbf63502e5f5abb"
-          }
-        ]
-      }
-    ],
-    "evidence": [],
-    "deferred": [
-      {
-        "title": "No separate Product Specialist development required",
-        "priority": "low",
-        "desiredLevel": null,
-        "gap": "No unique missing capability demonstrated after responsibility mapping.",
-        "requiredWork": "Responsibility mapping is complete in the existing Orchestrator, Developer, Proposal and Reviewer dossiers. No new agent work is scheduled. If an actual product-context omission is later reproduced, first scope a deterministic completeness check in existing Orchestrator intake; missing/stale Product Truth, wrong repository and protected UI gates need offline acceptance fixtures before any implementation.",
-        "success": "Any future work identifies a reproducible unowned requirement, preserves current scope/owner/reviewer gates, and supplies source-bound offline evidence.",
-        "cost": "No new inference, purchase or service for this audit/mapping. Future implementation effort and operating costs unknown; paid testing remains prohibited.",
-        "status": "Mapping complete; future engineering only if an evidence-backed gap is found."
-      }
-    ],
-    "history": [
-      {
-        "date": "2026-10-21",
-        "executor": "Codex",
-        "why": "Initial central import preserved policy-only planned lifecycle; no activation or competency inferred.",
-        "version": "Issue #274 initial import"
-      },
-      {
-        "date": "2026-10-22",
-        "executor": "Codex (executor; independent review pending)",
-        "why": "Owner-requested no-cost code/registry/evidence audit; recommend consolidation, define future role requirements and next documentation step. Actual implementation absent in reviewed scope; no live competency or release claim.",
-        "version": "BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb; HQ base 63ced770; codex/product-specialist-audit"
-      },
-      {
-        "date": "2026-10-22",
-        "executor": "Codex (executor; no independent competency review)",
-        "why": "Owner authorized completing consolidation now: duties mapped in existing staff dossiers, retaining historical/planned policy_only Product Specialist explicitly labeled Duties covered by existing staff. No runtime/authority or numeric assessment changes.",
-        "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
-      },
-      {
-        "date": "2026-10-22",
-        "executor": "Codex (release executor; no independent competency evaluation)",
-        "why": "Confirmed main c24c82e97228d01c90dc53115e66325df082cdce Ready in production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb; verified live authenticated HQ responsibility mapping in Product Specialist and all four existing staff dossiers. Audit/mapping complete. Documentation synchronization only; policy_only/planned status, staff permissions and all competency/accounting evidence preserved.",
-        "version": "PR #282 confirmed production dossier synchronization; c24c82e97228d01c90dc53115e66325df082cdce"
-      },
-      {
-        "date": "2026-10-22",
-        "executor": "Codex",
-        "why": "Keep the released-competency display Unassessed for historical/planned policy records even when their documentation has a release receipt. Documentation release history does not establish an operational agent or a competency assessment.",
-        "version": "PR #283 planned-policy documentation release label correction"
-      }
-    ],
-    "releases": [
-      {
-        "date": "2026-10-22",
-        "version": "c24c82e97228d01c90dc53115e66325df082cdce",
-        "summary": "HQ dossier documentation synchronization only: PR #282 production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb confirmed Ready on thebeast.seangworld.com. Authenticated owner browser confirmed all five mapped dossiers; anonymous HQ requests redirect to sign-in. No Product Specialist runtime release/activation, permission expansion or competency certification.",
-        "url": "https://github.com/seangworld/thebeast/pull/282"
-      }
-    ]
-  },
   "beastfusion.orchestrator-3": {
     "duties": [
       "Coordinate Observe through Recommend lifecycle stages",
@@ -1329,6 +1136,10 @@
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Removed the consolidated Product Specialist staff record by owner decision. Connect the outer strategy loop to the existing Orchestrator 2.x development and release workflow without inheriting owner authority. Absorbed Product Specialist responsibility: validate owner-approved product scope, repository and Product Truth before governed dispatch; escalate missing context and material decisions to Sean."
+      },
       {
         "date": "2026-10-22",
         "summary": "Confirmed live HQ synchronization of the completed responsibility mapping. Dossier documentation release only; no new agent, activation, authority or competency claim."
@@ -1360,6 +1171,12 @@
         "executor": "Codex (release executor; no independent competency evaluation)",
         "why": "Confirmed main c24c82e97228d01c90dc53115e66325df082cdce Ready in production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb; verified live authenticated HQ responsibility mapping in Product Specialist and all four existing staff dossiers. Audit/mapping complete. Documentation synchronization only; policy_only/planned status, staff permissions and all competency/accounting evidence preserved.",
         "version": "PR #282 confirmed production dossier synchronization; c24c82e97228d01c90dc53115e66325df082cdce"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (engineering executor; owner decision)",
+        "why": "Removed the consolidated Product Specialist staff record by owner decision. Connect the outer strategy loop to the existing Orchestrator 2.x development and release workflow without inheriting owner authority. Absorbed Product Specialist responsibility: validate owner-approved product scope, repository and Product Truth before governed dispatch; escalate missing context and material decisions to Sean. Existing department, scope, permissions and competency evidence preserved; no site-wide authority or activation.",
+        "version": "2026-10-22 consolidated role cleanup; exact release verification in linked handoff"
       }
     ],
     "evidence": [
@@ -1378,6 +1195,14 @@
         "reviewer": "Codex source reconciliation (executor)",
         "date": "2026-10-22",
         "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      },
+      {
+        "title": "Consolidated role removal and receiving dossier release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419",
+        "kind": "code review",
+        "reviewer": "Codex engineering executor; no competency evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 owner-authorized staff cleanup"
       }
     ],
     "releases": [
@@ -1386,8 +1211,16 @@
         "version": "c24c82e97228d01c90dc53115e66325df082cdce",
         "summary": "HQ dossier documentation synchronization only: PR #282 production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb confirmed Ready on thebeast.seangworld.com. Authenticated owner browser confirmed all five mapped dossiers; anonymous HQ requests redirect to sign-in. No Product Specialist runtime release/activation, permission expansion or competency certification.",
         "url": "https://github.com/seangworld/thebeast/pull/282"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "Consolidated Product Specialist cleanup \u2014 exact release status in handoff",
+        "summary": "Owner-facing descriptions and duties only; planned consolidated entry removed, no archived staff entry. The permanent handoff records confirmed deployment and live HQ synchronization after this single batch without a receipt deployment. No runtime/authority/competency change.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419"
       }
-    ]
+    ],
+    "role": "Coordinates evidence through owner proposal gates; absorbs approved product intake and context checks",
+    "mission": "Connect the outer strategy loop to the existing Orchestrator 2.x development and release workflow without inheriting owner authority. Absorbed Product Specialist responsibility: validate owner-approved product scope, repository and Product Truth before governed dispatch; escalate missing context and material decisions to Sean."
   },
   "beastfusion.developer-agent": {
     "duties": [
@@ -1400,6 +1233,10 @@
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Removed the consolidated Product Specialist staff record by owner decision. Inspect, implement, correct ordinary defects, validate, and return reviewer-ready evidence inside one governed assignment. Absorbed Product Specialist responsibility: implement only the assigned product package and product-owned files using supplied Product Truth; preserve ownership and protected UI gates. No independent roadmap, cross-product write or release authority."
+      },
       {
         "date": "2026-10-22",
         "summary": "Confirmed live HQ synchronization of the completed responsibility mapping. Dossier documentation release only; no new agent, activation, authority or competency claim."
@@ -1431,6 +1268,12 @@
         "executor": "Codex (release executor; no independent competency evaluation)",
         "why": "Confirmed main c24c82e97228d01c90dc53115e66325df082cdce Ready in production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb; verified live authenticated HQ responsibility mapping in Product Specialist and all four existing staff dossiers. Audit/mapping complete. Documentation synchronization only; policy_only/planned status, staff permissions and all competency/accounting evidence preserved.",
         "version": "PR #282 confirmed production dossier synchronization; c24c82e97228d01c90dc53115e66325df082cdce"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (engineering executor; owner decision)",
+        "why": "Removed the consolidated Product Specialist staff record by owner decision. Inspect, implement, correct ordinary defects, validate, and return reviewer-ready evidence inside one governed assignment. Absorbed Product Specialist responsibility: implement only the assigned product package and product-owned files using supplied Product Truth; preserve ownership and protected UI gates. No independent roadmap, cross-product write or release authority. Existing department, scope, permissions and competency evidence preserved; no site-wide authority or activation.",
+        "version": "2026-10-22 consolidated role cleanup; exact release verification in linked handoff"
       }
     ],
     "evidence": [
@@ -1449,6 +1292,14 @@
         "reviewer": "Codex source reconciliation (executor)",
         "date": "2026-10-22",
         "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      },
+      {
+        "title": "Consolidated role removal and receiving dossier release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419",
+        "kind": "code review",
+        "reviewer": "Codex engineering executor; no competency evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 owner-authorized staff cleanup"
       }
     ],
     "releases": [
@@ -1457,8 +1308,16 @@
         "version": "c24c82e97228d01c90dc53115e66325df082cdce",
         "summary": "HQ dossier documentation synchronization only: PR #282 production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb confirmed Ready on thebeast.seangworld.com. Authenticated owner browser confirmed all five mapped dossiers; anonymous HQ requests redirect to sign-in. No Product Specialist runtime release/activation, permission expansion or competency certification.",
         "url": "https://github.com/seangworld/thebeast/pull/282"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "Consolidated Product Specialist cleanup \u2014 exact release status in handoff",
+        "summary": "Owner-facing descriptions and duties only; planned consolidated entry removed, no archived staff entry. The permanent handoff records confirmed deployment and live HQ synchronization after this single batch without a receipt deployment. No runtime/authority/competency change.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419"
       }
-    ]
+    ],
+    "role": "Builds owner-authorized work assigned by Orchestrator; absorbs bounded product implementation",
+    "mission": "Inspect, implement, correct ordinary defects, validate, and return reviewer-ready evidence inside one governed assignment. Absorbed Product Specialist responsibility: implement only the assigned product package and product-owned files using supplied Product Truth; preserve ownership and protected UI gates. No independent roadmap, cross-product write or release authority."
   },
   "beastfusion.proposal-agent": {
     "duties": [
@@ -1471,6 +1330,10 @@
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Removed the consolidated Product Specialist staff record by owner decision. Give the owner a traceable problem statement, evidence, assumptions, unknowns, options, tradeoffs, expected outcome, risk, cost, validation, and rollback. Absorbed Product Specialist responsibility: research product requirements and alternatives only for the bounded assigned question; recommendations remain non-executable and stop at owner approval."
+      },
       {
         "date": "2026-10-22",
         "summary": "Confirmed live HQ synchronization of the completed responsibility mapping. Dossier documentation release only; no new agent, activation, authority or competency claim."
@@ -1502,6 +1365,12 @@
         "executor": "Codex (release executor; no independent competency evaluation)",
         "why": "Confirmed main c24c82e97228d01c90dc53115e66325df082cdce Ready in production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb; verified live authenticated HQ responsibility mapping in Product Specialist and all four existing staff dossiers. Audit/mapping complete. Documentation synchronization only; policy_only/planned status, staff permissions and all competency/accounting evidence preserved.",
         "version": "PR #282 confirmed production dossier synchronization; c24c82e97228d01c90dc53115e66325df082cdce"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (engineering executor; owner decision)",
+        "why": "Removed the consolidated Product Specialist staff record by owner decision. Give the owner a traceable problem statement, evidence, assumptions, unknowns, options, tradeoffs, expected outcome, risk, cost, validation, and rollback. Absorbed Product Specialist responsibility: research product requirements and alternatives only for the bounded assigned question; recommendations remain non-executable and stop at owner approval. Existing department, scope, permissions and competency evidence preserved; no site-wide authority or activation.",
+        "version": "2026-10-22 consolidated role cleanup; exact release verification in linked handoff"
       }
     ],
     "evidence": [
@@ -1520,6 +1389,14 @@
         "reviewer": "Codex source reconciliation (executor)",
         "date": "2026-10-22",
         "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      },
+      {
+        "title": "Consolidated role removal and receiving dossier release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419",
+        "kind": "code review",
+        "reviewer": "Codex engineering executor; no competency evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 owner-authorized staff cleanup"
       }
     ],
     "releases": [
@@ -1528,8 +1405,16 @@
         "version": "c24c82e97228d01c90dc53115e66325df082cdce",
         "summary": "HQ dossier documentation synchronization only: PR #282 production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb confirmed Ready on thebeast.seangworld.com. Authenticated owner browser confirmed all five mapped dossiers; anonymous HQ requests redirect to sign-in. No Product Specialist runtime release/activation, permission expansion or competency certification.",
         "url": "https://github.com/seangworld/thebeast/pull/282"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "Consolidated Product Specialist cleanup \u2014 exact release status in handoff",
+        "summary": "Owner-facing descriptions and duties only; planned consolidated entry removed, no archived staff entry. The permanent handoff records confirmed deployment and live HQ synchronization after this single batch without a receipt deployment. No runtime/authority/competency change.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419"
       }
-    ]
+    ],
+    "role": "Turns bounded investigations into options; absorbs product requirements research and planning",
+    "mission": "Give the owner a traceable problem statement, evidence, assumptions, unknowns, options, tradeoffs, expected outcome, risk, cost, validation, and rollback. Absorbed Product Specialist responsibility: research product requirements and alternatives only for the bounded assigned question; recommendations remain non-executable and stop at owner approval."
   },
   "beastfusion.reviewer-agent": {
     "duties": [
@@ -1537,11 +1422,15 @@
       "Verify the authorized objective and acceptance criteria",
       "Return precise findings and a governed verdict to Orchestrator",
       "Re-review bounded remediation without becoming the implementer",
-      "Own the independent check of product-scoped Developer work: bind findings to the exact candidate, approved scope, Product Truth, acceptance criteria, tests and evidence, including Product Completeness and applicable cross-product impacts.",
+      "Absorbed Product Specialist responsibility: Own the independent check of product-scoped Developer work: bind findings to the exact candidate, approved scope, Product Truth, acceptance criteria, tests and evidence, including Product Completeness and applicable cross-product impacts.",
       "Verify source-product ownership, protected UI approval and repository boundaries; return findings or an owner decision for gaps without silently repairing the candidate or waiving failures."
     ],
     "reviewedAt": "2026-10-22",
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Removed the consolidated Product Specialist staff record by owner decision. Bind review evidence to the exact Developer candidate and evaluate it against the authorized objective without trusting the completion claim by itself. Absorbed Product Specialist responsibility: independently check Product Truth, completeness, acceptance evidence, ownership and repository boundaries for the assigned product candidate. A review verdict grants no owner acceptance, merge or release authority."
+      },
       {
         "date": "2026-10-22",
         "summary": "Confirmed live HQ synchronization of the completed responsibility mapping. Dossier documentation release only; no new agent, activation, authority or competency claim."
@@ -1573,6 +1462,12 @@
         "executor": "Codex (release executor; no independent competency evaluation)",
         "why": "Confirmed main c24c82e97228d01c90dc53115e66325df082cdce Ready in production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb; verified live authenticated HQ responsibility mapping in Product Specialist and all four existing staff dossiers. Audit/mapping complete. Documentation synchronization only; policy_only/planned status, staff permissions and all competency/accounting evidence preserved.",
         "version": "PR #282 confirmed production dossier synchronization; c24c82e97228d01c90dc53115e66325df082cdce"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (engineering executor; owner decision)",
+        "why": "Removed the consolidated Product Specialist staff record by owner decision. Bind review evidence to the exact Developer candidate and evaluate it against the authorized objective without trusting the completion claim by itself. Absorbed Product Specialist responsibility: independently check Product Truth, completeness, acceptance evidence, ownership and repository boundaries for the assigned product candidate. A review verdict grants no owner acceptance, merge or release authority. Existing department, scope, permissions and competency evidence preserved; no site-wide authority or activation.",
+        "version": "2026-10-22 consolidated role cleanup; exact release verification in linked handoff"
       }
     ],
     "evidence": [
@@ -1591,6 +1486,14 @@
         "reviewer": "Codex source reconciliation (executor)",
         "date": "2026-10-22",
         "version": "PR #282 responsibility mapping; BeastFusion c0984f48403ef20bae952387ecbf63502e5f5abb"
+      },
+      {
+        "title": "Consolidated role removal and receiving dossier release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419",
+        "kind": "code review",
+        "reviewer": "Codex engineering executor; no competency evaluation",
+        "date": "2026-10-22",
+        "version": "2026-10-22 owner-authorized staff cleanup"
       }
     ],
     "releases": [
@@ -1599,8 +1502,16 @@
         "version": "c24c82e97228d01c90dc53115e66325df082cdce",
         "summary": "HQ dossier documentation synchronization only: PR #282 production dpl_5U5PAAFYRF4imzCkirtQqWjg5kLb confirmed Ready on thebeast.seangworld.com. Authenticated owner browser confirmed all five mapped dossiers; anonymous HQ requests redirect to sign-in. No Product Specialist runtime release/activation, permission expansion or competency certification.",
         "url": "https://github.com/seangworld/thebeast/pull/282"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "Consolidated Product Specialist cleanup \u2014 exact release status in handoff",
+        "summary": "Owner-facing descriptions and duties only; planned consolidated entry removed, no archived staff entry. The permanent handoff records confirmed deployment and live HQ synchronization after this single batch without a receipt deployment. No runtime/authority/competency change.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419"
       }
-    ]
+    ],
+    "role": "Independently checks Developer work; absorbs exact-candidate product completeness checks",
+    "mission": "Bind review evidence to the exact Developer candidate and evaluate it against the authorized objective without trusting the completion claim by itself. Absorbed Product Specialist responsibility: independently check Product Truth, completeness, acceptance evidence, ownership and repository boundaries for the assigned product candidate. A review verdict grants no owner acceptance, merge or release authority."
   },
   "atlas": {
     "reviewedAt": "2026-10-22",

@@ -105,36 +105,6 @@
       "aliases": []
     },
     {
-      "id": "beastfusion.policy.product_specialist",
-      "name": "Product Specialist",
-      "role": "Governance role / policy_only",
-      "departments": [
-        "BeastFusion"
-      ],
-      "products": [
-        "BeastFusion"
-      ],
-      "mission": "Governance role / policy_only",
-      "duties": [
-        "owner-approved product package",
-        "product-owned repository"
-      ],
-      "permissions": [
-        "Only explicitly owner-authorized scope; no authority inferred from this dossier."
-      ],
-      "limitations": [
-        "cross-product business logic transfer",
-        "unapproved repository writes",
-        "protected UI changes without approval",
-        "Policy class, not evidence of a separately running agent."
-      ],
-      "source": "https://github.com/seangworld/beastfusion/blob/7437aedb40873a0f6f7cb43703d07b2744d00504/state/shared-agent-registry.json",
-      "lifecycle": "planned",
-      "aliases": [
-        "product_specialist"
-      ]
-    },
-    {
       "id": "beastfusion.policy.release_coordinator",
       "name": "Release Coordinator",
       "role": "Governance role / policy_only",

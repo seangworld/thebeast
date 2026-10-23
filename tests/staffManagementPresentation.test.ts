@@ -6,9 +6,9 @@ import {staffGroups,currentLevelLabel,targetLevelLabel,releasedLevelLabel,format
 
 test('separate record counts never equate the whole inventory with operational staff',()=>{
  const counts=Object.fromEntries(staffGroups.map(g=>[g.kind,staffDossiers.filter(d=>d.recordKind===g.kind).length]));
- assert.deepEqual(counts,{staff:11,planned:4,system:12,external:3});
+ assert.deepEqual(counts,{staff:11,planned:3,system:12,external:3});
  assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),staffDossiers.length);
- assert.equal(getStaffDossier('product_specialist')!.recordKind,'planned');
+ assert.equal(getStaffDossier('product_specialist'),undefined);
  assert.equal(getStaffDossier('support.codex')!.recordKind,'external');assert.equal(getStaffDossier('news.source-scout')!.recordKind,'system');
 });
 test('mapping pending is distinct from not evaluated; targets are requirements and dates are deterministic US dates',()=>{
@@ -27,7 +27,7 @@ test('owner view is concise while underlying technical records and authorization
 });
 
 test('documentation release history cannot imply competency for a planned policy record',()=>{
- const specialist=getStaffDossier('product_specialist')!;
+ const specialist={...getStaffDossier('agency.cole-mercer')!,releases:[{date:'2026-10-22',version:'Documentation-only fixture',summary:'No competency certification',url:'https://github.com/seangworld/thebeast/issues/274'}]};
  assert.ok(specialist.releases.length>0);
  assert.equal(releasedLevelLabel(specialist),'Unassessed');
  assert.equal(specialist.lifecycle,'planned');

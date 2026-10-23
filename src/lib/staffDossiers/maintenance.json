@@ -185,6 +185,20 @@
       "affectedStaffIds": [
         "beastfusion.policy.marketing_specialist"
       ]
+    },
+    {
+      "date": "2026-10-22",
+      "executor": "Codex",
+      "reason": "Owner decision removes only consolidated BeastFusion Product Specialist inventory/review entry entirely, with no archived staff entry. Counts/filters derive from remaining inventory. Former canonical/alias dossier URLs redirect to owner-only roster. Clarify absorbed responsibilities in receiving roles without altering departments, permissions, scope or competency evidence. Preserve prior receipts and other app/module staff positions.",
+      "version": "2026-10-22 consolidated Product Specialist removal",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355102419",
+      "sourceDigest": "9f675dbaaca0e88dcf6c60e27675e979f98b880875e6b99c7d33bcab2378027b",
+      "affectedStaffIds": [
+        "beastfusion.orchestrator-3",
+        "beastfusion.developer-agent",
+        "beastfusion.proposal-agent",
+        "beastfusion.reviewer-agent"
+      ]
     }
   ]
 }
