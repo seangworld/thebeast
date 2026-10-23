@@ -64,3 +64,14 @@ test('VA secondary-service explanation is allowed when the member explicitly ask
  const result=guardUnrequestedVeteransSecondaryTheory(decisionContext,candidate);
  assert.equal(result.safe,true);assert.equal(result.response,candidate);
 });
+
+test('VA scope guard catches secondary-to causation wording without requiring the words condition or claim',()=>{
+ const decisionContext:RuntimeContext={...context,message:{...context.message,text:'Explain the evidence gaps in this VA decision letter.'}};
+ const candidate='The letter is missing a dated record.\n\nYour knee symptoms may be secondary to your existing back disability.';
+ const result=guardUnrequestedVeteransSecondaryTheory(decisionContext,candidate);
+ assert.equal(result.safe,false);assert.match(result.response,/missing a dated record/);assert.doesNotMatch(result.response,/secondary to|back disability/);
+ const requested={...decisionContext,message:{...context.message,text:'Explain the VA decision and whether secondary to my back disability means a secondary claim.'}};
+ assert.equal(guardUnrequestedVeteransSecondaryTheory(requested,candidate).safe,true);
+ const otherRole={...decisionContext,professionalId:'beasteducation.guidance-counselor'};
+ assert.equal(guardUnrequestedVeteransSecondaryTheory(otherRole,candidate).response,candidate);
+});
