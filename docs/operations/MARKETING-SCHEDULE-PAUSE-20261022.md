@@ -8,6 +8,8 @@ Existing callers: Vercel was invoking social every minute and growth once daily.
 
 Estimated removed dispatches: 1,440 social + 1 growth = 1,441 scheduler requests per full day, before retries or platform behavior. Database request reduction depends on eligibility and job state; this is not measured traffic, bandwidth or billing savings. Manual/visible workspace traffic can remain. Prior October 21 counts and the earlier optimization report remain historical evidence, not a post-release baseline.
 
+Release gate correction: adding raw `vercel.json` to the dossier content digest caused the first hosted preview to fail although the local digest passed. Remove that newly introduced watch entry; retain all existing source watches plus the added growth sources. Schedule behavior is covered by the exact configuration regression and post-release hosted configuration assertion. No production change occurred from the failed preview. One corrected preview is required; no receipt deployment.
+
 Validation: offline scheduling regression, existing marketing approval/publisher/growth tests, dossier/history guard, full test suite, TypeScript, lint, security audit and production build. No live publishing probe. Single preview and main production release; verify actual deployed schedules using the project configuration API. Confirm live owner-only Marketing dossier synchronization. Exact results and deployment identity are updated in the permanent handoff without a receipt deployment:
 https://github.com/seangworld/thebeast/issues/274#issuecomment-6354572829
 

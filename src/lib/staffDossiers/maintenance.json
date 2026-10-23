@@ -181,7 +181,7 @@
       "reason": "Scheduled marketing is disabled by owner decision before launch: marketing-social and marketing-growth have no recurring deployment schedules. Implementation, data, settings, approval rules and manual controls are retained. Both schedules must be explicitly restored by owner-authorized release when marketing launches; no agent activation is implied. Preserve previous history and update permanent handoff after release without a separate receipt deployment.",
       "version": "2026-10-22 owner-disabled prelaunch marketing schedules",
       "evidence": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6354572829",
-      "sourceDigest": "5cf72c62f291257b95d7b2a952578cf1ebd09f4581c9a56710aafff6bf89346b",
+      "sourceDigest": "a4cbd4cf42bd9d508b3256b2dfb23a2e260877e29c74d4fd20373e8803231f75",
       "affectedStaffIds": [
         "beastfusion.policy.marketing_specialist"
       ]
