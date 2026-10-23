@@ -87,9 +87,9 @@ test('paused Atlas is fail-closed before database/auth/provider work; persisted 
  const server=loadModule('src/lib/atlas/server.ts',{'./operatingPolicy':{ATLAS_PAUSED:true,ATLAS_PAUSED_MESSAGE:'Paused'},'./connections':{},'@/lib/supabase/admin':{createAdminClient:()=>{dbCalls++;throw Error('no db');}},'@/lib/supabase/server':{},'./shared':{},'@/lib/digitalStaffRuntime/provider':{}});
  await server.runAtlasTurn('existing-turn','owner');assert.throws(()=>server.atlasDB(),/Paused/);assert.equal(dbCalls,0);
 });
-test('only Atlas recurring cron is removed; minute social scheduler and unrelated schedules remain',()=>{
+test('owner-disabled Atlas and marketing schedules are absent; unrelated schedule remains',()=>{
  const config=JSON.parse(readFileSync('vercel.json','utf8'));
- assert.deepEqual(config.crons,[{path:'/api/cron/orchestrator-observation',schedule:'0 10 * * *'},{path:'/api/cron/marketing-growth',schedule:'20 10 * * *'},{path:'/api/cron/marketing-social',schedule:'* * * * *'}]);
+ assert.deepEqual(config.crons,[{path:'/api/cron/orchestrator-observation',schedule:'0 10 * * *'}]);
 });
 
 function socialCronFixture(rows:Array<Record<string,any>>=[],enabled=['enabled'],failRead=false) {
