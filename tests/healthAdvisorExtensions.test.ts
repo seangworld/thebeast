@@ -72,6 +72,6 @@ test('VA scope guard catches secondary-to causation wording without requiring th
  assert.equal(result.safe,false);assert.match(result.response,/missing a dated record/);assert.doesNotMatch(result.response,/secondary to|back disability/);
  const requested={...decisionContext,message:{...context.message,text:'Explain the VA decision and whether secondary to my back disability means a secondary claim.'}};
  assert.equal(guardUnrequestedVeteransSecondaryTheory(requested,candidate).safe,true);
- const otherRole={...decisionContext,professionalId:'beasteducation.guidance-counselor'};
+ const otherRole:RuntimeContext={...decisionContext,professionalId:'beasteducation.guidance-counselor'};
  assert.equal(guardUnrequestedVeteransSecondaryTheory(otherRole,candidate).response,candidate);
 });

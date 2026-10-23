@@ -144,16 +144,39 @@
             "version": "Historical evidence; not current live revalidation"
           }
         ]
+      },
+      {
+        "role": "October23 bounded source/mechanics review \u2014 not behavioral evaluation",
+        "summary": "Latest explicit minute-based capacity supersedes stale hour constraints without changing saved availability. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Previous original grades and all assessments preserved. No L1\u2013L5 promotion from fixtures.",
+        "criteria": [
+          {
+            "criterion": "Scoped current source and delivery mechanics",
+            "result": "pass",
+            "reason": "Focused authored local regressions verify the stated controls only. No complete delivered researched schooling plan; mocked research/citation handling does not establish source interpretation, applicability or useful delivery."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Bounded department audit: retained evidence and offline mechanics",
+            "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/JORDAN-RILEY.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "Released baseline d7e7ca9b; integrated source cf919b35"
+          }
+        ]
       }
     ],
     "strengths": [
+      "Latest explicit minute-based capacity supersedes stale hour constraints without changing saved availability. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload.",
       "Delivered bounded ordinary career guidance and corrected saved-degree assumptions in historical samples.",
       "Focused FAFSA private brief and separate privacy review completed in one retained probe; not an end-to-end answer."
     ],
     "limitations": [
       "No live complete researched schooling plan in retained assessments.",
       "Goals-led school discovery, full-route latency, source interpretation and hosted member E2E remain unverified.",
-      "Local tests and release do not establish a numeric competency level."
+      "Local tests and release do not establish a numeric competency level.",
+      "Canonical record writes and decision receipts are separate operations; partial saves require reload. Snapshot/receipt guards were locally reproduced, not live database-write tested."
     ],
     "blockers": [
       "Latest DEV inference returned credit_balance_exhausted; production quota is unknown. No paid testing is authorized."
@@ -171,9 +194,25 @@
         "version": "No-cost competency reconciliation \u2014 release status in handoff",
         "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
+      },
+      {
+        "date": "2026-10-23",
+        "version": "Coordinated five-staff application batch; exact release in handoff",
+        "summary": "Useful supported source corrections and same-batch canonical dossier updates. Exact merge/deployment and live access/dossier verification are recorded in permanent handoff after release, without a receipt deployment. No live competence certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       }
     ],
     "deferred": [
+      {
+        "title": "Remaining scoped behavioral evidence",
+        "priority": "high",
+        "desiredLevel": "L4",
+        "gap": "No complete delivered researched schooling plan; mocked research/citation handling does not establish source interpretation, applicability or useful delivery.",
+        "requiredWork": "A complete attributable researched-schooling answer with inspected current sources, intake/fees applicability, privacy and correction evidence and actual delivery outcome. Preserve previous evidence; no repeated completed audit or paid evaluation loop.",
+        "success": "Attributable role-specific original inputs/outputs and independently known outcomes close the named scope gap; mechanics alone do not raise competency.",
+        "cost": "Cost unknown: representative cases, effective model/input usage and required trials are not fixed. No paid validation requested or scheduled.",
+        "status": "Bounded no-cost department audit completed; remaining behavioral evidence deferred."
+      },
       {
         "title": "Inspect existing incomplete research receipts and source/privacy failures; a complete cited, practical plan is the missing outcome.",
         "priority": "high",
@@ -182,7 +221,7 @@
         "requiredWork": "No-cost first: Inspect existing incomplete research receipts and source/privacy failures; a complete cited, practical plan is the missing outcome. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
         "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
         "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish no complete researched schooling plan; private brief completion and mocked research flow do not establish delivered research competence. No paid validation is executed, requested or scheduled.",
-        "status": "Retained-evidence audit recommendation only; no automatic execution."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Retained-evidence audit recommendation only; no automatic execution."
       },
       {
         "title": "Review remaining research evidence gaps",
@@ -192,7 +231,7 @@
         "requiredWork": "Preserve existing source/privacy corrections and replay evidence. Inspect any existing substantive output; no new paid assessment or fabricated answer.",
         "success": "Practical sourced schooling plan and intake correction supported by actual evidence; ordinary L2 evidence alone cannot establish research competence.",
         "cost": "Engineering effort and further validation cost not estimated. No paid inference, purchase or new service authorized. Historical assessment costs are not a forecast.",
-        "status": "Deferred \u2014 prioritize no-cost engineering/evidence review only."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Deferred \u2014 prioritize no-cost engineering/evidence review only."
       },
       {
         "title": "Unverified researched plan",
@@ -202,7 +241,7 @@
         "requiredWork": "Retain original criteria and evidence. Use existing returned evidence/local fixes only. Do not launch another paid assessment.",
         "success": "Useful cited plan, correction honored, fees/intake scoped, no eligibility guarantee or private query disclosure.",
         "cost": "Unknown; no paid testing or services authorized.",
-        "status": "Deferred \u2014 owner prioritization; paid work only if Sean independently revisits spending."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Deferred \u2014 owner prioritization; paid work only if Sean independently revisits spending."
       }
     ],
     "costs": {
@@ -229,6 +268,12 @@
         "executor": "Codex (retained-evidence reconciliation; not independent testing)",
         "why": "L2 historical: Directed ordinary career guidance, capacity constraints and credential correction in seven retained answers. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
         "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel role workers and integration lead",
+        "why": "Latest explicit minute-based capacity supersedes stale hour constraints without changing saved availability. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Code/local mechanical verification only. Historical competency, assessments, evaluation dates, accounting and scope retained; no paid calls, activation or permission expansion.",
+        "version": "Single coordinated application release; exact status/live verification in permanent handoff"
       }
     ],
     "lastEvaluatedAt": "2026-10-21",
@@ -239,21 +284,27 @@
       "note": "Earlier ordinary/correction answers retained; no delivered researched plan.",
       "url": "https://github.com/seangworld/thebeast/blob/main/docs/guidance-counselor-upgrade/evaluation/engineering-handoff-20261021/REPORT.md"
     },
-    "reviewedAt": "2026-10-22",
+    "reviewedAt": "2026-10-23",
     "demonstrated": "L2",
     "target": "L4",
     "levelMapping": {
-      "reviewedAt": "2026-10-22",
-      "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
+      "reviewedAt": "2026-10-23",
+      "reviewer": "Codex retained-evidence reconciliation; historical grade preserved, no new behavioral evaluation",
       "rationale": "Actual earlier replies provide routine directed career steps and record/constraint corrections. This supports bounded L2 guidance. Core researched schooling plans remain unverified, so role-wide L3/L4 is not established despite local research-path checks.",
       "scope": "Directed ordinary career guidance, capacity constraints and credential correction in seven retained answers.",
       "evidenceUrls": [
         "https://github.com/seangworld/thebeast/blob/main/docs/guidance-counselor-upgrade/evaluation/engineering-handoff-20261021/REPORT.md",
-        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md",
+        "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/JORDAN-RILEY.md",
+        "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       ]
     },
     "targetRequirement": "The intended job includes complex official-source school/program comparison, intake correction and a practical contextual schooling plan.",
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Latest explicit minute-based capacity supersedes stale hour constraints without changing saved availability. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Historical level, behavioral date and accounting preserved."
+      },
       {
         "date": "2026-10-22",
         "summary": "L2 historical: Directed ordinary career guidance, capacity constraints and credential correction in seven retained answers. Current live competence not reverified; targets and evaluation dates remain distinct."
@@ -271,12 +322,12 @@
       "status": "mapped",
       "evidenceDate": "2026-10-21",
       "scope": "Directed ordinary career guidance, capacity constraints and credential correction in seven retained answers.",
-      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "currentVerification": "October23 source review and offline regressions passed. Historical demonstrated level preserved; current live competence not reverified.",
       "missingEvidence": [
-        "No complete researched schooling plan; private brief completion and mocked research flow do not establish delivered research competence."
+        "No complete delivered researched schooling plan; mocked research/citation handling does not establish source interpretation, applicability or useful delivery."
       ],
       "auditPriority": 4,
-      "nextAudit": "Inspect existing incomplete research receipts and source/privacy failures; a complete cited, practical plan is the missing outcome."
+      "nextAudit": "Bounded audit completed. Remaining requirement when legitimate evidence is available: A complete attributable researched-schooling answer with inspected current sources, intake/fees applicability, privacy and correction evidence and actual delivery outcome."
     },
     "evidence": [
       {
@@ -294,7 +345,23 @@
         "reviewer": "Codex engineering/evidence executor; no paid evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 evidence reconciliation"
+      },
+      {
+        "title": "Bounded department audit: retained evidence and offline mechanics",
+        "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/JORDAN-RILEY.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "Released baseline d7e7ca9b; integrated source cf919b35"
       }
+    ],
+    "duties": [
+      "Build a clear learner briefing from authorized education context",
+      "Identify the next meaningful learning or planning priority",
+      "Maintain continuity across goals, progress, and changing circumstances",
+      "Explain how each recommendation connects to the educational roadmap",
+      "Provide directed career guidance and preserve conversational corrections; research official schooling facts through existing source/privacy gates and keep persistent profile changes subject to approval.",
+      "Latest explicit minute-based capacity supersedes stale hour constraints without changing saved availability. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload."
     ]
   },
   "beasteducation.tutor": {
@@ -426,6 +493,27 @@
             "version": "PR #275; main baseline9f1cbe12"
           }
         ]
+      },
+      {
+        "role": "October23 bounded source/mechanics review \u2014 not behavioral evaluation",
+        "summary": "Impossible birthdays remain unknown age. Malformed or noncanonical image base64 is rejected before provider work; valid input limits and existing bounded delivery controls remain. Previous original grades and all assessments preserved. No L1\u2013L5 promotion from fixtures.",
+        "criteria": [
+          {
+            "criterion": "Scoped current source and delivery mechanics",
+            "result": "pass",
+            "reason": "Focused authored local regressions verify the stated controls only. Historical reported teaching lacks recovered per-turn model bindings. Current teaching, first-error diagnosis, adaptation and visual transcription remain unverified."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Bounded department audit: retained evidence and offline mechanics",
+            "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/JORDAN-RILEY.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "Released baseline d7e7ca9b; integrated source cf919b35"
+          }
+        ]
       }
     ],
     "limitations": [
@@ -434,9 +522,20 @@
       "The final checker receives private bounded academic history/transcription, not the original image; it cannot independently prove visual transcription accuracy.",
       "Cancellation stops local work and later dispatches; upstream processing/billing may already have occurred. Missing usage is recorded unknown, never zero.",
       "Completed telemetry means a validated reply was prepared for HTTP return, not proof the learner received, saved or understood it.",
-      "No grading, institutional authority, dishonest assignment completion or school-record actions. Important work still needs teacher/official verification."
+      "No grading, institutional authority, dishonest assignment completion or school-record actions. Important work still needs teacher/official verification.",
+      "Input encoding checks do not verify image pixels, readability or transcription; historical teaching grade does not certify current visual accuracy."
     ],
     "deferred": [
+      {
+        "title": "Remaining scoped behavioral evidence",
+        "priority": "high",
+        "desiredLevel": "L3",
+        "gap": "Historical reported teaching lacks recovered per-turn model bindings. Current teaching, first-error diagnosis, adaptation and visual transcription remain unverified.",
+        "requiredWork": "Legitimate retained original teaching turns/model/context receipts or academic feedback supporting current explanation, visual transcription and first-error correctness. Preserve previous evidence; no repeated completed audit or paid evaluation loop.",
+        "success": "Attributable role-specific original inputs/outputs and independently known outcomes close the named scope gap; mechanics alone do not raise competency.",
+        "cost": "Cost unknown: representative cases, effective model/input usage and required trials are not fixed. No paid validation requested or scheduled.",
+        "status": "Bounded no-cost department audit completed; remaining behavioral evidence deferred."
+      },
       {
         "title": "Locate existing per-turn teaching/model receipts or legitimate retained feedback before judging current explanations and first-error diagnosis.",
         "priority": "high",
@@ -445,7 +544,7 @@
         "requiredWork": "No-cost first: Locate existing per-turn teaching/model receipts or legitimate retained feedback before judging current explanations and first-error diagnosis. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
         "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
         "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish raw per-turn Tutor answers/model bindings were not recovered in this reconciliation. Current teaching, visual transcription and adaptation are not verified after prompt/context changes. No paid validation is executed, requested or scheduled.",
-        "status": "Retained-evidence audit recommendation only; no automatic execution."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Retained-evidence audit recommendation only; no automatic execution."
       },
       {
         "title": "Resolve current L3 evidence and transcription limitations from existing records",
@@ -455,7 +554,7 @@
         "requiredWork": "Reconcile additional already-existing sanitized per-turn receipts if available; review legitimate owner-provided teaching feedback and academic examples locally. No new paid assessment cycle or authority expansion.",
         "success": "Claims remain scoped to dated bound evidence; unsupported visual or teaching judgments stay explicitly unverified.",
         "cost": "Cost unknown: effective current model, image/input usage and representative required turns are not established. A future live check would establish current first-error teaching, adaptation and source/model binding; no paid test is executed or requested.",
-        "status": "Deferred evidence limitation; not an automatic release blocker for bounded guided tutoring."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Deferred evidence limitation; not an automatic release blocker for bounded guided tutoring."
       },
       {
         "title": "Bound provider and completion handling",
@@ -480,6 +579,12 @@
         "version": "No-cost competency reconciliation \u2014 release status in handoff",
         "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
+      },
+      {
+        "date": "2026-10-23",
+        "version": "Coordinated five-staff application batch; exact release in handoff",
+        "summary": "Useful supported source corrections and same-batch canonical dossier updates. Exact merge/deployment and live access/dossier verification are recorded in permanent handoff after release, without a receipt deployment. No live competence certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       }
     ],
     "assignment": "Provide bounded private guided tutoring and shown-work correction, preserving learner control; no expansion of grading or institutional authority.",
@@ -513,6 +618,12 @@
         "executor": "Codex (retained-evidence reconciliation; not independent testing)",
         "why": "L2 historical: Historical reported routine guided teaching: first-error correction, equivalent methods, targeted practice and bounded handoff at c24dd3e1. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
         "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel role workers and integration lead",
+        "why": "Impossible birthdays remain unknown age. Malformed or noncanonical image base64 is rejected before provider work; valid input limits and existing bounded delivery controls remain. Code/local mechanical verification only. Historical competency, assessments, evaluation dates, accounting and scope retained; no paid calls, activation or permission expansion.",
+        "version": "Single coordinated application release; exact status/live verification in permanent handoff"
       }
     ],
     "lastEvaluatedAt": "2026-08-30",
@@ -523,10 +634,11 @@
       "note": "Historical 08/30 result preserved. 10/22 code review/local fixtures corrected runtime reliability; not a new teaching assessment. Aggregate historical model counts do not bind each Tutor turn; current prompts differ.",
       "url": "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json"
     },
-    "reviewedAt": "2026-10-22",
+    "reviewedAt": "2026-10-23",
     "target": "L3",
     "targetRequirement": "Core guided-learning work: inspect shown attempts, guide correction, recognize equivalent methods and preserve academic-integrity/privacy boundaries.",
     "strengths": [
+      "Impossible birthdays remain unknown age. Malformed or noncanonical image base64 is rejected before provider work; valid input limits and existing bounded delivery controls remain.",
       "Historical 08/30 result: shown-work first-error diagnosis",
       "Historical 08/30 result: learner-correction acknowledgment",
       "Historical 08/30 result: alternate-method recognition",
@@ -536,17 +648,23 @@
       "Historical 08/30 result: task-complete handoff receiver"
     ],
     "levelMapping": {
-      "reviewedAt": "2026-10-22",
-      "reviewer": "Codex code/evidence review; not independent certification",
+      "reviewedAt": "2026-10-23",
+      "reviewer": "Codex retained-evidence reconciliation; historical grade preserved, no new behavioral evaluation",
       "rationale": "The dated evaluator report at an exact application candidate describes directed first-error guidance, acknowledgment of corrections, equivalent methods, targeted practice and a bounded worked example. Those reported behaviors support historical routine guided-learning L2 on the shared staff framework, independently of its Knight classification and 7/7 count. Primary per-turn outputs were not recovered here, so the mapping relies on attributed historical report evidence. Broader contextual accuracy/adaptation and current model/prompt binding needed for L3 are not established. Current verification remains unavailable; no current L2 certification is inferred.",
       "scope": "Historical reported routine guided teaching: first-error correction, equivalent methods, targeted practice and bounded handoff at c24dd3e1.",
       "evidenceUrls": [
         "https://github.com/seangworld/beastfusion/blob/7437aed/evidence/member-ai/BF-AGT-016-PROD-EVAL-001.json",
         "https://github.com/seangworld/thebeast/blob/codex/tutor-va-no-cost-audit-20261021/docs/agent-audits-20261021/TUTOR-REMEDIATION-20261022.md",
-        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md",
+        "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/JORDAN-RILEY.md",
+        "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       ]
     },
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Impossible birthdays remain unknown age. Malformed or noncanonical image base64 is rejected before provider work; valid input limits and existing bounded delivery controls remain. Historical level, behavioral date and accounting preserved."
+      },
       {
         "date": "2026-10-22",
         "summary": "L2 historical: Historical reported routine guided teaching: first-error correction, equivalent methods, targeted practice and bounded handoff at c24dd3e1. Current live competence not reverified; targets and evaluation dates remain distinct."
@@ -576,12 +694,12 @@
       "status": "mapped",
       "evidenceDate": "2026-08-30",
       "scope": "Historical reported routine guided teaching: first-error correction, equivalent methods, targeted practice and bounded handoff.",
-      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "currentVerification": "October23 source review and offline regressions passed. Historical demonstrated level preserved; current live competence not reverified.",
       "missingEvidence": [
-        "Raw per-turn Tutor answers/model bindings were not recovered in this reconciliation. Current teaching, visual transcription and adaptation are not verified after prompt/context changes."
+        "Historical reported teaching lacks recovered per-turn model bindings. Current teaching, first-error diagnosis, adaptation and visual transcription remain unverified."
       ],
       "auditPriority": 5,
-      "nextAudit": "Locate existing per-turn teaching/model receipts or legitimate retained feedback before judging current explanations and first-error diagnosis."
+      "nextAudit": "Bounded audit completed. Remaining requirement when legitimate evidence is available: Legitimate retained original teaching turns/model/context receipts or academic feedback supporting current explanation, visual transcription and first-error correctness."
     },
     "evidence": [
       {
@@ -599,7 +717,23 @@
         "reviewer": "Codex engineering/evidence executor; no paid evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 evidence reconciliation"
+      },
+      {
+        "title": "Bounded department audit: retained evidence and offline mechanics",
+        "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/JORDAN-RILEY.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "Released baseline d7e7ca9b; integrated source cf919b35"
       }
+    ],
+    "duties": [
+      "Explain concepts at the learner's age and grade level",
+      "Guide homework one reasoning step at a time",
+      "Review completed work and identify the first supported mistake",
+      "Create practice questions and short knowledge checks",
+      "Guide shown-work reasoning, corrections and practice using age-appropriate context; preserve cancellation, private bounded checking and honest unreadable/incomplete-input handling.",
+      "Impossible birthdays remain unknown age. Malformed or noncanonical image base64 is rejected before provider work; valid input limits and existing bounded delivery controls remain."
     ]
   },
   "beasthealth.health-advisor": {
@@ -802,6 +936,27 @@
             "version": "Current-main a5c687a8 baseline; VA preparation remediation"
           }
         ]
+      },
+      {
+        "role": "October23 bounded source/mechanics review \u2014 not behavioral evaluation",
+        "summary": "Unrequested VA causal suggestions phrased \u201csecondary to\u201d now use the existing conservative withholding guard. Prior selected-source, claim-switch, rejected-state and save-confirmation fixes retained. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Previous original grades and all assessments preserved. No L1\u2013L5 promotion from fixtures.",
+        "criteria": [
+          {
+            "criterion": "Scoped current source and delivery mechanics",
+            "result": "pass",
+            "reason": "Focused authored local regressions verify the stated controls only. Health evidence is a focused historical sample. Current broad document interpretation and VA clause-level reading, conflicting facts and factual-draft accuracy remain unverified."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Bounded department audit: retained evidence and offline mechanics",
+            "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/TAYLOR-HEALTH-VA.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "Released baseline d7e7ca9b; integrated source cf919b35"
+          }
+        ]
       }
     ],
     "aliases": [
@@ -817,7 +972,8 @@
       "VA has separate historical L2 evidence for one H-C decision-letter sample, not the Health L3 grade. Current VA readability, conflicting-source interpretation and factual drafting remain unverified.",
       "Older unlinked claim conversation turns remain visible but are excluded from selected-claim evidence; switching claim/revision resets cached state, and documents must be reselected for a different issue.",
       "Selected originals are member-owned inputs, not independently authenticated VA records. Live readability, clause-level draft accuracy, conflicting-source interpretation and legal deadline judgment remain unverified for this candidate.",
-      "Conversation message/summary writes are not a single transaction. Unconfirmed saves may have stored some messages; review before retrying. No automatic retry, filing or representation."
+      "Conversation message/summary writes are not a single transaction. Unconfirmed saves may have stored some messages; review before retrying. No automatic retry, filing or representation.",
+      "Canonical record writes and decision receipts are separate operations; partial saves require reload. Snapshot/receipt guards were locally reproduced, not live database-write tested."
     ],
     "releases": [
       {
@@ -837,9 +993,25 @@
         "version": "No-cost competency reconciliation \u2014 release status in handoff",
         "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
+      },
+      {
+        "date": "2026-10-23",
+        "version": "Coordinated five-staff application batch; exact release in handoff",
+        "summary": "Useful supported source corrections and same-batch canonical dossier updates. Exact merge/deployment and live access/dossier verification are recorded in permanent handoff after release, without a receipt deployment. No live competence certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       }
     ],
     "deferred": [
+      {
+        "title": "Remaining scoped behavioral evidence",
+        "priority": "high",
+        "desiredLevel": "L4",
+        "gap": "Health evidence is a focused historical sample. Current broad document interpretation and VA clause-level reading, conflicting facts and factual-draft accuracy remain unverified.",
+        "requiredWork": "Health L4: representative complex source-bound record/document workflows, correction and recovery. VA L3 separately: contextual multi-turn original reading, conflicting facts/laterality and clause-attributed factual drafts. Preserve previous evidence; no repeated completed audit or paid evaluation loop.",
+        "success": "Attributable role-specific original inputs/outputs and independently known outcomes close the named scope gap; mechanics alone do not raise competency.",
+        "cost": "Cost unknown: representative cases, effective model/input usage and required trials are not fixed. No paid validation requested or scheduled.",
+        "status": "Bounded no-cost department audit completed; remaining behavioral evidence deferred."
+      },
       {
         "title": "Prioritize VA selected-source readability, conflicting facts and factual draft attribution using existing originals/receipts; keep Health and VA evidence separate.",
         "priority": "high",
@@ -848,7 +1020,7 @@
         "requiredWork": "No-cost first: Prioritize VA selected-source readability, conflicting facts and factual draft attribution using existing originals/receipts; keep Health and VA evidence separate. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
         "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
         "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish small executor-reviewed Health sample is not broad complex-document reliability, clinical/legal certification or current VA-source verification. No paid validation is executed, requested or scheduled.",
-        "status": "Retained-evidence audit recommendation only; no automatic execution."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Retained-evidence audit recommendation only; no automatic execution."
       },
       {
         "title": "VA specialization: reconcile source-bound drafting evidence toward role target L3",
@@ -858,7 +1030,7 @@
         "requiredWork": "Review additional already-existing, legitimately available evidence/feedback locally where permitted; preserve exact original source and uncertainty. No duplicate agent, paid testing or autonomous authority. Consider atomic persistence only if real failure evidence justifies a separately scoped schema change.",
         "success": "Every claims statement remains attributable to supplied member/source evidence; missing/conflicting/unreadable evidence stays explicit, and save state is truthful.",
         "cost": "No new service or paid testing. Engineering effort unpriced. Reusing selected originals in the existing final check adds no provider request, but may add document input tokens; actual model/page/token usage is unknown, so a defensible dollar forecast is unavailable. Historical Taylor charges are not a forecast.",
-        "status": "Deferred evidence/reliability limits; no paid evaluation approval loop."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Deferred evidence/reliability limits; no paid evaluation approval loop."
       },
       {
         "title": "Harden selected-document and VA evidence handling",
@@ -868,7 +1040,7 @@
         "requiredWork": "Use existing retained evidence/local fixtures to verify selected-claim/source provenance and unsupported-claim rejection. No duplicate agent or paid test.",
         "success": "Source-bound interpretation and clear clinical/legal limits; do not infer general VA competence from focused health results.",
         "cost": "Engineering effort and further validation cost not estimated. No paid inference, purchase or new service authorized. Historical assessment costs are not a forecast.",
-        "status": "Concrete provenance/switch/save engineering completed locally 10/22; broader/current live VA semantic competence remains unverified. No new paid assessment cycle."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Concrete provenance/switch/save engineering completed locally 10/22; broader/current live VA semantic competence remains unverified. No new paid assessment cycle."
       },
       {
         "title": "VA selected-evidence interpretation",
@@ -878,7 +1050,7 @@
         "requiredWork": "Reuse Taylor, organizer and private original-document adapter. Inspect local provenance/injection/unsupported-fact cases; no duplicate agent.",
         "success": "Evidence-bound explanation, honest gaps, no fabricated nexus or completion/filing claim.",
         "cost": "Unknown; no paid testing or services authorized.",
-        "status": "Concrete provenance/switch/save engineering completed locally 10/22; broader/current live VA semantic competence remains unverified. No new paid assessment cycle."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Concrete provenance/switch/save engineering completed locally 10/22; broader/current live VA semantic competence remains unverified. No new paid assessment cycle."
       }
     ],
     "costs": {
@@ -929,6 +1101,12 @@
         "executor": "Codex (retained-evidence reconciliation; not independent testing)",
         "why": "L3 historical: Focused Health trend explanation, symptom-context preparation and uncertainty in retained H-B answers. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
         "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel role workers and integration lead",
+        "why": "Unrequested VA causal suggestions phrased \u201csecondary to\u201d now use the existing conservative withholding guard. Prior selected-source, claim-switch, rejected-state and save-confirmation fixes retained. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Code/local mechanical verification only. Historical competency, assessments, evaluation dates, accounting and scope retained; no paid calls, activation or permission expansion.",
+        "version": "Single coordinated application release; exact status/live verification in permanent handoff"
       }
     ],
     "departments": [
@@ -943,24 +1121,31 @@
       "note": "Focused historical H-B/H-C sample; not clinical/legal certification. Six H-C criteria are separately referenced for VA. 10/22 VA engineering review is not a new competency evaluation.",
       "url": "https://github.com/seangworld/thebeast/blob/main/docs/taylor-health-advisor-upgrade/evaluation/quality-regression-20261020/REPORT.md"
     },
-    "reviewedAt": "2026-10-22",
+    "reviewedAt": "2026-10-23",
     "demonstrated": "L3",
     "target": "L4",
     "levelMapping": {
-      "reviewedAt": "2026-10-22",
-      "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
+      "reviewedAt": "2026-10-23",
+      "reviewer": "Codex retained-evidence reconciliation; historical grade preserved, no new behavioral evaluation",
       "rationale": "Retained responses demonstrate contextual source-grounded trend review, preparation advice and correction within explicit health boundaries. Scoped L3 is supported; a focused executor-reviewed sample does not establish reliable broad complex-document workflows (L4) or clinical/legal expertise.",
       "scope": "Focused Health trend explanation, symptom-context preparation and uncertainty in retained H-B answers.",
       "evidenceUrls": [
         "https://github.com/seangworld/thebeast/blob/main/docs/taylor-health-advisor-upgrade/evaluation/quality-regression-20261020/REPORT.md",
-        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md",
+        "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/TAYLOR-HEALTH-VA.md",
+        "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       ]
     },
     "targetRequirement": "The job requires reliable contextual review of selected records/documents and official evidence while preserving clinical, permission and uncertainty boundaries. VA Claims Aide separately targets L3 contextual, member-directed preparation: exact selected issue/source provenance, truthful drafts, uncertainty and correction; no independent adjudication or filing authority.",
     "strengths": [
+      "Unrequested VA causal suggestions phrased \u201csecondary to\u201d now use the existing conservative withholding guard. Prior selected-source, claim-switch, rejected-state and save-confirmation fixes retained. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload.",
       "Focused historical sample accurately compared supplied ranges and delivered bounded, evidence-grounded preparation advice."
     ],
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Unrequested VA causal suggestions phrased \u201csecondary to\u201d now use the existing conservative withholding guard. Prior selected-source, claim-switch, rejected-state and save-confirmation fixes retained. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Historical level, behavioral date and accounting preserved."
+      },
       {
         "date": "2026-10-22",
         "summary": "L3 historical: Focused Health trend explanation, symptom-context preparation and uncertainty in retained H-B answers. Current live competence not reverified; targets and evaluation dates remain distinct."
@@ -987,12 +1172,12 @@
       "status": "mapped",
       "evidenceDate": "2026-10-20",
       "scope": "Focused Health trend explanation, symptom-context preparation and uncertainty in retained H-B answers.",
-      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "currentVerification": "October23 source review and offline regressions passed. Historical demonstrated level preserved; current live competence not reverified.",
       "missingEvidence": [
-        "Small executor-reviewed Health sample is not broad complex-document reliability, clinical/legal certification or current VA-source verification."
+        "Health evidence is a focused historical sample. Current broad document interpretation and VA clause-level reading, conflicting facts and factual-draft accuracy remain unverified."
       ],
       "auditPriority": 6,
-      "nextAudit": "Prioritize VA selected-source readability, conflicting facts and factual draft attribution using existing originals/receipts; keep Health and VA evidence separate.",
+      "nextAudit": "Bounded audit completed. Remaining requirement when legitimate evidence is available: Health L4: representative complex source-bound record/document workflows, correction and recovery. VA L3 separately: contextual multi-turn original reading, conflicting facts/laterality and clause-attributed factual drafts.",
       "specializations": [
         {
           "name": "VA Claims Aide",
@@ -1000,7 +1185,7 @@
           "target": "L3",
           "evidenceDate": "2026-10-20",
           "scope": "One historical H-C synthetic decision-letter sample: selected-source facts, laterality, missing evidence and bounded preparation with official links.",
-          "currentVerification": "Current VA clause interpretation/readability remains unverified after 10/22 source/checker changes; no broad claims, legal, filing or adjudication competence inferred."
+          "currentVerification": "Last behavioral evaluation October20,2026: historical directed H-C sample L2 only. October23 guard/save regressions are mechanics; current VA source reading and factual drafting remain unverified after checker/context changes."
         }
       ]
     },
@@ -1020,7 +1205,23 @@
         "reviewer": "Codex engineering/evidence executor; no paid evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 evidence reconciliation"
+      },
+      {
+        "title": "Bounded department audit: retained evidence and offline mechanics",
+        "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/TAYLOR-HEALTH-VA.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "Released baseline d7e7ca9b; integrated source cf919b35"
       }
+    ],
+    "duties": [
+      "Prepare concise briefings from owner-authorized health records",
+      "Organize medication records without changing or interpreting treatment",
+      "Prepare appointment questions and record-review checklists",
+      "Track recommendation decisions and preparation outcomes",
+      "Explain selected Health records and uncertainty for clinician preparation. VA remains separate selected-claim/original review and supplied-fact drafting; no filing, representation, diagnosis, nexus or adjudication authority.",
+      "Unrequested VA causal suggestions phrased \u201csecondary to\u201d now use the existing conservative withholding guard. Prior selected-source, claim-switch, rejected-state and save-confirmation fixes retained. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload."
     ]
   },
   "beastmoney.money-coach": {
@@ -1085,14 +1286,37 @@
             "version": "d42be7b7"
           }
         ]
+      },
+      {
+        "role": "October23 bounded source/mechanics review \u2014 not behavioral evaluation",
+        "summary": "Invalid calendar dates and invalid explicit due overrides cannot certify affordability. Recommendation history now retains corrected assumptions and risks. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Previous original grades and all assessments preserved. No L1\u2013L5 promotion from fixtures.",
+        "criteria": [
+          {
+            "criterion": "Scoped current source and delivery mechanics",
+            "result": "pass",
+            "reason": "Focused authored local regressions verify the stated controls only. Plan-model attack judgment and broad complex reliability remain unverified; current saved records are not live bank verification."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Bounded department audit: retained evidence and offline mechanics",
+            "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/AVERY-MORGAN.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "Released baseline d7e7ca9b; integrated source cf919b35"
+          }
+        ]
       }
     ],
     "strengths": [
+      "Invalid calendar dates and invalid explicit due overrides cannot certify affordability. Recommendation history now retains corrected assumptions and risks. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload.",
       "Independent review accepted the exercised financial reasoning, changed-record handling and checkpoint-correction families."
     ],
     "limitations": [
       "No autonomous payments/investments or account changes.",
-      "Attack-path plan model judgment not established by input rejection."
+      "Attack-path plan model judgment not established by input rejection.",
+      "Canonical record writes and decision receipts are separate operations; partial saves require reload. Snapshot/receipt guards were locally reproduced, not live database-write tested."
     ],
     "releases": [
       {
@@ -1106,6 +1330,12 @@
         "version": "No-cost competency reconciliation \u2014 release status in handoff",
         "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
+      },
+      {
+        "date": "2026-10-23",
+        "version": "Coordinated five-staff application batch; exact release in handoff",
+        "summary": "Useful supported source corrections and same-batch canonical dossier updates. Exact merge/deployment and live access/dossier verification are recorded in permanent handoff after release, without a receipt deployment. No live competence certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       }
     ],
     "costs": {
@@ -1132,6 +1362,12 @@
         "executor": "Codex (retained-evidence reconciliation; not independent testing)",
         "why": "L3 historical: Contextual cash-flow/debt coaching, changed records and checkpoint correction in exercised financial families. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
         "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel role workers and integration lead",
+        "why": "Invalid calendar dates and invalid explicit due overrides cannot certify affordability. Recommendation history now retains corrected assumptions and risks. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Code/local mechanical verification only. Historical competency, assessments, evaluation dates, accounting and scope retained; no paid calls, activation or permission expansion.",
+        "version": "Single coordinated application release; exact status/live verification in permanent handoff"
       }
     ],
     "lastEvaluatedAt": "2026-10-18",
@@ -1142,21 +1378,33 @@
       "note": "Attack stopped by input safeguard; plan-model attack judgment not established.",
       "url": "https://github.com/seangworld/thebeast/blob/main/docs/money-coach-upgrade/release-preparation/REPORT.md"
     },
-    "reviewedAt": "2026-10-22",
+    "reviewedAt": "2026-10-23",
     "demonstrated": "L3",
     "target": "L4",
     "levelMapping": {
-      "reviewedAt": "2026-10-22",
-      "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
+      "reviewedAt": "2026-10-23",
+      "reviewer": "Codex retained-evidence reconciliation; historical grade preserved, no new behavioral evaluation",
       "rationale": "The independent review covers cash flow, debt choices, changed records, missing assumptions and checkpoint correction with explicit boundaries. That supports contextual financial coaching (L3). It does not establish broad integrated reliability or attack-path plan judgment required for L4.",
       "scope": "Contextual cash-flow/debt coaching, changed records and checkpoint correction in exercised financial families.",
       "evidenceUrls": [
         "https://github.com/seangworld/thebeast/blob/main/docs/money-coach-upgrade/release-preparation/REPORT.md",
-        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md",
+        "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/AVERY-MORGAN.md",
+        "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       ]
     },
     "targetRequirement": "The role must reliably combine financial records, canonical calculations and Director checkpoint evidence across complex objectives.",
     "deferred": [
+      {
+        "title": "Remaining scoped behavioral evidence",
+        "priority": "normal",
+        "desiredLevel": "L4",
+        "gap": "Plan-model attack judgment and broad complex reliability remain unverified; current saved records are not live bank verification.",
+        "requiredWork": "Attributable complex financial/correction outputs tied to verified sources and independently checked boundaries; input attack rejection remains separate from plan-model judgment. Preserve previous evidence; no repeated completed audit or paid evaluation loop.",
+        "success": "Attributable role-specific original inputs/outputs and independently known outcomes close the named scope gap; mechanics alone do not raise competency.",
+        "cost": "Cost unknown: representative cases, effective model/input usage and required trials are not fixed. No paid validation requested or scheduled.",
+        "status": "Bounded no-cost department audit completed; remaining behavioral evidence deferred."
+      },
       {
         "title": "Reconcile existing attack/checkpoint receipts and current source binding; preserve canonical arithmetic and no transaction authority.",
         "priority": "normal",
@@ -1165,7 +1413,7 @@
         "requiredWork": "No-cost first: Reconcile existing attack/checkpoint receipts and current source binding; preserve canonical arithmetic and no transaction authority. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
         "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
         "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish plan-model attack judgment and broad complex integrated reliability were not established; input rejection is a safeguard result. No paid validation is executed, requested or scheduled.",
-        "status": "Retained-evidence audit recommendation only; no automatic execution."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Retained-evidence audit recommendation only; no automatic execution."
       },
       {
         "title": "Strengthen integrated boundary evidence",
@@ -1175,10 +1423,14 @@
         "requiredWork": "Review existing unsafe-input and checkpoint evidence; keep canonical arithmetic and permission regressions. Do not repeat competency testing.",
         "success": "Consistent complex-context evidence with honest uncertainty and no unsupported transaction authority.",
         "cost": "Engineering effort and further validation cost not estimated. No paid inference, purchase or new service authorized. Historical assessment costs are not a forecast.",
-        "status": "Deferred \u2014 prioritize no-cost engineering/evidence review only."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Deferred \u2014 prioritize no-cost engineering/evidence review only."
       }
     ],
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Invalid calendar dates and invalid explicit due overrides cannot certify affordability. Recommendation history now retains corrected assumptions and risks. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Historical level, behavioral date and accounting preserved."
+      },
       {
         "date": "2026-10-22",
         "summary": "L3 historical: Contextual cash-flow/debt coaching, changed records and checkpoint correction in exercised financial families. Current live competence not reverified; targets and evaluation dates remain distinct."
@@ -1197,12 +1449,12 @@
       "status": "mapped",
       "evidenceDate": "2026-10-18",
       "scope": "Contextual cash-flow/debt coaching, changed records and checkpoint correction in exercised financial families.",
-      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "currentVerification": "October23 source review and offline regressions passed. Historical demonstrated level preserved; current live competence not reverified.",
       "missingEvidence": [
-        "Plan-model attack judgment and broad complex integrated reliability were not established; input rejection is a safeguard result."
+        "Plan-model attack judgment and broad complex reliability remain unverified; current saved records are not live bank verification."
       ],
       "auditPriority": 8,
-      "nextAudit": "Reconcile existing attack/checkpoint receipts and current source binding; preserve canonical arithmetic and no transaction authority."
+      "nextAudit": "Bounded audit completed. Remaining requirement when legitimate evidence is available: Attributable complex financial/correction outputs tied to verified sources and independently checked boundaries; input attack rejection remains separate from plan-model judgment."
     },
     "evidence": [
       {
@@ -1220,7 +1472,23 @@
         "reviewer": "Codex engineering/evidence executor; no paid evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 evidence reconciliation"
+      },
+      {
+        "title": "Bounded department audit: retained evidence and offline mechanics",
+        "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/AVERY-MORGAN.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "Released baseline d7e7ca9b; integrated source cf919b35"
       }
+    ],
+    "duties": [
+      "Prepare concise financial briefings from current records",
+      "Explain projections, tradeoffs, and meaningful changes",
+      "Surface evidence-backed planning observations",
+      "Follow recommendations through documented outcomes",
+      "Explain canonical cash flow, debt scenarios and corrections with explicit timing, assumptions and risks; preserve essentials/reserves and member control without transaction authority.",
+      "Invalid calendar dates and invalid explicit due overrides cannot certify affordability. Recommendation history now retains corrected assumptions and risks. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload."
     ]
   },
   "beastfusion.fusion-director": {
@@ -1270,11 +1538,33 @@
             "version": "Final16-call assessment; corrections separate"
           }
         ]
+      },
+      {
+        "role": "October23 bounded source/mechanics review \u2014 not behavioral evaluation",
+        "summary": "Existing cancellation, checkpoint recovery and evidence controls retained; no additional Avery-specific defect established. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Previous original grades and all assessments preserved. No L1\u2013L5 promotion from fixtures.",
+        "criteria": [
+          {
+            "criterion": "Scoped current source and delivery mechanics",
+            "result": "pass",
+            "reason": "Focused authored local regressions verify the stated controls only. Current integrated planning/cancellation judgment after later local fixes remains unverified; historical cancellation result and original grade remain unchanged."
+          }
+        ],
+        "evidence": [
+          {
+            "title": "Bounded department audit: retained evidence and offline mechanics",
+            "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/AVERY-MORGAN.md",
+            "kind": "code review",
+            "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+            "date": "2026-10-23",
+            "version": "Released baseline d7e7ca9b; integrated source cf919b35"
+          }
+        ]
       }
     ],
     "limitations": [
       "Folio 63 independent result 3/4; cancellation-contract corrections later local-only verified.",
-      "Local security gates are not independent reasoning competence."
+      "Local security gates are not independent reasoning competence.",
+      "Canonical record writes and decision receipts are separate operations; partial saves require reload. Snapshot/receipt guards were locally reproduced, not live database-write tested."
     ],
     "releases": [
       {
@@ -1288,6 +1578,12 @@
         "version": "No-cost competency reconciliation \u2014 release status in handoff",
         "summary": "Dossier evidence interpretation and presentation only; no fresh live competence claim. Permanent handoff updated after this batch confirms deployment/HQ synchronization without a receipt deployment.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6355413018"
+      },
+      {
+        "date": "2026-10-23",
+        "version": "Coordinated five-staff application batch; exact release in handoff",
+        "summary": "Useful supported source corrections and same-batch canonical dossier updates. Exact merge/deployment and live access/dossier verification are recorded in permanent handoff after release, without a receipt deployment. No live competence certification.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       }
     ],
     "costs": {
@@ -1314,6 +1610,12 @@
         "executor": "Codex (retained-evidence reconciliation; not independent testing)",
         "why": "L3 historical: Contextual delegation, contradictory evidence, recovery and permission handling in six frozen Director scenarios. Current live competence not reverified; targets and evaluation dates remain distinct. Historical assessments retained. Framework-only 08/30 review dates are not behavioral evaluation dates; no new calls, competency transfer, permissions or activation.",
         "version": "2026-10-22 no-cost competency reconciliation; exact release verification in permanent handoff"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex parallel role workers and integration lead",
+        "why": "Existing cancellation, checkpoint recovery and evidence controls retained; no additional Avery-specific defect established. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Code/local mechanical verification only. Historical competency, assessments, evaluation dates, accounting and scope retained; no paid calls, activation or permission expansion.",
+        "version": "Single coordinated application release; exact status/live verification in permanent handoff"
       }
     ],
     "departments": [
@@ -1328,24 +1630,37 @@
       "note": "Later cancellation corrections verified locally; original grade unchanged.",
       "url": "https://github.com/seangworld/thebeast/blob/main/docs/avery-release-readiness/report.md"
     },
-    "reviewedAt": "2026-10-22",
+    "reviewedAt": "2026-10-23",
     "demonstrated": "L3",
     "target": "L4",
     "levelMapping": {
-      "reviewedAt": "2026-10-22",
-      "reviewer": "Codex evidence reconciliation; not a new test or independent certification",
+      "reviewedAt": "2026-10-23",
+      "reviewer": "Codex retained-evidence reconciliation; historical grade preserved, no new behavioral evaluation",
       "rationale": "Contextual delegation, evidence correction, recovery and permission handling were demonstrated across the frozen Folios. This supports bounded contextual Director workflows (L3). Cancellation scored 3/4 and later fixes were local-only; reliable complex integrated operation (L4) is not established.",
       "scope": "Contextual delegation, contradictory evidence, recovery and permission handling in six frozen Director scenarios.",
       "evidenceUrls": [
         "https://github.com/seangworld/thebeast/blob/main/docs/avery-release-readiness/report.md",
-        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md"
+        "https://github.com/seangworld/thebeast/blob/codex/staff-competency-reconciliation/docs/staff-dossiers/COMPETENCY-RECONCILIATION-20261022.md",
+        "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/AVERY-MORGAN.md",
+        "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736"
       ]
     },
     "targetRequirement": "Reliable complex multi-specialist planning, delegation, evidence verification and recovery are the Director job requirement.",
     "strengths": [
+      "Existing cancellation, checkpoint recovery and evidence controls retained; no additional Avery-specific defect established. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload.",
       "Historical assessment supports conditional delegation, identifying incorrect specialist results, recovery and permission boundaries."
     ],
     "deferred": [
+      {
+        "title": "Remaining scoped behavioral evidence",
+        "priority": "normal",
+        "desiredLevel": "L4",
+        "gap": "Current integrated planning/cancellation judgment after later local fixes remains unverified; historical cancellation result and original grade remain unchanged.",
+        "requiredWork": "Attributable current-candidate planning, supervision, cancellation and recovery outputs with independently checked outcomes. Preserve previous evidence; no repeated completed audit or paid evaluation loop.",
+        "success": "Attributable role-specific original inputs/outputs and independently known outcomes close the named scope gap; mechanics alone do not raise competency.",
+        "cost": "Cost unknown: representative cases, effective model/input usage and required trials are not fixed. No paid validation requested or scheduled.",
+        "status": "Bounded no-cost department audit completed; remaining behavioral evidence deferred."
+      },
       {
         "title": "Audit retained cancellation and current candidate bindings before seeking any broader reliability claim.",
         "priority": "normal",
@@ -1354,7 +1669,7 @@
         "requiredWork": "No-cost first: Audit retained cancellation and current candidate bindings before seeking any broader reliability claim. Preserve original outputs, evaluation dates and grades; do not run new model calls.",
         "success": "Representative role-specific outputs tied to their candidate and sources close the named gap; engineering tests alone do not raise the level.",
         "cost": "Cost unknown. If existing records cannot answer the gap, new live validation would establish cancellation reliability and current integrated reasoning after later local fixes remain unverified. No paid validation is executed, requested or scheduled.",
-        "status": "Retained-evidence audit recommendation only; no automatic execution."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Retained-evidence audit recommendation only; no automatic execution."
       },
       {
         "title": "Close cancellation reliability gap",
@@ -1364,10 +1679,14 @@
         "requiredWork": "Retain locally corrected cancellation behavior and independently inspect existing receipts; do not change the historical23/24 grade.",
         "success": "No action after cancellation; local recovery and cancellation evidence remains consistent. L4 needs reliable representative evidence, not a score conversion.",
         "cost": "Engineering effort and further validation cost not estimated. No paid inference, purchase or new service authorized. Historical assessment costs are not a forecast.",
-        "status": "Deferred \u2014 prioritize no-cost engineering/evidence review only."
+        "status": "Historical retained recommendation; October23 bounded source/evidence pass completed. Deferred \u2014 prioritize no-cost engineering/evidence review only."
       }
     ],
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Existing cancellation, checkpoint recovery and evidence controls retained; no additional Avery-specific defect established. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload. Historical level, behavioral date and accounting preserved."
+      },
       {
         "date": "2026-10-22",
         "summary": "L3 historical: Contextual delegation, contradictory evidence, recovery and permission handling in six frozen Director scenarios. Current live competence not reverified; targets and evaluation dates remain distinct."
@@ -1390,12 +1709,12 @@
       "status": "mapped",
       "evidenceDate": "2026-10-18",
       "scope": "Contextual delegation, contradictory evidence, recovery and permission handling in six frozen Director scenarios.",
-      "currentVerification": "Historical demonstration; current live competence not reverified. This pass reviewed retained evidence only.",
+      "currentVerification": "October23 source review and offline regressions passed. Historical demonstrated level preserved; current live competence not reverified.",
       "missingEvidence": [
-        "Cancellation reliability and current integrated reasoning after later local fixes remain unverified."
+        "Current integrated planning/cancellation judgment after later local fixes remains unverified; historical cancellation result and original grade remain unchanged."
       ],
       "auditPriority": 7,
-      "nextAudit": "Audit retained cancellation and current candidate bindings before seeking any broader reliability claim."
+      "nextAudit": "Bounded audit completed. Remaining requirement when legitimate evidence is available: Attributable current-candidate planning, supervision, cancellation and recovery outputs with independently checked outcomes."
     },
     "evidence": [
       {
@@ -1413,7 +1732,23 @@
         "reviewer": "Codex engineering/evidence executor; no paid evaluation",
         "date": "2026-10-22",
         "version": "2026-10-22 evidence reconciliation"
+      },
+      {
+        "title": "Bounded department audit: retained evidence and offline mechanics",
+        "url": "https://github.com/seangworld/thebeast/blob/cf919b35/docs/staff-dossiers/department-20261023/AVERY-MORGAN.md",
+        "kind": "code review",
+        "reviewer": "Codex isolated role workers and integration lead; not a new behavioral evaluation",
+        "date": "2026-10-23",
+        "version": "Released baseline d7e7ca9b; integrated source cf919b35"
       }
+    ],
+    "duties": [
+      "Look across approved Beast summaries for the most important next step",
+      "Send detailed questions to the specialist with the right expertise",
+      "Coordinate permissioned context and cross-professional follow-up",
+      "Explain which specialists and records support each recommendation",
+      "Coordinate permitted specialist reviews and dependencies with explicit approval; independently verify evidence, resume existing checkpoints and distinguish completed reviews from unfinished member objectives.",
+      "Existing cancellation, checkpoint recovery and evidence controls retained; no additional Avery-specific defect established. Approved record updates require an existing target; failed prior-write lookups stop writes. Approval/rejection receipts require the exact pending owner/professional/conversation snapshot and confirmed saved status; unconfirmed decisions warn to reload."
     ]
   },
   "beastfusion.orchestrator-3": {
