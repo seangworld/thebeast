@@ -1673,7 +1673,7 @@
       "platform-style ad previews",
       "internal provider-neutral distribution plans",
       "qualified traffic acquisition and distribution recommendations for existing assets",
-      "Existing deterministic social controls/scheduler: retain minute scheduled publishing and all approval/CAS gates; idle ticks use one eligibility read and no write, recovery targets observed stale claims only, visible workspace polls only enabled scheduled/in-flight jobs and stops hidden/unmounted. This administrative workflow is not activation or permission expansion of the policy class."
+      "Scheduled marketing is disabled by owner decision before launch: marketing-social and marketing-growth have no recurring deployment schedules. Implementation, data, settings, approval rules and manual controls are retained. Both schedules must be explicitly restored by owner-authorized release when marketing launches; no agent activation is implied."
     ],
     "limitations": [
       "publish or schedule without owner approval",
@@ -1684,9 +1684,13 @@
       "treat unavailable metrics as zero",
       "Policy class, not evidence of a separately running agent.",
       "No staff activation or publishing authority is granted by polling/scheduler optimization. Exact revision approval and role/pause/account checks remain mandatory.",
-      "Idle minute eligibility reads remain necessary with the existing scheduler; active-job paths can require additional safety reads."
+      "No automatic social publishing/recovery or growth cycles from these removed schedules. Manual authorized actions and visible workspace reads remain available; saved enabled settings do not restore a deployment schedule."
     ],
     "recentChanges": [
+      {
+        "date": "2026-10-22",
+        "summary": "Scheduled marketing is disabled by owner decision before launch: marketing-social and marketing-growth have no recurring deployment schedules. Implementation, data, settings, approval rules and manual controls are retained. Both schedules must be explicitly restored by owner-authorized release when marketing launches; no agent activation is implied."
+      },
       {
         "date": "2026-10-22",
         "summary": "Existing deterministic social controls/scheduler: retain minute scheduled publishing and all approval/CAS gates; idle ticks use one eligibility read and no write, recovery targets observed stale claims only, visible workspace polls only enabled scheduled/in-flight jobs and stops hidden/unmounted. This administrative workflow is not activation or permission expansion of the policy class."
@@ -1708,6 +1712,12 @@
         "executor": "Codex (engineering executor; no competency evaluation)",
         "why": "Existing deterministic social controls/scheduler: retain minute scheduled publishing and all approval/CAS gates; idle ticks use one eligibility read and no write, recovery targets observed stale claims only, visible workspace polls only enabled scheduled/in-flight jobs and stops hidden/unmounted. This administrative workflow is not activation or permission expansion of the policy class. Request effects are estimates; no measured bandwidth or billing savings.",
         "version": "2026-10-22 single idle-traffic batch; exact release identity in linked handoff"
+      },
+      {
+        "date": "2026-10-22",
+        "executor": "Codex (engineering executor; owner decision, no competency evaluation)",
+        "why": "Scheduled marketing is disabled by owner decision before launch: marketing-social and marketing-growth have no recurring deployment schedules. Implementation, data, settings, approval rules and manual controls are retained. Both schedules must be explicitly restored by owner-authorized release when marketing launches; no agent activation is implied.",
+        "version": "2026-10-22 marketing schedule removal; exact release verification in permanent handoff"
       }
     ],
     "evidence": [
@@ -1726,6 +1736,14 @@
         "reviewer": "Codex engineering executor; no independent competency review",
         "date": "2026-10-22",
         "version": "2026-10-22 single idle-traffic batch; exact release identity in linked handoff"
+      },
+      {
+        "title": "Owner-disabled marketing schedules and single-release verification",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6354572829",
+        "kind": "code review",
+        "reviewer": "Codex engineering executor; no independent competency review",
+        "date": "2026-10-22",
+        "version": "2026-10-22 marketing schedule removal"
       }
     ],
     "releases": [
@@ -1734,6 +1752,12 @@
         "version": "Idle-traffic operating behavior \u2014 exact release status in handoff",
         "summary": "Source-revision operating behavior update. The linked permanent handoff records preparation/confirmed deployment status and is updated after release without a second deployment. No competency level or agent activation inferred.",
         "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6353916826"
+      },
+      {
+        "date": "2026-10-22",
+        "version": "Prelaunch marketing schedules disabled \u2014 exact release status in handoff",
+        "summary": "Operating configuration only. The linked handoff records confirmed deployed configuration and live HQ synchronization after this single release, without a receipt deployment. Planned policy record remains planned; no activation or competency claim.",
+        "url": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6354572829"
       }
     ]
   }

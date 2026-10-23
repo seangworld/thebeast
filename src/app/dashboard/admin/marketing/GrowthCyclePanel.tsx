@@ -36,9 +36,9 @@ export function GrowthCyclePanel() {
     {message && <p role="status" className="text-slate-200">{message}</p>}
     {!snapshot ? <p className="text-slate-300">{error ? "Cycle controls are unavailable." : "Loading cycle history…"}</p> : <>
       <p className="text-amber-200">{snapshot.blocker}</p>
-      <p className="text-sm text-slate-300">Discovery is {snapshot.enabled ? "enabled" : "paused"}. Daily check: 10:20 UTC. One attempt per UTC day; an interrupted or failed attempt remains visible until the next day&apos;s cycle. Up to ten campaigns per product receive assessments, rotating daily. Search changes are not attributed conversions or proof of campaign effectiveness.</p>
+      <p className="text-sm text-slate-300">Discovery is {snapshot.enabled ? "enabled" : "paused"}. Automatic daily checks are disabled by owner decision until marketing launches; restoring them requires an explicitly authorized release. One attempt per UTC day; an interrupted or failed attempt remains visible until the next day&apos;s cycle. Up to ten campaigns per product receive assessments, rotating daily. Search changes are not attributed conversions or proof of campaign effectiveness.</p>
       <div className="flex flex-wrap gap-3">
-        <button disabled={busy} onClick={() => void act({ action: "set_enabled", enabled: !snapshot.enabled })} className="min-h-11 rounded-xl border border-white/20 px-4 py-2 text-white disabled:opacity-50">{snapshot.enabled ? "Pause discovery" : "Enable daily discovery"}</button>
+        <button disabled={busy} onClick={() => void act({ action: "set_enabled", enabled: !snapshot.enabled })} className="min-h-11 rounded-xl border border-white/20 px-4 py-2 text-white disabled:opacity-50">{snapshot.enabled ? "Pause discovery" : "Enable discovery for manual runs"}</button>
         <button disabled={busy || !snapshot.enabled} onClick={() => void act({ action: "run" })} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 font-bold text-black disabled:opacity-50">{busy ? "Working…" : "Run today's cycle"}</button>
         <Link href="/dashboard/operations/marketing/advertising" className="min-h-11 px-4 py-2 text-amber-100">Review campaigns and assets →</Link>
       </div>
