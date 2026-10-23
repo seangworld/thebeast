@@ -116,3 +116,21 @@ test("BE-301 provides an age-appropriate contextual tutorial and Outcome hooks",
   assert.match(migration, /professional_turn_failed/);
   assert.match(migration, /does not store[\s\S]*homework text[\s\S]*image data/i);
 });
+
+
+test("Tutor does not infer learner age from impossible calendar birthdays", () => {
+  const today = new Date("2026-08-29T00:00:00Z");
+  for (const accountBirthday of ["2016-02-31", "2015-02-29", "2016-04-31", "2027-01-01"]) {
+    assert.match(buildTutorLearnerContext({ accountBirthday }, today).profile, /age not provided/);
+  }
+  assert.match(buildTutorLearnerContext({ accountBirthday: "2016-02-29" }, today).profile, /child learner/);
+});
+
+test("Tutor rejects incomplete or noncanonical base64 before provider dispatch", () => {
+  for (const encoded of ["A", "AA", "AAA", "AAAA=", "AAAA==", "AB==", "AAB=", ""]) {
+    assert.throws(() => validateTutorImageAttachment({ dataUrl: `data:image/png;base64,${encoded}`, mediaType: "image/png" }), /valid base64/);
+  }
+  for (const encoded of ["AA==", "AAA=", "AAAA"]) {
+    assert.ok(validateTutorImageAttachment({ dataUrl: `data:image/png;base64,${encoded}`, mediaType: "image/png" }));
+  }
+});

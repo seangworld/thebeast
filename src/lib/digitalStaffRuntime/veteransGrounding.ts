@@ -1,6 +1,6 @@
 import type { RuntimeContext } from "./types";
 
-const secondaryTheory = /\bsecondary(?:\s+(?:service[- ]?connection|service[- ]connected\s+(?:condition|disability)|condition|claim))\b|\bsecondarily\b.{0,120}\b(?:caus\w*|aggravat\w*)\b/i;
+const secondaryTheory = /\bsecondary(?:\s+(?:service[- ]?connection|service[- ]connected\s+(?:condition|disability)|condition|claim|to))\b|\bsecondarily\b.{0,120}\b(?:caus\w*|aggravat\w*)\b/i;
 const explicitSecondaryRequest = /\b(?:explain|define|describe|compare|discuss|what\s+(?:is|does)|can|could|would|should)\b.{0,80}\bsecondary\b/i;
 const rejectsSecondaryDiscussion = /\b(?:do\s+not|don't|never|avoid|without)\b.{0,50}\bsecondary\b/i;
 

@@ -247,6 +247,21 @@
         "beastfusion.proposal-agent",
         "beastfusion.outcome-agent"
       ]
+    },
+    {
+      "date": "2026-10-23",
+      "executor": "Codex parallel role workers and integration lead",
+      "reason": "Coordinated no-cost Avery/Morgan/Jordan/Riley/Taylor Health+VA source audit and scoped corrections; preserve historical demonstrated scopes, targets, behavioral dates, original assessments and accounting. No paid evaluation, activation or permission changes.",
+      "version": "Single application batch from released d7e7ca9b; exact release/live verification in handoff",
+      "evidence": "https://github.com/seangworld/thebeast/issues/274#issuecomment-6374628736",
+      "sourceDigest": "4b9f1244999f11c678140e4510d881943099ad1b8a6369609e14923d9c0358b4",
+      "affectedStaffIds": [
+        "beastfusion.fusion-director",
+        "beastmoney.money-coach",
+        "beasteducation.guidance-counselor",
+        "beasteducation.tutor",
+        "beasthealth.health-advisor"
+      ]
     }
   ]
 }

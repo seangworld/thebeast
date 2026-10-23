@@ -46,7 +46,7 @@ test('dossier server authorization denies anonymous, member, editable metadata, 
 
 
 test('prior result/evaluation dates remain distinct from dossier updates and score-to-level shortcuts',()=>{
- const a=getStaffDossier('fusion-director')!;assert.equal(a.latestAssessment?.title,'23/24 PARTIAL-PASS');assert.equal(a.lastEvaluatedAt,'2026-10-18');assert.equal(a.reviewedAt,'2026-10-22');assert.match(a.latestAssessment!.note,/locally/);assert.equal(a.demonstrated,'L3');assert.equal(a.target,'L4');assert.match(a.levelMapping!.rationale,/Cancellation/);
+ const a=getStaffDossier('fusion-director')!;assert.equal(a.latestAssessment?.title,'23/24 PARTIAL-PASS');assert.equal(a.lastEvaluatedAt,'2026-10-18');assert.equal(a.reviewedAt,'2026-10-23');assert.match(a.latestAssessment!.note,/locally/);assert.equal(a.demonstrated,'L3');assert.equal(a.target,'L4');assert.match(a.levelMapping!.rationale,/Cancellation/);
  const tutor=getStaffDossier('tutor')!;assert.equal(tutor.lastEvaluatedAt,'2026-08-30');assert.equal(tutor.latestAssessment?.title,'7/7 source turns accepted');assert.equal(tutor.demonstrated,'L2');assert.match(tutor.levelMapping!.rationale,/Knight/);assert.ok(tutor.assessments.some(a=>a.evidence.some(e=>e.date==='2026-08-30')));
 });
 

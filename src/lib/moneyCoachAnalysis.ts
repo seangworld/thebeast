@@ -9,6 +9,9 @@ export function moneyCoachFinancialAssessment(rows: MoneyCoachContextRows, cash:
   const active = (row: Record<string, unknown>) => row.is_active !== false && row.is_archived !== true;
   const incomes = rows.incomes.filter(active), bills = rows.bills.filter(active), allDebts = rows.debts.filter(active), debts = allDebts.filter(isDebtPayoffEligible);
   const numeric = (v: unknown, negative = false) => (typeof v === "number" || typeof v === "string" && v.trim() !== "") && Number.isFinite(Number(v)) && Math.abs(Number(v)) <= 1_000_000_000 && (negative || Number(v) >= 0);
+  // Date.parse rolls impossible dates (for example February 30) into another day.
+  // A saved calendar day must round-trip exactly before it can certify timing.
+  const calendarDay = (value: unknown): value is string => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
   const source = (row: Record<string, unknown>, kind: string) => `${kind}:${typeof row.id === "string" ? row.id : "unidentified"}`;
   const issues: Array<{ code: string; source: string; detail: string; blocks: "cash" | "payoff" | "none" }> = [];
   for (const field of ["starting_balance", "checking_buffer"]) if (!numeric(rows.cashSettings?.[field], field === "starting_balance")) issues.push({ code: "missing_or_invalid_amount", source: `cash_settings:${field}`, detail: `${field} is unknown or invalid; do not substitute zero.`, blocks: "cash" });
@@ -22,10 +25,12 @@ export function moneyCoachFinancialAssessment(rows: MoneyCoachContextRows, cash:
     if (!row.frequency) issues.push({ code: "frequency_assumption", source: source(row, "schedule"), detail: "Canonical legacy frequency defaults to monthly; recurrence is not independently confirmed.", blocks: "cash" });
     else if (!/^(?:weekly|biweekly|bi-weekly|semi-monthly|semimonthly|monthly|annual|annually|yearly|quarterly|every_[236]_months)$/i.test(String(row.frequency)) && !isOneTimeFrequency(String(row.frequency))) issues.push({ code: "unsupported_frequency", source: source(row, "schedule"), detail: "Unsupported frequency cannot substantiate a recurring cash projection.", blocks: "cash" });
   }
-  for (const row of incomes) if (!/^\d{4}-\d{2}-\d{2}$/.test(String(row.next_date || "")) || !Number.isFinite(Date.parse(String(row.next_date)))) issues.push({ code: "missing_income_date", source: source(row, "income"), detail: "Income timing is unavailable; monthly arithmetic is not proof that obligations clear on time.", blocks: "cash" });
+  for (const row of incomes) if (!calendarDay(row.next_date)) issues.push({ code: "missing_income_date", source: source(row, "income"), detail: "Income timing is unavailable; monthly arithmetic is not proof that obligations clear on time.", blocks: "cash" });
   for (const row of [...bills,...debts]) {
     const due=Number(row.due_date),override=row.next_due_date_after_payment;
-    const hasOverride=typeof override === "string" && Number.isFinite(Date.parse(override));
+    const overrideProvided=override !== undefined && override !== null && override !== "";
+    const hasOverride=calendarDay(override);
+    if (overrideProvided && !hasOverride) issues.push({code:"invalid_due_override",source:source(row,"obligation"),detail:"Saved next-due override is not a valid calendar day; confirm timing instead of silently using the recurring due day.",blocks:"cash"});
     if (!hasOverride && !(Number.isInteger(due) && due>=1 && due<=31)) issues.push({code:"missing_due_date",source:source(row,"obligation"),detail:"Obligation timing is unavailable; a default day cannot establish personal affordability.",blocks:"cash"});
     if (hasOverride && String(override).slice(0,10)<asOf.toISOString().slice(0,10)) issues.push({code:"stale_due_override",source:source(row,"obligation"),detail:"Saved next-due override predates this review; confirm the current obligation cycle.",blocks:"cash"});
   }

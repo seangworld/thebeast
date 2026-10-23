@@ -119,6 +119,8 @@ function recommendationSignature(record: FinancialCoachRecommendationRecord) {
     record.action,
     record.why,
     record.risk,
+    record.assumptions,
+    record.risks,
   ]);
 }
 

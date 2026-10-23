@@ -84,3 +84,24 @@ test("vaccination proposals save as procedures and preserve the recorded adminis
   const payload = calls[0].payload as { record_type: string; occurred_on: string };
   assert.equal(payload.record_type, "procedure"); assert.equal(payload.occurred_on, "2026-01-01");
 });
+
+test("an approved update without exact target never falls through to a create", async () => {
+  for (const [professionalId,domain,entityType] of [
+    ['beasthealth.health-advisor','health','medication'],
+    ['beasteducation.guidance-counselor','education','school'],
+    ['beastfusion.fusion-director','goal','goal'],
+    ['beastmoney.money-coach','money','priority'],
+  ] as const) {
+    const f=fakeClient();
+    await assert.rejects(applyApprovedKnowledgeProposal({client:f.client,ownerId:'owner',professionalId,proposal:{...base,domain,entityType,fields:{name:'Requested correction'},proposedAction:'update'}}),/existing record identity/);
+    assert.equal(f.calls.length,0);
+  }
+});
+
+test("failed prior-write lookups do not authorize fallback inserts", async () => {
+  for (const [professionalId,domain,entityType] of [['beasthealth.health-advisor','health','medication'],['beasteducation.guidance-counselor','education','school'],['beastmoney.money-coach','money','priority']] as const) {
+    let writes=0;const q={from(){return q},select(){return q},eq(){return q},limit(){return q},maybeSingle:async()=>({data:null,error:{message:'lookup unavailable'}}),insert(){writes++;return q}};
+    await assert.rejects(applyApprovedKnowledgeProposal({client:q as never,ownerId:'owner',professionalId,proposal:{...base,domain,entityType,fields:professionalId==='beastmoney.money-coach'?{priority:'Reduce debt'}:{name:'Example'}}}),/could not be checked/);
+    assert.equal(writes,0);
+  }
+});

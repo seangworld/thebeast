@@ -1,6 +1,6 @@
 import { advisorGoalColumns, advisorGoalFilters } from "@/lib/platform/goalConnections";
 import { NextResponse } from "next/server";
-import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, classifyDigitalStaffFailure, moneyCoachCashSettingsColumns, moneyCoachFundingSourceColumns, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, saveKnowledgeProposalDecision, buildMoneyCoachStructuredRecords, classifyDigitalStaffFailure, moneyCoachCashSettingsColumns, moneyCoachFundingSourceColumns, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { digitalStaffTelemetryRecord, firstPartyErrorCategoryFromDigitalStaff, recordServerFirstPartyTelemetry } from "@/lib/server/firstPartyTelemetry";
 import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
@@ -162,25 +162,20 @@ export async function POST(request: Request) {
     const runtime = latest?.content && typeof latest.content === "object" && !Array.isArray(latest.content) ? (latest.content as { runtime?: { proposals?: StructuredKnowledgeProposal[] } }).runtime : null;
     const proposal = runtime?.proposals?.find((item) => item.id === proposalId);
     if (!proposal) return privateJson({ error: "That proposal is not available for this owner-scoped conversation." }, 404);
+    if (proposal.approvalStatus !== "proposed") return privateJson({error: "That proposal already has a decision."}, 409);
     if (body.decision === "reject") {
-      if (latest?.id && latest.content && typeof latest.content === "object" && !Array.isArray(latest.content)) {
-        const content = latest.content as { runtime?: { proposals?: StructuredKnowledgeProposal[]; [key: string]: unknown } };
-        const updatedContent = { ...content, runtime: { ...(content.runtime || {}), proposals: (content.runtime?.proposals || []).map((item: StructuredKnowledgeProposal) => item.id === proposalId ? { ...item, approvalStatus: "rejected" as const } : item) } };
-        await supabase.from("agent_conversation_messages").update({ content: updatedContent }).eq("id", latest.id).eq("owner_id", user.id);
-      }
-      return privateJson({ proposalId, status: "rejected" });
+      try {
+        const decision = await saveKnowledgeProposalDecision({client:supabase,ownerId:user.id,conversationId,professionalId:professionalId as ProfessionalId,messageId:latest!.id,content:latest!.content as Parameters<typeof saveKnowledgeProposalDecision>[0]["content"],proposalId,status:"rejected"});
+        return privateJson(decision);
+      } catch (error) {return privateJson({...safeDigitalStaffFailure("proposal-decision",error,requestId),code:"proposal_decision_unconfirmed"},409);}
     }
     const editedFields = body.editedFields && typeof body.editedFields === "object" && !Array.isArray(body.editedFields) ? body.editedFields as Record<string, string | number | boolean | null> : undefined;
     try {
       const result = await applyApprovedKnowledgeProposal({ client: supabase, ownerId: user.id, professionalId: professionalId as ProfessionalId, proposal, editedFields });
-      if (latest?.id && latest.content && typeof latest.content === "object" && !Array.isArray(latest.content)) {
-        const content = latest.content as { text?: string; runtime?: { proposals?: StructuredKnowledgeProposal[]; [key: string]: unknown } };
-        const updatedContent = { ...content, runtime: { ...(content.runtime || {}), proposals: (content.runtime?.proposals || []).map((item) => item.id === proposalId ? { ...item, approvalStatus: "approved" as const, approvedRecordId: result.recordId } : item) } };
-        await supabase.from("agent_conversation_messages").update({ content: updatedContent }).eq("id", latest.id).eq("owner_id", user.id);
-      }
+      await saveKnowledgeProposalDecision({client:supabase,ownerId:user.id,conversationId,professionalId:professionalId as ProfessionalId,messageId:latest!.id,content:latest!.content as Parameters<typeof saveKnowledgeProposalDecision>[0]["content"],proposalId,status:"approved",recordId:result.recordId});
       return privateJson({ result });
     } catch (error) {
-      return privateJson(safeDigitalStaffFailure("proposal-decision", error, requestId), 422);
+      return privateJson({...safeDigitalStaffFailure("proposal-decision", error, requestId),code:"proposal_decision_unconfirmed"}, 422);
     }
   }
   const requestLease = acquireDigitalStaffRequestLease(user.id, professionalId);

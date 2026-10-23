@@ -83,6 +83,9 @@
       "postcss": "8.5.23",
       "sharp": "0.35.5"
     },
-    "braces": "$braces"
+    "braces": "$braces",
+    "@vercel/cli-config": {
+      "zod": "4.6.6"
+    }
   }
 }
