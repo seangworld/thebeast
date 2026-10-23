@@ -255,3 +255,11 @@ test("Money Coach exposes timestamped history and visible safety boundaries", ()
   assert.match(page, /history is not saved to your Money records/);
   assert.match(page, /snapshot\.financialCoach\.safetyBoundaries/);
 });
+
+test("recommendation history retains corrected assumptions and risks with unchanged action", () => {
+ const original: FinancialCoachRecommendationRecord = {id:"first",recommendationId:"review",recordedAt:"2026-10-23T10:00:00Z",title:"Review plan",action:"Review cash",why:"Protect reserve",risk:"low",assumptions:["Cash is 1200"],risks:[]};
+ const corrected={...original,id:"corrected",recordedAt:"2026-10-23T10:05:00Z",assumptions:["Cash is 900"],risks:["Pending bill"]};
+ const history=appendFinancialCoachRecommendationHistory([original],corrected);
+ assert.equal(history.length,2);assert.deepEqual(history[0].assumptions,["Cash is 900"]);assert.deepEqual(history[0].risks,["Pending bill"]);
+ assert.equal(appendFinancialCoachRecommendationHistory(history,{...corrected,id:"repeat"}).length,2);
+});

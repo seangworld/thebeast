@@ -48,3 +48,10 @@ test("month-end obligations clamp without skipping February or losing the saved 
 test("annual income aliases do not become monthly timeline inflows",()=>{const timeline=buildCashTimeline({incomes:[{name:"Annual",amount:1200,next_date:"2026-11-01",frequency:"annual"}],bills:[],debts:[],startDate:date,days:100});assert.equal(timeline.length,1)});
 
 test("a legitimate recurring reimbursement is not automatically reclassified or blocked by its label",()=>{const r=rows();r.incomes.push({id:"allowance",name:"Monthly employer reimbursement",amount:100,frequency:"monthly",next_date:"2026-10-20"});const a=summary(r).financialAssessment;assert.equal(a.cashVerified,true);assert.equal(summary(r).monthlyIncome,4100);assert.ok(a.issues.some(i=>i.code==="classification_review"));assert.equal(a.facts.disputedIncomeSources.length,0)});
+
+ test("impossible calendar dates cannot certify cash timing or fall back from an invalid override",()=>{
+ for(const value of ["2026-02-30", "2026-04-31", "2026-13-01"]){const r=rows();r.incomes[0].next_date=value;assert.equal(summary(r).financialAssessment.cashVerified,false,value);}
+ const r=rows();r.bills[0].next_due_date_after_payment="2026-10-32";assert.equal(summary(r).financialAssessment.cashVerified,false);
+ const s=rows();s.bills[0].next_due_date_after_payment="2026-11-31";assert.equal(summary(s).financialAssessment.cashVerified,false);
+ const leap=rows();leap.incomes[0].next_date="2028-02-29";assert.equal(summary(leap).financialAssessment.cashVerified,true);
+ });
