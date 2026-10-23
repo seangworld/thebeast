@@ -77,7 +77,8 @@ export async function applyApprovedKnowledgeProposal({
   const normalized = { ...proposal, fields: { ...normalizedProposalFields(proposal), ...(editedFields || {}) } };
   if (normalized.approvalStatus !== "proposed") throw new Error("Only a pending proposal can be approved.");
   if (normalized.sourceMessageId.trim() === "") throw new Error("Proposal provenance is required.");
-  if (normalized.proposedAction === "none") throw new Error("This proposal does not authorize a record write.");
+  if (!["create", "update"].includes(normalized.proposedAction)) throw new Error("This proposal does not authorize a record write.");
+  if (normalized.proposedAction === "update" && !normalized.relatedRecordId?.trim()) throw new Error("An update requires the existing record identity.");
 
   const targetProfessional = professionalId === "beastfusion.fusion-director"
     ? normalized.domain === "health"
@@ -97,6 +98,7 @@ export async function applyApprovedKnowledgeProposal({
     const existingProposal = normalized.proposedAction === "create"
       ? await client.from("beast_health_records").select("id").eq("owner_id", ownerId).eq("details->>proposalId", normalized.id).limit(1).maybeSingle()
       : { data: null, error: null };
+    if (existingProposal.error) throw new Error("Existing proposal write could not be checked.");
     if (existingProposal.data?.id) return { proposalId: normalized.id, status: "approved", recordId: String(existingProposal.data.id), table: "beast_health_records" };
     const receivedOn = /vaccin/i.test(normalized.entityType) ? stringField(normalized, "receivedOn") : "";
     if (receivedOn && (!validDate(receivedOn) || receivedOn > new Date().toISOString().slice(0, 10))) throw new Error("Confirm a valid vaccination date before approving.");
@@ -123,6 +125,7 @@ export async function applyApprovedKnowledgeProposal({
     const existingProposal = normalized.proposedAction === "create"
       ? await client.from("education_career_profile_items").select("id").eq("owner_id", ownerId).eq("details->>proposalId", normalized.id).limit(1).maybeSingle()
       : { data: null, error: null };
+    if (existingProposal.error) throw new Error("Existing proposal write could not be checked.");
     if (existingProposal.data?.id) return { proposalId: normalized.id, status: "approved", recordId: String(existingProposal.data.id), table: "education_career_profile_items" };
     const value = JSON.stringify(jsonFields(normalized));
     const values = { category, label, value, verification_status: "member_reported", confidence: normalized.confidence, details: { entityType: normalized.entityType, provenance: "digital_staff_runtime", proposalId: normalized.id }, updated_at: new Date().toISOString() };
@@ -137,11 +140,12 @@ export async function applyApprovedKnowledgeProposal({
     if (!supportedMoneyProposal({...normalized,fields:{...proposal.fields,...editedFields}})) throw new Error("Unsupported financial proposal; only owner-approved Money priorities can be saved.");
     const title = stringField(normalized, "priority", "goal", "title", "value") || "Financial priority";
     const existing = normalized.relatedRecordId
-      ? { data: { id: normalized.relatedRecordId } }
+      ? { data: { id: normalized.relatedRecordId }, error: null }
       : await client.from("beast_goals").select("id").eq("owner_id", ownerId).eq("category", "Money").eq("status", "Active").limit(1).maybeSingle();
+    if (existing.error) throw new Error("The existing financial priority could not be checked.");
     const values = { title, category: "Money", status: "Active", summary: JSON.stringify(jsonFields(normalized)), current_step: "Review the current debt plan", source_module: "BeastMoney", source_type: "professional", source_label: "Money Coach", source_reference: normalized.sourceMessageId, linked_professional: "beastmoney.money-coach", updated_at: new Date().toISOString() };
     const result = existing.data?.id
-      ? await client.from("beast_goals").update(values).eq("id", existing.data.id).eq("owner_id", ownerId).select("id").single()
+      ? await client.from("beast_goals").update(values).eq("id", existing.data.id).eq("owner_id", ownerId).eq("category", "Money").select("id").single()
       : await client.from("beast_goals").insert({ owner_id: ownerId, ...values }).select("id").single();
     if (result.error || !result.data) throw new Error("The approved financial priority could not be saved.");
     return { proposalId: normalized.id, status: "approved", recordId: String(result.data.id), table: "beast_goals" };
@@ -158,4 +162,26 @@ export async function applyApprovedKnowledgeProposal({
   }
 
   throw new Error("This professional cannot persist the proposed record type.");
+}
+
+/** Confirm the owner decision against the exact pending message snapshot.
+ * A canonical write and this receipt are separate operations: failure here must
+ * never be reported as a completed approval or rejection. */
+export async function saveKnowledgeProposalDecision({client, ownerId, conversationId, professionalId, messageId, content, proposalId, status, recordId}: {
+  client: SupabaseClient; ownerId: string; conversationId: string; professionalId: ProfessionalId; messageId: string;
+  content: {runtime?: {proposals?: StructuredKnowledgeProposal[]; [key: string]: unknown}; [key: string]: unknown};
+  proposalId: string; status: "approved" | "rejected"; recordId?: string;
+}) {
+  const matches = (content.runtime?.proposals || []).filter(item => item.id === proposalId);
+  if (matches.length !== 1 || matches[0].approvalStatus !== "proposed") throw new Error("Only a pending proposal can receive a decision.");
+  const updatedContent = {...content, runtime: {...content.runtime, proposals: content.runtime!.proposals!.map(item => item.id === proposalId ? {...item, approvalStatus: status, ...(status === "approved" ? {approvedRecordId: recordId} : {})} : item)}};
+  const saved = await client.from("agent_conversation_messages").update({content: updatedContent})
+    .eq("id", messageId).eq("owner_id", ownerId).eq("conversation_id", conversationId).eq("sender->>kind", "agent").eq("sender->>id", professionalId)
+    .eq("content", JSON.stringify(content)).select("id,content").maybeSingle();
+  const receipt = saved.data?.content as typeof content | undefined;
+  const decision = receipt?.runtime?.proposals?.find(item => item.id === proposalId) as (StructuredKnowledgeProposal & {approvedRecordId?: string}) | undefined;
+  if (saved.error || saved.data?.id !== messageId || decision?.approvalStatus !== status || (status === "approved" && decision.approvedRecordId !== recordId)) {
+    throw new Error("Proposal decision save could not be confirmed; a canonical record may already have saved. Reload the conversation before retrying.");
+  }
+  return {proposalId, status};
 }

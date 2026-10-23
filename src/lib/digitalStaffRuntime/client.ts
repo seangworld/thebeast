@@ -93,8 +93,10 @@ export async function requestDigitalStaffResponse(input: { professionalId: Profe
 
 export async function decideDigitalStaffProposal(input: { professionalId: ProfessionalId; conversationId: string; proposalId: string; decision: "approve" | "reject"; editedFields?: Record<string, string | number | boolean | null> }) {
   const response = await fetch("/api/digital-staff/runtime", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
-  const payload = (await response.json()) as { result?: unknown; error?: string };
-  if (!response.ok) throw new Error(payload.error || "The proposal decision could not be saved.");
+  const payload = (await response.json()) as { result?: unknown; error?: string; code?: string };
+  if (!response.ok) throw new Error(payload.code === "proposal_decision_unconfirmed"
+    ? "Your proposal decision could not be confirmed saved. Some changes may already have saved. Reload this conversation before retrying."
+    : payload.error || "The proposal decision could not be saved.");
   return payload;
 }
 
