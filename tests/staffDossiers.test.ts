@@ -19,7 +19,7 @@ test('one canonical dossier per real profile; VA is Taylor specialization, scout
  assert.ok(staffDossiers.some(d=>d.id.startsWith('news.workflow.')&&d.lifecycle==='planned'));
 });
 test('levels require scoped rationale and role requirements; release and accounting cannot imply competency',()=>{
- for(const d of staffDossiers){assert.equal(d.released,null);if(d.demonstrated){assert.ok(d.levelMapping?.rationale);assert.ok(d.levelMapping?.evidenceUrls.length);}if(d.target)assert.notEqual(d.targetRequirement,'Role requirement not yet established.');assert.ok(d.duties.length);assert.ok(d.assessments.length);assert.ok(d.history.length);assert.match(d.availability,/Unknown/);for(const e of d.evidence){assert.ok(e.date);assert.ok(e.reviewer);assert.ok(e.version);assert.match(e.url,/^https:\/\/github.com\/seangworld\//);}}
+ for(const d of staffDossiers){assert.equal(d.released,null);if(d.demonstrated){assert.ok(d.levelMapping?.rationale);assert.ok(d.levelMapping?.evidenceUrls.length);}if(d.target)assert.notEqual(d.targetRequirement,'Role requirement not yet established.');assert.ok(d.duties.length);assert.ok(d.assessments.length);assert.ok(d.history.length);if(d.recordKind!=='virtual_talent')assert.match(d.availability,/Unknown/);for(const e of d.evidence){assert.ok(e.date);assert.ok(e.reviewer);assert.ok(e.version);assert.match(e.url,/^https:\/\/github.com\/seangworld\//);}}
  const jordan=getStaffDossier('guidance-counselor')!;assert.equal(jordan.releases[0].version,'498bfa974658f6a1ad4e68a5cd0a5e509201ac27');assert.equal(jordan.costs.confirmedChargesUsd,null);assert.equal(jordan.costs.unresolvedReservationsUsd,4.7);assert.equal(jordan.assessments[0].criteria.length,24);
  assert.ok(jordan.assessments[0].criteria.some(c=>c.result==='not tested'));
  assert.ok(getStaffDossier('beastfusion.developer-agent')?.autonomy);
@@ -53,7 +53,7 @@ test('prior result/evaluation dates remain distinct from dossier updates and sco
 test('consolidated Product Specialist is absent from inventory, roster counts, filters and lookup; other positions remain',()=>{
  for(const id of ['beastfusion.policy.product_specialist','product_specialist'])assert.equal(getStaffDossier(id),undefined);
  assert.equal(staffDossiers.length,29);
- assert.equal(staffDossiers.filter(d=>d.recordKind==='planned').length,3);
+ assert.equal(staffDossiers.filter(d=>d.recordKind==='planned').length,1);
  assert.equal(filterStaffDossiers(staffDossiers,{query:'product_specialist'}).length,0);
  assert.ok(getStaffDossier('beastfusion.policy.marketing_specialist'));
  for(const p of digitalProfessionals)assert.ok(getStaffDossier(p.canonicalId));

@@ -2,7 +2,7 @@ export type CompetencyLevel = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
 export type CriterionResult = 'pass' | 'partial' | 'fail' | 'not tested' | 'not applicable';
 export type Evidence = { title: string; url: string; kind: 'live answer' | 'local replay' | 'code review' | 'release' | 'source registry'; reviewer: string; date: string; version: string };
 export type Assessment = { role: string; criteria: { criterion: string; result: CriterionResult; reason: string }[]; evidence: Evidence[]; summary: string };
-export type StaffRecordKind = 'staff' | 'planned' | 'system' | 'external';
+export type StaffRecordKind = 'staff' | 'planned' | 'system' | 'external' | 'virtual_talent';
 export type CompetencyReconciliation = {
  status: 'mapped' | 'not_evaluated' | 'insufficient';
  evidenceDate: string | null; scope: string; currentVerification: string; missingEvidence: string[];

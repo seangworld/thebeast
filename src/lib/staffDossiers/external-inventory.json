@@ -23,32 +23,32 @@
     "Public seangworld.com five member profiles alias the five BeastOS canonical profiles; no duplicate dossiers.",
     "BeastFusion member classes alias the same specialists. Developer/observer/proposal/reviewer/outcome and ecosystem_orchestrator map to six existing development profiles.",
     "VA Claims Aide is Taylor\u2019s specialization, not a separate agent.",
-    "Cole Mercer and Leila Bautista are owner-requested identity reconciliation records, not verified deployed personas.",
     "News workflow roles are contract-only; scouts are separate paused runtime roles.",
     "Telemetry is not queried by this static roster. Availability is unknown until verified through existing operations evidence.",
     "Newsroom Source Scout workflow role aliases runtime Source Scout; its contract duties do not create a duplicate or reactivate discovery.",
-    "Legacy validation_reviewer governance class is retained as a Reviewer Agent alias; not an extra independently deployed reviewer."
+    "Legacy validation_reviewer governance class is retained as a Reviewer Agent alias; not an extra independently deployed reviewer.",
+    "Cole Mercer and Leila Bautista are Virtual Talent identities backed by existing private inactive presenter drafts, not operational agents. Cole manual setup is the current focus; Leila remains deferred."
   ],
   "staff": [
     {
       "id": "agency.cole-mercer",
       "name": "Cole Mercer",
-      "role": "Agency persona",
+      "role": "Virtual Talent",
       "departments": [
         "AI Agency"
       ],
       "products": [
         "AI Agency"
       ],
-      "mission": "Agency persona",
+      "mission": "Owner-controlled fictional brand identity; not an operational agent.",
       "duties": [
-        "Owner-requested staff inclusion; canonical implementation and duties require reconciliation."
+        "Provide a consistent fictional identity for owner-reviewed content; workflow actions are performed by the owner and existing services."
       ],
       "permissions": [
         "Only explicitly owner-authorized scope; no authority inferred from this dossier."
       ],
       "limitations": [
-        "No matching persona record located in inspected source registries. Do not claim activation."
+        "No autonomous execution, DM handling, generation, account access or staff competency grade."
       ],
       "source": "https://github.com/seangworld/thebeast/issues/274",
       "lifecycle": "planned",
@@ -57,22 +57,22 @@
     {
       "id": "agency.leila-bautista",
       "name": "Leila Bautista",
-      "role": "Agency persona",
+      "role": "Virtual Talent",
       "departments": [
         "AI Agency"
       ],
       "products": [
         "AI Agency"
       ],
-      "mission": "Agency persona",
+      "mission": "Owner-controlled fictional brand identity; not an operational agent.",
       "duties": [
-        "Owner-requested staff inclusion; canonical implementation and duties require reconciliation."
+        "Provide a consistent fictional identity for owner-reviewed content; workflow actions are performed by the owner and existing services."
       ],
       "permissions": [
         "Only explicitly owner-authorized scope; no authority inferred from this dossier."
       ],
       "limitations": [
-        "No matching persona record located in inspected source registries. Do not claim activation."
+        "No autonomous execution, DM handling, generation, account access or staff competency grade."
       ],
       "source": "https://github.com/seangworld/thebeast/issues/274",
       "lifecycle": "planned",

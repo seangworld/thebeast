@@ -6,7 +6,7 @@ import {staffGroups,currentLevelLabel,targetLevelLabel,releasedLevelLabel,format
 
 test('separate record counts never equate the whole inventory with operational staff',()=>{
  const counts=Object.fromEntries(staffGroups.map(g=>[g.kind,staffDossiers.filter(d=>d.recordKind===g.kind).length]));
- assert.deepEqual(counts,{staff:11,planned:3,system:12,external:3});
+ assert.deepEqual(counts,{staff:11,virtual_talent:2,planned:1,system:12,external:3});
  assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),staffDossiers.length);
  assert.equal(getStaffDossier('product_specialist'),undefined);
  assert.equal(getStaffDossier('support.codex')!.recordKind,'external');assert.equal(getStaffDossier('news.source-scout')!.recordKind,'system');

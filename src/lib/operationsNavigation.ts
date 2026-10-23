@@ -1,4 +1,5 @@
 export const operationsVentures = [
+  { name: "Agency", href: "/dashboard/admin/agency/metrics", description: "Virtual Talent: Cole setup, Leila deferred; owner-controlled Instagram drafts and receipts.", tag: "Virtual Talent" },
   { name: "The Beast", href: "/dashboard/operations/beast", description: "Memberships, product growth, support, and the Beast package.", tag: "Member products" },
   { name: "BeastMarketing / Media", href: "/dashboard/operations/marketing", description: "Video production, channels, advertising, and campaigns.", tag: "Media & growth" },
   { name: "KDP / Publishing", href: "/dashboard/operations/publishing", description: "Book opportunities, production, quality review, and publishing approvals.", tag: "Publishing" },

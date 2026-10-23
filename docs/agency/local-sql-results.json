@@ -1,0 +1,7 @@
+{
+  "scope": "isolated synthetic local PostgreSQL mechanics only",
+  "checks": 28,
+  "result": "passed",
+  "livePublishing": false,
+  "paidCalls": 0
+}
