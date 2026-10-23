@@ -50,23 +50,33 @@ test('prior result/evaluation dates remain distinct from dossier updates and sco
  const tutor=getStaffDossier('tutor')!;assert.equal(tutor.lastEvaluatedAt,'2026-08-30');assert.equal(tutor.latestAssessment?.title,'7/7 source turns accepted');assert.equal(tutor.demonstrated,null);assert.match(tutor.levelMapping!.rationale,/Knight/);assert.ok(tutor.assessments.some(a=>a.evidence.some(e=>e.date==='2026-08-30')));
 });
 
-test('Product Specialist remains a planned policy record with duties mapped to existing staff and no inferred authority',()=>{
- const specialist=getStaffDossier('product_specialist')!;
- assert.equal(specialist.id,'beastfusion.policy.product_specialist');
- assert.equal(specialist.recordKind,'planned');assert.equal(specialist.lifecycle,'planned');
- assert.match(specialist.role,/Duties covered by existing staff/);
- for(const dimension of ['target','demonstrated','released'] as const)assert.equal(specialist[dimension],null);
- assert.equal(specialist.lastEvaluatedAt,null);
- assert.match(specialist.assignment,/Sean retains authorization/);
+test('consolidated Product Specialist is absent from inventory, roster counts, filters and lookup; other positions remain',()=>{
+ for(const id of ['beastfusion.policy.product_specialist','product_specialist'])assert.equal(getStaffDossier(id),undefined);
+ assert.equal(staffDossiers.length,29);
+ assert.equal(staffDossiers.filter(d=>d.recordKind==='planned').length,3);
+ assert.equal(filterStaffDossiers(staffDossiers,{query:'product_specialist'}).length,0);
+ assert.ok(getStaffDossier('beastfusion.policy.marketing_specialist'));
+ for(const p of digitalProfessionals)assert.ok(getStaffDossier(p.canonicalId));
  for(const id of ['orchestrator-3','developer-agent','proposal-agent','reviewer-agent']){
   const dossier=getStaffDossier('beastfusion.'+id)!;
   const profile=developmentAgentProfiles.find(p=>p.id===id)!;
-  assert.equal(dossier.recordKind,'staff');
+  assert.equal(dossier.recordKind,'staff');assert.deepEqual(dossier.departments,['BeastFusion']);
+  assert.match(dossier.mission,/Absorbed Product Specialist responsibility:/);
+  assert.match(dossier.role,/absorbs/);
   for(const duty of profile.responsibilities)assert.ok(dossier.duties.includes(duty));
-  assert.ok(dossier.duties.some(d=>d.includes('Product Specialist')||d.includes('product-scoped Developer')));
+  assert.ok(dossier.duties.some(d=>d.includes('Product Specialist')));
   assert.ok(dossier.permissions.includes(profile.authorityBoundary));
+  assert.equal(dossier.released,null);
   assert.ok(dossier.history.some(h=>h.version.includes('PR #282 responsibility mapping')));
-  assert.ok(specialist.duties.some(d=>d.includes(dossier.id)));
  }
- assert.match(specialist.deferred[0].requiredWork,/No new agent work is scheduled/);
+});
+
+test('former canonical and alias URLs redirect after authorization; unrelated unknown IDs still return not found',async()=>{
+ const compiled=ts.transpileModule(readFileSync('src/app/dashboard/operations/staff/[staffId]/page.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+ for(const owner of [false,true])for(const staffId of ['beastfusion.policy.product_specialist','product_specialist','unrelated-unknown']){
+  const exports:any={};let lookup=false;
+  runInNewContext(compiled,{exports,require:(name:string)=>name==='next/navigation'?{redirect:(p:string)=>{throw Error('redirect:'+p);},notFound:()=>{throw Error('not-found');}}:name==='@/lib/server/staffDossierOwner'?{requireStaffDossierOwner:async()=>{if(!owner)throw Error('owner-required');}}:name==='@/lib/staffDossiers'?{getStaffDossier:()=>{lookup=true;return undefined;}}:{}});
+  await assert.rejects(exports.default({params:Promise.resolve({staffId})}),owner?(staffId==='unrelated-unknown'?/not-found/:/redirect:\/dashboard\/operations\/staff/):/owner-required/);
+  assert.equal(lookup,owner&&staffId==='unrelated-unknown');
+ }
 });
