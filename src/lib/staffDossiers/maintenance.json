@@ -329,6 +329,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Add allowlisted Instagram discovery diagnostics: zero_pages, expected_page_absent, missing_page_token or missing_linked_instagram_account, plus fail-closed malformed/ambiguous response handling. Logs contain counts, fixed reason codes and safe identity-match booleans only. Verified Cole identity hints never grant binding or publishing authority. Existing four scopes, owner/cookie/expiry/single-use state, encrypted credentials, separate Facebook/X paths and explicit binding/approval safeguards remain. One production release and one owner-completed fresh authorization are authorized; no success until saved Cole connection and verified binding.",
+      "version": "PR296 discovery diagnostics",
+      "evidence": "https://github.com/seangworld/thebeast/pull/296",
+      "sourceDigest": "b6f8f0b8a43fab792896c9ac0097fd794e5a6a91b189edf92c4349ad3bc1dbc9",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }
