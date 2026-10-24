@@ -3,11 +3,13 @@ import { NextResponse } from "next/server";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { socialOwner, SOCIAL_ORIGIN, SOCIAL_PATH, SOCIAL_CALLBACK, stateHash, seal } from "@/lib/server/social/auth";
 import { metaRequest, metaUrl, providerJson, xToken } from "@/lib/server/social/providers";
+import { AGENCY_INSTAGRAM_PATH, metaIntent, instagramPermissionsGranted } from "@/lib/server/social/oauth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
+  let returnPath: string = SOCIAL_PATH;
   const finish = (status: string) => {
-    const response = NextResponse.redirect(`${SOCIAL_ORIGIN}${SOCIAL_PATH}?connection=${status}`);
+    const response = NextResponse.redirect(`${SOCIAL_ORIGIN}${returnPath}?connection=${status}`);
     response.cookies.delete({ name: "beast_social_state", path: "/api/admin/beast-marketing/social" });
     return response;
   };
@@ -20,8 +22,12 @@ export async function GET(request: Request) {
   const service = createBeastFusionPublicationClient();
   // Delete-returning is a single-use, owner-bound state claim.
   const claim = await service.from("beast_marketing_social_oauth").delete().eq("state_hash", stateHash(state)).eq("owner_id", owner.id).gt("expires_at", new Date().toISOString()).select("provider,verifier").maybeSingle();
-  if (claim.error || !claim.data || !params.get("code") || params.has("error")) return finish("failed");
+  if (claim.error || !claim.data) return finish("failed");
   try {
+    if (claim.data.provider !== "meta" && claim.data.provider !== "x") return finish("failed");
+    const instagramOnly = claim.data.provider === "meta" && metaIntent(claim.data.verifier) === "agency_instagram";
+    if (instagramOnly) returnPath = AGENCY_INSTAGRAM_PATH;
+    if (!params.get("code") || params.has("error")) return finish("failed");
     const rows: Record<string, unknown>[] = [];
     if (claim.data.provider === "x") {
       const token = await xToken({ grant_type: "authorization_code", code: params.get("code")!, redirect_uri: SOCIAL_CALLBACK, code_verifier: claim.data.verifier });
@@ -33,12 +39,16 @@ export async function GET(request: Request) {
       if (!token.access_token) throw new Error("token_missing");
       const long = await providerJson(`${metaUrl("oauth/access_token")}?${new URLSearchParams({ grant_type: "fb_exchange_token", client_id: process.env.META_APP_ID!, client_secret: process.env.META_APP_SECRET!, fb_exchange_token: token.access_token })}`);
       if (!long.access_token) throw new Error("token_missing");
-      const pages = await metaRequest("me/accounts", long.access_token, { fields: "id,name,access_token,tasks,instagram_business_account{id,username}", limit: "100" });
+      if (instagramOnly) {
+        const permissions = await metaRequest("me/permissions", long.access_token, { limit: "100" });
+        if (permissions.paging?.next || !instagramPermissionsGranted(permissions.data)) return finish("permissions_required");
+      }
+      const pages = await metaRequest("me/accounts", long.access_token, { fields: instagramOnly ? "id,name,access_token,instagram_business_account{id,username}" : "id,name,access_token,tasks,instagram_business_account{id,username}", limit: "100" });
       if (pages.paging?.next) throw new Error("account_list_incomplete");
       for (const page of pages.data || []) {
-        if (!/^\d+$/.test(page.id || "") || !page.access_token || !page.tasks?.some((task: string) => ["CREATE_CONTENT", "MANAGE"].includes(task))) continue;
+        if (!/^\d+$/.test(page.id || "") || !page.access_token || (!instagramOnly && !page.tasks?.some((task: string) => ["CREATE_CONTENT", "MANAGE"].includes(task)))) continue;
         const common = { disconnected_at: null, owner_id: owner.id, credentials: seal({ access_token: page.access_token }, owner.id), connected_at: new Date().toISOString(), expires_at: long.expires_in ? new Date(Date.now() + long.expires_in * 1000).toISOString() : null };
-        rows.push({ ...common, channel: "facebook_page", account_id: page.id, label: String(page.name).slice(0,160) });
+        if (!instagramOnly) rows.push({ ...common, channel: "facebook_page", account_id: page.id, label: String(page.name).slice(0,160) });
         if (/^\d+$/.test(page.instagram_business_account?.id || "")) rows.push({ ...common, channel: "instagram", account_id: page.instagram_business_account.id, label: page.instagram_business_account.username ? `@${page.instagram_business_account.username}` : `${page.name} Instagram` });
       }
     }

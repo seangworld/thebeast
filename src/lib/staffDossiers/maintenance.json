@@ -294,6 +294,19 @@
         "agency.leila-bautista",
         "beastfusion.policy.marketing_specialist"
       ]
+    },
+    {
+      "date": "2026-10-23",
+      "executor": "Codex",
+      "reason": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed. Shared configuration key-presence facts reconciled without activating deferred Leila. Local fixtures do not establish live Meta authorization.",
+      "version": "Instagram-only OAuth correction / Issue294",
+      "evidence": "https://github.com/seangworld/thebeast/issues/294",
+      "sourceDigest": "ea82ae39d652e13175b8f3cf4fced7d3cc9cbac06fcd9e71e0af18fa787dc63d",
+      "affectedStaffIds": [
+        "agency.cole-mercer",
+        "agency.leila-bautista",
+        "beastfusion.policy.marketing_specialist"
+      ]
     }
   ]
 }
