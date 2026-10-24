@@ -5091,7 +5091,8 @@
       "Cole is the current setup focus.",
       "Instagram publishing and metrics remain live-unverified; no saved connection. Meta app configuration key names are now present (read-only check 2026-10-23); key presence does not prove credentials, app review or granted access.",
       "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
-      "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment."
+      "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment.",
+      "Live production initiation verified 2026-10-23 through request payload, HTTP 200, exact four-scope URL and Meta Continue screen. Earlier reported pages_manage_posts rejection remains unresolved; successful consent, permissions, account discovery/binding and publishing are not established. No stale production routing or connector defect reproduced."
     ],
     "blockers": [
       "Cole needs an owner-approved JPEG and explicit professional Instagram connection/binding before approval or public posting."
@@ -5124,10 +5125,22 @@
         "reviewer": "Codex (executor; synthetic provider, not live authorization)",
         "date": "2026-10-23",
         "version": "Instagram OAuth correction"
+      },
+      {
+        "title": "Actual production Agency request payload, returned OAuth scopes and Meta consent boundary",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/cole-production-oauth-trace/docs/agency/INSTAGRAM-PRODUCTION-TRACE-20261023.md",
+        "kind": "code review",
+        "reviewer": "Codex (executor; live browser/network inspection, no consent or publishing validation)",
+        "date": "2026-10-23",
+        "version": "Production a543f39 / PR295"
       }
     ],
     "reviewedAt": "2026-10-23",
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Production trace of #295 at a543f39: actual Agency button POST returned 200 with provider meta and purpose agency_instagram; returned OAuth URL requested pages_show_list, pages_read_engagement, instagram_basic and instagram_content_publish, excluding pages_manage_posts. Meta reached its Continue consent screen; no grant accepted. Reported earlier failure remains unexplained, not attributed to owner error. Publishing stays paused; no paid calls or posts."
+      },
       {
         "date": "2026-10-23",
         "summary": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed."
@@ -5155,6 +5168,12 @@
         "executor": "Codex",
         "why": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed.",
         "version": "Issue294 / Instagram OAuth correction"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex",
+        "why": "Production trace of #295 at a543f39: actual Agency button POST returned 200 with provider meta and purpose agency_instagram; returned OAuth URL requested pages_show_list, pages_read_engagement, instagram_basic and instagram_content_publish, excluding pages_manage_posts. Meta reached its Continue consent screen; no grant accepted. Reported earlier failure remains unexplained, not attributed to owner error. Publishing stays paused; no paid calls or posts.",
+        "version": "Production OAuth trace / a543f39 / PR295"
       }
     ],
     "releases": [

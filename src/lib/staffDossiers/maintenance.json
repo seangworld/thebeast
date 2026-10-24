@@ -307,6 +307,17 @@
         "agency.leila-bautista",
         "beastfusion.policy.marketing_specialist"
       ]
+    },
+    {
+      "date": "2026-10-23",
+      "executor": "Codex",
+      "reason": "Production trace of #295 at a543f39: actual Agency button POST returned 200 with provider meta and purpose agency_instagram; returned OAuth URL requested pages_show_list, pages_read_engagement, instagram_basic and instagram_content_publish, excluding pages_manage_posts. Meta reached its Continue consent screen; no grant accepted. Reported earlier failure remains unexplained, not attributed to owner error. Publishing stays paused; no paid calls or posts.",
+      "version": "Production OAuth trace / a543f39 / PR295",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-production-oauth-trace/docs/agency/INSTAGRAM-PRODUCTION-TRACE-20261023.md",
+      "sourceDigest": "c2fea92c84fa842d56c093559fb9514bef4dfbbc278f46675efd8f0d76f54bb1",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }
