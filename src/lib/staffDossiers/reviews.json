@@ -5094,8 +5094,9 @@
       "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment.",
       "Initial production Agency initiation was verified 2026-10-23 through the actual POST, four-scope URL and Meta Continue screen. Subsequent retained failing Social Accounts attempt used the same app/callback with extra pages_manage_posts; that historical request body and account identity were unavailable. Latest Agency no_accounts is a separate account-discovery failure; publishing remains unverified.",
       "The authorized fresh diagnostic attempt returned expected_page_absent: two Pages with tokens, zero linked Instagram accounts and zero Cole Page matches. No saved connection or verified binding; no further authorization attempt authorized.",
-      "Owner renamed the portfolio to Beast AI Talent Agency; unchanged portfolio, Page and app IDs and updated ownership labels verified. Meta People still displays Instagram-origin sean.after.hours with @cole.after.hours; public Instagram name/handle and Page/cover already match Cole. No separate safe rename control for that internal entry is verified.",
-      "Current official IG User documentation requires ads_read or ads_management for Instagram reads when Page access is via Business Manager. This conditional requirement applies to the observed role; no extra scope is added, and it does not alone prove the cause of Page-list omission."
+      "Owner renamed the portfolio to Beast AI Talent Agency and the Instagram-origin People entry to Cole Mercer; unchanged portfolio, Page, app and selected People-entry IDs verified. Public Page/Instagram branding already matches Cole. Old names remain only in accurate historical attribution and dated audit/history.",
+      "Current official IG User documentation requires ads_read or ads_management for Instagram reads when Page access is via Business Manager. This conditional requirement applies to the observed role; no extra scope is added, and it does not alone prove the cause of Page-list omission.",
+      "After the owner corrected the Meta People name, the separately authorized connection attempt still returned expected_page_absent: two Pages with tokens, no linked Instagram accounts and no Cole match. Production readback confirms no saved Instagram connection or binding. The name correction did not solve Page discovery; no further retry or permission addition is authorized by this result."
     ],
     "blockers": [
       "Cole needs an owner-approved JPEG and explicit professional Instagram connection/binding before approval or public posting."
@@ -5166,6 +5167,10 @@
     "recentChanges": [
       {
         "date": "2026-10-24",
+        "summary": "Owner corrected the remaining Instagram-origin Meta People display name to Cole Mercer, with @cole.after.hours and selected entry/portfolio IDs unchanged; Sean Gatewood remains administrator. A separately authorized post-rename attempt still returned expected_page_absent (2 Pages with tokens, 0 linked Instagram accounts, 0 Cole matches). Read-only database confirms no saved Instagram connection or Cole binding. Record the verified name correction and persistent discovery failure in the same branding release; preserve historical names, all IDs, credentials, four OAuth scopes and publishing/automation pause."
+      },
+      {
+        "date": "2026-10-24",
         "summary": "Owner confirmed and saved Beast AI Talent Agency as the umbrella portfolio name; verified unchanged portfolio 1698592135026247, Cole Page 1266254166581850 and app 1437303488549044. Cole Mercer / Cole After Hours / @cole.after.hours is the first talent. Derived Page/app ownership labels updated; Instagram-origin People label sean.after.hours and accurate historical attribution remain. Saved application profile contains no old-name matches; no connections, bindings or posts exist to rename. Agency shows the umbrella agency and current Cole identity; IDs, credentials, profile state, visual direction, administrator Sean Gatewood, historical records and OAuth scopes preserved. Documented conditional ads_read requirement recorded, not applied speculatively; omission of Cole from discovery remains unresolved without a new authorization attempt."
       },
       {
@@ -5231,6 +5236,12 @@
         "executor": "Codex",
         "why": "Owner confirmed and saved Beast AI Talent Agency as the umbrella portfolio name; verified unchanged portfolio 1698592135026247, Cole Page 1266254166581850 and app 1437303488549044. Cole Mercer / Cole After Hours / @cole.after.hours is the first talent. Derived Page/app ownership labels updated; Instagram-origin People label sean.after.hours and accurate historical attribution remain. Saved application profile contains no old-name matches; no connections, bindings or posts exist to rename. Agency shows the umbrella agency and current Cole identity; IDs, credentials, profile state, visual direction, administrator Sean Gatewood, historical records and OAuth scopes preserved. Documented conditional ads_read requirement recorded, not applied speculatively; omission of Cole from discovery remains unresolved without a new authorization attempt.",
         "version": "Cole brand alignment batch"
+      },
+      {
+        "date": "2026-10-24",
+        "executor": "Codex",
+        "why": "Owner corrected the remaining Instagram-origin Meta People display name to Cole Mercer, with @cole.after.hours and selected entry/portfolio IDs unchanged; Sean Gatewood remains administrator. A separately authorized post-rename attempt still returned expected_page_absent (2 Pages with tokens, 0 linked Instagram accounts, 0 Cole matches). Read-only database confirms no saved Instagram connection or Cole binding. Record the verified name correction and persistent discovery failure in the same branding release; preserve historical names, all IDs, credentials, four OAuth scopes and publishing/automation pause.",
+        "version": "Cole branding / PR297 final reconciliation"
       }
     ],
     "releases": [
