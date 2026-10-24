@@ -2992,9 +2992,13 @@
       "Policy class, not evidence of a separately running agent.",
       "No staff activation or publishing authority is granted by polling/scheduler optimization. Exact revision approval and role/pause/account checks remain mandatory.",
       "No automatic social publishing/recovery or growth cycles from these removed schedules. Manual authorized actions and visible workspace reads remain available; saved enabled settings do not restore a deployment schedule.",
-      "Agency manual workflow mechanics do not prove live Instagram access or editorial competence; accounts/assets and Meta configuration remain missing. Leila workflow deferred."
+      "Agency manual workflow mechanics do not prove live Instagram access or editorial competence; accounts/assets remain unavailable; shared Meta key names are present but provider access is unverified. Leila workflow deferred."
     ],
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed."
+      },
       {
         "date": "2026-10-23",
         "summary": "Cole Agency workflow explicitly separates Virtual Talent from the owner and deterministic services. Existing marketing automation stays disabled; no paid inference."
@@ -3030,6 +3034,12 @@
         "executor": "Codex (engineering executor; owner decision, no competency evaluation)",
         "why": "Scheduled marketing is disabled by owner decision before launch: marketing-social and marketing-growth have no recurring deployment schedules. Implementation, data, settings, approval rules and manual controls are retained. Both schedules must be explicitly restored by owner-authorized release when marketing launches; no agent activation is implied.",
         "version": "2026-10-22 marketing schedule removal; exact release verification in permanent handoff"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex",
+        "why": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed.",
+        "version": "Issue294"
       }
     ],
     "evidence": [
@@ -5079,7 +5089,7 @@
     ],
     "limitations": [
       "Cole is the current setup focus.",
-      "Instagram publishing and metrics not live-verified: no connected account; Meta app ID/secret/version missing in production.",
+      "Instagram publishing and metrics remain live-unverified; no saved connection. Meta app configuration key names are now present (read-only check 2026-10-23); key presence does not prove credentials, app review or granted access.",
       "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
       "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment."
     ],
@@ -5106,10 +5116,22 @@
         "reviewer": "Codex (executor; not independent live evaluation)",
         "date": "2026-10-23",
         "version": "Cole Agency batch / PR259 preserved"
+      },
+      {
+        "title": "Instagram OAuth scopes and actual callback fixtures; 2648 passing local tests",
+        "url": "https://github.com/seangworld/thebeast/issues/294",
+        "kind": "local replay",
+        "reviewer": "Codex (executor; synthetic provider, not live authorization)",
+        "date": "2026-10-23",
+        "version": "Instagram OAuth correction"
       }
     ],
     "reviewedAt": "2026-10-23",
     "recentChanges": [
+      {
+        "date": "2026-10-23",
+        "summary": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed."
+      },
       {
         "date": "2026-10-23",
         "summary": "Cole is the current setup focus. Classified as Virtual Talent; private inactive presenter draft confirmed. No activation or competency reassessment."
@@ -5127,6 +5149,12 @@
         "executor": "Codex",
         "why": "Cole is the current setup focus. Owner-only Agency navigation and manual workflow mechanics; no live publishing or paid validation.",
         "version": "Issue292"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex",
+        "why": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed.",
+        "version": "Issue294 / Instagram OAuth correction"
       }
     ],
     "releases": [
@@ -5135,6 +5163,12 @@
         "version": "Cole Agency manual workflow v1",
         "summary": "Owner-only Agency UI and local mechanical safeguards; no live Instagram publishing/metrics validation or agent activation. Exact confirmed deployment receipt is linked in Issue292.",
         "url": "https://github.com/seangworld/thebeast/issues/292"
+      },
+      {
+        "date": "2026-10-23",
+        "version": "Instagram-only OAuth correction",
+        "summary": "Agency-specific connect/callback mechanics; live Meta consent and account eligibility remain owner verification. Confirmed release receipt in Issue294.",
+        "url": "https://github.com/seangworld/thebeast/issues/294"
       }
     ]
   },
@@ -5159,7 +5193,7 @@
     ],
     "limitations": [
       "Leila remains deferred until Cole works reliably; no Leila operating workflow implemented.",
-      "Instagram publishing and metrics not live-verified: no connected account; Meta app ID/secret/version missing in production.",
+      "Leila remains deferred. No live account/metrics verification; shared Meta configuration key names are now present, but provider authorization is unverified.",
       "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
       "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment."
     ],
