@@ -307,6 +307,28 @@
         "agency.leila-bautista",
         "beastfusion.policy.marketing_specialist"
       ]
+    },
+    {
+      "date": "2026-10-23",
+      "executor": "Codex",
+      "reason": "Production trace of #295 at a543f39: actual Agency button POST returned 200 with provider meta and purpose agency_instagram; returned OAuth URL requested pages_show_list, pages_read_engagement, instagram_basic and instagram_content_publish, excluding pages_manage_posts. Meta reached its Continue consent screen; no grant accepted. Reported earlier failure remains unexplained, not attributed to owner error. Publishing stays paused; no paid calls or posts.",
+      "version": "Production OAuth trace / a543f39 / PR295",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-production-oauth-trace/docs/agency/INSTAGRAM-PRODUCTION-TRACE-20261023.md",
+      "sourceDigest": "c2fea92c84fa842d56c093559fb9514bef4dfbbc278f46675efd8f0d76f54bb1",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
+    },
+    {
+      "date": "2026-10-23",
+      "executor": "Codex",
+      "reason": "Latest production Agency callback returned no_accounts. Read-only Meta UI confirms Cole After Hours Page 1266254166581850, Sean Gatewood full Page access, linked cole.after.hours Instagram asset, and active SEANGWORLD Agency integration with all four requested permission switches enabled. Callback has no retained sanitized Page discovery diagnostics; logs contain no matching entries. Zero Pages, omitted Cole Page, absent Page token and absent instagram_business_account remain indistinguishable. All-current/future consent inclusion of Cole is unverified; no exact Meta setting or functional application fix is justified. No reauthorization, grant change, publishing, automation or paid call.",
+      "version": "Production a543f39 / no_accounts investigation",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-production-oauth-trace/docs/agency/INSTAGRAM-NO-ACCOUNTS-20261023.md",
+      "sourceDigest": "b86d7e28b299e5a3c70940f89c7ae6f6659a9b2fe93dfd48392121ebac4514dd",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }
