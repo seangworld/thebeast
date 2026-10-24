@@ -3,7 +3,7 @@
 import { useCallback,useEffect,useRef,useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { COLE_NAME,COLE_BRAND,COLE_INSTAGRAM_USERNAME,FIRST_COLE_CAPTION } from '@/lib/agencyBrand';
+import { AGENCY_NAME,COLE_NAME,COLE_BRAND,COLE_INSTAGRAM_USERNAME,FIRST_COLE_CAPTION } from '@/lib/agencyBrand';
 import type { AgencyCreative,AgencyPost } from '@/lib/agencyWorkflow';
 type Profile={id:string;name:string;updated_at:string;visual_identity:{direction:string};voice_identity:{direction:string};presentation_rules:{audience:string};allowed_topics:string[]};
 type Snapshot={profiles:Profile[];connections:{id:string;account_id:string;label:string;expires_at:string|null}[];bindings:{presenter_profile_id:string;expected_account_id:string;expected_username:string;metrics:Record<string,number|null>|null;metrics_checked_at:string|null;metrics_error:string|null}[];posts:(AgencyPost&{displayStatus:string})[];configuration:{meta:boolean};automationEnabled:false;dmEnabled:false};
@@ -24,7 +24,7 @@ export function AgencyMetricsContent(){
  function edit(p:AgencyPost){setId(p.id);setRevision(p.revision);setContent(p.content);setReviewed(false);}
  function newDraft(){setId('');setRevision(0);setContent({caption:FIRST_COLE_CAPTION,mediaUrl:''});setReviewed(false);}
  return <div className="space-y-6">
-  <section className="rounded-xl border border-white/15 p-5"><h2 className="text-xl font-bold">Virtual Talent</h2><p>Cole is the active setup focus. Talent identities are not operational agents. Leila’s workflow remains deferred.</p><p className="mt-2 text-amber-200">Manual owner actions only · Marketing schedules disabled · DMs off · no AI generation or voice synthesis in this workspace.</p>
+  <section className="rounded-xl border border-white/15 p-5"><p className="text-sm text-slate-300">{AGENCY_NAME}</p><h2 className="text-xl font-bold">Virtual Talent</h2><p>Cole is the active setup focus. Talent identities are not operational agents. Leila’s workflow remains deferred.</p><p className="mt-2 text-amber-200">Manual owner actions only · Marketing schedules disabled · DMs off · no AI generation or voice synthesis in this workspace.</p>
    <div className="mt-4 grid gap-4 md:grid-cols-2">{[{name:COLE_NAME,key:'agency.cole-mercer',state:'Setup focus'},{name:'Leila Bautista',key:'agency.leila-bautista',state:'Deferred'}].map(t=><article key={t.key} className="rounded border border-white/15 p-4"><h3 className="font-bold">{t.name}</h3><p>{t.state} · Virtual Talent</p>{t.key==='agency.cole-mercer'&&<p>{COLE_BRAND} · @{COLE_INSTAGRAM_USERNAME}</p>}<Link className="text-cyan-200 underline" href={`/dashboard/operations/staff/${t.key}`}>Canonical HQ dossier</Link></article>)}</div>
   </section>
   <section className="rounded-xl border border-white/15 p-5"><h2 className="text-lg font-bold">Who performs the work</h2><p>Owner: brand decisions, asset selection, exact revision approval and each publish action. Agency workflow service: private drafts, identity checks and receipts. Existing Meta adapter: Instagram requests after explicit owner actions. BeastMarketing is a separate paused system; no autonomous Cole or Leila agent is deployed.</p><Link className="text-cyan-200 underline" href="/dashboard/operations/staff/beastfusion.policy.marketing_specialist">BeastMarketing system dossier</Link></section>

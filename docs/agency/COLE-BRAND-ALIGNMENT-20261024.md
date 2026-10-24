@@ -2,9 +2,9 @@
 
 ## Current identity
 
-Character **Cole Mercer**; public brand **Cole After Hours**; Instagram **@cole.after.hours**. **Sean Gatewood** is the real administrator and remains unchanged. Shared application name **SEANGWORLD Agency** is correct and remains unchanged.
+Umbrella agency **Beast AI Talent Agency**. Cole is the first talent: character **Cole Mercer**; public brand **Cole After Hours**; Instagram **@cole.after.hours**. **Sean Gatewood** is the real administrator and remains unchanged. Shared application name **SEANGWORLD Agency** is correct and remains unchanged.
 
-Application constants now explicitly define the character, brand and Instagram username. Agency shows the brand/handle on Cole's card and in the existing brand configuration section. The discovery hint reuses the same username constant; expected Page ID, account persistence/binding behavior, credentials, permissions and safeguards are unchanged. Displayed brand identity is not a verified connection or binding.
+Application constants now explicitly define the umbrella agency, character, brand and Instagram username. Agency shows the brand/handle on Cole's card and in the existing brand configuration section. The discovery hint reuses the same username constant; expected Page ID, account persistence/binding behavior, credentials, permissions and safeguards are unchanged. Displayed brand identity is not a verified connection or binding.
 
 ## Verified read-only inventory
 
@@ -16,8 +16,8 @@ Application constants now explicitly define the character, brand and Instagram u
 | Facebook Page | `Cole After Hours`, ID `1266254166581850`; public vanity path `/cole.after.hours/` | Already correct; retain asset |
 | Page cover/avatar | Visible Cole Mercer/After Hours artwork and existing character appearance | Retain approved artwork; no regeneration/redesign |
 | Instagram public profile | `@cole.after.hours`, display name `Cole Mercer | Fitness • Adventure • Lifestyle` | Current identity is correct; no speculative public-profile rename |
-| Business portfolio | Display label `sean.after.hours`, ID `1698592135026247` | Owner rename guide below; verification tracked in release receipt |
-| Page/app ownership displays | `Owned by: sean.after.hours` for existing Cole Page and app | Derived portfolio label; verify after the portfolio rename, retain IDs |
+| Business portfolio | Owner saved **Beast AI Talent Agency**; same ID `1698592135026247` verified | Rename complete; no asset recreation |
+| Page/app ownership displays | Now `Owned by: Beast AI Talent Agency`; same Page ID `1266254166581850` and app ID `1437303488549044` verified | Derived labels updated; IDs retained |
 | Meta portfolio People | Instagram-origin entry `sean.after.hours` with `@cole.after.hours` | Remaining internal label; public IG identity is already correct. No separate safe rename control verified; do not rename Sean's personal profile or recreate this entry |
 | Meta business history | `Created by sean.after.hours on Oct 1, 2026` | Preserve historical attribution |
 | Dated repository audit/history | Prior observations of portfolio `sean.after.hours` | Preserve accurate history; current dossier identity is explicit |
@@ -26,7 +26,7 @@ No saved Cole draft/publication rows were present. No profile, Page, portfolio, 
 
 ## Exact owner-controlled Meta rename
 
-In the existing `sean.after.hours` business portfolio (ID `1698592135026247`), open **Settings → Business info → Edit beside the portfolio header → Business portfolio name**. Replace only that portfolio display name with the owner-approved agency label and Save. The owner has typed **SEANGWORLD AI Talent Agency** into the editor; that proposed umbrella label is separate from the public character brand **Cole After Hours**. Owner confirmation/save verification is pending at this audit point. The existing name-only editor was opened read-only for the owner; the executor did not type or save a value. Do not edit legal business details, administrator names, asset IDs or ownership. Verify that the same portfolio ID now has the new label and that Page/app ownership labels follow it. Leave historical Created by attribution intact. If the Instagram-origin People label remains old after refresh, record that location; do not guess at an account/identity edit.
+In the existing `sean.after.hours` business portfolio (ID `1698592135026247`), open **Settings → Business info → Edit beside the portfolio header → Business portfolio name**. The owner saved **Beast AI Talent Agency** in that name-only field and explicitly confirmed it as the umbrella agency. Readback verifies portfolio ID `1698592135026247`, Page ID `1266254166581850` and app ID `1437303488549044` are unchanged. Both existing asset ownership labels now use Beast AI Talent Agency. The public character brand remains Cole After Hours. The existing name-only editor was opened read-only for the owner; the executor did not type or save a value. Do not edit legal business details, administrator names, asset IDs or ownership. Verify that the same portfolio ID now has the new label and that Page/app ownership labels follow it. Leave historical Created by attribution intact. If the Instagram-origin People label remains old after refresh, record that location; do not guess at an account/identity edit.
 
 ## Coordinated connection diagnosis
 
@@ -34,7 +34,7 @@ The one completed fresh callback produced only these safe facts: `expected_page_
 
 Read-only Meta asset comparison confirms:
 
-- Cole Page and SEANGWORLD Agency app (`1437303488549044`) are both owned by the same `sean.after.hours` portfolio, with Sean Gatewood full access to both.
+- Cole Page and SEANGWORLD Agency app (`1437303488549044`) are both owned by the same portfolio, now named **Beast AI Talent Agency** (previously `sean.after.hours`), with Sean Gatewood full access to both.
 - Cole's Page is linked to `cole.after.hours`; actual Page access settings also show Sean full access through this portfolio.
 - The app's Connected assets list is empty. Its Connect assets picker offers **Ad accounts** only (zero available), not Pages or Instagram accounts. The picker was cancelled without changes. An empty list here does not establish a missing Page-to-app assignment or justify asset recreation.
 - The saved personal Business Integration is active with four enabled permissions; it does not expose a per-Page grant list. Business-level Connected apps warns some authorizations appear only in personal Business Integrations.
@@ -50,3 +50,9 @@ The app permission table independently shows `ads_read` and `ads_management` at 
 ## Validation and release tracking
 
 Full suite: 2,651 passed, zero failures. Standalone typecheck, lint (no ESLint warnings/errors), dossier source/history gates and production build passed, including the required security audit (zero vulnerabilities). Existing route tests cover unchanged scopes, state isolation, diagnostic redaction, account save and binding boundaries. No new tests were added for the reversible display-copy change. One coordinated production release is authorized; confirmed PR/SHA, live UI/dossier checks and owner Meta rename readback will be recorded in the linked Cole tracking record [Issue292](https://github.com/seangworld/thebeast/issues/292), without a second receipt deployment.
+
+### Future supported permission correction (not executed)
+
+The existing app UI path is **Use cases → Manage messaging & content on Instagram → Customize → Permissions and features → ads_read**; the row currently offers **Add**. A separately authorized correction would configure/request `ads_read` alongside the current four scopes, preserve all binding/state safeguards, and validate with a separately authorized future consent/read. Do not choose `ads_management`, add ad-account assets, or request broad permissions merely to experiment. No such permission addition or consent retry is part of this read-only diagnosis/branding release, and the documented Instagram-read requirement must not be presented as a proven cause of the earlier Page-list omission.
+
+After the owner's rename, read-only verification shows the portfolio and both existing asset ownership displays use **Beast AI Talent Agency**, with the same IDs. The remaining Instagram-origin People entry was inspected in detail: it still displays `sean.after.hours` / `@cole.after.hours`; its controls are access management/removal, not a separate name-only edit. No access was removed or changed. Instagram public profile/handle and Facebook cover/Page/vanity path remain Cole-branded.

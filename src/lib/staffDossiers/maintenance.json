@@ -344,10 +344,10 @@
     {
       "date": "2026-10-24",
       "executor": "Codex",
-      "reason": "Align current character Cole Mercer, brand Cole After Hours and Instagram @cole.after.hours in Agency and shared constants. Saved profile contains no old-name match; no connections or bindings exist. Real administrator Sean Gatewood and all IDs, credentials, profile state, appearance, historical records and permissions preserved. Meta portfolio/derived ownership labels still show sean.after.hours pending owner rename; Instagram-origin People label remains distinct from correct public IG identity. One released diagnostic attempt confirmed expected_page_absent with two other Pages; their identities were not retained. Same-portfolio app/Page ownership and full access verified; official IG User reference documents ads_read or ads_management for Business-Manager role-based Instagram reads, but scopes remain unchanged and the omission is not claimed resolved.",
+      "reason": "Owner confirmed and saved Beast AI Talent Agency as the umbrella portfolio name; verified unchanged portfolio 1698592135026247, Cole Page 1266254166581850 and app 1437303488549044. Cole Mercer / Cole After Hours / @cole.after.hours is the first talent. Derived Page/app ownership labels updated; Instagram-origin People label sean.after.hours and accurate historical attribution remain. Saved application profile contains no old-name matches; no connections, bindings or posts exist to rename. Agency shows the umbrella agency and current Cole identity; IDs, credentials, profile state, visual direction, administrator Sean Gatewood, historical records and OAuth scopes preserved. Documented conditional ads_read requirement recorded, not applied speculatively; omission of Cole from discovery remains unresolved without a new authorization attempt.",
       "version": "Cole brand alignment batch",
       "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-brand-alignment/docs/agency/COLE-BRAND-ALIGNMENT-20261024.md",
-      "sourceDigest": "7dbaf61a5f8304c25872eddf3396248495b6f70bc8deddb95820fcc4f445c558",
+      "sourceDigest": "b31e04e3e801d08460e91604b092cd58af7c2920eaabbc963f7cb6dd2ae98391",
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
