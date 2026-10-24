@@ -1,5 +1,6 @@
+import { COLE_INSTAGRAM_USERNAME } from '../../agencyBrand';
 /** Owner-verified Cole discovery hints. These never grant binding or publishing authority. */
-export const COLE_INSTAGRAM_EXPECTATION = { pageId: '1266254166581850', username: 'cole.after.hours' } as const;
+export const COLE_INSTAGRAM_EXPECTATION = { pageId: '1266254166581850', username: COLE_INSTAGRAM_USERNAME } as const;
 export type InstagramDiscoveryReason = 'zero_pages' | 'expected_page_absent' | 'missing_page_token' | 'missing_linked_instagram_account' | 'instagram_identity_mismatch' | 'ambiguous_expected_page' | 'invalid_page_response' | 'ready';
 const record = (value: unknown): Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 export const hasPageToken = (page: Record<string, unknown>) => typeof page.access_token === 'string' && page.access_token.trim().length > 0;

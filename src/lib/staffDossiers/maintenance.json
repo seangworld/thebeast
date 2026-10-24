@@ -340,6 +340,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Align current character Cole Mercer, brand Cole After Hours and Instagram @cole.after.hours in Agency and shared constants. Saved profile contains no old-name match; no connections or bindings exist. Real administrator Sean Gatewood and all IDs, credentials, profile state, appearance, historical records and permissions preserved. Meta portfolio/derived ownership labels still show sean.after.hours pending owner rename; Instagram-origin People label remains distinct from correct public IG identity. One released diagnostic attempt confirmed expected_page_absent with two other Pages; their identities were not retained. Same-portfolio app/Page ownership and full access verified; official IG User reference documents ads_read or ads_management for Business-Manager role-based Instagram reads, but scopes remain unchanged and the omission is not claimed resolved.",
+      "version": "Cole brand alignment batch",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-brand-alignment/docs/agency/COLE-BRAND-ALIGNMENT-20261024.md",
+      "sourceDigest": "7dbaf61a5f8304c25872eddf3396248495b6f70bc8deddb95820fcc4f445c558",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }

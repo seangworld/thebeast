@@ -5071,9 +5071,9 @@
   "agency.cole-mercer": {
     "role": "Virtual Talent",
     "recordKind": "virtual_talent",
-    "mission": "Fictional brand identity under owner control; no autonomous staff authority.",
-    "assignment": "Cole is the current setup focus.",
-    "availability": "Existing inactive private presenter draft verified by read-only production inspection, 2026-10-23.",
+    "mission": "Cole Mercer is the fictional character behind Cole After Hours (@cole.after.hours), under owner control; no autonomous staff authority.",
+    "assignment": "Cole Mercer is the current setup focus: Cole After Hours / @cole.after.hours. Sean Gatewood remains the real administrator.",
+    "availability": "Existing inactive private Cole Mercer profile verified by read-only production inspection, 2026-10-24; no saved social connection or binding.",
     "target": null,
     "demonstrated": null,
     "released": null,
@@ -5093,8 +5093,9 @@
       "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
       "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment.",
       "Initial production Agency initiation was verified 2026-10-23 through the actual POST, four-scope URL and Meta Continue screen. Subsequent retained failing Social Accounts attempt used the same app/callback with extra pages_manage_posts; that historical request body and account identity were unavailable. Latest Agency no_accounts is a separate account-discovery failure; publishing remains unverified.",
-      "Latest no_accounts failure is verified, but Page discovery response/counts were not retained. Meta UI confirms the Page, owner access, Instagram link and enabled permission switches; it does not establish asset-level grant inclusion or the fields returned to this app. The all-current/future Pages selection cannot be validated retrospectively from available evidence. One fresh post-release attempt is authorized; its diagnostics and saved identity/binding must be verified before any success claim.",
-      "New safe discovery diagnostics do not reconstruct earlier callback payloads. Release confirmation and the single authorized fresh attempt are tracked in PR296; no connection or publishing readiness is claimed before verified save and binding."
+      "The authorized fresh diagnostic attempt returned expected_page_absent: two Pages with tokens, zero linked Instagram accounts and zero Cole Page matches. No saved connection or verified binding; no further authorization attempt authorized.",
+      "Meta portfolio and derived app/Page ownership labels were audited as sean.after.hours. Owner-controlled name-only rename guide is linked; Instagram-origin People label remains a separate unverified rename location. Public Page, handle and character name already match Cole.",
+      "Current official IG User documentation requires ads_read or ads_management for Instagram reads when Page access is via Business Manager. This conditional requirement applies to the observed role; no extra scope is added, and it does not alone prove the cause of Page-list omission."
     ],
     "blockers": [
       "Cole needs an owner-approved JPEG and explicit professional Instagram connection/binding before approval or public posting."
@@ -5151,10 +5152,22 @@
         "reviewer": "Codex (executor; synthetic provider fixtures, live attempt pending release)",
         "date": "2026-10-24",
         "version": "PR296 discovery diagnostics"
+      },
+      {
+        "title": "Current Cole brand/source/database/Meta asset audit and official permission requirements",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/cole-brand-alignment/docs/agency/COLE-BRAND-ALIGNMENT-20261024.md",
+        "kind": "code review",
+        "reviewer": "Codex (executor; live read-only checks, no new consent or publishing)",
+        "date": "2026-10-24",
+        "version": "Cole brand alignment batch"
       }
     ],
     "reviewedAt": "2026-10-24",
     "recentChanges": [
+      {
+        "date": "2026-10-24",
+        "summary": "Align current character Cole Mercer, brand Cole After Hours and Instagram @cole.after.hours in Agency and shared constants. Saved profile contains no old-name match; no connections or bindings exist. Real administrator Sean Gatewood and all IDs, credentials, profile state, appearance, historical records and permissions preserved. Meta portfolio/derived ownership labels still show sean.after.hours pending owner rename; Instagram-origin People label remains distinct from correct public IG identity. One released diagnostic attempt confirmed expected_page_absent with two other Pages; their identities were not retained. Same-portfolio app/Page ownership and full access verified; official IG User reference documents ads_read or ads_management for Business-Manager role-based Instagram reads, but scopes remain unchanged and the omission is not claimed resolved."
+      },
       {
         "date": "2026-10-24",
         "summary": "Add allowlisted Instagram discovery diagnostics: zero_pages, expected_page_absent, missing_page_token or missing_linked_instagram_account, plus fail-closed malformed/ambiguous response handling. Logs contain counts, fixed reason codes and safe identity-match booleans only. Verified Cole identity hints never grant binding or publishing authority. Existing four scopes, owner/cookie/expiry/single-use state, encrypted credentials, separate Facebook/X paths and explicit binding/approval safeguards remain. One production release and one owner-completed fresh authorization are authorized; no success until saved Cole connection and verified binding."
@@ -5212,6 +5225,12 @@
         "executor": "Codex",
         "why": "Add allowlisted Instagram discovery diagnostics: zero_pages, expected_page_absent, missing_page_token or missing_linked_instagram_account, plus fail-closed malformed/ambiguous response handling. Logs contain counts, fixed reason codes and safe identity-match booleans only. Verified Cole identity hints never grant binding or publishing authority. Existing four scopes, owner/cookie/expiry/single-use state, encrypted credentials, separate Facebook/X paths and explicit binding/approval safeguards remain. One production release and one owner-completed fresh authorization are authorized; no success until saved Cole connection and verified binding.",
         "version": "PR296 discovery diagnostics"
+      },
+      {
+        "date": "2026-10-24",
+        "executor": "Codex",
+        "why": "Align current character Cole Mercer, brand Cole After Hours and Instagram @cole.after.hours in Agency and shared constants. Saved profile contains no old-name match; no connections or bindings exist. Real administrator Sean Gatewood and all IDs, credentials, profile state, appearance, historical records and permissions preserved. Meta portfolio/derived ownership labels still show sean.after.hours pending owner rename; Instagram-origin People label remains distinct from correct public IG identity. One released diagnostic attempt confirmed expected_page_absent with two other Pages; their identities were not retained. Same-portfolio app/Page ownership and full access verified; official IG User reference documents ads_read or ads_management for Business-Manager role-based Instagram reads, but scopes remain unchanged and the omission is not claimed resolved.",
+        "version": "Cole brand alignment batch"
       }
     ],
     "releases": [
@@ -5232,6 +5251,12 @@
         "version": "PR296 Instagram discovery diagnostics",
         "summary": "Single authorized production release; exact deployment confirmation and fresh-attempt findings tracked in PR296. Connection success requires saved identity and verified binding; publishing and automation remain paused.",
         "url": "https://github.com/seangworld/thebeast/pull/296"
+      },
+      {
+        "date": "2026-10-24",
+        "version": "Cole brand identity alignment",
+        "summary": "Current character/brand/handle alignment; one coordinated release. Exact confirmed deployment receipt and remaining Meta label readback tracked in the linked Cole record. No permission expansion, new authorization, binding, publishing or automation activation.",
+        "url": "https://github.com/seangworld/thebeast/issues/292"
       }
     ]
   },
