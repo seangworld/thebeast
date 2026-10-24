@@ -351,6 +351,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Implement bounded direct lookup of the verified Cole Page when complete enumeration omits it, under existing four permissions. Read-only same-app/admin-context v26 checks showed basic discovery omits Cole while direct Page/link identity reads work. Exact Page/name/Instagram identity and independently usable Page credentials are required before encrypted owner save; exact saved identity readback is required before connected. Clear credential-unavailable/unusable and uncertain-save outcomes; no auto-binding, publishing or automation. Focused regressions and one coordinated release/owner connection verification are required; no added scopes or paid tests.",
+      "version": "Cole bounded direct-Page fallback",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-direct-page-fallback/docs/agency/COLE-DIRECT-PAGE-FALLBACK-20261024.md",
+      "sourceDigest": "0f930c4e25361248e44be102d2bb51e5ab844b144c5ada8e91d311ae98bf62e0",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }

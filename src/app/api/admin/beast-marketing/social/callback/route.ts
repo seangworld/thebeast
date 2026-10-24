@@ -4,7 +4,7 @@ import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { socialOwner, SOCIAL_ORIGIN, SOCIAL_PATH, SOCIAL_CALLBACK, stateHash, seal } from "@/lib/server/social/auth";
 import { metaRequest, metaUrl, providerJson, xToken } from "@/lib/server/social/providers";
 import { AGENCY_INSTAGRAM_PATH, metaIntent, instagramPermissionsGranted } from "@/lib/server/social/oauth";
-import { instagramDiscoveryDiagnostics, hasPageToken } from "@/lib/server/social/instagramDiscovery";
+import { instagramDiscoveryDiagnostics, resolveColeInstagram } from "@/lib/server/social/instagramDiscovery";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     if (instagramOnly) returnPath = AGENCY_INSTAGRAM_PATH;
     if (!params.get("code") || params.has("error")) return finish("failed");
     const rows: Record<string, unknown>[] = [];
+    let expectedInstagramId: string | undefined;
     if (claim.data.provider === "x") {
       const token = await xToken({ grant_type: "authorization_code", code: params.get("code")!, redirect_uri: SOCIAL_CALLBACK, code_verifier: claim.data.verifier });
       const user = await providerJson("https://api.x.com/2/users/me", { headers: { Authorization: `Bearer ${token.access_token}` } });
@@ -51,20 +52,36 @@ export async function GET(request: Request) {
       if (pages.paging?.next) throw new Error("account_list_incomplete");
       if (instagramOnly) {
         const diagnostics = instagramDiscoveryDiagnostics(pages.data);
-        discoveryReason = diagnostics.reason;
         console.info("agency_instagram_discovery", JSON.stringify(diagnostics));
         if (diagnostics.reason === "invalid_page_response" || diagnostics.reason === "ambiguous_expected_page") return finish("failed");
-      }
-      for (const page of pages.data || []) {
-        if (!/^\d+$/.test(page.id || "") || (instagramOnly ? !hasPageToken(page) : !page.access_token) || (!instagramOnly && !page.tasks?.some((task: string) => ["CREATE_CONTENT", "MANAGE"].includes(task)))) continue;
-        const common = { disconnected_at: null, owner_id: owner.id, credentials: seal({ access_token: page.access_token }, owner.id), connected_at: new Date().toISOString(), expires_at: long.expires_in ? new Date(Date.now() + long.expires_in * 1000).toISOString() : null };
-        if (!instagramOnly) rows.push({ ...common, channel: "facebook_page", account_id: page.id, label: String(page.name).slice(0,160) });
-        if (/^\d+$/.test(page.instagram_business_account?.id || "")) rows.push({ ...common, channel: "instagram", account_id: page.instagram_business_account.id, label: page.instagram_business_account.username ? `@${page.instagram_business_account.username}` : `${page.name} Instagram` });
+        const resolved = await resolveColeInstagram(pages.data, long.access_token, metaRequest);
+        console.info("agency_instagram_resolution", JSON.stringify(resolved.diagnostics));
+        if (!resolved.ok) { discoveryReason = resolved.diagnostics.reason; return finish("no_accounts"); }
+        expectedInstagramId = resolved.account.instagramId;
+        rows.push({ owner_id: owner.id, channel: "instagram", account_id: expectedInstagramId, label: `@${resolved.account.username}`, credentials: seal({access_token: resolved.account.pageToken}, owner.id), disconnected_at: null, connected_at: new Date().toISOString(), expires_at: long.expires_in ? new Date(Date.now() + long.expires_in * 1000).toISOString() : null });
+      } else {
+        for (const page of pages.data || []) {
+          if (!/^\d+$/.test(page.id || "") || !page.access_token || !page.tasks?.some((task: string) => ["CREATE_CONTENT", "MANAGE"].includes(task))) continue;
+          const common = { disconnected_at: null, owner_id: owner.id, credentials: seal({ access_token: page.access_token }, owner.id), connected_at: new Date().toISOString(), expires_at: long.expires_in ? new Date(Date.now() + long.expires_in * 1000).toISOString() : null };
+          rows.push({ ...common, channel: "facebook_page", account_id: page.id, label: String(page.name).slice(0,160) });
+          if (/^\d+$/.test(page.instagram_business_account?.id || "")) rows.push({ ...common, channel: "instagram", account_id: page.instagram_business_account.id, label: page.instagram_business_account.username ? `@${page.instagram_business_account.username}` : `${page.name} Instagram` });
+        }
       }
     }
     if (!rows.length) return finish("no_accounts");
-    const saved = await service.from("beast_marketing_social_connections").upsert(rows, { onConflict: "owner_id,channel,account_id" });
-    if (saved.error) throw new Error("save_failed");
+    const operation = service.from("beast_marketing_social_connections").upsert(rows, { onConflict: "owner_id,channel,account_id" });
+    if (expectedInstagramId) {
+      let confirmed = false;
+      try {
+        const saved = await operation.select("channel,account_id,label");
+        confirmed = !saved.error && Array.isArray(saved.data) && saved.data.length === 1 && saved.data[0].channel === "instagram" && saved.data[0].account_id === expectedInstagramId && saved.data[0].label === rows[0].label;
+      } catch { /* An uncertain write is not an invitation to reconnect or retry. */ }
+      console.info("agency_instagram_connection", JSON.stringify({reason: confirmed ? "saved" : "save_unconfirmed", verifiedConnections: confirmed ? 1 : 0}));
+      if (!confirmed) return finish("save_unconfirmed");
+    } else {
+      const saved = await operation;
+      if (saved.error) throw new Error("save_failed");
+    }
     return finish("connected");
   } catch { return finish("failed"); }
 }
