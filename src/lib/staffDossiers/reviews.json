@@ -5091,7 +5091,10 @@
       "Cole is the current setup focus.",
       "Instagram publishing and metrics remain live-unverified; no saved connection. Meta app configuration key names are now present (read-only check 2026-10-23); key presence does not prove credentials, app review or granted access.",
       "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
-      "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment."
+      "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment.",
+      "Initial production Agency initiation was verified 2026-10-23 through the actual POST, four-scope URL and Meta Continue screen. Subsequent retained failing Social Accounts attempt used the same app/callback with extra pages_manage_posts; that historical request body and account identity were unavailable. Latest Agency no_accounts is a separate account-discovery failure; publishing remains unverified.",
+      "Latest no_accounts failure is verified, but Page discovery response/counts were not retained. Meta UI confirms the Page, owner access, Instagram link and enabled permission switches; it does not establish asset-level grant inclusion or the fields returned to this app. The all-current/future Pages selection cannot be validated retrospectively from available evidence. One fresh post-release attempt is authorized; its diagnostics and saved identity/binding must be verified before any success claim.",
+      "New safe discovery diagnostics do not reconstruct earlier callback payloads. Release confirmation and the single authorized fresh attempt are tracked in PR296; no connection or publishing readiness is claimed before verified save and binding."
     ],
     "blockers": [
       "Cole needs an owner-approved JPEG and explicit professional Instagram connection/binding before approval or public posting."
@@ -5124,10 +5127,46 @@
         "reviewer": "Codex (executor; synthetic provider, not live authorization)",
         "date": "2026-10-23",
         "version": "Instagram OAuth correction"
+      },
+      {
+        "title": "Actual production Agency request payload, returned OAuth scopes and Meta consent boundary",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/cole-production-oauth-trace/docs/agency/INSTAGRAM-PRODUCTION-TRACE-20261023.md",
+        "kind": "code review",
+        "reviewer": "Codex (executor; live browser/network inspection, no consent or publishing validation)",
+        "date": "2026-10-23",
+        "version": "Production a543f39 / PR295"
+      },
+      {
+        "title": "Production no_accounts callback and read-only Meta Page/access/link/integration inspection",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/cole-production-oauth-trace/docs/agency/INSTAGRAM-NO-ACCOUNTS-20261023.md",
+        "kind": "code review",
+        "reviewer": "Codex (executor; live read-only UI and deployed-source inspection, no authorization replay)",
+        "date": "2026-10-23",
+        "version": "Production a543f39 / no_accounts investigation"
+      },
+      {
+        "title": "Allowlisted discovery diagnostics and actual-route redaction/regression fixtures",
+        "url": "https://github.com/seangworld/thebeast/pull/296",
+        "kind": "local replay",
+        "reviewer": "Codex (executor; synthetic provider fixtures, live attempt pending release)",
+        "date": "2026-10-24",
+        "version": "PR296 discovery diagnostics"
       }
     ],
-    "reviewedAt": "2026-10-23",
+    "reviewedAt": "2026-10-24",
     "recentChanges": [
+      {
+        "date": "2026-10-24",
+        "summary": "Add allowlisted Instagram discovery diagnostics: zero_pages, expected_page_absent, missing_page_token or missing_linked_instagram_account, plus fail-closed malformed/ambiguous response handling. Logs contain counts, fixed reason codes and safe identity-match booleans only. Verified Cole identity hints never grant binding or publishing authority. Existing four scopes, owner/cookie/expiry/single-use state, encrypted credentials, separate Facebook/X paths and explicit binding/approval safeguards remain. One production release and one owner-completed fresh authorization are authorized; no success until saved Cole connection and verified binding."
+      },
+      {
+        "date": "2026-10-23",
+        "summary": "Latest production Agency callback returned no_accounts. Read-only Meta UI confirms Cole After Hours Page 1266254166581850, Sean Gatewood full Page access, linked cole.after.hours Instagram asset, and active SEANGWORLD Agency integration with all four requested permission switches enabled. Callback has no retained sanitized Page discovery diagnostics; logs contain no matching entries. Zero Pages, omitted Cole Page, absent Page token and absent instagram_business_account remain indistinguishable. All-current/future consent inclusion of Cole is unverified; no exact Meta setting or functional application fix is justified. No reauthorization, grant change, publishing, automation or paid call."
+      },
+      {
+        "date": "2026-10-23",
+        "summary": "Production trace of #295 at a543f39: actual Agency button POST returned 200 with provider meta and purpose agency_instagram; returned OAuth URL requested pages_show_list, pages_read_engagement, instagram_basic and instagram_content_publish, excluding pages_manage_posts. Meta reached its Continue consent screen; no grant accepted. Reported earlier failure remains unexplained, not attributed to owner error. Publishing stays paused; no paid calls or posts."
+      },
       {
         "date": "2026-10-23",
         "summary": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed."
@@ -5155,6 +5194,24 @@
         "executor": "Codex",
         "why": "Agency Instagram-only OAuth excludes pages_manage_posts, retains linked Page discovery/read and Instagram basic/publishing scopes, saves only Instagram connections and returns to Agency. Facebook/X paths preserved; no account grant, binding, post, DMs or activation executed.",
         "version": "Issue294 / Instagram OAuth correction"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex",
+        "why": "Production trace of #295 at a543f39: actual Agency button POST returned 200 with provider meta and purpose agency_instagram; returned OAuth URL requested pages_show_list, pages_read_engagement, instagram_basic and instagram_content_publish, excluding pages_manage_posts. Meta reached its Continue consent screen; no grant accepted. Reported earlier failure remains unexplained, not attributed to owner error. Publishing stays paused; no paid calls or posts.",
+        "version": "Production OAuth trace / a543f39 / PR295"
+      },
+      {
+        "date": "2026-10-23",
+        "executor": "Codex",
+        "why": "Latest production Agency callback returned no_accounts. Read-only Meta UI confirms Cole After Hours Page 1266254166581850, Sean Gatewood full Page access, linked cole.after.hours Instagram asset, and active SEANGWORLD Agency integration with all four requested permission switches enabled. Callback has no retained sanitized Page discovery diagnostics; logs contain no matching entries. Zero Pages, omitted Cole Page, absent Page token and absent instagram_business_account remain indistinguishable. All-current/future consent inclusion of Cole is unverified; no exact Meta setting or functional application fix is justified. No reauthorization, grant change, publishing, automation or paid call.",
+        "version": "Production a543f39 / no_accounts investigation"
+      },
+      {
+        "date": "2026-10-24",
+        "executor": "Codex",
+        "why": "Add allowlisted Instagram discovery diagnostics: zero_pages, expected_page_absent, missing_page_token or missing_linked_instagram_account, plus fail-closed malformed/ambiguous response handling. Logs contain counts, fixed reason codes and safe identity-match booleans only. Verified Cole identity hints never grant binding or publishing authority. Existing four scopes, owner/cookie/expiry/single-use state, encrypted credentials, separate Facebook/X paths and explicit binding/approval safeguards remain. One production release and one owner-completed fresh authorization are authorized; no success until saved Cole connection and verified binding.",
+        "version": "PR296 discovery diagnostics"
       }
     ],
     "releases": [
@@ -5169,6 +5226,12 @@
         "version": "Instagram-only OAuth correction",
         "summary": "Agency-specific connect/callback mechanics; live Meta consent and account eligibility remain owner verification. Confirmed release receipt in Issue294.",
         "url": "https://github.com/seangworld/thebeast/issues/294"
+      },
+      {
+        "date": "2026-10-24",
+        "version": "PR296 Instagram discovery diagnostics",
+        "summary": "Single authorized production release; exact deployment confirmation and fresh-attempt findings tracked in PR296. Connection success requires saved identity and verified binding; publishing and automation remain paused.",
+        "url": "https://github.com/seangworld/thebeast/pull/296"
       }
     ]
   },
