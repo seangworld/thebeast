@@ -340,6 +340,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Owner confirmed and saved Beast AI Talent Agency as the umbrella portfolio name; verified unchanged portfolio 1698592135026247, Cole Page 1266254166581850 and app 1437303488549044. Cole Mercer / Cole After Hours / @cole.after.hours is the first talent. Derived Page/app ownership labels updated; Instagram-origin People label sean.after.hours and accurate historical attribution remain. Saved application profile contains no old-name matches; no connections, bindings or posts exist to rename. Agency shows the umbrella agency and current Cole identity; IDs, credentials, profile state, visual direction, administrator Sean Gatewood, historical records and OAuth scopes preserved. Documented conditional ads_read requirement recorded, not applied speculatively; omission of Cole from discovery remains unresolved without a new authorization attempt. Owner corrected the remaining Instagram-origin Meta People display name to Cole Mercer, with @cole.after.hours and selected entry/portfolio IDs unchanged; Sean Gatewood remains administrator. A separately authorized post-rename attempt still returned expected_page_absent (2 Pages with tokens, 0 linked Instagram accounts, 0 Cole matches). Read-only database confirms no saved Instagram connection or Cole binding. Record the verified name correction and persistent discovery failure in the same branding release; preserve historical names, all IDs, credentials, four OAuth scopes and publishing/automation pause.",
+      "version": "Cole brand alignment batch",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-brand-alignment/docs/agency/COLE-BRAND-ALIGNMENT-20261024.md",
+      "sourceDigest": "1fc2e1020c77a06449eb6891b5e381e3c9c04e8bc97d887c0f14fcf4873baefd",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }
