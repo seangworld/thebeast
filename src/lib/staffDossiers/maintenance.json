@@ -318,6 +318,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-23",
+      "executor": "Codex",
+      "reason": "Latest production Agency callback returned no_accounts. Read-only Meta UI confirms Cole After Hours Page 1266254166581850, Sean Gatewood full Page access, linked cole.after.hours Instagram asset, and active SEANGWORLD Agency integration with all four requested permission switches enabled. Callback has no retained sanitized Page discovery diagnostics; logs contain no matching entries. Zero Pages, omitted Cole Page, absent Page token and absent instagram_business_account remain indistinguishable. All-current/future consent inclusion of Cole is unverified; no exact Meta setting or functional application fix is justified. No reauthorization, grant change, publishing, automation or paid call.",
+      "version": "Production a543f39 / no_accounts investigation",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-production-oauth-trace/docs/agency/INSTAGRAM-NO-ACCOUNTS-20261023.md",
+      "sourceDigest": "b86d7e28b299e5a3c70940f89c7ae6f6659a9b2fe93dfd48392121ebac4514dd",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }
