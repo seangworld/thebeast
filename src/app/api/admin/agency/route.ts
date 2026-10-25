@@ -13,14 +13,15 @@ const fields='id,presenter_profile_id,content,content_hash,media_hash,revision,s
 export async function GET(){
  const owner=await socialOwner();if(!owner)return socialJson({error:'Owner access required.'},403);
  try{
-  const db=createBeastFusionPublicationClient();const [profiles,connections,bindings,posts]=await Promise.all([
+  const db=createBeastFusionPublicationClient();const [profiles,connections,bindings,posts,daily]=await Promise.all([
    owner.client.from('beast_marketing_presenter_profiles').select('id,name,active,updated_at,presenter_type,visual_identity,voice_identity,presentation_rules,allowed_topics,disclosure_rules,provenance').eq('owner_id',owner.id).eq('presenter_type','future_character').in('name',[COLE_NAME,'Leila Bautista']),
    db.from('beast_marketing_social_connections').select('id,channel,account_id,label,connected_at,expires_at').eq('owner_id',owner.id).eq('channel','instagram').is('disconnected_at',null),
    db.from('beast_marketing_agency_bindings').select('presenter_profile_id,connection_id,expected_account_id,expected_username,connection_version,metrics,metrics_checked_at,metrics_error').eq('owner_id',owner.id),
    db.from('beast_marketing_agency_posts').select(fields).eq('owner_id',owner.id).order('created_at',{ascending:false}).limit(50),
+   db.from('agency_cole_daily_jobs').select('post_id').eq('owner_id',owner.id),
   ]);
-  if([profiles,connections,bindings,posts].some(r=>r.error))return socialJson({error:'Agency data is unavailable. Verify the two Agency migrations and server configuration; do not treat this as an empty queue.'},503);
-  return socialJson({profiles:profiles.data,connections:connections.data,bindings:bindings.data,posts:posts.data?.map(p=>({...p,displayStatus:ownerState(p as AgencyPost)})),configuration:socialConfiguration(),automationEnabled:false,dmEnabled:false,metricsNote:'Metrics refresh is manual. Missing access or values remain unavailable.'});
+  if([profiles,connections,bindings,posts,daily].some(r=>r.error))return socialJson({error:'Agency data is unavailable. Verify the two Agency migrations and server configuration; do not treat this as an empty queue.'},503);
+  return socialJson({profiles:profiles.data,connections:connections.data,bindings:bindings.data,posts:posts.data?.map(p=>({...p,dailySource:daily.data?.some(j=>j.post_id===p.id)??false,displayStatus:ownerState(p as AgencyPost)})),configuration:socialConfiguration(),automationEnabled:false,dmEnabled:false,metricsNote:'Metrics refresh is manual. Missing access or values remain unavailable.'});
  }catch{return socialJson({error:'Agency configuration is unavailable. No data or metrics inferred.'},503);}
 }
 export async function POST(request:Request){
@@ -55,6 +56,7 @@ export async function POST(request:Request){
   }
   if(body.action==='save'){
    if(!isUuid(body.id)||!Number.isSafeInteger(body.revision)||body.revision<0)throw Error('Choose a valid draft revision.');
+   const daily=await db.from('agency_cole_daily_jobs').select('id').eq('owner_id',owner.id).eq('post_id',body.id).maybeSingle();if(daily.error||daily.data)throw Error('Use the daily workflow controls for generated posts.');
    const content=creativeInput(body.content,process.env.NEXT_PUBLIC_SUPABASE_URL);
    await privacyCheck(content.caption);
    const mediaHash=content.mediaUrl?await agencyMediaHash(content.mediaUrl,process.env.NEXT_PUBLIC_SUPABASE_URL):'';
@@ -75,6 +77,7 @@ export async function POST(request:Request){
    const saved=await db.from('beast_marketing_agency_posts').update({status:'failed',approval_hash:null,approved_at:null,last_error:'Owner abandoned uncertain media preparation. No publish request had started; an orphan unpublished container may remain.',updated_at:now()}).eq('owner_id',owner.id).eq('id',post.id).eq('revision',post.revision).eq('unknown_stage','prepare').in('status',['unknown','publishing']).select('id').maybeSingle();if(saved.error||!saved.data)throw Error('Preparation advanced or changed. Refresh and do not retry.');return socialJson({saved:true});
   }
   if(body.action==='cancel'){if(post.status==='processing'){const {token}=await agencyAccount(owner.id,profile.id,true);const remote=await metaRequest(post.container_id!,token,{fields:'status_code'});if(remote.status_code==='PUBLISHED'){await savePatch({status:'unknown',last_error:'Instagram reports published media. Reconcile the receipt; do not repost.'},['processing']);throw Error('Publication may exist. Reconcile its receipt.');}if(!['IN_PROGRESS','FINISHED','ERROR','EXPIRED'].includes(remote.status_code))throw Error('Container outcome is unknown. Inspect Instagram before cancellation.');}await savePatch({status:'cancelled',approval_hash:null,approved_at:null},['draft','approved','failed','processing']);return socialJson({saved:true});}
+  if(['approve','publish'].includes(body.action)){const daily=await db.from('agency_cole_daily_jobs').select('id').eq('owner_id',owner.id).eq('post_id',post.id).maybeSingle();if(daily.error||daily.data)throw Error('Use the daily workflow controls for generated posts.');}
   if(body.action==='approve'){
    if(profile.provenance?.manualAgencyApproved!==true||profile.provenance?.identityApproval!==true||profile.provenance?.disclosureApproved!==true)throw Error('Approve Cole’s brand identity and disclosure first.');
    if(post.status!=='draft'||body.confirm!==true||body.privacyReviewed!==true)throw Error('Review the saved caption, image, disclosure, privacy and account before approval.');

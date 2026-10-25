@@ -4,6 +4,22 @@
     {
       "path": "/api/cron/orchestrator-observation",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/agency-cole-daily?phase=prepare&slot=10",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/agency-cole-daily?phase=prepare&slot=11",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/agency-cole-daily?phase=publish&slot=22",
+      "schedule": "0 22 * * *"
+    },
+    {
+      "path": "/api/cron/agency-cole-daily?phase=publish&slot=23",
+      "schedule": "0 23 * * *"
     }
   ]
 }

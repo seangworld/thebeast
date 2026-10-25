@@ -89,7 +89,8 @@ test('paused Atlas is fail-closed before database/auth/provider work; persisted 
 });
 test('owner-disabled Atlas and marketing schedules are absent; unrelated schedule remains',()=>{
  const config=JSON.parse(readFileSync('vercel.json','utf8'));
- assert.deepEqual(config.crons,[{path:'/api/cron/orchestrator-observation',schedule:'0 10 * * *'}]);
+ assert.deepEqual(config.crons.filter((c:{path:string})=>!c.path.startsWith('/api/cron/agency-cole-daily?')),[{path:'/api/cron/orchestrator-observation',schedule:'0 10 * * *'}]);
+ assert.equal(config.crons.filter((c:{path:string})=>c.path.startsWith('/api/cron/agency-cole-daily?')).length,4);
 });
 
 function socialCronFixture(rows:Array<Record<string,any>>=[],enabled=['enabled'],failRead=false) {

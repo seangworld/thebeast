@@ -130,6 +130,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20261017215227_director_execution_contract.sql",
   "20261017230022_director_cancellation_intent.sql",
   "20261023190000_cole_agency_manual_workflow.sql",
+  "20261025174755_cole_daily_approval_workflow.sql",
 ] as const;
 
 export type BeastAdminMigrationState =
