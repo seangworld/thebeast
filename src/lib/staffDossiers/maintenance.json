@@ -373,6 +373,30 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Record owner-approved Cole appearance: two full tattoo sleeves, one on each arm, in Cole dossier and Cole-specific cross-reference in Leila dossier. Reference supplied screenshot; available attachment is Agency UI, not independent appearance evidence. Original image recovery remains pending. No Leila appearance change, media substitution, runtime profile change, connection change, publishing authorization or activation. Preserve historical records. Hosted HQ synchronization pending separate release authorization.",
+      "version": "Owner-approved Cole appearance record",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-appearance-decision/docs/agency/COLE-APPEARANCE-DECISION-20261024.md",
+      "sourceDigest": "b932af864eb29a0dc573d5d474e4cfb0e567ffdaaca742e3d7c837ff6d3afaaa",
+      "affectedStaffIds": [
+        "agency.cole-mercer",
+        "agency.leila-bautista"
+      ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Correct PR300 before release: Cole blue-shirt portrait with two full tattoo sleeves and Leila cream-suit portrait are their respective owner-approved appearance references from the supplied screenshot. Original-image recovery pending for both. Supersede incomplete Cole-only/cross-reference interpretation while retaining historical receipts. Appearance approval grants no publishing approval or automation activation. Owner authorizes one combined dossier release after required checks; account/binding/credentials and publishing safeguards unchanged.",
+      "version": "PR300 corrected talent appearance references",
+      "evidence": "https://github.com/seangworld/thebeast/pull/300",
+      "sourceDigest": "70b9ff72ad595eddca2c3ff78979ca0108bcf6fcec40dcb48eea5ee30d2025d4",
+      "affectedStaffIds": [
+        "agency.cole-mercer",
+        "agency.leila-bautista"
+      ]
     }
   ]
 }
