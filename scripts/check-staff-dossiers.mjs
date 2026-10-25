@@ -17,5 +17,5 @@ if(process.argv[1]?.endsWith('check-staff-dossiers.mjs')){
  const base=process.argv.indexOf('--base');if(base>=0){const ref=process.argv[base+1];let prior;try{prior=JSON.parse(execFileSync('git',['show',ref+':'+file],{encoding:'utf8',stdio:['ignore','pipe','ignore']}));}catch{/* Initial introduction. */}
  if(prior){if(JSON.stringify(r.changes.slice(0,prior.changes.length))!==JSON.stringify(prior.changes))throw Error('Preserve existing dossier history. Append corrections/reverts, never overwrite.');if(prior.changes.at(-1)?.sourceDigest!==digest&&r.changes.length<=prior.changes.length)throw Error('Append a dossier change receipt for changed agent source.');}}
  console.log('Staff dossier source/history completion check passed (offline).');
- }catch(e){console.error(e.message);process.exitCode=1;}
+ }catch(e){console.error(e.message);if(process.env.VERCEL==='1'){for(const p of ['vercel.json','supabase/migrations/20261025174755_cole_daily_approval_workflow.sql']){try{console.error('Dossier source diagnostic',p,createHash('sha256').update(readFileSync(p)).digest('hex'));if(p==='vercel.json')console.error('Dossier cron diagnostic',JSON.stringify(JSON.parse(readFileSync(p)).crons));}catch{/* No contents or credentials logged. */}}}process.exitCode=1;}
 }
