@@ -34,6 +34,6 @@ test('appearance references enlarge without publishing or account writes; proven
  assert.equal(ui.queryByText(/Connection callback completed/),null);
  for(const name of ['Cole Mercer','Leila Bautista']){const buttons=ui.getAllByRole('button',{name:`Enlarge ${name} appearance reference`});assert.equal(buttons.length,2);fireEvent.click(buttons[0]);assert.equal(shown.at(-1)?.getAttribute('aria-label'),`${name} appearance reference`);shown.at(-1)?.removeAttribute('open');}
  for(const summary of ui.getAllByText('Source & provenance',{exact:true}))assert.equal(summary.parentElement?.hasAttribute('open'),false);
- assert.ok(ui.getByText('Leila remains deferred.'));assert.deepEqual(requests,[]);
+ assert.ok(ui.getByText('Leila remains deferred.'));assert.ok(ui.getAllByAltText(/Cole Mercer: Mature, athletic, dark tousled hair, trimmed beard, no tattoos/).length>=2);assert.ok(ui.getAllByText(/No guaranteed uniqueness or exclusive rights claimed/).length>=2);assert.deepEqual(requests,[]);
  dom.window.history.replaceState(null,'','/dashboard/admin/agency/metrics');
 });

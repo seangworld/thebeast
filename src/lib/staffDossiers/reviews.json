@@ -5073,7 +5073,7 @@
     "recordKind": "virtual_talent",
     "mission": "Cole Mercer is the fictional character behind Cole After Hours (@cole.after.hours), the first talent of Beast AI Talent Agency, under owner control; no autonomous staff authority.",
     "assignment": "First talent setup focus for Beast AI Talent Agency: Cole Mercer / Cole After Hours / @cole.after.hours. Sean Gatewood remains the real administrator.",
-    "availability": "Instagram @cole.after.hours is saved and explicitly bound to Cole. Production readback verified active, unexpired, sealed credentials and matching account/connection version. Read-only metrics returned 0 followers and 0 posts at 2026-10-24T23:59:33Z. Publishing and automation remain paused. Recovered appearance reference file available privately in Agency; not a publishing asset.",
+    "availability": "Instagram @cole.after.hours is saved and explicitly bound to Cole. Production readback verified active, unexpired, sealed credentials and matching account/connection version. Read-only metrics returned 0 followers and 0 posts at 2026-10-24T23:59:33Z. Publishing and automation remain paused. Canonical tattoo-free coastal PNG is the Agency appearance reference; private Supabase storage and owner-only checksum-verified response. Appearance/profile-picture approval does not authorize future posts.",
     "target": null,
     "demonstrated": null,
     "released": null,
@@ -5085,7 +5085,7 @@
       "Existing private Agency workflow and Meta adapter perform deterministic persistence, account checks and receipt handling; no independently running talent agent."
     ],
     "strengths": [
-      "Owner-approved appearance reference recovered: blue-shirt portrait with two full tattoo sleeves, 736 \u00d7 1104 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval.",
+      "Canonical appearance approved by owner 2026-10-25: mature, athletic, dark tousled hair, trimmed beard, NO tattoos. Approved ink-free coastal PNG, 1254 \u00d7 1254, SHA-256 c84a2646f592c74d92430e33753b10b87a3c9cc6dec1eb8e3539383842a4e3bb. Supersedes the Pinterest-attributed blue-shirt portrait and previous two-full-sleeve requirement. Owner reports ChatGPT generation from written description without outside reference imagery, then editing to remove tattoos; no guaranteed uniqueness or exclusive rights claimed. Appearance/profile-picture approval only, not approval for future posts.",
       "Existing private identity draft retained; no redesign or new generation."
     ],
     "limitations": [
@@ -5095,7 +5095,7 @@
       "Initial production Agency initiation was verified 2026-10-23 through the actual POST, four-scope URL and Meta Continue screen. Subsequent retained failing Social Accounts attempt used the same app/callback with extra pages_manage_posts; that historical request body and account identity were unavailable. The historical Agency no_accounts was a separate discovery failure, resolved by the bounded fallback; publishing remains unverified.",
       "Owner renamed the portfolio to Beast AI Talent Agency and the Instagram-origin People entry to Cole Mercer; unchanged portfolio, Page, app and selected People-entry IDs verified. Public Page/Instagram branding already matches Cole. Old names remain only in accurate historical attribution and dated audit/history.",
       "Instagram account identity, saved connection, explicit binding and basic account counts are production-verified. Publishing, post-level reporting, reach, growth, revenue and costs remain unverified. Zero followers/posts are returned values, not inferred missing data. Historical discovery records predate the successful bounded fallback.",
-      "Reference file recovered; creator-original provenance and reuse rights remain unverified. Appearance approval does not approve a publishing asset or public post."
+      "The new canonical PNG is privately stored, not committed or bundled. Owner-reported text-only generation and tattoo removal are provenance statements, not guarantees of uniqueness/exclusive rights. The retired blue-shirt JPEG remains in historical public Git commits/PR301; removal from the current tree does not erase those copies. Old two-sleeve decisions are superseded historical records."
     ],
     "blockers": [
       "An owner-approved Cole JPEG and exact saved-revision review are still required before any separate publishing decision. No reconnect or added permissions are needed for verified basic account metrics."
@@ -5200,10 +5200,22 @@
         "reviewer": "Codex (executor; actual browser download, local file comparison and visual verification; creator originals unverified)",
         "date": "2026-10-24",
         "version": "Agency recovered reference display batch"
+      },
+      {
+        "title": "Approved tattoo-free PNG inspection, private-storage receipt, owner provenance and release evidence",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/cole-ink-free/docs/agency/COLE-INK-FREE-20261025.md",
+        "kind": "code review",
+        "reviewer": "Owner decision/provenance recorded by Codex; exact file inspection and hash, not independent generation-history or rights verification",
+        "date": "2026-10-25",
+        "version": "Cole tattoo-free canonical appearance batch"
       }
     ],
-    "reviewedAt": "2026-10-24",
+    "reviewedAt": "2026-10-25",
     "recentChanges": [
+      {
+        "date": "2026-10-25",
+        "summary": "Canonical appearance approved by owner 2026-10-25: mature, athletic, dark tousled hair, trimmed beard, NO tattoos. Approved ink-free coastal PNG, 1254 \u00d7 1254, SHA-256 c84a2646f592c74d92430e33753b10b87a3c9cc6dec1eb8e3539383842a4e3bb. Supersedes the Pinterest-attributed blue-shirt portrait and previous two-full-sleeve requirement. Owner reports ChatGPT generation from written description without outside reference imagery, then editing to remove tattoos; no guaranteed uniqueness or exclusive rights claimed. Appearance/profile-picture approval only, not approval for future posts. Saved visual direction updated without enabling publishing approval. Owner reports social profile pictures already changed, Facebook cover removed and old photos deleted; no account actions repeated."
+      },
       {
         "date": "2026-10-24",
         "summary": "Owner-approved appearance reference recovered: blue-shirt portrait with two full tattoo sleeves, 736 \u00d7 1104 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval."
@@ -5331,6 +5343,12 @@
         "executor": "Codex",
         "why": "Owner-approved appearance reference recovered: blue-shirt portrait with two full tattoo sleeves, 736 \u00d7 1104 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval. Supersedes historical pending-reference-recovery notes; historical records retained.",
         "version": "Agency recovered reference display batch"
+      },
+      {
+        "date": "2026-10-25",
+        "executor": "Codex",
+        "why": "Canonical appearance approved by owner 2026-10-25: mature, athletic, dark tousled hair, trimmed beard, NO tattoos. Approved ink-free coastal PNG, 1254 \u00d7 1254, SHA-256 c84a2646f592c74d92430e33753b10b87a3c9cc6dec1eb8e3539383842a4e3bb. Supersedes the Pinterest-attributed blue-shirt portrait and previous two-full-sleeve requirement. Owner reports ChatGPT generation from written description without outside reference imagery, then editing to remove tattoos; no guaranteed uniqueness or exclusive rights claimed. Appearance/profile-picture approval only, not approval for future posts. Explicitly supersedes prior tattoo/sleeve appearance decisions while preserving their dated history. Leila unchanged; Cole connection and paused publishing/automation preserved.",
+        "version": "Cole tattoo-free canonical appearance batch"
       }
     ],
     "releases": [
