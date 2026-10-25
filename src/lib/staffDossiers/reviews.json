@@ -5085,6 +5085,7 @@
       "Existing private Agency workflow and Meta adapter perform deterministic persistence, account checks and receipt handling; no independently running talent agent."
     ],
     "strengths": [
+      "Owner-approved appearance reference (2026-10-24): Cole Mercer\u2019s blue-shirt portrait with two full tattoo sleeves, one on each arm, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation.",
       "Existing private identity draft retained; no redesign or new generation."
     ],
     "limitations": [
@@ -5094,7 +5095,7 @@
       "Initial production Agency initiation was verified 2026-10-23 through the actual POST, four-scope URL and Meta Continue screen. Subsequent retained failing Social Accounts attempt used the same app/callback with extra pages_manage_posts; that historical request body and account identity were unavailable. The historical Agency no_accounts was a separate discovery failure, resolved by the bounded fallback; publishing remains unverified.",
       "Owner renamed the portfolio to Beast AI Talent Agency and the Instagram-origin People entry to Cole Mercer; unchanged portfolio, Page, app and selected People-entry IDs verified. Public Page/Instagram branding already matches Cole. Old names remain only in accurate historical attribution and dated audit/history.",
       "Instagram account identity, saved connection, explicit binding and basic account counts are production-verified. Publishing, post-level reporting, reach, growth, revenue and costs remain unverified. Zero followers/posts are returned values, not inferred missing data. Historical discovery records predate the successful bounded fallback.",
-      "Owner-approved appearance decision (2026-10-24): Cole Mercer has two full tattoo sleeves, one on each arm. Reference: owner-supplied screenshot; original image recovery remains pending. The available screenshot shows Agency UI, so sleeve appearance is owner-attested, not independently image-verified. No new asset, redesign, brand approval, publishing authorization or automation activation."
+      "Original portrait-image recovery remains pending. Screenshot-based appearance approval does not approve a publishing asset or public post."
     ],
     "blockers": [
       "An owner-approved Cole JPEG and exact saved-revision review are still required before any separate publishing decision. No reconnect or added permissions are needed for verified basic account metrics."
@@ -5183,10 +5184,22 @@
         "reviewer": "Owner decision recorded by Codex; not independent image verification",
         "date": "2026-10-24",
         "version": "Cole appearance decision"
+      },
+      {
+        "title": "Cole Mercer\u2019s blue-shirt portrait with two full tattoo sleeves, one on each arm \u2014 owner-approved screenshot reference; originals pending",
+        "url": "https://github.com/seangworld/thebeast/pull/300",
+        "kind": "code review",
+        "reviewer": "Owner approval recorded by Codex; no original-image recovery claimed",
+        "date": "2026-10-24",
+        "version": "PR300 corrected appearance references"
       }
     ],
     "reviewedAt": "2026-10-24",
     "recentChanges": [
+      {
+        "date": "2026-10-24",
+        "summary": "Owner-approved appearance reference (2026-10-24): Cole Mercer\u2019s blue-shirt portrait with two full tattoo sleeves, one on each arm, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation. Corrects the earlier incomplete #300 record; each talent now has their own appearance reference."
+      },
       {
         "date": "2026-10-24",
         "summary": "Owner-approved appearance decision (2026-10-24): Cole Mercer has two full tattoo sleeves, one on each arm. Reference: owner-supplied screenshot; original image recovery remains pending. The available screenshot shows Agency UI, so sleeve appearance is owner-attested, not independently image-verified. No new asset, redesign, brand approval, publishing authorization or automation activation."
@@ -5294,6 +5307,12 @@
         "executor": "Codex",
         "why": "Owner-approved appearance decision (2026-10-24): Cole Mercer has two full tattoo sleeves, one on each arm. Reference: owner-supplied screenshot; original image recovery remains pending. The available screenshot shows Agency UI, so sleeve appearance is owner-attested, not independently image-verified. No new asset, redesign, brand approval, publishing authorization or automation activation.",
         "version": "Owner-approved Cole appearance record"
+      },
+      {
+        "date": "2026-10-24",
+        "executor": "Codex",
+        "why": "Owner-approved appearance reference (2026-10-24): Cole Mercer\u2019s blue-shirt portrait with two full tattoo sleeves, one on each arm, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation. Owner correction supersedes the earlier Cole-only/cross-reference interpretation; prior history retained.",
+        "version": "PR300 corrected talent appearance references"
       }
     ],
     "releases": [
@@ -5346,6 +5365,7 @@
       "Existing private Agency workflow and Meta adapter perform deterministic persistence, account checks and receipt handling; no independently running talent agent."
     ],
     "strengths": [
+      "Owner-approved appearance reference (2026-10-24): Leila Bautista\u2019s cream-suit portrait, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation.",
       "Existing private identity draft retained; no redesign or new generation."
     ],
     "limitations": [
@@ -5353,7 +5373,7 @@
       "Leila remains deferred. No live account/metrics verification; shared Meta configuration key names are now present, but provider authorization is unverified.",
       "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
       "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment.",
-      "Cole-specific cross-reference; does not change Leila\u2019s appearance: Owner-approved appearance decision (2026-10-24): Cole Mercer has two full tattoo sleeves, one on each arm. Reference: owner-supplied screenshot; original image recovery remains pending. The available screenshot shows Agency UI, so sleeve appearance is owner-attested, not independently image-verified. No new asset, redesign, brand approval, publishing authorization or automation activation."
+      "Original portrait-image recovery remains pending. Screenshot-based appearance approval does not approve a publishing asset or public post."
     ],
     "blockers": [
       "Deferred by owner until Cole\u2019s workflow works reliably."
@@ -5386,10 +5406,22 @@
         "reviewer": "Owner decision recorded by Codex; not independent image verification",
         "date": "2026-10-24",
         "version": "Cole appearance decision"
+      },
+      {
+        "title": "Leila Bautista\u2019s cream-suit portrait \u2014 owner-approved screenshot reference; originals pending",
+        "url": "https://github.com/seangworld/thebeast/pull/300",
+        "kind": "code review",
+        "reviewer": "Owner approval recorded by Codex; no original-image recovery claimed",
+        "date": "2026-10-24",
+        "version": "PR300 corrected appearance references"
       }
     ],
     "reviewedAt": "2026-10-24",
     "recentChanges": [
+      {
+        "date": "2026-10-24",
+        "summary": "Owner-approved appearance reference (2026-10-24): Leila Bautista\u2019s cream-suit portrait, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation. Corrects the earlier incomplete #300 record; each talent now has their own appearance reference."
+      },
       {
         "date": "2026-10-24",
         "summary": "Cole-specific cross-reference; does not change Leila\u2019s appearance: Owner-approved appearance decision (2026-10-24): Cole Mercer has two full tattoo sleeves, one on each arm. Reference: owner-supplied screenshot; original image recovery remains pending. The available screenshot shows Agency UI, so sleeve appearance is owner-attested, not independently image-verified. No new asset, redesign, brand approval, publishing authorization or automation activation."
@@ -5417,6 +5449,12 @@
         "executor": "Codex",
         "why": "Cole-specific cross-reference; does not change Leila\u2019s appearance: Owner-approved appearance decision (2026-10-24): Cole Mercer has two full tattoo sleeves, one on each arm. Reference: owner-supplied screenshot; original image recovery remains pending. The available screenshot shows Agency UI, so sleeve appearance is owner-attested, not independently image-verified. No new asset, redesign, brand approval, publishing authorization or automation activation.",
         "version": "Owner-approved Cole appearance record"
+      },
+      {
+        "date": "2026-10-24",
+        "executor": "Codex",
+        "why": "Owner-approved appearance reference (2026-10-24): Leila Bautista\u2019s cream-suit portrait, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation. Owner correction supersedes the earlier Cole-only/cross-reference interpretation; prior history retained.",
+        "version": "PR300 corrected talent appearance references"
       }
     ],
     "releases": [

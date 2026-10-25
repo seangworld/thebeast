@@ -385,6 +385,18 @@
         "agency.cole-mercer",
         "agency.leila-bautista"
       ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Correct PR300 before release: Cole blue-shirt portrait with two full tattoo sleeves and Leila cream-suit portrait are their respective owner-approved appearance references from the supplied screenshot. Original-image recovery pending for both. Supersede incomplete Cole-only/cross-reference interpretation while retaining historical receipts. Appearance approval grants no publishing approval or automation activation. Owner authorizes one combined dossier release after required checks; account/binding/credentials and publishing safeguards unchanged.",
+      "version": "PR300 corrected talent appearance references",
+      "evidence": "https://github.com/seangworld/thebeast/pull/300",
+      "sourceDigest": "70b9ff72ad595eddca2c3ff78979ca0108bcf6fcec40dcb48eea5ee30d2025d4",
+      "affectedStaffIds": [
+        "agency.cole-mercer",
+        "agency.leila-bautista"
+      ]
     }
   ]
 }
