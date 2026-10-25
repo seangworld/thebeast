@@ -116,6 +116,13 @@ test("BA-103 protects final owners plus explicit system and demo accounts", () =
   );
 });
 
+test("reading Health overrides does not authorize editing Health access", () => {
+  assert.equal(normalizeBeastAdminMemberEditRequest({
+    ...validRequest,
+    moduleAccess: ["learning", "health"],
+  }), null);
+});
+
 test("BA-103 module access uses one shared navigation behavior", () => {
   const moduleAccess = [
     { moduleId: "money" as const, enabled: false },

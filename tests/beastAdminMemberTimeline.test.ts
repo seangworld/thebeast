@@ -136,6 +136,31 @@ test("BA-104 normalizes the live owner member directory and preserves confirmed 
   );
 });
 
+test("member directory preserves Health restrictions without hiding other members", () => {
+  const overrides = [
+    { moduleId: "health", enabled: false },
+    { moduleId: "money", enabled: false },
+  ];
+  const normalized = normalizeBeastAdminMemberDirectory([
+    { ...directory[0], role: "user", moduleAccessOverrides: overrides },
+    directory[1],
+  ]);
+  assert.ok(normalized);
+  assert.equal(normalized.length, 2);
+  assert.deepEqual(normalized[0].moduleAccessOverrides, overrides);
+  assert.equal(normalized[0].enabledModules.some((module) => module.id === "health"), false);
+  assert.equal(normalized[0].enabledModules.some((module) => module.id === "money"), false);
+  assert.equal(normalized[1].id, directory[1].id);
+  for (const invalid of [
+    { moduleId: "unknown-module", enabled: false },
+    { moduleId: "health", enabled: "false" },
+  ]) {
+    assert.equal(normalizeBeastAdminMemberDirectory([
+      { ...directory[0], moduleAccessOverrides: [invalid] },
+    ]), null);
+  }
+});
+
 test("BA-102 filters the directory by authoritative identity and effective access", () => {
   const normalized = normalizeBeastAdminMemberDirectory(directory);
   assert.ok(normalized);
