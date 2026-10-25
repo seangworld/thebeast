@@ -1,5 +1,5 @@
 import { USER_ROLES, type UserRole } from "./entitlements";
-import type { BeastModuleIdentifier } from "./moduleRegistry";
+import { beastModuleRegistry, type BeastModuleIdentifier } from "./moduleRegistry";
 
 export const beastAdminEditableAccountStatuses = [
   "active",
@@ -43,7 +43,7 @@ export type BeastAdminMemberEditResult = {
 };
 
 export type BeastAdminMemberModuleAccessOverride = {
-  moduleId: BeastAdminEditableModuleId;
+  moduleId: BeastModuleIdentifier;
   enabled: boolean;
 };
 
@@ -174,9 +174,9 @@ export function normalizeMemberModuleAccessOverrides(
   const rows = value.flatMap((entry) => {
     if (
       !isRecord(entry) ||
-      !beastAdminEditableModuleIds.includes(
-        entry.moduleId as BeastAdminEditableModuleId
-      ) ||
+      // Reading an existing restriction is not permission to edit that module.
+      // Health and other registered modules can have overrides written elsewhere.
+      !beastModuleRegistry.some((module) => module.identifier === entry.moduleId) ||
       typeof entry.enabled !== "boolean"
     ) {
       return [];
@@ -184,7 +184,7 @@ export function normalizeMemberModuleAccessOverrides(
 
     return [
       {
-        moduleId: entry.moduleId as BeastAdminEditableModuleId,
+        moduleId: entry.moduleId as BeastModuleIdentifier,
         enabled: entry.enabled,
       },
     ];
