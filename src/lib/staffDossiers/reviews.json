@@ -5073,7 +5073,7 @@
     "recordKind": "virtual_talent",
     "mission": "Cole Mercer is the fictional character behind Cole After Hours (@cole.after.hours), the first talent of Beast AI Talent Agency, under owner control; no autonomous staff authority.",
     "assignment": "Cole-only daily Instagram preparation and exact-post owner review for Beast AI Talent Agency. Sean Gatewood remains administrator. Facebook, Leila, DMs, engagement and unrelated schedules unchanged.",
-    "availability": "Instagram @cole.after.hours remains saved and bound. Production runtime reports generation credential presence and cron configuration, without exposing values; provider validity/model access remain untested. Daily generation is held before dispatch because the request maximum cost is unverified. No generated photo or public post is confirmed. Final preparation enablement receipt is linked in the release PR; Leila remains deferred.",
+    "availability": "Cole remains saved and bound to Instagram. Approval-required preparation is enabled with a cost-bound hold: one held job, zero saved Agency posts/reservations at read-only verification. No usable first photo/caption draft exists. Exact request cost analysis is complete; no paid API operation or new readiness-only release. Included-plan generation/private import is proposed only, pending owner decision. Leila remains deferred.",
     "target": null,
     "demonstrated": null,
     "released": null,
@@ -5100,7 +5100,7 @@
       "The new canonical PNG is privately stored, not committed or bundled. Owner-reported text-only generation and tattoo removal are provenance statements, not guarantees of uniqueness/exclusive rights. The retired blue-shirt JPEG remains in historical public Git commits/PR301; removal from the current tree does not erase those copies. Old two-sleeve decisions are superseded historical records."
     ],
     "blockers": [
-      "Verify a defensible maximum reference-edit request cost before any paid production generation. No paid tests or automatic regeneration.",
+      "The configured Flare edit has no defensible guaranteed maximum in the current documented API contract; provider hard monthly limits can overshoot. No dispatch under the unchanged strict $10 ceiling. Owner decision needed only if choosing the proposed included-usage/import alternative; no Meta setup/reconnect required.",
       "Cole\u2019s brand/disclosure approval is not yet recorded; owner must review Brand & Style before approving a generated exact post. No public post is authorized by the workflow implementation."
     ],
     "deferred": [
@@ -5219,10 +5219,22 @@
         "reviewer": "Codex executor; offline fixtures, not paid evaluation or public posting",
         "date": "2026-10-25",
         "version": "Cole daily workflow batch"
+      },
+      {
+        "title": "Exact image request, current official pricing/control limits and single included-usage alternative",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/cole-image-cost-evidence/docs/agency/COLE-IMAGE-COST-BOUND-20261025.md",
+        "kind": "code review",
+        "reviewer": "Codex executor; official documentation and read-only production counts, no paid evaluation",
+        "date": "2026-10-25",
+        "version": "Cole cost-bound investigation; not deployed"
       }
     ],
     "reviewedAt": "2026-10-25",
     "recentChanges": [
+      {
+        "date": "2026-10-25",
+        "summary": "Exact Flare reference-edit investigation completed using current official provider docs: model gpt-image-2.5-flare-2026-09-08, one unchanged PR302 1254x1254 PNG reference, n=1, 1024x1024 low-quality JPEG. Published token rates and output-only calculator estimate do not establish a guaranteed total maximum. Direct edit schema has no documented token/dollar cap, and provider monthly hard limits explicitly allow delayed-enforcement overshoot. Strict $10 ceiling therefore continues to block dispatch. No first private photo/caption draft, paid call, charge or post. One proposed alternative (not executed/approved): a single generation from verified existing included ChatGPT/Codex allowance, then private Agency import; $0 incremental API spending, no API/paid-credit fallback, purchase, top-up or retry. Built-in gpt-image-2 differs from Flare and requires an explicit owner workflow decision."
+      },
       {
         "date": "2026-10-25",
         "summary": "Production owner-only readiness readback reports generationConfigured=true and cronConfigured=true. This supersedes the earlier inference that absence from the project-level environment list proved no production generation credential. Credential presence does not verify validity, model access or billing. No paid/provider generation test was made. The remaining dispatch blocker is request_cost_bound_unverified; exact-post owner review remains required. Preparation was not enabled while correcting this evidence."
@@ -5380,6 +5392,12 @@
         "executor": "Codex",
         "why": "Production owner-only readiness readback reports generationConfigured=true and cronConfigured=true. This supersedes the earlier inference that absence from the project-level environment list proved no production generation credential. Credential presence does not verify validity, model access or billing. No paid/provider generation test was made. The remaining dispatch blocker is request_cost_bound_unverified; exact-post owner review remains required. Preparation was not enabled while correcting this evidence.",
         "version": "Cole daily production readiness correction"
+      },
+      {
+        "date": "2026-10-25",
+        "executor": "Codex",
+        "why": "Exact Flare reference-edit investigation completed using current official provider docs: model gpt-image-2.5-flare-2026-09-08, one unchanged PR302 1254x1254 PNG reference, n=1, 1024x1024 low-quality JPEG. Published token rates and output-only calculator estimate do not establish a guaranteed total maximum. Direct edit schema has no documented token/dollar cap, and provider monthly hard limits explicitly allow delayed-enforcement overshoot. Strict $10 ceiling therefore continues to block dispatch. No first private photo/caption draft, paid call, charge or post. One proposed alternative (not executed/approved): a single generation from verified existing included ChatGPT/Codex allowance, then private Agency import; $0 incremental API spending, no API/paid-credit fallback, purchase, top-up or retry. Built-in gpt-image-2 differs from Flare and requires an explicit owner workflow decision. Dossier source update prepared without deployment; live synchronization pending a subsequent authorized functional batch, not another readiness-only release.",
+        "version": "Cole exact image request cost-bound investigation"
       }
     ],
     "releases": [

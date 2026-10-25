@@ -442,6 +442,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-25",
+      "executor": "Codex",
+      "reason": "Record completed official-doc investigation of exact Flare reference edit: no defensible guaranteed per-request total; provider hard monthly limits admit overshoot. Keep strict $10 hold, no paid tests/generation/release, no Meta changes. Propose only one existing-included-usage generation and honest private import, $0 incremental API spending, no paid credit/API fallback/purchase/retry, owner decision required. Preserve canonical private appearance, account binding, exact-post review and duplicate safeguards. Source dossier updated; live synchronization deferred rather than another readiness-only deployment.",
+      "version": "Cole exact image request cost-bound investigation",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-image-cost-evidence/docs/agency/COLE-IMAGE-COST-BOUND-20261025.md",
+      "sourceDigest": "a0bfb9c6dd52bf00209d1aa6368dd170f775ba403462c66192979aaab16277c9",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }
