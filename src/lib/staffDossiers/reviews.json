@@ -5100,6 +5100,7 @@
     ],
     "blockers": [
       "Verify a defensible maximum reference-edit request cost before any paid production generation. No paid tests or automatic regeneration.",
+      "Production image-generation credential is unavailable in project configuration; the existing OpenAI key is restricted to an isolated Money Coach preview. Do not copy or broaden that credential. Agency exposes only a readiness boolean, never credential values.",
       "Cole\u2019s brand/disclosure approval is not yet recorded; owner must review Brand & Style before approving a generated exact post. No public post is authorized by the workflow implementation."
     ],
     "deferred": [
@@ -5224,7 +5225,7 @@
     "recentChanges": [
       {
         "date": "2026-10-25",
-        "summary": "Owner authorized Cole-only daily Instagram photo/caption preparation, with a $10/month ceiling and explicit approval of EVERY exact post. Uses only the private PR302 tattoo-free reference: mature, athletic, dark tousled hair, trimmed beard, 6 ft 1 in proportions, NO tattoos. Rotates fitness, outdoors and after-hours lifestyle. Preparation target 6 AM and posting target 6 PM America/New_York (delivery within the hour); unapproved posts never enter the publishing queue. Unattended mode remains unavailable. Current prerequisite: the selected image model has verified token rates but no verified maximum reference-edit request cost; preflight holds before paid dispatch. No first generated photo, charge or publishing success is claimed."
+        "summary": "Owner authorized Cole-only daily Instagram photo/caption preparation, with a $10/month ceiling and explicit approval of EVERY exact post. Uses only the private PR302 tattoo-free reference: mature, athletic, dark tousled hair, trimmed beard, 6 ft 1 in proportions, NO tattoos. Rotates fitness, outdoors and after-hours lifestyle. Preparation target 6 AM and posting target 6 PM America/New_York (delivery within the hour); unapproved posts never enter the publishing queue. Unattended mode remains unavailable. Current prerequisite: the selected image model has verified token rates but no verified maximum reference-edit request cost; preflight holds before paid dispatch. No first generated photo, charge or publishing success is claimed. Production generation configuration is also unavailable; isolated preview credentials are not repurposed."
       },
       {
         "date": "2026-10-25",
@@ -5367,7 +5368,7 @@
       {
         "date": "2026-10-25",
         "executor": "Codex",
-        "why": "Owner authorized Cole-only daily Instagram photo/caption preparation, with a $10/month ceiling and explicit approval of EVERY exact post. Uses only the private PR302 tattoo-free reference: mature, athletic, dark tousled hair, trimmed beard, 6 ft 1 in proportions, NO tattoos. Rotates fitness, outdoors and after-hours lifestyle. Preparation target 6 AM and posting target 6 PM America/New_York (delivery within the hour); unapproved posts never enter the publishing queue. Unattended mode remains unavailable. Current prerequisite: the selected image model has verified token rates but no verified maximum reference-edit request cost; preflight holds before paid dispatch. No first generated photo, charge or publishing success is claimed. Appearance approval is separate from public-post approval. Historical blue-shirt and two-sleeve records remain superseded.",
+        "why": "Owner authorized Cole-only daily Instagram photo/caption preparation, with a $10/month ceiling and explicit approval of EVERY exact post. Uses only the private PR302 tattoo-free reference: mature, athletic, dark tousled hair, trimmed beard, 6 ft 1 in proportions, NO tattoos. Rotates fitness, outdoors and after-hours lifestyle. Preparation target 6 AM and posting target 6 PM America/New_York (delivery within the hour); unapproved posts never enter the publishing queue. Unattended mode remains unavailable. Current prerequisite: the selected image model has verified token rates but no verified maximum reference-edit request cost; preflight holds before paid dispatch. No first generated photo, charge or publishing success is claimed. Appearance approval is separate from public-post approval. Historical blue-shirt and two-sleeve records remain superseded. Read-only Vercel metadata confirms CRON_SECRET in production and OPENAI_API_KEY only on the Money Coach preview branch; no credential values read or copied.",
         "version": "Cole approval-required daily workflow"
       }
     ],
