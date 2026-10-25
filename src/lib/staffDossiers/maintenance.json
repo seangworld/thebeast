@@ -362,6 +362,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Verified production connection/binding and read-only metrics using existing saved access: 0 followers, 0 posts, no metrics error; encrypted credentials, account identity and connection version match. Simplify Beast AI Talent Agency into Account, Brand & Style, Posts and Results with current status, one next step, explicit username label and collapsed Technical details. Missing data stays Unavailable, never zero. Preserve exact approval/publish safeguards; no new scopes, reconnection, paid AI, services, public posts or automation activation.",
+      "version": "Cole usability and metrics batch",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-agency-usability/docs/agency/COLE-USABILITY-METRICS-20261024.md",
+      "sourceDigest": "ee40d49cf1302d0f86cefd0413275e45161cd937496e9cd52e6b11570ddbb4a7",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }

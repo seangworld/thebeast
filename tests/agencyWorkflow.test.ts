@@ -44,7 +44,7 @@ test('ordinary previews cannot write to production; production still requires ex
 test('Agency entry and API preserve owner guards; no timer dispatch or Leila workflow',()=>{
  const page=readFileSync('src/app/dashboard/admin/agency/metrics/page.tsx','utf8');assert.match(page,/await requireStaffDossierOwner/);
  const api=readFileSync('src/app/api/admin/agency/route.ts','utf8');assert.match(api,/agencyWriteOwner/);assert.match(api,/eq\('name',COLE_NAME\)/);assert.doesNotMatch(api,/beast_marketing_social_posts/);
- const ui=readFileSync('src/app/dashboard/admin/agency/metrics/AgencyMetricsContent.tsx','utf8');assert.doesNotMatch(ui,/setInterval|setTimeout/);assert.match(ui,/window.confirm/);assert.match(ui,/Canonical HQ dossier/);
+ const ui=readFileSync('src/app/dashboard/admin/agency/metrics/AgencyMetricsContent.tsx','utf8');assert.doesNotMatch(ui,/setInterval|setTimeout/);assert.match(ui,/window.confirm/);assert.match(ui,/Cole’s SW HQ dossier/);
 });
 
 test('repeated dispatch after an unknown write cannot obtain another claim',async()=>{const f=fixture({publishFail:true});await publishAgencyRevision(f.p,f.d);const writes=f.counts().writes;f.d.claim=async()=>false;await assert.rejects(()=>publishAgencyRevision(f.p,f.d),/already claimed/);assert.equal(f.counts().writes,writes);});

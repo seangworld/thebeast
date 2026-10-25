@@ -5073,7 +5073,7 @@
     "recordKind": "virtual_talent",
     "mission": "Cole Mercer is the fictional character behind Cole After Hours (@cole.after.hours), the first talent of Beast AI Talent Agency, under owner control; no autonomous staff authority.",
     "assignment": "First talent setup focus for Beast AI Talent Agency: Cole Mercer / Cole After Hours / @cole.after.hours. Sean Gatewood remains the real administrator.",
-    "availability": "Existing inactive Cole profile preserved. Pre-fallback read-only production audit found no saved Instagram connection or binding; current confirmed owner connection/binding status is tracked in the linked release receipt.",
+    "availability": "Instagram @cole.after.hours is saved and explicitly bound to Cole. Production readback verified active, unexpired, sealed credentials and matching account/connection version. Read-only metrics returned 0 followers and 0 posts at 2026-10-24T23:59:33Z. Publishing and automation remain paused.",
     "target": null,
     "demonstrated": null,
     "released": null,
@@ -5089,28 +5089,25 @@
     ],
     "limitations": [
       "Cole is the current setup focus.",
-      "Instagram publishing and metrics remain live-unverified. Exact saved connection and binding must be verified through Agency and the linked release receipt; identity reads alone do not establish connection readiness.",
       "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
       "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment.",
-      "Initial production Agency initiation was verified 2026-10-23 through the actual POST, four-scope URL and Meta Continue screen. Subsequent retained failing Social Accounts attempt used the same app/callback with extra pages_manage_posts; that historical request body and account identity were unavailable. Latest Agency no_accounts is a separate account-discovery failure; publishing remains unverified.",
-      "The authorized fresh diagnostic attempt returned expected_page_absent: two Pages with tokens, zero linked Instagram accounts and zero Cole Page matches. No saved connection or verified binding; no further authorization attempt authorized.",
+      "Initial production Agency initiation was verified 2026-10-23 through the actual POST, four-scope URL and Meta Continue screen. Subsequent retained failing Social Accounts attempt used the same app/callback with extra pages_manage_posts; that historical request body and account identity were unavailable. The historical Agency no_accounts was a separate discovery failure, resolved by the bounded fallback; publishing remains unverified.",
       "Owner renamed the portfolio to Beast AI Talent Agency and the Instagram-origin People entry to Cole Mercer; unchanged portfolio, Page, app and selected People-entry IDs verified. Public Page/Instagram branding already matches Cole. Old names remain only in accurate historical attribution and dated audit/history.",
-      "After the owner corrected the Meta People name, the separately authorized connection attempt still returned expected_page_absent: two Pages with tokens, no linked Instagram accounts and no Cole match. Production readback confirms no saved Instagram connection or binding. The name correction did not solve Page discovery; no further retry or permission addition is authorized by this result.",
-      "The read-only split diagnosis confirmed the current four scopes can read Cole\u2019s Page and linked Instagram identity directly despite enumeration omitting Cole. No additional ads_read scope is justified for those successful reads. Bounded recovery now requires Page credential retrieval and independent credential identity checks plus confirmed secure save; live Page-credential/save/binding verification remains pending the owner flow."
+      "Instagram account identity, saved connection, explicit binding and basic account counts are production-verified. Publishing, post-level reporting, reach, growth, revenue and costs remain unverified. Zero followers/posts are returned values, not inferred missing data. Historical discovery records predate the successful bounded fallback."
     ],
     "blockers": [
-      "Cole needs an owner-approved JPEG and explicit professional Instagram connection/binding before approval or public posting."
+      "An owner-approved Cole JPEG and exact saved-revision review are still required before any separate publishing decision. No reconnect or added permissions are needed for verified basic account metrics."
     ],
     "deferred": [
       {
         "title": "Owner setup and separate first-post decision",
         "priority": "normal",
         "desiredLevel": null,
-        "gap": "Live account/asset/publishing validation unavailable.",
-        "requiredWork": "Owner supplies approved assets and authorizes account setup separately. Review the exact saved first-post revision before any public post.",
+        "gap": "Connection and basic account metrics verified; approved media and live publishing validation remain unavailable.",
+        "requiredWork": "Owner supplies an approved Cole JPEG, reviews brand and exact saved post revision, and separately decides whether to authorize a public post. No additional account setup required for basic metrics.",
         "success": "Confirmed account identity, approved immutable content and retained provider receipt; no inferred success.",
         "cost": "Cost unknown; no paid calls/tests or purchases authorized.",
-        "status": "Owner setup pending"
+        "status": "Approved media and separate first-post decision pending"
       }
     ],
     "evidence": [
@@ -5169,10 +5166,22 @@
         "reviewer": "Codex (executor; read-only identity evidence plus synthetic route fixtures; live credential/save/binding pending)",
         "date": "2026-10-24",
         "version": "Cole bounded direct-Page fallback"
+      },
+      {
+        "title": "Production saved binding and basic account metrics; Agency usability batch",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/cole-agency-usability/docs/agency/COLE-USABILITY-METRICS-20261024.md",
+        "kind": "code review",
+        "reviewer": "Codex (executor; live read-only account metrics and sanitized database readback, no publishing)",
+        "date": "2026-10-24",
+        "version": "Cole usability and metrics batch"
       }
     ],
     "reviewedAt": "2026-10-24",
     "recentChanges": [
+      {
+        "date": "2026-10-24",
+        "summary": "Verified production connection/binding and read-only metrics using existing saved access: 0 followers, 0 posts, no metrics error; encrypted credentials, account identity and connection version match. Simplify Beast AI Talent Agency into Account, Brand & Style, Posts and Results with current status, one next step, explicit username label and collapsed Technical details. Missing data stays Unavailable, never zero. Preserve exact approval/publish safeguards; no new scopes, reconnection, paid AI, services, public posts or automation activation."
+      },
       {
         "date": "2026-10-24",
         "summary": "Implement bounded direct lookup of the verified Cole Page when complete enumeration omits it, under existing four permissions. Read-only same-app/admin-context v26 checks showed basic discovery omits Cole while direct Page/link identity reads work. Exact Page/name/Instagram identity and independently usable Page credentials are required before encrypted owner save; exact saved identity readback is required before connected. Clear credential-unavailable/unusable and uncertain-save outcomes; no auto-binding, publishing or automation. Focused regressions and one coordinated release/owner connection verification are required; no added scopes or paid tests."
@@ -5260,6 +5269,12 @@
         "executor": "Codex",
         "why": "Implement bounded direct lookup of the verified Cole Page when complete enumeration omits it, under existing four permissions. Read-only same-app/admin-context v26 checks showed basic discovery omits Cole while direct Page/link identity reads work. Exact Page/name/Instagram identity and independently usable Page credentials are required before encrypted owner save; exact saved identity readback is required before connected. Clear credential-unavailable/unusable and uncertain-save outcomes; no auto-binding, publishing or automation. Focused regressions and one coordinated release/owner connection verification are required; no added scopes or paid tests.",
         "version": "Cole bounded direct-Page fallback"
+      },
+      {
+        "date": "2026-10-24",
+        "executor": "Codex",
+        "why": "Verified production connection/binding and read-only metrics using existing saved access: 0 followers, 0 posts, no metrics error; encrypted credentials, account identity and connection version match. Simplify Beast AI Talent Agency into Account, Brand & Style, Posts and Results with current status, one next step, explicit username label and collapsed Technical details. Missing data stays Unavailable, never zero. Preserve exact approval/publish safeguards; no new scopes, reconnection, paid AI, services, public posts or automation activation.",
+        "version": "Cole usability and metrics batch"
       }
     ],
     "releases": [
