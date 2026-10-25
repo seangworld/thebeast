@@ -12,11 +12,11 @@ function fixture(options:{denyClaim?:boolean;prepareFail?:boolean;publishFail?:b
  const d:PublishDependencies={verify:async()=>{checks++;assertApproved(p,'brand',account);if(options.revoke&&checks>=2)throw Error('revoked');},claim:async()=>{claims++;if(options.denyClaim||dbState==='publishing')return false;dbState='publishing';return true;},prepare:async()=>{writes++;if(options.prepareFail)throw Error('network unknown');return '234';},beforePublish:async()=>{assert.equal(dbState,'publishing');},checkpoint:async()=>{checkpoints++;assert.equal(dbState,'publishing','checkpoint must not expose a resumable processing claim');},containerStatus:async()=>options.status||'FINISHED',publish:async()=>{writes++;if(options.publishFail)throw Error('write timeout');return '345';},save:async r=>{if(options.receiptFail&&r.status==='published')throw Error('receipt unavailable');saved.push(r.status);dbState=r.status;}};
  return {p,d,saved,counts:()=>({claims,writes,checks,checkpoints}),state:()=>dbState};
 }
-test('Cole caption retains required disclosure; invalid/private/arbitrary assets are rejected',()=>{
- assert.match(FIRST_COLE_CAPTION,/AI-generated character; not a real person\./);
+test('Cole captions allow plain English; invalid/private/arbitrary assets are rejected',()=>{
+ assert.doesNotMatch(FIRST_COLE_CAPTION,/AI-generated character/);
  assert.doesNotThrow(()=>creativeInput({caption:FIRST_COLE_CAPTION,mediaUrl:''}));
  for(const mediaUrl of ['http://localhost/a.jpg','https://evil.test/a.jpg','https://seangworld.com/api/a.jpg','https://seangworld.com/images/a.jpg?token=x','https://seangworld.com/images/a.png'])assert.throws(()=>creativeInput({caption:FIRST_COLE_CAPTION,mediaUrl}));
- assert.throws(()=>creativeInput({caption:'undisclosed character',mediaUrl:''}));assert.throws(()=>rejectPrivateIdentity('Contact owner@example.test',[]));assert.throws(()=>rejectPrivateIdentity('A private Owner Name appears',['Owner Name']));
+ assert.doesNotThrow(()=>creativeInput({caption:'A quiet evening outside.',mediaUrl:''}));assert.throws(()=>rejectPrivateIdentity('Contact owner@example.test',[]));assert.throws(()=>rejectPrivateIdentity('A private Owner Name appears',['Owner Name']));
 });
 test('approval changes with revision, caption/media digest, brand, account or authorization epoch',()=>{
  const p=post();assert.doesNotThrow(()=>assertApproved(p,'brand',account));

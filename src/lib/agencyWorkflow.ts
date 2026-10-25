@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { AI_CHARACTER_DISCLOSURE } from './beastMarketingPersona';
 import { allowedSocialMedia } from './marketingSocial';
 export { COLE_NAME, FIRST_COLE_CAPTION } from './agencyBrand';
 export type AgencyCreative = { caption: string; mediaUrl: string };
@@ -11,7 +10,6 @@ export function profileFingerprint(profile:Record<string,unknown>) { return dige
 export function creativeInput(value:unknown,supabaseUrl?:string):AgencyCreative {
  const c=value as Partial<AgencyCreative>|null;
  if(!c||typeof c.caption!=='string'||!c.caption.trim()||c.caption.length>1800)throw Error('Enter a caption of 1–1,800 characters.');
- if(!c.caption.includes(AI_CHARACTER_DISCLOSURE))throw Error('Keep the required AI character disclosure in the caption.');
  const mediaUrl=typeof c.mediaUrl==='string'?c.mediaUrl.trim():'';
  if(mediaUrl&&(!allowedSocialMedia(mediaUrl,supabaseUrl)||!/^https:\/\/[^?]+\.jpe?g$/i.test(mediaUrl)))throw Error('Use an owned public JPEG URL. Local files can be previewed, but need an approved hosted asset before approval.');
  return {caption:c.caption.trim(),mediaUrl};

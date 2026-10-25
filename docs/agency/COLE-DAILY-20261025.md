@@ -1,0 +1,37 @@
+# Cole daily Instagram workflow — 2026-10-25
+
+Owner-authorized production preparation only for Cole Mercer / @cole.after.hours, one original private photo and caption per America/New_York day. Every exact post requires owner approval. Primary executor: Codex. Current main inspected at 8220e9a (PR302); unrelated open PRs and paused private-storage checkout left untouched. PR259's old Agency metrics layout reused. No Facebook, Leila, DM, engagement, unrelated Marketing schedule or OAuth changes.
+
+## Actual readiness boundary
+
+The implementation deliberately holds generation with `request_cost_bound_unverified`. No paid production dispatch, evaluation, first photo or publication is claimed. After the single release, approval-required preparation may be enabled with this visible hold. Owner review of Brand & Style is also required before approving any exact post; this review is not silently set by activation. Live enablement, counts, deployment SHA/READY/alias and browser proof belong in the batch PR/Issue292 receipt. A successful build is not activation.
+
+The chosen schedule is preparation 6 AM and posting target 6 PM America/New_York. Four isolated once-daily UTC slots cover DST; the server admits only the matching New York hour. Existing orchestrator observation cron remains byte-equivalent. [Vercel documents](https://vercel.com/docs/cron-jobs/usage-and-pricing) Hobby delivery within the hour; UI shows a target and window rather than guaranteeing an exact minute. A missed/unapproved post does not publish later automatically.
+
+## Pricing and budget
+
+[Official model pricing](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare), checked 2026-10-25: selected snapshot `gpt-image-2.5-flare-2026-09-08`, $5/M text input, $8/M image input, $30/M image output. Direct [Images edits API](https://developers.openai.com/api/reference/resources/images/methods/edit) supports one explicit-size/quality reference edit, but no documented maximum token/request-cost parameter was established. Output-only calculator estimates omit variable reference input and do not establish a hard maximum. Thus `requestMaximumMicros=null`; no fabricated $0.30 or typical-image quote. Rates expire 2026-11-25 and require review. A future supported bound needs a reviewed source change, not an owner/browser/environment override.
+
+Production generation adapter is one request, n=1, 1024 square, low quality, JPEG, no retries. It is unreachable until bound verification passes. Exact PR302 private PNG is checksum/size verified, then supplied as the sole reference. Provider output is stored unchanged in the existing private bucket and read back by checksum. No reference/image bytes are committed or bundled. Photo fidelity requires owner review; no guaranteed uniqueness/exclusive rights. Captions are composed locally without another paid text call.
+
+PostgreSQL service-only tables and invoker RPCs serialize reservations on the owner control row. Integer micro-USD ceiling 10,000,000; settled usage plus outstanding reservations cannot exceed the ceiling through reservation. Reservations have one job each, no timeout release; uncertain dispatch blocks all future generation across months. Dispatch rejects stale month, paused control or changed epoch. Missing/malformed usage remains uncertain, reserved and paused; charges are usage-priced records, not independently invoice-confirmed amounts. If reported cost exceeds a bound, pause and retain uncertainty rather than hide it. Preflight hold creates no reservation or spend.
+
+## Approval, privacy and publishing
+
+Unique owner/day jobs and owner/publish-day slots, no regeneration loop. Fixed `approval_required` mode and fixed Cole username in SQL. Nothing automatically graduates to unattended mode. Owner-only APIs retain production Origin/environment safeguards. Generated private image endpoint checks owner, job, object prefix, JPEG bytes/size/SHA, private/no-store; no credentials or storage signed URL returned to the owner UI. Caption edits via legacy route are blocked for daily jobs.
+
+Approve & Schedule rechecks brand/disclosure approval, exact caption/media/profile fingerprints, live existing account binding and explicit destination. Approval hashes reuse the existing exact-revision path. Publication reuses `publishAgencyRevision`, with checks of pause epoch, rejected/cancelled jobs, current admin/brand/account authority, media bytes and unresolved publications before external actions. The private object is signed only after specific publication approval, solely for Meta media fetch. Signed URLs are never logged or sent in owner JSON. A timeout/unknown write stays unknown; it is never automatically retried. Known processing requires explicit owner continuation; stale in-flight and unknown outcomes require receipt reconciliation through existing safeguards. No assumption of Facebook cross-sharing.
+
+Pause revokes queued approvals and changes an epoch. Resume never restores prior publishing authority. In-progress external calls cannot be recalled; immediate checks precede dispatch, and uncertain results remain blocked. Live publishing is deliberately untested.
+
+## AI transparency and caption review
+
+The legacy Agency-only requirement to append the identical AI character sentence is removed. Shared Marketing captions are unchanged. [Meta's labeling guidance](https://about.fb.com/news/2024/04/metas-approach-to-labeling-ai-generated-content-and-manipulated-media/) and [2026 update](https://about.fb.com/news/2026/02/meta-prepares-for-2026-us-midterms/) describe AI info based on industry indicators such as C2PA and self-disclosure; no universal repeated photo-caption sentence is specified. Keep provider JPEG bytes and provenance metadata intact. Owner reviews required disclosure; no invented Graph API AI-label parameter or speculative permission is added. This is still photos only, no voice/video/political advertising.
+
+## Verification and release
+
+Focused offline tests exercise New York/DST boundaries, pricing/usage rejection, actual held preparation without provider/storage/paid dispatch, private endpoint authorization and exact bytes, approval/publish revision invariants and owner UI. `scripts/test-cole-daily-sql.mjs` uses an already installed PGlite fixture (no new dependency) for competing reservations, duplicate jobs/reservations, month rollover, pause epoch, usage uncertainty, RLS/grants and approval-only constraint. Synthetic serialized PGlite is not a live multi-connection load test.
+
+Required gates: full npm tests, TypeScript, lint, dossier digest/history/base tests, production build including security/audit, diff whitespace check. Apply only the new migration to verified production project; do not push unrelated migration backlog. One PR/merge/deployment. Verify production owner UI, anonymous denials, actual durable preparation state and saved connection/binding. Never expose provider raw responses, cookies, credentials, OAuth state or signed URLs in evidence.
+
+Local gate result: 2,668/2,668 tests passed; 25 focused Agency tests passed within that suite. Synthetic SQL budget/RLS checks passed. Standalone typecheck, lint, dossier history/base checks and production build passed; required npm audit found zero vulnerabilities. No paid calls. These results do not establish hosted activation or generation success.

@@ -39,7 +39,7 @@ test("DB-001 canonical migrations have unique ordered versions", () => {
     .sort();
   const versions = files.map((file) => file.slice(0, 14));
 
-  assert.equal(files.length, 129);
+  assert.equal(files.length, 130);
   assert.equal(new Set(versions).size, versions.length);
   assert.deepEqual(
     files,
@@ -65,7 +65,7 @@ test("DB-001 every canonical public table enables RLS", () => {
     )
   );
 
-  assert.equal(createdTables.size, 158);
+  assert.equal(createdTables.size, 161);
   assert.deepEqual(
     Array.from(createdTables).filter((table) => !rlsTables.has(table)),
     []
