@@ -5073,7 +5073,7 @@
     "recordKind": "virtual_talent",
     "mission": "Cole Mercer is the fictional character behind Cole After Hours (@cole.after.hours), the first talent of Beast AI Talent Agency, under owner control; no autonomous staff authority.",
     "assignment": "First talent setup focus for Beast AI Talent Agency: Cole Mercer / Cole After Hours / @cole.after.hours. Sean Gatewood remains the real administrator.",
-    "availability": "Instagram @cole.after.hours is saved and explicitly bound to Cole. Production readback verified active, unexpired, sealed credentials and matching account/connection version. Read-only metrics returned 0 followers and 0 posts at 2026-10-24T23:59:33Z. Publishing and automation remain paused.",
+    "availability": "Instagram @cole.after.hours is saved and explicitly bound to Cole. Production readback verified active, unexpired, sealed credentials and matching account/connection version. Read-only metrics returned 0 followers and 0 posts at 2026-10-24T23:59:33Z. Publishing and automation remain paused. Recovered appearance reference file available privately in Agency; not a publishing asset.",
     "target": null,
     "demonstrated": null,
     "released": null,
@@ -5085,7 +5085,7 @@
       "Existing private Agency workflow and Meta adapter perform deterministic persistence, account checks and receipt handling; no independently running talent agent."
     ],
     "strengths": [
-      "Owner-approved appearance reference (2026-10-24): Cole Mercer\u2019s blue-shirt portrait with two full tattoo sleeves, one on each arm, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation.",
+      "Owner-approved appearance reference recovered: blue-shirt portrait with two full tattoo sleeves, 736 \u00d7 1104 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval.",
       "Existing private identity draft retained; no redesign or new generation."
     ],
     "limitations": [
@@ -5095,7 +5095,7 @@
       "Initial production Agency initiation was verified 2026-10-23 through the actual POST, four-scope URL and Meta Continue screen. Subsequent retained failing Social Accounts attempt used the same app/callback with extra pages_manage_posts; that historical request body and account identity were unavailable. The historical Agency no_accounts was a separate discovery failure, resolved by the bounded fallback; publishing remains unverified.",
       "Owner renamed the portfolio to Beast AI Talent Agency and the Instagram-origin People entry to Cole Mercer; unchanged portfolio, Page, app and selected People-entry IDs verified. Public Page/Instagram branding already matches Cole. Old names remain only in accurate historical attribution and dated audit/history.",
       "Instagram account identity, saved connection, explicit binding and basic account counts are production-verified. Publishing, post-level reporting, reach, growth, revenue and costs remain unverified. Zero followers/posts are returned values, not inferred missing data. Historical discovery records predate the successful bounded fallback.",
-      "Original portrait-image recovery remains pending. Screenshot-based appearance approval does not approve a publishing asset or public post."
+      "Reference file recovered; creator-original provenance and reuse rights remain unverified. Appearance approval does not approve a publishing asset or public post."
     ],
     "blockers": [
       "An owner-approved Cole JPEG and exact saved-revision review are still required before any separate publishing decision. No reconnect or added permissions are needed for verified basic account metrics."
@@ -5192,10 +5192,22 @@
         "reviewer": "Owner approval recorded by Codex; no original-image recovery claimed",
         "date": "2026-10-24",
         "version": "PR300 corrected appearance references"
+      },
+      {
+        "title": "Recovered blue-shirt portrait with two full tattoo sleeves; byte hashes, dimensions and sources",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/agency-reference-images/docs/agency/TALENT-REFERENCE-RECOVERY-20261024.md",
+        "kind": "code review",
+        "reviewer": "Codex (executor; actual browser download, local file comparison and visual verification; creator originals unverified)",
+        "date": "2026-10-24",
+        "version": "Agency recovered reference display batch"
       }
     ],
     "reviewedAt": "2026-10-24",
     "recentChanges": [
+      {
+        "date": "2026-10-24",
+        "summary": "Owner-approved appearance reference recovered: blue-shirt portrait with two full tattoo sleeves, 736 \u00d7 1104 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval."
+      },
       {
         "date": "2026-10-24",
         "summary": "Owner-approved appearance reference (2026-10-24): Cole Mercer\u2019s blue-shirt portrait with two full tattoo sleeves, one on each arm, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation. Corrects the earlier incomplete #300 record; each talent now has their own appearance reference."
@@ -5313,6 +5325,12 @@
         "executor": "Codex",
         "why": "Owner-approved appearance reference (2026-10-24): Cole Mercer\u2019s blue-shirt portrait with two full tattoo sleeves, one on each arm, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation. Owner correction supersedes the earlier Cole-only/cross-reference interpretation; prior history retained.",
         "version": "PR300 corrected talent appearance references"
+      },
+      {
+        "date": "2026-10-24",
+        "executor": "Codex",
+        "why": "Owner-approved appearance reference recovered: blue-shirt portrait with two full tattoo sleeves, 736 \u00d7 1104 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval. Supersedes historical pending-reference-recovery notes; historical records retained.",
+        "version": "Agency recovered reference display batch"
       }
     ],
     "releases": [
@@ -5353,7 +5371,7 @@
     "recordKind": "virtual_talent",
     "mission": "Fictional brand identity under owner control; no autonomous staff authority.",
     "assignment": "Leila remains deferred until Cole works reliably; no Leila operating workflow implemented.",
-    "availability": "Existing inactive private presenter draft verified by read-only production inspection, 2026-10-23.",
+    "availability": "Existing inactive private presenter draft verified by read-only production inspection, 2026-10-23. Recovered appearance reference file available privately in Agency; not a publishing asset.",
     "target": null,
     "demonstrated": null,
     "released": null,
@@ -5365,7 +5383,7 @@
       "Existing private Agency workflow and Meta adapter perform deterministic persistence, account checks and receipt handling; no independently running talent agent."
     ],
     "strengths": [
-      "Owner-approved appearance reference (2026-10-24): Leila Bautista\u2019s cream-suit portrait, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation.",
+      "Owner-approved appearance reference recovered: cream-suit portrait, 1024 \u00d7 1024 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval.",
       "Existing private identity draft retained; no redesign or new generation."
     ],
     "limitations": [
@@ -5373,7 +5391,7 @@
       "Leila remains deferred. No live account/metrics verification; shared Meta configuration key names are now present, but provider authorization is unverified.",
       "Canonical media/voice assets remain unbound. No paid generation, autonomous posting, DMs or owner identity in public content.",
       "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment.",
-      "Original portrait-image recovery remains pending. Screenshot-based appearance approval does not approve a publishing asset or public post."
+      "Reference file recovered; creator-original provenance and reuse rights remain unverified. Appearance approval does not approve a publishing asset or public post."
     ],
     "blockers": [
       "Deferred by owner until Cole\u2019s workflow works reliably."
@@ -5414,10 +5432,22 @@
         "reviewer": "Owner approval recorded by Codex; no original-image recovery claimed",
         "date": "2026-10-24",
         "version": "PR300 corrected appearance references"
+      },
+      {
+        "title": "Recovered cream-suit portrait; byte hashes, dimensions and sources",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/agency-reference-images/docs/agency/TALENT-REFERENCE-RECOVERY-20261024.md",
+        "kind": "code review",
+        "reviewer": "Codex (executor; actual browser download, local file comparison and visual verification; creator originals unverified)",
+        "date": "2026-10-24",
+        "version": "Agency recovered reference display batch"
       }
     ],
     "reviewedAt": "2026-10-24",
     "recentChanges": [
+      {
+        "date": "2026-10-24",
+        "summary": "Owner-approved appearance reference recovered: cream-suit portrait, 1024 \u00d7 1024 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval."
+      },
       {
         "date": "2026-10-24",
         "summary": "Owner-approved appearance reference (2026-10-24): Leila Bautista\u2019s cream-suit portrait, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation. Corrects the earlier incomplete #300 record; each talent now has their own appearance reference."
@@ -5455,6 +5485,12 @@
         "executor": "Codex",
         "why": "Owner-approved appearance reference (2026-10-24): Leila Bautista\u2019s cream-suit portrait, from the owner-supplied screenshot. Original-image recovery remains pending. Appearance approval only: no publishing approval, post authorization or automation activation. Owner correction supersedes the earlier Cole-only/cross-reference interpretation; prior history retained.",
         "version": "PR300 corrected talent appearance references"
+      },
+      {
+        "date": "2026-10-24",
+        "executor": "Codex",
+        "why": "Owner-approved appearance reference recovered: cream-suit portrait, 1024 \u00d7 1024 JPEG, unchanged from the AI Agency chat download and byte-identical to the owner-supplied file. Available beside the talent name and in Agency Brand & Style with owner-only click-to-enlarge. Creator-original provenance and reuse rights remain unverified. Reference only: not an approved publishing asset; no publishing or automation approval. Supersedes historical pending-reference-recovery notes; historical records retained.",
+        "version": "Agency recovered reference display batch"
       }
     ],
     "releases": [
