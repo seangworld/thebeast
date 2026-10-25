@@ -431,6 +431,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-25",
+      "executor": "Codex",
+      "reason": "Correct production credential-readiness inference after owner-only live API reports generationConfigured=true and cronConfigured=true. Project-level environment metadata was incomplete. Credential presence is not validity/model access, and no paid call was made. Remove unsupported active credential-absence blocker while preserving dated history. Dispatch remains held for unverified request-cost maximum. Preparation stays disabled until final dossier correction is deployed and verified; no public post, approval, OAuth or credential changes.",
+      "version": "Cole daily production readiness correction",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-daily-runtime-receipt/docs/agency/COLE-DAILY-20261025.md",
+      "sourceDigest": "6109d6c423522fe381fb3de8f1749ef1d4abada8497c5152f8d1a9c0c78de6c0",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }
