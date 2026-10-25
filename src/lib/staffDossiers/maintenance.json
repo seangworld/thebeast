@@ -409,6 +409,17 @@
         "agency.cole-mercer",
         "agency.leila-bautista"
       ]
+    },
+    {
+      "date": "2026-10-25",
+      "executor": "Codex",
+      "reason": "Canonical appearance approved by owner 2026-10-25: mature, athletic, dark tousled hair, trimmed beard, NO tattoos. Approved ink-free coastal PNG, 1254 \u00d7 1254, SHA-256 c84a2646f592c74d92430e33753b10b87a3c9cc6dec1eb8e3539383842a4e3bb. Supersedes the Pinterest-attributed blue-shirt portrait and previous two-full-sleeve requirement. Owner reports ChatGPT generation from written description without outside reference imagery, then editing to remove tattoos; no guaranteed uniqueness or exclusive rights claimed. Appearance/profile-picture approval only, not approval for future posts. Upload original bytes to existing private beast-marketing-media owner folder; replace only Cole endpoint with owner-session RLS download, exact size/hash and private/no-store PNG response, no service credentials or signed URLs sent to browser. Remove retired Cole JPEG from current tree/tracing; historical public copies remain. Preserve Leila appearance/deferred status and all publishing/OAuth safeguards. One combined release authorized; no generation, paid calls, social changes or activation.",
+      "version": "Cole tattoo-free canonical appearance batch",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-ink-free/docs/agency/COLE-INK-FREE-20261025.md",
+      "sourceDigest": "e93ad9577d9df9ae32c0c0d4b8c92566640bdd9c21be0f4244c684fec01aa73d",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }
