@@ -453,6 +453,17 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-25",
+      "executor": "Codex",
+      "reason": "Owner selects estimated $10/month operating budget with possible provider billing overrun; replace absolute maximum hold with conservative $0.25 reservations including reference/input/output/headroom, atomic admission and real returned-usage reconciliation. Pause for unknown/over-reservation usage without discarding returned private media; explicit owner pause still stops persistence. One generation attempt per New York day, no retries/regeneration/evaluations/purchases/top-ups/fallback. Resume only prior undispatched pricing hold. Keep Flare/private PR302 reference/Instagram-only binding/exact-post approvals. Functional release then single production attempt; actual photo/cost outcome linked in PR305 receipt, not inferred. No publishing/unattended activation.",
+      "version": "PR305 Cole estimated operating budget functional batch",
+      "evidence": "https://github.com/seangworld/thebeast/pull/305",
+      "sourceDigest": "fb1c4c3c03caea191183cc27cff159e0e3c8fc1e2f0df4e3422ff7196b453399",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }

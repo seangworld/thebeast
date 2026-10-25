@@ -36,8 +36,21 @@ Estimated incremental API spending: **$0**, because this alternative would make 
 
 The exact private Cole reference and tattoo-free identity constraints would remain. Save the resulting bytes unchanged with honest included-tool provenance, create a private draft through an explicit import path with owner/day duplicate protection, and require Sean's exact-post approval. Do not manufacture an API reservation/usage receipt for included-plan generation. No public posting or unattended mode. This proposal needs the owner's decision before changing the workflow or dispatching it; it does not implement automatic daily API preparation.
 
-## Actual state and scope of this update
+## Historical investigation state, before the later owner decision
 
 Read-only production check: approval_required control enabled, one held job, zero Cole Agency posts and zero reservations. No provider generation call was made. The $10 API ceiling, private storage and Instagram-only safeguards remain unchanged.
 
 The canonical Cole dossier source and append-only maintenance/history receipt are updated in the accompanying draft PR. They are **not deployed**: the user explicitly rejected another readiness-only release. Live SW HQ synchronization remains pending a subsequent authorized functional batch; the live dossier already states that request_cost_bound_unverified blocks generation. This investigation is not success against the real-photo acceptance criterion.
+
+
+## Superseding owner decision: estimated operating budget
+
+The owner selected a $10/month **operating budget with possible provider billing overrun**, explicitly removing the absolute-maximum prerequisite. The manual included-plan alternative above is not selected and will not execute. Keep the exact configured Flare request/reference.
+
+Reserve $0.25 per attempt: prompt allowance 2,000 tokens × $5/M = $0.01; reference allowance 10,000 tokens × $8/M = $0.08; output estimate 196 tokens × $30/M = $0.00588; add $0.15412 headroom. The 10,000 input-token allowance is an intentionally padded planning assumption for the single 1254-square reference, not provider-guaranteed tokenization or a measured value. Base estimate $0.09588; reservation approximately 2.6× base. Thirty-one full reservations total $7.75, before reconciling real usage. No claim of a provider billing cap or unlimited spending.
+
+Admission is serialized on the existing control row: known settled cost plus all outstanding reservations plus the next reservation must be ≤$10. Unknown dispatched usage blocks future attempts across months. Returned sanitized text-input/image-input/image-output counts settle actual usage-priced cost, including a known cost above its reservation. Unknown usage or over-reservation cost pauses further generation and reports the reason; invoice amounts remain unverified. A spending pause preserves the generation epoch so already-returned media can be retained privately; explicit owner pause changes the epoch and stops subsequent persistence. No paid API retry, regeneration, purchase, top-up or API/provider fallback.
+
+A new service-only claim RPC may resume the existing old pricing hold only if no reservation/dispatch exists. One job per New York day, one reservation per job and a CAS dispatch marker prevent another attempt, including concurrent clicks and uncertain outcomes. Future-day or old-month dispatch is denied. Provider errors retain only numeric HTTP status, an allowlisted code and fixed reason; no raw response, tokens, secrets or OAuth state. A returned valid JPEG is uploaded unchanged to the existing private owner path, read back by SHA-256, saved as a draft and exposed only via authorized private/no-store endpoint. No reference bytes are committed/bundled. No public post/approval or unattended publishing activation.
+
+This functional batch supersedes the earlier draft-only scope. Required local gates and exact-head hosted checks precede one merge/release. After production is READY and the alias matches, trigger exactly one real production preparation attempt and verify the resulting private image/caption, ledger and binding. A failed attempt is reported without retry. Actual deployment, outcome, image hash/cost and live SW HQ checks are appended to PR305 and Issue292; no second receipt-only release. No success is claimed before that evidence exists.
