@@ -5073,7 +5073,7 @@
     "recordKind": "virtual_talent",
     "mission": "Cole Mercer is the fictional character behind Cole After Hours (@cole.after.hours), the first talent of Beast AI Talent Agency, under owner control; no autonomous staff authority.",
     "assignment": "Cole-only daily Instagram preparation and exact-post owner review for Beast AI Talent Agency. Sean Gatewood remains administrator. Facebook, Leila, DMs, engagement and unrelated schedules unchanged.",
-    "availability": "Existing Instagram @cole.after.hours remains saved and bound. Daily workflow has an explicit cost-bound hold before generation; runtime preparation enablement and deployment receipts are recorded in the batch PR. No generated photo or public post is confirmed. Leila remains deferred.",
+    "availability": "Instagram @cole.after.hours remains saved and bound. Production runtime reports generation credential presence and cron configuration, without exposing values; provider validity/model access remain untested. Daily generation is held before dispatch because the request maximum cost is unverified. No generated photo or public post is confirmed. Final preparation enablement receipt is linked in the release PR; Leila remains deferred.",
     "target": null,
     "demonstrated": null,
     "released": null,
@@ -5089,6 +5089,7 @@
       "Approved private reference retained without redesign or borrowed imagery; generated drafts require separate appearance and post review."
     ],
     "limitations": [
+      "Runtime credential presence is verified, not provider validity/model entitlement. Earlier project-only metadata was incomplete and is superseded by the production readiness response. No preview credential was copied or broadened.",
       "AI request maximum remains unverified. Model rates are $5/M text input, $8/M image input and $30/M image output, checked 2026-10-25 for gpt-image-2.5-flare-2026-09-08. A typical image price is not a defensible reservation bound. Dispatch stays blocked until supported costing is established; model availability and paid output are untested.",
       "Hardcoded caption boilerplate removed only from Agency. Required AI transparency and exact JPEG provenance metadata remain part of owner review; no unsupported Meta disclosure parameter is invented. Voice synthesis remains unavailable.",
       "Cole is the current setup focus.",
@@ -5100,7 +5101,6 @@
     ],
     "blockers": [
       "Verify a defensible maximum reference-edit request cost before any paid production generation. No paid tests or automatic regeneration.",
-      "Production image-generation credential is unavailable in project configuration; the existing OpenAI key is restricted to an isolated Money Coach preview. Do not copy or broaden that credential. Agency exposes only a readiness boolean, never credential values.",
       "Cole\u2019s brand/disclosure approval is not yet recorded; owner must review Brand & Style before approving a generated exact post. No public post is authorized by the workflow implementation."
     ],
     "deferred": [
@@ -5223,6 +5223,10 @@
     ],
     "reviewedAt": "2026-10-25",
     "recentChanges": [
+      {
+        "date": "2026-10-25",
+        "summary": "Production owner-only readiness readback reports generationConfigured=true and cronConfigured=true. This supersedes the earlier inference that absence from the project-level environment list proved no production generation credential. Credential presence does not verify validity, model access or billing. No paid/provider generation test was made. The remaining dispatch blocker is request_cost_bound_unverified; exact-post owner review remains required. Preparation was not enabled while correcting this evidence."
+      },
       {
         "date": "2026-10-25",
         "summary": "Owner authorized Cole-only daily Instagram photo/caption preparation, with a $10/month ceiling and explicit approval of EVERY exact post. Uses only the private PR302 tattoo-free reference: mature, athletic, dark tousled hair, trimmed beard, 6 ft 1 in proportions, NO tattoos. Rotates fitness, outdoors and after-hours lifestyle. Preparation target 6 AM and posting target 6 PM America/New_York (delivery within the hour); unapproved posts never enter the publishing queue. Unattended mode remains unavailable. Current prerequisite: the selected image model has verified token rates but no verified maximum reference-edit request cost; preflight holds before paid dispatch. No first generated photo, charge or publishing success is claimed. Production generation configuration is also unavailable; isolated preview credentials are not repurposed."
@@ -5370,6 +5374,12 @@
         "executor": "Codex",
         "why": "Owner authorized Cole-only daily Instagram photo/caption preparation, with a $10/month ceiling and explicit approval of EVERY exact post. Uses only the private PR302 tattoo-free reference: mature, athletic, dark tousled hair, trimmed beard, 6 ft 1 in proportions, NO tattoos. Rotates fitness, outdoors and after-hours lifestyle. Preparation target 6 AM and posting target 6 PM America/New_York (delivery within the hour); unapproved posts never enter the publishing queue. Unattended mode remains unavailable. Current prerequisite: the selected image model has verified token rates but no verified maximum reference-edit request cost; preflight holds before paid dispatch. No first generated photo, charge or publishing success is claimed. Appearance approval is separate from public-post approval. Historical blue-shirt and two-sleeve records remain superseded. Read-only Vercel metadata confirms CRON_SECRET in production and OPENAI_API_KEY only on the Money Coach preview branch; no credential values read or copied.",
         "version": "Cole approval-required daily workflow"
+      },
+      {
+        "date": "2026-10-25",
+        "executor": "Codex",
+        "why": "Production owner-only readiness readback reports generationConfigured=true and cronConfigured=true. This supersedes the earlier inference that absence from the project-level environment list proved no production generation credential. Credential presence does not verify validity, model access or billing. No paid/provider generation test was made. The remaining dispatch blocker is request_cost_bound_unverified; exact-post owner review remains required. Preparation was not enabled while correcting this evidence.",
+        "version": "Cole daily production readiness correction"
       }
     ],
     "releases": [
