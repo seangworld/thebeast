@@ -442,6 +442,28 @@
       "affectedStaffIds": [
         "agency.cole-mercer"
       ]
+    },
+    {
+      "date": "2026-10-25",
+      "executor": "Codex",
+      "reason": "Record completed official-doc investigation of exact Flare reference edit: no defensible guaranteed per-request total; provider hard monthly limits admit overshoot. Keep strict $10 hold, no paid tests/generation/release, no Meta changes. Propose only one existing-included-usage generation and honest private import, $0 incremental API spending, no paid credit/API fallback/purchase/retry, owner decision required. Preserve canonical private appearance, account binding, exact-post review and duplicate safeguards. Source dossier updated; live synchronization deferred rather than another readiness-only deployment.",
+      "version": "Cole exact image request cost-bound investigation",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/cole-image-cost-evidence/docs/agency/COLE-IMAGE-COST-BOUND-20261025.md",
+      "sourceDigest": "a0bfb9c6dd52bf00209d1aa6368dd170f775ba403462c66192979aaab16277c9",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
+    },
+    {
+      "date": "2026-10-25",
+      "executor": "Codex",
+      "reason": "Owner selects estimated $10/month operating budget with possible provider billing overrun; replace absolute maximum hold with conservative $0.25 reservations including reference/input/output/headroom, atomic admission and real returned-usage reconciliation. Pause for unknown/over-reservation usage without discarding returned private media; explicit owner pause still stops persistence. One generation attempt per New York day, no retries/regeneration/evaluations/purchases/top-ups/fallback. Resume only prior undispatched pricing hold. Keep Flare/private PR302 reference/Instagram-only binding/exact-post approvals. Functional release then single production attempt; actual photo/cost outcome linked in PR305 receipt, not inferred. No publishing/unattended activation.",
+      "version": "PR305 Cole estimated operating budget functional batch",
+      "evidence": "https://github.com/seangworld/thebeast/pull/305",
+      "sourceDigest": "fb1c4c3c03caea191183cc27cff159e0e3c8fc1e2f0df4e3422ff7196b453399",
+      "affectedStaffIds": [
+        "agency.cole-mercer"
+      ]
     }
   ]
 }

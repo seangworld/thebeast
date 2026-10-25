@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createBeastFusionPublicationClient} from '@/lib/supabase/service';
-import {COLE_DAILY,dailyCreative,nyDay,nyMonth,nextPostingTime,requestQuote,safeDailyReason,usageCost} from '@/lib/agencyDaily';
+import {COLE_DAILY,dailyCreative,nyDay,nyMonth,nextPostingTime,requestQuote,safeDailyReason,generationUsage,providerFailure,type GenerationUsage} from '@/lib/agencyDaily';
 import {talentAppearance} from '@/lib/agencyAppearance';
 import {agencyAccount} from './store';
 import {approvalFingerprint,assertApproved,digest,profileFingerprint,publishAgencyRevision,type AgencyPost} from '@/lib/agencyWorkflow';
@@ -11,16 +11,20 @@ const db=()=>createBeastFusionPublicationClient();
 const now=()=>new Date().toISOString();
 export async function coleProfile(ownerId:string){const r=await db().from('beast_marketing_presenter_profiles').select('*').eq('owner_id',ownerId).eq('name','Cole Mercer').eq('presenter_type','future_character').single();if(r.error||!r.data)throw Error('Cole profile unavailable.');return r.data;}
 export async function dailySnapshot(ownerId:string){
- const service=db(),month=nyMonth(new Date()),[c,j,r,u]=await Promise.all([service.from('agency_cole_daily_controls').select('*').eq('owner_id',ownerId).maybeSingle(),service.from('agency_cole_daily_jobs').select('*,post:beast_marketing_agency_posts(revision,status,published_at)').eq('owner_id',ownerId).order('local_day',{ascending:false}).limit(31),service.from('agency_cole_ai_reservations').select('month,state,maximum_micros,settled_micros').eq('owner_id',ownerId).eq('month',month),service.from('agency_cole_ai_reservations').select('id').eq('owner_id',ownerId).in('state',['dispatched','uncertain']).limit(1)]);
+ const service=db(),month=nyMonth(new Date()),[c,j,r,u]=await Promise.all([service.from('agency_cole_daily_controls').select('*').eq('owner_id',ownerId).maybeSingle(),service.from('agency_cole_daily_jobs').select('*,post:beast_marketing_agency_posts(revision,status,published_at)').eq('owner_id',ownerId).order('local_day',{ascending:false}).limit(31),service.from('agency_cole_ai_reservations').select('job_id,month,state,maximum_micros,settled_micros,usage_counts').eq('owner_id',ownerId).eq('month',month),service.from('agency_cole_ai_reservations').select('id').eq('owner_id',ownerId).in('state',['dispatched','uncertain']).limit(1)]);
  if(c.error||j.error||r.error||u.error)throw Error('Daily workflow unavailable.');
  const current=r.data;
- return {control:c.data,jobs:j.data,month,generationConfigured:!!process.env.OPENAI_API_KEY?.trim(),cronConfigured:!!process.env.CRON_SECRET?.trim(),spentMicros:current.reduce((s,x)=>s+(x.settled_micros??0),0),reservedMicros:current.filter(x=>['reserved','dispatched','uncertain'].includes(x.state)).reduce((s,x)=>s+x.maximum_micros,0),unresolved:!!u.data?.length,limitMicros:COLE_DAILY.monthlyLimitMicros,nextPostingTime:nextPostingTime(new Date()),pricing:{model:COLE_DAILY.model,checked:COLE_DAILY.pricingChecked,source:COLE_DAILY.pricingSource,maximumVerified:COLE_DAILY.requestMaximumMicros!==null},today:nyDay(new Date())};
+ const today=nyDay(new Date()),todayJob=j.data.find(x=>x.local_day===today);
+ const canPrepareToday=!!c.data?.enabled&&!c.data.paused&&(!todayJob||todayJob.state==='blocked'&&todayJob.reason==='request_cost_bound_unverified'&&!current.some(x=>x.job_id===todayJob.id));
+ return {control:c.data,jobs:j.data,month,canPrepareToday,generationConfigured:!!process.env.OPENAI_API_KEY?.trim(),cronConfigured:!!process.env.CRON_SECRET?.trim(),spentMicros:current.reduce((s,x)=>s+(x.settled_micros??0),0),reservedMicros:current.filter(x=>['reserved','dispatched','uncertain'].includes(x.state)).reduce((s,x)=>s+x.maximum_micros,0),spendingRecords:current.map(r=>({jobId:r.job_id,state:r.state,estimateMicros:r.maximum_micros,costMicros:r.settled_micros,usage:r.usage_counts})),unresolved:!!u.data?.length,limitMicros:COLE_DAILY.monthlyLimitMicros,nextPostingTime:nextPostingTime(new Date()),pricing:{model:COLE_DAILY.model,checked:COLE_DAILY.pricingChecked,source:COLE_DAILY.pricingSource,reservationEstimateMicros:COLE_DAILY.reservationEstimateMicros,estimate:COLE_DAILY.estimate,billingOverrunPossible:true},today:nyDay(new Date())};
 }
 export async function dailyControl(ownerId:string,enable:boolean){
  const p=await coleProfile(ownerId),service=db();
  const prior=await service.from('agency_cole_daily_controls').select('*').eq('owner_id',ownerId).maybeSingle();if(prior.error)throw Error('Daily control unavailable.');
+ if(enable&&['usage_unverified','reservation_exceeded'].includes(prior.data?.hold_reason))throw Error('Reconcile generation usage before resuming.');
  if(enable){const {account}=await agencyAccount(ownerId,p.id,true);if(account.username!==COLE_DAILY.username)throw Error('Cole binding differs.');}
- let reason:string|null=null;try{requestQuote(new Date());}catch(e){reason=safeDailyReason(e);}
+ let reason:string|null=['usage_unverified','reservation_exceeded'].includes(prior.data?.hold_reason)?prior.data.hold_reason:null;
+ if(!reason)try{requestQuote(new Date());}catch(e){reason=safeDailyReason(e);}
  const payload={owner_id:ownerId,presenter_profile_id:p.id,enabled:enable,paused:!enable,epoch:(prior.data?.epoch??0)+1,hold_reason:reason,updated_at:now()};
  const saved=prior.data?await service.from('agency_cole_daily_controls').update(payload).eq('owner_id',ownerId).eq('epoch',prior.data.epoch).select('owner_id').maybeSingle():await service.from('agency_cole_daily_controls').insert(payload).select('owner_id').single();
  if(saved.error||!saved.data)throw Error('Control changed. Refresh.');
@@ -34,51 +38,66 @@ export async function privateDailyImage(ownerId:string,jobId:string){
  const object=await service.storage.from(bucket).download(r.data.media_path,{}, {cache:'no-store'});if(object.error||!object.data||object.data.size!==r.data.media_bytes||object.data.size>8*1024*1024)throw Error('Private image unavailable.');
  const bytes=new Uint8Array(await object.data.arrayBuffer());if(bytes[0]!==255||bytes[1]!==216||hash(bytes)!==r.data.media_hash)throw Error('Private image checksum mismatch.');return bytes;
 }
+function rpcFailure(error:{message?:string}|null,fallback:string){const message=error?.message??'';for(const code of ['budget_exhausted','spending_unresolved','paused','job_changed','day_changed'])if(message===code)return Error(code);return Error(fallback);}
+async function maySaveGeneratedDraft(ownerId:string,epoch:number,jobId:string){
+ const [control,role,job]=await Promise.all([db().from('agency_cole_daily_controls').select('*').eq('owner_id',ownerId).single(),db().from('profiles').select('role').eq('id',ownerId).single(),db().from('agency_cole_daily_jobs').select('state').eq('owner_id',ownerId).eq('id',jobId).single()]);
+ if(control.error||!control.data.enabled||control.data.epoch!==epoch||role.error||role.data?.role!=='admin'||job.error||job.data.state!=='preparing'||control.data.paused&&!['usage_unverified','reservation_exceeded'].includes(control.data.hold_reason))throw Error('paused');
+}
 export async function prepareDaily(ownerId:string){
  const service=db(),snapshot=await dailySnapshot(ownerId),control=snapshot.control;
  if(!control?.enabled||control.paused)throw Error('paused');
- // Preflight precedes the durable daily claim and ALL paid requests. Blocked
- // preflight does not pretend to create a photo or reserve/spend money.
  const creative=dailyCreative(snapshot.today);
- const claimed=await service.from('agency_cole_daily_jobs').insert({owner_id:ownerId,local_day:snapshot.today,control_epoch:control.epoch,theme:creative.theme,caption:creative.caption}).select('*').single();
- if(claimed.error){if(claimed.error.code==='23505')return {status:'already_prepared_or_held'};throw Error('Daily claim unconfirmed.');}
- const job=claimed.data;let reservation:string|null=null,dispatched=false;
+ const claimed=await service.rpc('agency_cole_claim_day',{p_owner:ownerId,p_day:snapshot.today,p_theme:creative.theme,p_caption:creative.caption});
+ if(claimed.error)throw rpcFailure(claimed.error,'daily_claim_unconfirmed');
+ if(!claimed.data)return {status:'already_attempted_or_prepared'};
+ const jobId=claimed.data as string;
+ let reservation:string|null=null,dispatched=false,settlement:{state:string;cost_micros:number|null;pause_reason:string|null}|null=null,phase='preflight';
+ let providerStatus:number|null=null,providerCode:string|null=null;
+ const settle=async(usage:GenerationUsage|null)=>{
+  const r=await service.rpc('agency_cole_settle_estimate',{p_owner:ownerId,p_reservation:reservation,p_usage:usage});
+  if(r.error||!r.data)throw Error('usage_save_unconfirmed');settlement=r.data;
+  return r.data as {state:string;cost_micros:number|null;pause_reason:string|null};
+ };
  try{
-  const maximum=requestQuote(new Date());
+  const estimate=requestQuote(new Date());
   if(snapshot.unresolved)throw Error('spending_unresolved');
-  const p=await coleProfile(ownerId);if(p.id!==control.presenter_profile_id)throw Error('Cole identity changed.');
-  if(p.visual_identity?.canonicalAppearance?.sha256!==talentAppearance.cole.sha256)throw Error('Approved appearance changed.');
-  const {account}=await agencyAccount(ownerId,p.id,true);if(account.username!==COLE_DAILY.username)throw Error('Cole identity changed.');
-  const reference=talentAppearance.cole,object=await service.storage.from(bucket).download(`${ownerId}/agency-appearance/${reference.storageFilename}`,{}, {cache:'no-store'});
-  if(object.error||!object.data||object.data.size!==reference.bytes)throw Error('Reference unavailable.');
-  const referenceBytes=new Uint8Array(await object.data.arrayBuffer());if(hash(referenceBytes)!==reference.sha256)throw Error('Reference checksum mismatch.');
-  const key=process.env.OPENAI_API_KEY;if(!key)throw Error('Generation configuration unavailable.');
-  const reserve=await service.rpc('agency_cole_reserve',{p_owner:ownerId,p_job:job.id,p_maximum:maximum,p_model:COLE_DAILY.model,p_pricing:COLE_DAILY.pricingChecked});if(reserve.error||!reserve.data)throw Error('Reservation unconfirmed.');reservation=reserve.data;
+  phase='account';const p=await coleProfile(ownerId);if(p.id!==control.presenter_profile_id)throw Error('account_changed');
+  if(p.visual_identity?.canonicalAppearance?.sha256!==talentAppearance.cole.sha256)throw Error('reference_unavailable');
+  const {account}=await agencyAccount(ownerId,p.id,true);if(account.username!==COLE_DAILY.username)throw Error('account_changed');
+  phase='reference';const reference=talentAppearance.cole,object=await service.storage.from(bucket).download(`${ownerId}/agency-appearance/${reference.storageFilename}`,{}, {cache:'no-store'});
+  if(object.error||!object.data||object.data.size!==reference.bytes)throw Error('reference_unavailable');
+  const referenceBytes=new Uint8Array(await object.data.arrayBuffer());if(hash(referenceBytes)!==reference.sha256)throw Error('reference_unavailable');
+  const key=process.env.OPENAI_API_KEY?.trim();if(!key)throw Error('generation_not_configured');
+  phase='reservation';const reserve=await service.rpc('agency_cole_reserve',{p_owner:ownerId,p_job:jobId,p_maximum:estimate,p_model:COLE_DAILY.model,p_pricing:COLE_DAILY.pricingChecked});
+  if(reserve.error||!reserve.data)throw rpcFailure(reserve.error,'reservation_unconfirmed');reservation=reserve.data;
   await active(ownerId,control.epoch);
-  const dispatch=await service.rpc('agency_cole_dispatch',{p_owner:ownerId,p_reservation:reservation});if(dispatch.error||dispatch.data!==true)throw Error('paused');
-  dispatched=true;
-  await active(ownerId,control.epoch);
-  // No retries, no SDK regeneration, no evaluation calls. The exact private
-  // reference is sent once, only after a verified bound and durable reservation.
-  const response=await fetch('https://api.openai.com/v1/images/edits',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:COLE_DAILY.model,prompt:creative.prompt,images:[{image_url:`data:image/png;base64,${Buffer.from(referenceBytes).toString('base64')}`}],n:1,size:'1024x1024',quality:'low',output_format:'jpeg'}),signal:AbortSignal.timeout(180000)});
-  if(!response.ok)throw Error('Generation outcome unconfirmed.');
-  const result=await response.json();let cost:number|null=null;try{cost=usageCost(result.usage);}catch{/* leave cost uncertain */}
-  const settled=await service.rpc('agency_cole_settle',{p_owner:ownerId,p_reservation:reservation,p_cost:cost});if(settled.error||cost===null||cost>maximum)throw Error('usage_unverified');
-  if(result.data?.length!==1||typeof result.data[0]?.b64_json!=='string'||result.data[0].b64_json.length>12_000_000)throw Error('Generated image unavailable.');
-  const bytes=Buffer.from(result.data[0].b64_json,'base64');if(bytes.length>8*1024*1024||bytes[0]!==255||bytes[1]!==216)throw Error('Generated image unavailable.');
-  await active(ownerId,control.epoch);
-  const mediaHash=hash(bytes),path=`${ownerId}/agency-daily/${job.id}.jpeg`;
-  const upload=await service.storage.from(bucket).upload(path,bytes,{contentType:'image/jpeg',upsert:false});if(upload.error)throw Error('Private save unconfirmed.');
-  // Keep exact provider JPEG including provenance metadata. No transforms.
-  const readback=await service.storage.from(bucket).download(path,{}, {cache:'no-store'});if(readback.error||!readback.data||hash(new Uint8Array(await readback.data.arrayBuffer()))!==mediaHash)throw Error('Private save checksum mismatch.');
-  await active(ownerId,control.epoch);
-  const post=await service.from('beast_marketing_agency_posts').insert({owner_id:ownerId,presenter_profile_id:p.id,content:{caption:creative.caption,mediaUrl:''},content_hash:digest([creative.caption,mediaHash]),media_hash:mediaHash,profile_hash:profileFingerprint(p),status:'draft'}).select('id').single();if(post.error||!post.data)throw Error('Draft save unconfirmed.');
-  const ready=await service.from('agency_cole_daily_jobs').update({state:'ready',post_id:post.data.id,media_path:path,media_hash:mediaHash,media_bytes:bytes.length,updated_at:now()}).eq('owner_id',ownerId).eq('id',job.id).eq('state','preparing').select('id').single();if(ready.error)throw Error('Draft save unconfirmed.');
-  return {status:'ready'};
+  phase='dispatch';const dispatch=await service.rpc('agency_cole_dispatch',{p_owner:ownerId,p_reservation:reservation});if(dispatch.error||dispatch.data!==true)throw Error('paused');
+  dispatched=true;await active(ownerId,control.epoch);
+  // One production attempt only. An estimate controls admission, not billing.
+  phase='provider';let response:Response;
+  try{response=await fetch('https://api.openai.com/v1/images/edits',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:COLE_DAILY.model,prompt:creative.prompt,images:[{image_url:`data:image/png;base64,${Buffer.from(referenceBytes).toString('base64')}`}],n:1,size:'1024x1024',quality:'low',output_format:'jpeg'}),signal:AbortSignal.timeout(180000)});}catch(e){throw Error(e instanceof Error&&['TimeoutError','AbortError'].includes(e.name)?'provider_timeout':'provider_network_error');}
+  providerStatus=response.status;
+  if(!response.ok){const errorBody=await response.json().catch(()=>null),safe=providerFailure(response.status,errorBody?.error?.code);providerCode=safe.code;throw Error(safe.reason);}
+  const result=await response.json();let usage:GenerationUsage|null=null;try{usage=generationUsage(result.usage);}catch{/* Unknown usage remains reserved and pauses generation. */}
+  phase='usage';const receipt=await settle(usage);
+  if(result.data?.length!==1||typeof result.data[0]?.b64_json!=='string'||result.data[0].b64_json.length>12_000_000)throw Error('generated_image_invalid');
+  const bytes=Buffer.from(result.data[0].b64_json,'base64');if(bytes.length>8*1024*1024||bytes[0]!==255||bytes[1]!==216)throw Error('generated_image_invalid');
+  // A spending pause does not discard already-paid private media. Explicit
+  // owner pause changes epoch and still stops persistence before each action.
+  phase='private_storage';await maySaveGeneratedDraft(ownerId,control.epoch,jobId);
+  const mediaHash=hash(bytes),path=`${ownerId}/agency-daily/${jobId}.jpeg`;
+  const upload=await service.storage.from(bucket).upload(path,bytes,{contentType:'image/jpeg',upsert:false});if(upload.error)throw Error('private_save_unconfirmed');
+  const readback=await service.storage.from(bucket).download(path,{}, {cache:'no-store'});if(readback.error||!readback.data||hash(new Uint8Array(await readback.data.arrayBuffer()))!==mediaHash)throw Error('private_save_unconfirmed');
+  await maySaveGeneratedDraft(ownerId,control.epoch,jobId);phase='draft_save';
+  const post=await service.from('beast_marketing_agency_posts').insert({owner_id:ownerId,presenter_profile_id:p.id,content:{caption:creative.caption,mediaUrl:''},content_hash:digest([creative.caption,mediaHash]),media_hash:mediaHash,profile_hash:profileFingerprint(p),status:'draft'}).select('id').single();if(post.error||!post.data)throw Error('draft_save_unconfirmed');
+  const ready=await service.from('agency_cole_daily_jobs').update({state:'ready',post_id:post.data.id,media_path:path,media_hash:mediaHash,media_bytes:bytes.length,provider_status:providerStatus,reason:receipt.pause_reason,updated_at:now()}).eq('owner_id',ownerId).eq('id',jobId).eq('state','preparing').select('id').single();if(ready.error)throw Error('draft_save_unconfirmed');
+  return {status:'ready',jobId,postId:post.data.id,generationCostMicros:receipt.cost_micros,spendState:receipt.state,pauseReason:receipt.pause_reason};
  }catch(e){
-  const reason=safeDailyReason(e);
-  if(reservation){if(dispatched)await service.from('agency_cole_ai_reservations').update({state:'uncertain'}).eq('id',reservation).eq('owner_id',ownerId).eq('state','dispatched');else await service.from('agency_cole_ai_reservations').update({state:'released'}).eq('id',reservation).eq('owner_id',ownerId).eq('state','reserved');}
-  const saved=await service.from('agency_cole_daily_jobs').update({state:'blocked',reason,updated_at:now()}).eq('owner_id',ownerId).eq('id',job.id).eq('state','preparing').select('id').single();if(saved.error)throw Error('Daily hold save unconfirmed.');return {status:'blocked',reason};
+  const raw=e instanceof Error?e.message:'',known=safeDailyReason(e);
+  const reason=/^provider_http_[1-5][0-9]{2}$/.test(raw)?raw:known!=='preparation_unconfirmed'?known:`${phase}_unconfirmed`;
+  if(reservation){if(dispatched&&!settlement){try{await settle(null);}catch{/* Dispatched reservation remains durable and blocks future dispatch. */}}else if(!dispatched){await service.from('agency_cole_ai_reservations').update({state:'released'}).eq('id',reservation).eq('owner_id',ownerId).eq('state','reserved');}}
+  const saved=await service.from('agency_cole_daily_jobs').update({state:'blocked',reason,provider_status:providerStatus,provider_error_code:providerCode,updated_at:now()}).eq('owner_id',ownerId).eq('id',jobId).eq('state','preparing').select('id').single();if(saved.error)throw Error('Daily failure save unconfirmed. Do not retry.');
+  return {status:'blocked',reason,providerStatus,providerCode,jobId};
  }
 }
 export async function scheduleDaily(ownerId:string,jobId:string,revision:number,username:string,reviewed:boolean){

@@ -5073,7 +5073,7 @@
     "recordKind": "virtual_talent",
     "mission": "Cole Mercer is the fictional character behind Cole After Hours (@cole.after.hours), the first talent of Beast AI Talent Agency, under owner control; no autonomous staff authority.",
     "assignment": "Cole-only daily Instagram preparation and exact-post owner review for Beast AI Talent Agency. Sean Gatewood remains administrator. Facebook, Leila, DMs, engagement and unrelated schedules unchanged.",
-    "availability": "Instagram @cole.after.hours remains saved and bound. Production runtime reports generation credential presence and cron configuration, without exposing values; provider validity/model access remain untested. Daily generation is held before dispatch because the request maximum cost is unverified. No generated photo or public post is confirmed. Final preparation enablement receipt is linked in the release PR; Leila remains deferred.",
+    "availability": "Cole\u2019s Instagram binding and exact private tattoo-free reference are retained. Owner approved estimated-reservation operating-budget preparation with possible provider overrun; the prior guaranteed-maximum hold and proposed manual import are superseded. First production photo/caption and returned usage are verified only in the linked PR305 runtime receipt, not inferred from tests/build. Every public post still needs Sean\u2019s exact approval. Leila remains deferred.",
     "target": null,
     "demonstrated": null,
     "released": null,
@@ -5090,7 +5090,7 @@
     ],
     "limitations": [
       "Runtime credential presence is verified, not provider validity/model entitlement. Earlier project-only metadata was incomplete and is superseded by the production readiness response. No preview credential was copied or broadened.",
-      "AI request maximum remains unverified. Model rates are $5/M text input, $8/M image input and $30/M image output, checked 2026-10-25 for gpt-image-2.5-flare-2026-09-08. A typical image price is not a defensible reservation bound. Dispatch stays blocked until supported costing is established; model availability and paid output are untested.",
+      "The $10/month policy is an operating admission budget, not a guaranteed provider billing cap. $0.25 is a conservative estimated reservation with documented rates and explicit planning assumptions. Provider overrun remains possible; unknown or over-reservation usage pauses all further generation. Invoice-confirmed amounts remain separate.",
       "Hardcoded caption boilerplate removed only from Agency. Required AI transparency and exact JPEG provenance metadata remain part of owner review; no unsupported Meta disclosure parameter is invented. Voice synthesis remains unavailable.",
       "Cole is the current setup focus.",
       "Local fixtures establish workflow mechanics, not live publishing capability or agent judgment.",
@@ -5100,19 +5100,19 @@
       "The new canonical PNG is privately stored, not committed or bundled. Owner-reported text-only generation and tattoo removal are provenance statements, not guarantees of uniqueness/exclusive rights. The retired blue-shirt JPEG remains in historical public Git commits/PR301; removal from the current tree does not erase those copies. Old two-sleeve decisions are superseded historical records."
     ],
     "blockers": [
-      "Verify a defensible maximum reference-edit request cost before any paid production generation. No paid tests or automatic regeneration.",
-      "Cole\u2019s brand/disclosure approval is not yet recorded; owner must review Brand & Style before approving a generated exact post. No public post is authorized by the workflow implementation."
+      "First production generation result must be checked after the coordinated release. If a provider or persistence error occurs, report its sanitized status/reason without another generation attempt.",
+      "Brand & Style and every exact saved photo/caption revision still require Sean\u2019s review before approval/scheduling. No public posting is approved in this step."
     ],
     "deferred": [
       {
-        "title": "First private daily draft and exact owner approval",
+        "title": "First real private photo and exact owner review",
         "priority": "high",
         "desiredLevel": null,
-        "gap": "Request cost bound is unverified; no generation dispatched.",
-        "requiredWork": "Establish a documented request maximum within the durable budget; prepare one private image, then owner reviews Brand & Style and the exact post before Approve & Schedule.",
-        "success": "Private saved photo/caption, matching identity and checksum, explicit exact-post approval, then separately verified publication receipt.",
-        "cost": "$10/month ceiling; production generation authorized, evaluations prohibited. Rates verified, hard bound unverified.",
-        "status": "Held before paid dispatch"
+        "gap": "Production attempt not executed at source freeze; offline tests do not establish an actual draft.",
+        "requiredWork": "After one functional release, make one production generation attempt; save the unchanged JPEG privately, record returned usage/cost and present caption/photo for Sean. Stop and report if blocked.",
+        "success": "Owner-accessible private JPEG and caption with exact checksum, preserved account binding and honest generation cost; no public post.",
+        "cost": "$10/month operating budget with possible provider overrun; $0.25 estimated reservation, no paid evaluations/top-ups/fallbacks.",
+        "status": "Production receipt pending release"
       }
     ],
     "evidence": [
@@ -5219,10 +5219,34 @@
         "reviewer": "Codex executor; offline fixtures, not paid evaluation or public posting",
         "date": "2026-10-25",
         "version": "Cole daily workflow batch"
+      },
+      {
+        "title": "Exact image request, current official pricing/control limits and single included-usage alternative",
+        "url": "https://github.com/seangworld/thebeast/blob/codex/cole-image-cost-evidence/docs/agency/COLE-IMAGE-COST-BOUND-20261025.md",
+        "kind": "code review",
+        "reviewer": "Codex executor; official documentation and read-only production counts, no paid evaluation",
+        "date": "2026-10-25",
+        "version": "Cole cost-bound investigation; not deployed"
+      },
+      {
+        "title": "Owner-approved estimated operating budget, offline safety checks and actual production attempt receipt",
+        "url": "https://github.com/seangworld/thebeast/pull/305",
+        "kind": "code review",
+        "reviewer": "Codex executor; no independent or paid evaluation",
+        "date": "2026-10-25",
+        "version": "PR305 functional generation batch"
       }
     ],
     "reviewedAt": "2026-10-25",
     "recentChanges": [
+      {
+        "date": "2026-10-25",
+        "summary": "Owner explicitly selected a $10/month operating budget with possible provider billing overrun; an absolute maximum is no longer required. Keep the configured Flare snapshot and exact private PR302 reference. Reserve a conservative estimated $0.25: 2,000 prompt tokens at $5/M ($0.01), 10,000 assumed reference-image tokens at $8/M ($0.08), 196 estimated output tokens at $30/M ($0.00588), plus $0.15412 headroom. The reference allowance is a planning assumption, not a documented token prediction. Atomic reservations stop admission when known returned-usage cost plus outstanding estimates plus the next estimate exceeds $10. This is not a hard provider billing cap. Exactly one generation attempt per New York day; no automatic retries, regeneration, paid evaluations, purchases, top-ups or fallback. Returned token counts settle actual usage-priced cost; missing usage or reservation overrun pauses further generation and is reported. Already-returned media may still be saved privately during the automatic spending pause, while explicit owner pause/cancellation remains effective. First production attempt occurs only after the functional release; no draft/cost success claimed by source tests. No public post or unattended publishing activation."
+      },
+      {
+        "date": "2026-10-25",
+        "summary": "Exact Flare reference-edit investigation completed using current official provider docs: model gpt-image-2.5-flare-2026-09-08, one unchanged PR302 1254x1254 PNG reference, n=1, 1024x1024 low-quality JPEG. Published token rates and output-only calculator estimate do not establish a guaranteed total maximum. Direct edit schema has no documented token/dollar cap, and provider monthly hard limits explicitly allow delayed-enforcement overshoot. Strict $10 ceiling therefore continues to block dispatch. No first private photo/caption draft, paid call, charge or post. One proposed alternative (not executed/approved): a single generation from verified existing included ChatGPT/Codex allowance, then private Agency import; $0 incremental API spending, no API/paid-credit fallback, purchase, top-up or retry. Built-in gpt-image-2 differs from Flare and requires an explicit owner workflow decision."
+      },
       {
         "date": "2026-10-25",
         "summary": "Production owner-only readiness readback reports generationConfigured=true and cronConfigured=true. This supersedes the earlier inference that absence from the project-level environment list proved no production generation credential. Credential presence does not verify validity, model access or billing. No paid/provider generation test was made. The remaining dispatch blocker is request_cost_bound_unverified; exact-post owner review remains required. Preparation was not enabled while correcting this evidence."
@@ -5380,6 +5404,18 @@
         "executor": "Codex",
         "why": "Production owner-only readiness readback reports generationConfigured=true and cronConfigured=true. This supersedes the earlier inference that absence from the project-level environment list proved no production generation credential. Credential presence does not verify validity, model access or billing. No paid/provider generation test was made. The remaining dispatch blocker is request_cost_bound_unverified; exact-post owner review remains required. Preparation was not enabled while correcting this evidence.",
         "version": "Cole daily production readiness correction"
+      },
+      {
+        "date": "2026-10-25",
+        "executor": "Codex",
+        "why": "Exact Flare reference-edit investigation completed using current official provider docs: model gpt-image-2.5-flare-2026-09-08, one unchanged PR302 1254x1254 PNG reference, n=1, 1024x1024 low-quality JPEG. Published token rates and output-only calculator estimate do not establish a guaranteed total maximum. Direct edit schema has no documented token/dollar cap, and provider monthly hard limits explicitly allow delayed-enforcement overshoot. Strict $10 ceiling therefore continues to block dispatch. No first private photo/caption draft, paid call, charge or post. One proposed alternative (not executed/approved): a single generation from verified existing included ChatGPT/Codex allowance, then private Agency import; $0 incremental API spending, no API/paid-credit fallback, purchase, top-up or retry. Built-in gpt-image-2 differs from Flare and requires an explicit owner workflow decision. Dossier source update prepared without deployment; live synchronization pending a subsequent authorized functional batch, not another readiness-only release.",
+        "version": "Cole exact image request cost-bound investigation"
+      },
+      {
+        "date": "2026-10-25",
+        "executor": "Codex",
+        "why": "Owner explicitly selected a $10/month operating budget with possible provider billing overrun; an absolute maximum is no longer required. Keep the configured Flare snapshot and exact private PR302 reference. Reserve a conservative estimated $0.25: 2,000 prompt tokens at $5/M ($0.01), 10,000 assumed reference-image tokens at $8/M ($0.08), 196 estimated output tokens at $30/M ($0.00588), plus $0.15412 headroom. The reference allowance is a planning assumption, not a documented token prediction. Atomic reservations stop admission when known returned-usage cost plus outstanding estimates plus the next estimate exceeds $10. This is not a hard provider billing cap. Exactly one generation attempt per New York day; no automatic retries, regeneration, paid evaluations, purchases, top-ups or fallback. Returned token counts settle actual usage-priced cost; missing usage or reservation overrun pauses further generation and is reported. Already-returned media may still be saved privately during the automatic spending pause, while explicit owner pause/cancellation remains effective. First production attempt occurs only after the functional release; no draft/cost success claimed by source tests. No public post or unattended publishing activation. Supersedes the previous strict-cap investigation and unselected included-plan/manual-import proposal; historical findings retained.",
+        "version": "PR305 Cole estimated operating budget and first-production-draft batch"
       }
     ],
     "releases": [
@@ -5417,14 +5453,14 @@
     "permissions": [
       "Existing Cole Instagram connection and explicit binding; no added OAuth scopes or Facebook cross-sharing.",
       "Existing private beast-marketing-media storage and owner-only checksum-verified image endpoints.",
-      "Production draft generation only within a verified request maximum and durable $10/month budget. No paid evaluations, purchases or new services.",
+      "Production draft generation uses conservative estimated reservations against a durable $10/month operating budget; provider billing may exceed it. No paid evaluations, purchases or new services.",
       "Scheduled publication only for an individually owner-approved exact revision. No unattended content approval, DMs or automated engagement."
     ],
     "costs": {
       "confirmedChargesUsd": null,
       "usageEstimateUsd": null,
       "unresolvedReservationsUsd": null,
-      "note": "Live Agency ledger distinguishes usage-priced settled charges, durable reserved maxima and uncertain usage. This release does not claim paid dispatch or invoice-confirmed charges. $10/month budget; holds on uncertain usage."
+      "note": "Live Agency ledger separates conservative estimated reservations, known returned-token usage-priced costs and uncertain usage. $10/month operating budget can be exceeded by provider billing. Unknown usage or cost above reservation pauses further generation. Source tests do not prove an actual production charge."
     }
   },
   "agency.leila-bautista": {

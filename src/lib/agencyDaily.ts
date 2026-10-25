@@ -4,9 +4,9 @@ export const COLE_DAILY = {
  preparationHour:6, postingHour:18, mode:'approval_required',
  model:'gpt-image-2.5-flare-2026-09-08', pricingChecked:'2026-10-25', pricingExpires:'2026-11-25',
  pricingSource:'https://developers.openai.com/api/docs/models/gpt-image-2.5-flare',
- // The Images API has no documented token ceiling for this reference edit.
- // Do not replace this with a typical image price or a client/environment value.
- requestMaximumMicros:null as number|null,
+ // Owner-approved conservative estimate, not a provider billing maximum.
+ reservationEstimateMicros:250_000,
+ estimate:{promptTokensAssumed:2000,referenceTokensAssumed:10000,outputTokensEstimated:196,headroomMicros:154120},
  textInputMicrosPerToken:5, imageInputMicrosPerToken:8, imageOutputMicrosPerToken:30,
 } as const;
 export function nyDay(date:Date){return new Intl.DateTimeFormat('en-CA',{timeZone:COLE_DAILY.timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(date);}
@@ -21,16 +21,23 @@ export function dayAtHour(day:string,hour:number){
 export function nextPostingTime(now:Date){const today=dayAtHour(nyDay(now),18);if(Date.parse(today)>now.getTime())return today;return dayAtHour(nyDay(new Date(now.getTime()+86400000)),18);}
 export function requestQuote(now:Date){
  if(now.toISOString().slice(0,10)>=COLE_DAILY.pricingExpires)throw Error('pricing_review_required');
- const bound=COLE_DAILY.requestMaximumMicros;
- if(bound===null||!Number.isSafeInteger(bound)||bound<=0||bound>COLE_DAILY.monthlyLimitMicros)throw Error('request_cost_bound_unverified');
- return bound;
+ const estimate=COLE_DAILY.reservationEstimateMicros;
+ if(!Number.isSafeInteger(estimate)||estimate<=0||estimate>COLE_DAILY.monthlyLimitMicros)throw Error('invalid_estimate');
+ return estimate;
 }
-export function usageCost(usage:unknown):number{
- const u=usage as {input_tokens?:number;output_tokens?:number;input_tokens_details?:{text_tokens?:number;image_tokens?:number};output_tokens_details?:{text_tokens?:number;image_tokens?:number}};
- const t=u?.input_tokens_details?.text_tokens,i=u?.input_tokens_details?.image_tokens,o=u?.output_tokens_details?.image_tokens;
- if(![t,i,o,u?.input_tokens,u?.output_tokens].every(x=>typeof x==='number'&&Number.isSafeInteger(x)&&x>=0)||(t! + i!)!==u.input_tokens||o!==u.output_tokens||(u.output_tokens_details?.text_tokens??0)!==0)throw Error('usage_unverified');
- const cost=t!*5+i!*8+o!*30;if(!Number.isSafeInteger(cost))throw Error('usage_unverified');return cost;
+export type GenerationUsage={textInputTokens:number;imageInputTokens:number;imageOutputTokens:number};
+export function generationUsage(usage:unknown):GenerationUsage{
+ const u=usage as {input_tokens?:number;output_tokens?:number;input_tokens_details?:{text_tokens?:number;image_tokens?:number};output_tokens_details?:{text_tokens?:number;image_tokens?:number};total_tokens?:number};
+ const t=u?.input_tokens_details?.text_tokens,i=u?.input_tokens_details?.image_tokens,o=u?.output_tokens_details?.image_tokens??u?.output_tokens;
+ if(![t,i,o,u?.input_tokens,u?.output_tokens].every(x=>typeof x==='number'&&Number.isSafeInteger(x)&&x>=0&&x<=1_000_000_000)||(t!+i!)!==u.input_tokens||o!==u.output_tokens||(u.output_tokens_details?.text_tokens??0)!==0||(u.total_tokens!==undefined&&u.total_tokens!==u.input_tokens!+u.output_tokens!))throw Error('usage_unverified');
+ return {textInputTokens:t!,imageInputTokens:i!,imageOutputTokens:o!};
 }
+export function usageCost(usage:unknown):number{const u=generationUsage(usage);return u.textInputTokens*5+u.imageInputTokens*8+u.imageOutputTokens*30;}
+export function providerFailure(status:number,code:unknown){
+ const allowed=['invalid_api_key','insufficient_quota','model_not_found','permission_denied','billing_hard_limit_reached','rate_limit_exceeded','content_policy_violation','moderation_blocked'];
+ return {reason:`provider_http_${status}`,code:typeof code==='string'&&allowed.includes(code)?code:'provider_error'};
+}
+
 const concepts=[
  ['Fitness','A quiet outdoor strength session, navy athletic tee, natural morning light.','A little stronger than yesterday. That’s enough for today.'],
  ['Outdoors','A coastal trail walk, casual hiking clothes, ocean air and natural daylight.','Fresh air, a longer route, and nowhere to rush.'],
@@ -42,4 +49,4 @@ export function dailyCreative(day:string){
  const caption=`${c[2]} ${endings[Math.floor(index/3)%endings.length]}`;
  return {theme:c[0],caption,prompt:`Create one original photorealistic lifestyle photograph of the fictional character Cole Mercer. Use ONLY the supplied owner-approved character reference to preserve his exact face: mature, dark tousled hair, trimmed beard, athletic build, 6 feet 1 inch proportions. NO tattoos anywhere. Do not copy the reference composition. ${c[1]} No text, logos, other people or borrowed photographs. Preserve natural anatomy. This is a private draft for owner review, not proof of uniqueness or exclusive rights.`};
 }
-export function safeDailyReason(error:unknown){const code=error instanceof Error?error.message:'';return ['request_cost_bound_unverified','pricing_review_required','usage_unverified','paused','budget_exhausted','spending_unresolved'].includes(code)?code:'preparation_unconfirmed';}
+export function safeDailyReason(error:unknown){const code=error instanceof Error?error.message:'';return ['pricing_review_required','usage_unverified','reservation_exceeded','paused','budget_exhausted','spending_unresolved','provider_timeout','provider_network_error','generated_image_invalid','private_save_unconfirmed','reference_unavailable','generation_not_configured'].includes(code)?code:'preparation_unconfirmed';}
