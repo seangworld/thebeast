@@ -397,6 +397,18 @@
         "agency.cole-mercer",
         "agency.leila-bautista"
       ]
+    },
+    {
+      "date": "2026-10-24",
+      "executor": "Codex",
+      "reason": "Display unchanged recovered Cole blue-shirt and Leila cream-suit reference JPEGs beside each talent name and in Brand & Style with accessible native-dialog enlargement, collapsed provenance and explicit Appearance reference / not approved for publishing labels. Serve only through owner-authenticated no-store endpoint with fixed talent allowlist and checksum validation; trace private files into deployment. Clear stale connected-callback binding prompt only after saved binding loads. Both dossiers now distinguish recovered reference files from unverified creator originals/reuse rights. Preserve historical records, Cole connection, deferred Leila, encrypted credentials, exact approval safeguards and publishing/automation pause. One release authorized; no paid calls, generation, posts or activation.",
+      "version": "Agency recovered reference display batch",
+      "evidence": "https://github.com/seangworld/thebeast/blob/codex/agency-reference-images/docs/agency/TALENT-REFERENCE-RECOVERY-20261024.md",
+      "sourceDigest": "ba6c2e656b20b5365888e92c8e3ab3796bae239bd4f48ad703e770a4debf5d6c",
+      "affectedStaffIds": [
+        "agency.cole-mercer",
+        "agency.leila-bautista"
+      ]
     }
   ]
 }
