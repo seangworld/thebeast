@@ -83,7 +83,7 @@ grant execute on function public.agency_cole_reserve(uuid,uuid,bigint,text,text)
 -- reference. Do not grant brand/post approval, enable the profile or touch Leila.
 update public.beast_marketing_presenter_profiles p
 set visual_identity=jsonb_set(p.visual_identity,'{direction}',to_jsonb('Cole Mercer: mature, athletic, 6 ft 1 in proportions, dark tousled hair, trimmed beard, NO tattoos. Preserve the exact approved private ink-free coastal face. Daily original photo drafts only; every public post needs exact owner approval.'::text)),
- disclosure_rules='["Fictional AI character: preserve required platform AI transparency and provider provenance metadata. Review disclosure for each exact post; no repeated caption sentence required by Agency."]'::jsonb,
+ disclosure_rules=ARRAY['Fictional AI character: preserve required platform AI transparency and provider provenance metadata. Review disclosure for each exact post; no repeated caption sentence required by Agency.']::text[],
  updated_at=now()
 where p.name='Cole Mercer' and p.presenter_type='future_character'
  and p.visual_identity->'canonicalAppearance'->>'sha256'='c84a2646f592c74d92430e33753b10b87a3c9cc6dec1eb8e3539383842a4e3bb'
