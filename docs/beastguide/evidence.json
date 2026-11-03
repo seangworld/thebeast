@@ -1,19 +1,15 @@
 {
   "recordedAt": "2026-11-03T03:25:38.923864+00:00",
   "canonicalBase": "3a41e80a7bcaf2708ca1d4690888a562f34859bc",
-  "beastguideSource": "6bfc72334b6e46d6f5247951b5e21121d86d0fcc",
+  "beastguideSource": "8d6d13734daa5a65fdedab12192621eabc6fb303",
   "beastguideTests": {
     "passed": 40,
     "failed": 0
   },
   "beastosFullSuite": {
-    "passed": 2683,
+    "passed": 2688,
     "failed": 0,
     "concurrency": 4
-  },
-  "additionalActualWrapperTests": {
-    "passed": 4,
-    "failed": 0
   },
   "nextReleaseCompilation": "passed",
   "requiredNpmRunBuild": "blocked by 18 moderate minimatch development-tooling audit findings; no bypass",
@@ -38,5 +34,21 @@
   "realDataExported": false,
   "recordsMigratedOrDeleted": false,
   "productionCutover": false,
-  "applePackagingStarted": false
+  "applePackagingStarted": false,
+  "actualWrapperTests": {
+    "passed": 5,
+    "failed": 0,
+    "includedInFullSuite": true
+  },
+  "hostedAcceptanceConfiguration": {
+    "project": "thebeast",
+    "target": "preview",
+    "branch": "codex/beastguide-phase1-current",
+    "variables": 10,
+    "databaseCredentialVisibility": "sensitive",
+    "canonicalAuthCallbackAdded": true,
+    "canonicalSiteUrlPreserved": true,
+    "productionVariablesChanged": false,
+    "notice": "isolated test records; production libraries unchanged"
+  }
 }

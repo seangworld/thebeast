@@ -13,5 +13,5 @@ export default async function BeastGuidePage() {
     if (access.status === 401) redirect("/login?next=%2Fdashboard%2Fbeastguide");
     return <section><h1>BeastGuide</h1><p>This workspace is unavailable for the current member profile.</p></section>;
   }
-  return <BeastGuideWorkspace />;
+  return <BeastGuideWorkspace acceptancePreview={process.env.VERCEL_ENV !== "production"} />;
 }

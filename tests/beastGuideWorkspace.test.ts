@@ -29,3 +29,5 @@ test('BeastOS logout removes the embedded workspace and cleanup detaches listene
 test('late verification after navigation cannot recreate an account host',async()=>{
  let complete:(v:unknown)=>void=()=>{};const f=fixture(new Promise(resolve=>complete=resolve));const ui=render(React.createElement(Workspace));ui.unmount();await act(async()=>complete({data:{user:{id:'old'}},error:null}));assert.equal(window.__BEASTGUIDE_HOST__,undefined);assert.equal(f.unsubscribed(),1);
 });
+
+test("acceptance workspace identifies isolated test data to the embedded application",async()=>{fixture(Promise.resolve({data:{user:{id:"canonical-user"}},error:null}));const ui=render(React.createElement(Workspace,{acceptancePreview:true}));await ui.findByTitle("BeastGuide");assert.equal(window.__BEASTGUIDE_HOST__?.preview,true);});
