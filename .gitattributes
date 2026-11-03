@@ -1,0 +1,4 @@
+# Reviewed in the independently maintained BeastGuide source repository;
+# integrity is recorded in src/vendor/beastguide/manifest.json.
+public/beastguide-app/assets/*.js -whitespace linguist-generated=true
+public/beastguide-app/assets/*.css linguist-generated=true

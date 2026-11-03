@@ -79,6 +79,7 @@ function getWorkspaceModule(pathname: string): ModuleKey {
   if (isOwnerWorkspacePath(pathname)) return "admin";
   if (pathname.startsWith("/dashboard/money")) return "money";
   if (pathname.startsWith("/dashboard/learning") || pathname.startsWith("/dashboard/education")) return "learning";
+  if (pathname.startsWith("/dashboard/beastguide")) return "beastguide";
   if (pathname.startsWith("/dashboard/health")) return "health";
   if (pathname.startsWith("/dashboard/home")) return "home";
   if (pathname.startsWith("/dashboard/calendar")) return "calendar";

@@ -182,7 +182,7 @@ function ArchitectureGraph({
       aria-label="Architecture Explorer map, horizontally scrollable"
     >
       <svg
-        viewBox="0 0 1120 630"
+        viewBox={`0 0 1120 ${Math.max(630, ...nodes.map((node) => node.y + node.height + 30))}`}
         className="block w-full min-w-[920px]"
         role="img"
         aria-labelledby="ecosystem-map-title ecosystem-map-description"

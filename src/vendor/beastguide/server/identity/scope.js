@@ -1,0 +1,2 @@
+const scopes={production:Object.freeze({identity:'beastguide_identity',canonical:'beastguide_canonical',legacy:'public',linkRole:'beastguide_linker',dataRole:'beastguide_data'}),preview:Object.freeze({identity:'beastguide_preview_identity',canonical:'beastguide_preview_canonical',legacy:'beastguide_preview',linkRole:'beastguide_preview_linker',dataRole:'beastguide_preview_data'})};
+export function scopeFor(name){if(!Object.hasOwn(scopes,name))throw new Error('Invalid identity deployment scope');return scopes[name]}

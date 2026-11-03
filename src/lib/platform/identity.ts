@@ -79,6 +79,7 @@ export const beastOSPlatformIdentityRules = [
 ] as const;
 
 const workspaceContext: Record<PlatformModule, string> = {
+  beastguide: "Entertainment application",
   beastos: "The Beast platform",
   money: "Money application",
   learning: "Education application",

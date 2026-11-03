@@ -136,7 +136,7 @@ export async function middleware(request: NextRequest) {
 
   if (user && (isDashboardRoute || (isApiRoute && !isPublicAuthApiRoute))) {
     const gatedModule = request.nextUrl.pathname.match(
-      /(?:^|\/)(?:dashboard\/|api\/)(money|health|home)(?:\/|$)/
+      /(?:^|\/)(?:dashboard\/|api\/)(money|health|home|beastguide)(?:\/|$)/
     )?.[1];
     if (gatedModule) {
       const { data: profile, error: profileError } = await supabase

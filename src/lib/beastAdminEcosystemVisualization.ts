@@ -236,12 +236,14 @@ const modulePositions = [
   [640, 536],
   [795, 536],
   [950, 536],
+  [485, 628],
 ] as const;
 
 const modulePurposeStatements: Record<
   BeastModuleRegistryEntry["id"],
   string
 > = {
+  beastguide: "Owns the entertainment library and episode progress with shared Beast identity.",
   beastos:
     "The shared operating platform connecting identity, permissions, services, applications, and professional collaboration.",
   money:
@@ -466,6 +468,9 @@ export function buildBeastAdminEcosystemMap({
         `${application.name} runs as an application on BeastOS while retaining its domain ownership.`
       )
     );
+    // Shared identity and hosting are implemented for BeastGuide. Do not claim
+    // entertainment records are indexed by Search, notifications or Timeline.
+    if (application.id === "beastguide") continue;
     edges.push(
       edge(
         moduleNodeId(application.id),

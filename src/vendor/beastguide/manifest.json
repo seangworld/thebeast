@@ -1,0 +1,25 @@
+{
+  "application": "beastguide",
+  "format": 1,
+  "sourceCommit": "6bfc72334b6e46d6f5247951b5e21121d86d0fcc",
+  "session": "BeastOS existing same-origin browser client",
+  "files": {
+    "public/assets/index-CAOwLuoy.js": "bdcdf47bc632d04d46a09f2cab71a2309d47389db84f97edcb5620be9ec49f45",
+    "public/assets/index-D0xLdBqG.css": "eb3f4066127ca56f16bd2b82cafd96bc83ecb229f15cbbf5c0b842ead2e1448a",
+    "public/beastguide-banner.png": "4be7d01bebbf86825812ccb0361e8521bcc23ccf6394b6a6513ab60043521a89",
+    "public/data-sources.html": "ccc1780bd21b4379b4e71d3294e094d91db9f41080e3a8bec88608db8e9b9558",
+    "public/index.html": "05a4955ae8662889464f081d40918f3d53ea9ba4043759c380f24548759fd56e",
+    "runtime/api/catalog.js": "71b013c66e0fb91bf1c9261983543e74b68a6a9e4e6c20f06e7e2c3771e7beda",
+    "runtime/api/identity.js": "7d21a194c960f300a18306ce0e970feb10a31f0f25dc98d3b8d70e51e245f8dc",
+    "runtime/api/sports.js": "db6334e36fc6fec5e8730057d95a22850dedc927386600a0887d643509ccc2b5",
+    "runtime/package.json": "d218e29ec01186542b0d85bdc6691d12514e4cdd0ba3b9cd81f253250c8d1e34",
+    "runtime/server/identity/data.js": "5802c5de5dc44e6a6103b2f617bb53e3c3869a38525e6d98c939ff7de00b2781",
+    "runtime/server/identity/database-tls.js": "8fe98d87645db7c148302612c6748d6d58ece72c3ec7a97cdb4185612ceccd9b",
+    "runtime/server/identity/proof.js": "a2a85686c7fd1846ebfd27300ef7a892db1cce9d6a72f22675e7630e634f019e",
+    "runtime/server/identity/registration.js": "72cadeef100fdad08bbc1f98e5e0dd0a1e2222e9688be16ae1fddfcf7620ee47",
+    "runtime/server/identity/runtime.js": "74078dc41b54aec2cffd37222590904a241b6d9369893af2932f66e2134423a3",
+    "runtime/server/identity/scope.js": "7c570d08d46fd52a92ba5debbb4a823db8b042d8d9991d7f9770b75f2a1f9267",
+    "runtime/server/identity/service.js": "cd1effea1590d2551be385f4384b50de4e8ece253c0f2f6721119dd8396e16ac",
+    "runtime/server/identity/store.js": "6dec59b950ac255676bc403a65426ba1845fc999d40309ef8bb8ea996e5e4680"
+  }
+}
