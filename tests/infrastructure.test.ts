@@ -586,7 +586,7 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(
     secondaryNavigation.map((item) => item.label),
-    ["Relationship Center", "Director", "Digital Staff"]
+    ["Applications", "Relationship Center", "Director", "Digital Staff"]
   );
   assert.deepEqual(
     buildApplicationNavigationForPersona({ isOwner: true }).map(

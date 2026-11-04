@@ -144,6 +144,7 @@ const expectedCliMigrations = [
   "20261025215007_cole_estimated_generation_budget.sql",
   "20261025224150_preserve_noneditable_member_access.sql",
   "20261103235724_universal_authentication.sql",
+  "20261104230605_account_setup_username_readback.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

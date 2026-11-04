@@ -1,18 +1,19 @@
 import { createHmac, randomUUID } from 'node:crypto';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireSupabasePublicConfiguration } from '@/lib/supabase/config';
 import { isDisabledBeastUser } from '@/lib/auth/experience';
+import { usernameClaimFailure } from '@/lib/auth/accountSetup';
+import { getSafeAuthDestination } from '@/lib/auth/experience';
 import { AUTH_FAILURE, normalizeUsername, REGISTRATION_NOTICE, validPassword } from '@/lib/auth/universal/policy';
 
 export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const response = NextResponse.json({ message: AUTH_FAILURE }, { status: 401 });
   response.headers.set('Cache-Control', 'no-store');
-  const reply = (message: string, status = 200) => {
-    const result = NextResponse.json({ message }, { status });
+  const reply = (message: string, status = 200, username?: string) => {
+    const result = NextResponse.json({ message, ...(username ? { username } : {}) }, { status });
     result.headers.set('Cache-Control', 'no-store');
     return result;
   };
@@ -46,8 +47,8 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
       if (data !== true) return reply('Please wait before trying again.', 429);
     }
-    const authenticatedReply = (message: string) => {
-      const success = reply(message);
+    const authenticatedReply = (message: string, username?: string) => {
+      const success = reply(message, 200, username);
       response.cookies.getAll().forEach(cookie => success.cookies.set(cookie));
       return success;
     };
@@ -63,11 +64,11 @@ export async function POST(request: NextRequest) {
       if (input.expectedSubject !== undefined && input.expectedSubject !== user.id) return reply(AUTH_FAILURE, 401);
       const control = await auth.rpc('is_current_beast_session_allowed');
       if (control.error || control.data !== true) return reply(AUTH_FAILURE, 401);
-      const currentIdentity = await admin.rpc('beast_auth_identity', { p_username: username });
-      if (currentIdentity.error) throw currentIdentity.error;
-      if (currentIdentity.data === user.id) return authenticatedReply('Your username is already active.');
+      const current = await auth.rpc('beast_auth_current_username');
+      if (current.error) throw current.error;
+      if (typeof current.data === 'string' && current.data) return authenticatedReply('Your username is already active and has not been changed.', current.data);
       const claimed = await admin.rpc('beast_auth_claim', { p_username: username, p_user_id: user.id });
-      return claimed.error ? reply('Unable to claim this username.', 409) : authenticatedReply('Username claimed.');
+      return claimed.error ? reply(usernameClaimFailure(claimed.error), claimed.error.code === '23505' || claimed.error.code === '23514' ? 409 : 503) : authenticatedReply('Username selected. Your email is verified.', username);
     }
     if (action === 'register' && process.env.NEXT_PUBLIC_BEAST_PUBLIC_REGISTRATION_ENABLED?.trim().toLowerCase() === 'false') return reply('Registration is unavailable.', 503);
     if (!validPassword(input.password) && action === 'register') return reply('Use at least 12 characters and at most 72 UTF-8 bytes.', 400);
@@ -78,15 +79,21 @@ export async function POST(request: NextRequest) {
     if (process.env.BEAST_AUTH_CAPTCHA_REQUIRED === 'true' && !input.captchaToken) return reply('Complete the security check.', 400);
     if (action === 'register') {
       if (typeof input.email !== 'string' || input.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) return reply('Enter a valid email address.', 400);
-      // Non-persisting client prevents accidental sessions if confirmation was
-      // misconfigured. Confirmation is independently checked again at login.
-      const signup = createClient(configuration.url, configuration.publicKey, { auth: { persistSession: false, autoRefreshToken: false } });
-      await signup.auth.signUp({ email: input.email, password: input.password, options: {
+      // The existing SSR client uses PKCE and writes the verifier cookie needed
+      // by /auth/callback. Never send an accidental signup session to the browser.
+      const availability = await admin.rpc('beast_auth_identity', { p_username: username });
+      if (availability.error) throw availability.error;
+      if (availability.data) return reply('That username is unavailable. Choose another one.', 409);
+      const registration = await auth.auth.signUp({ email: input.email, password: input.password, options: {
         captchaToken: input.captchaToken,
         data: { beast_username: username },
-        emailRedirectTo: new URL('/auth/callback?flow=email_verification', process.env.BEAST_AUTH_EMAIL_ORIGIN || request.nextUrl.origin).toString(),
+        emailRedirectTo: (() => { const callback = new URL('/auth/callback', request.nextUrl.origin); callback.searchParams.set('flow', 'email_verification'); const destination = getSafeAuthDestination(input.next); if(destination !== '/dashboard/today') callback.searchParams.set('next', destination); return callback.toString(); })(),
       } });
-      return reply(REGISTRATION_NOTICE);
+      if (registration.error && !['user_already_exists','email_exists'].includes(registration.error.code || '')) return reply('Registration could not be completed. Please retry, or use login help if you already have an account.', 503);
+      const notice = reply(REGISTRATION_NOTICE);
+      // Only retain PKCE verifier cookies, including chunked verifier cookies.
+      response.cookies.getAll().filter(cookie => /-code-verifier(?:\.\d+)?$/.test(cookie.name)).forEach(cookie => notice.cookies.set(cookie));
+      return notice;
     }
     phase = 'identity_resolution';
     const identity = await admin.rpc('beast_auth_identity', { p_username: username });

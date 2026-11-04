@@ -116,6 +116,7 @@ test("BP-001 relocates Digital Staff without removing its functionality", () => 
   assert.deepEqual(
     secondaryNavigation.map(({ label, href }) => [label, href]),
     [
+      ["Applications", "/dashboard/applications"],
       ["Relationship Center", "/dashboard/relationships"],
       ["Director", "/dashboard/director"],
       ["Digital Staff", "/dashboard/digital-staff"],

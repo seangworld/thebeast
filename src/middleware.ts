@@ -1,3 +1,4 @@
+import { accountSetupPath, accountSetupStage } from '@/lib/auth/accountSetup';
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import {
@@ -131,6 +132,30 @@ export async function middleware(request: NextRequest) {
           "session_expired"
         )
       );
+    }
+  }
+
+  // Roll out only with the additive self-read RPC. Auth metadata/profile handles
+  // never stand in for the canonical login registry. Settings remains reachable.
+  if (process.env.BEAST_ACCOUNT_SETUP_REQUIRED === 'true' && user &&
+      (isDashboardRoute || (isApiRoute && !isPublicAuthApiRoute)) &&
+      !(request.nextUrl.pathname === '/dashboard/settings/profile' || request.nextUrl.pathname.startsWith('/dashboard/settings/profile/'))) {
+    const identity = await supabase.rpc('beast_auth_current_username');
+    const profile = await supabase.from('profiles').select('preferred_name,display_name,full_name,birthday').eq('id', user.id).maybeSingle();
+    if (identity.error || profile.error) {
+      const unavailable = NextResponse.json({error:'Account setup could not be verified. Please retry.'},{status:503});
+      unavailable.headers.set('cache-control','private, no-store');
+      response.cookies.getAll().forEach(cookie => unavailable.cookies.set(cookie));
+      return unavailable;
+    }
+    if (accountSetupStage(Boolean(user.email_confirmed_at), typeof identity.data === 'string' ? identity.data : null, profile.data) !== 'ready') {
+      if (isApiRoute) {
+        const required = NextResponse.json({error:'ACCOUNT_SETUP_REQUIRED',setup:'/account-setup'},{status:403});
+        required.headers.set('cache-control','private, no-store');
+        response.cookies.getAll().forEach(cookie => required.cookies.set(cookie));
+        return required;
+      }
+      return redirect(accountSetupPath(`${request.nextUrl.pathname}${request.nextUrl.search}`));
     }
   }
 

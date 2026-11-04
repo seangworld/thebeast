@@ -516,6 +516,8 @@ export default function TodayPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Link href="/dashboard/applications" className="beast-button-secondary">Applications</Link>
+              {process.env.NEXT_PUBLIC_BEASTGUIDE_ENABLED === "true" && <Link href="/dashboard/beastguide" className="beast-button-secondary">BeastGuide</Link>}
               <Link href="/dashboard/timeline" className="beast-button-secondary">
                 What changed
               </Link>
