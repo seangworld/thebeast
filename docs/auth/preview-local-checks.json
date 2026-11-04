@@ -16,8 +16,10 @@
     1440
   ],
   "browserAuth": "synthetic",
-  "hostedPreview": "pending",
+  "hostedPreview": "first protected READY; canonical server binding corrected; replacement deployment pending",
   "liveAcceptance": "pending",
   "productionPromoted": false,
-  "beastguideCutover": false
+  "beastguideCutover": false,
+  "canonicalServiceReadRPC": "passed",
+  "productionEnvironmentChanged": false
 }

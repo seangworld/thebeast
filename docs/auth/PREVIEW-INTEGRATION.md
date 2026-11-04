@@ -46,9 +46,12 @@ integration branch.
 
 Only candidate-branch Preview variables may be changed. Both public Supabase URL
 and public key are verified through canonical Auth settings; email confirmation is
-still required. SUPABASE_SERVICE_ROLE_KEY is inherited from the existing sensitive
-Preview configuration, without extracting it. Its canonical usability must be
-verified through the deployed gateway before any acceptance account operation.
+still required. The inherited generic Preview server credential failed the canonical rate RPC.
+The existing canonical service-role key was then verified through the supported
+Supabase CLI and a service-only read RPC, and bound as a sensitive variable only
+to this candidate branch. No key was created/rotated, no value was printed/committed,
+and no Production environment variable or Supabase setting changed. The updated
+deployment must pass gateway readiness before any acceptance account operation.
 BEAST_AUTH_RATE_SECRET is a candidate-only random HMAC key, never public or logged.
 No service/admin key is included in the browser bundle or source-control artifacts.
 
@@ -107,3 +110,15 @@ Production promotion remains gated until the owner reviews evidence and approves
 
 Hosted Preview and live owner acceptance results are recorded separately after
 execution. A local pass does not authorize Production promotion.
+
+## Hosted preparation result
+
+First protected deployment dpl_HKB74A7cohY18spFbmsbUS4ZHYE6 built READY with the full
+remote audit/build gate and zero advisories. Anonymous requests redirect to Vercel
+SSO; authenticated CLI/browser access succeeds and the username UI is mounted.
+The anonymous gateway readiness probe failed closed at rate_limit, identifying
+the inherited generic Preview credential mismatch. The candidate-only canonical
+server binding is now verified; a fresh deployment is required to consume it.
+No owner credentials, verification emails, claims or registration records were
+submitted during this readiness probe. Existing-email login and real account
+acceptance remain pending. Production promotion is not authorized by these checks.
