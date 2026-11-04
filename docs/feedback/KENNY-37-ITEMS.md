@@ -33,7 +33,7 @@ Owner requested implementation November 4, 2026. Executor: Codex. Two review bra
 | 25 | Concert/event provider | Ticketmaster coverage/quotas/terms evaluated; commercial/storage approval and access pending. |
 | 26 | UFC/PPV schedules | Sports free limits reviewed; complete coverage/rights not established. Manual events retained; no paid provider. |
 | 27 | Sports artwork | Released official Chiefs URL/fallback retained. No artwork regression introduced; official source rechecked during this work: HTTP 200, image/svg+xml. |
-| 28 | Kenny/other-user defects | Specific startup dependency fixed in candidate. Additional actual error details/tester reports remain pending; no fabricated defect resolution. |
+| 28 | Kenny/other-user defects | Specific startup dependency fixed in candidate. Current hosted Guide verification callback is missing from canonical allowlist, causing fallback to BeastOS Site URL; exact one-URL repair awaits security/release approval. Additional tester reports remain pending. |
 | 29 | Protect fixes/isolation/data/rollback | Existing release gates retained; no new hosted writes. Current working rollback remains PR #6 deployment dpl_8XRqjSTvXMCKRL1XNugbAxkeFuc3; serving PR #7 dpl_2RceGBX1UokoLWajsNRge8KXCh5J is unchanged. |
 | 30 | iPhone/iPad application | Deferred until web/auth candidate stable and approved. |
 | 31 | Native canonical Beast login | Deferred with native packaging; no separate identity project. |
