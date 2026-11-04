@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import { createElement } from 'react';
+import {renderToString} from 'react-dom/server';
 import { render, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import * as setup from '../src/lib/auth/accountSetup';
 import { UniversalAuth } from '../src/app/components/auth/UniversalAuth';
 
 function browser() {
@@ -19,6 +21,7 @@ test('shared login submits credentials only to same-origin gateway and clears pa
   try {
     let signedIn=0;const requests:Array<{url:string;input:RequestInit|undefined}>=[];
     globalThis.fetch=async(url,input)=>{requests.push({url:String(url),input});return new Response(JSON.stringify({message:'Signed in.'}),{status:200})};
+    const serverHtml=renderToString(createElement(UniversalAuth,{onSignedIn:()=>{}}));assert.match(serverHtml, /<form[^>]*method="post"/);assert.match(serverHtml, /<button[^>]*disabled/);
     const view=render(createElement(UniversalAuth,{onSignedIn:()=>{signedIn++}}));
     const username=view.getByLabelText('Username') as HTMLInputElement,password=view.getByLabelText('Password') as HTMLInputElement;
     assert.equal(password.autocomplete,'current-password');
@@ -44,16 +47,32 @@ test('registration requires username/email/password and waits for one-time verif
 test('claim UI binds the verified subject and submits no client-selected ownership', async()=>{
  const restore=browser();const Module=require('node:module');const originalLoad=Module._load;
  try {
-  const client={auth:{getUser:async()=>({data:{user:{id:'fixture-subject',email_confirmed_at:'2026-11-03'}},error:null})}};
-  Module._load=function(name:string,...args:unknown[]){if(name==='@/lib/supabase/client')return{createClient:()=>client};return originalLoad.call(this,name,...args)};
+  let currentUsername:string|null=null;const client={rpc:async()=>({data:currentUsername,error:null}),auth:{getUser:async()=>({data:{user:{id:'fixture-subject',email_confirmed_at:'2026-11-03'}},error:null})}};
+  Module._load=function(name:string,...args:unknown[]){if(name==='@/lib/auth/accountSetup')return setup;if(name==='@/lib/supabase/client')return{createClient:()=>client};return originalLoad.call(this,name,...args)};
   const {UsernameClaim}=require('../src/app/components/auth/UsernameClaim') as typeof import('../src/app/components/auth/UsernameClaim');
   Module._load=originalLoad;
   let body:Record<string,unknown>|undefined;
-  globalThis.fetch=async(_url,input)=>{body=JSON.parse(String(input?.body));return new Response(JSON.stringify({message:'Username claimed.'}),{status:200})};
+  globalThis.fetch=async(_url,input)=>{body=JSON.parse(String(input?.body));return new Response(JSON.stringify({message:'Username claimed.',username:'fixture_username'}),{status:200})};
   const view=render(createElement(UsernameClaim));
+  await waitFor(()=>assert.ok(view.getByLabelText('Login username')));
   fireEvent.change(view.getByLabelText('Login username'),{target:{value:'fixture_username'}});
   fireEvent.submit(view.container.querySelector('form')!);
   await waitFor(()=>assert.equal(view.getByRole('status').textContent,'Username claimed.'));
-  assert.equal(body?.action,'claim');assert.equal(body?.expectedSubject,'fixture-subject');assert.equal(body?.user_id,undefined);
+  assert.equal(body?.action,'claim');assert.equal(body?.expectedSubject,'fixture-subject');assert.equal(body?.user_id,undefined);assert.ok(view.getByText('fixture_username'));assert.equal(view.container.querySelector('form'),null);
+  view.unmount();currentUsername='preserved_username';const existing=render(createElement(UsernameClaim));await waitFor(()=>assert.ok(existing.getByText('preserved_username')));assert.equal(existing.container.querySelector('input'),null);
  } finally {Module._load=originalLoad;restore()}
+});
+
+test('username email recovery never creates users and uses the same private notice for unknown addresses',async()=>{
+ const restore=browser();const Module=require('node:module');const originalLoad=Module._load;
+ try{
+  const requests:Array<{email:string;options:{shouldCreateUser:boolean;emailRedirectTo:string}}>=[];
+  const client={auth:{signInWithOtp:async(input:{email:string;options:{shouldCreateUser:boolean;emailRedirectTo:string}})=>{requests.push(input);return {error:{code:'user_not_found'}}}}};
+  Module._load=function(name:string,...args:unknown[]){if(name==='@/lib/supabase/client')return{createClient:()=>client};if(name==='@/lib/auth/experience')return require('../src/lib/auth/experience');return originalLoad.call(this,name,...args)};
+  const {AccountRecoveryEmail}=require('../src/app/components/auth/AccountRecoveryEmail') as typeof import('../src/app/components/auth/AccountRecoveryEmail');Module._load=originalLoad;
+  const serverHtml=renderToString(createElement(AccountRecoveryEmail,{kind:'username'}));assert.match(serverHtml, /<form[^>]*method="post"/);assert.match(serverHtml, /<button[^>]*disabled/);
+  const view=render(createElement(AccountRecoveryEmail,{kind:'username'}));fireEvent.change(view.getByLabelText('Registered email address'),{target:{value:'unknown@example.test'}});fireEvent.submit(view.container.querySelector('form')!);
+  await waitFor(()=>assert.match(view.getByRole('status').textContent||'',/If this address can receive/));assert.equal(requests[0].options.shouldCreateUser,false);assert.equal(new URL(requests[0].options.emailRedirectTo).searchParams.get('next'),'/dashboard/settings/profile#account-username');
+  fireEvent.submit(view.container.querySelector('form')!);assert.equal(requests.length,1);assert.match(view.getByRole('status').textContent||'',/one minute/);
+ }finally{Module._load=originalLoad;restore()}
 });

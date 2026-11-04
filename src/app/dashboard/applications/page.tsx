@@ -1,0 +1,7 @@
+import Link from 'next/link';
+import {beastModuleRegistry, MODULE_VISIBILITY_LABELS} from '@/lib/moduleRegistry';
+export default function ApplicationsPage(){return <main className="beast-page"><div className="beast-container space-y-6"><h1 className="beast-title">Beast applications</h1><p>One Beast account. Each application retains its own access requirements, records and release status.</p><div className="grid gap-5 md:grid-cols-2">
+{beastModuleRegistry.filter(entry=>entry.visibility!=='adminOnly'&&entry.identifier!=='admin').map(entry=><article key={entry.id} className="beast-card space-y-3 p-5"><h2 className="text-xl font-black">{entry.name}</h2><p>{MODULE_VISIBILITY_LABELS[entry.visibility]} · {entry.status} · {entry.version}</p>{entry.enabled&&entry.href&&entry.visibility!=='disabled'&&entry.status!=='planned'?<Link href={entry.href} className="beast-button-secondary inline-flex">Open {entry.name}</Link>:<p>Not available to launch.</p>}</article>)}
+{process.env.NEXT_PUBLIC_BEASTGUIDE_ENABLED!=='true'&&<article className="beast-card space-y-3 p-5"><h2 className="text-xl font-black">BeastGuide</h2><p>Standalone web available. BeastOS integration is not enabled here.</p><a href="https://beastguide.seangworld.com" className="beast-button-secondary inline-flex">Open BeastGuide website</a><p className="text-sm">A separate browser session may require sign-in.</p></article>}
+<article className="beast-card p-5"><h2 className="text-xl font-black">BeastVA and BeastGames</h2><p>Standalone apps are not available here yet.</p></article>
+</div></div></main>}

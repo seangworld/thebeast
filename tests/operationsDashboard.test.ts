@@ -9,6 +9,7 @@ import { operationsLinks, isOwnerWorkspacePath, isOperationsLinkActive } from ".
 import { beastAdminNavigation, buildOwnerNavigationForPersona } from "../src/lib/moduleNavigation";
 import { canAccessBeastAdmin } from "../src/lib/beastAdmin";
 import * as configuration from "../src/lib/supabase/config";
+import * as accountSetup from "../src/lib/auth/accountSetup";
 import * as authExperience from "../src/lib/auth/experience";
 
 test("SEANGWORLD HQ destinations exist and business controls leave BeastAdmin", async () => {
@@ -81,6 +82,7 @@ function middlewareFor({ role = "admin", signedIn = true, profileError = false, 
     if (name === "next/server") return { NextResponse };
     if (name === "@supabase/ssr") return { createServerClient: () => client };
     if (name === "@/lib/supabase/config") return configuration;
+    if (name === "@/lib/auth/accountSetup") return accountSetup;
     if (name === "@/lib/auth/experience") return authExperience;
     if (name === "@/lib/moduleRegistry" || name === "@/lib/memberAgeEntitlements") return {};
     throw new Error(`Unexpected dependency ${name}`);

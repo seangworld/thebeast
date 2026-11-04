@@ -74,7 +74,12 @@ test("SW-AUTH-004 Supabase template files keep required placeholders and trust l
 
     if (kind === "welcome") {
       assert.match(source, /\{\{ \.SiteURL \}\}/);
-    } else if (kind === "verify_email" || kind === "email_change") {
+    } else if (kind === "verify_email") {
+      assert.equal((source.match(/\{\{ \.ConfirmationURL \}\}/g) || []).length, 2);
+      assert.doesNotMatch(source, /\{\{ \.TokenHash \}\}/);
+      assert.match(source, /one time/i);
+      assert.match(source, /expires soon/i);
+    } else if (kind === "email_change") {
       assert.match(source, /\{\{ \.RedirectTo \}\}/);
       assert.match(source, /\{\{ \.TokenHash \}\}/);
       assert.match(source, /one time/i);

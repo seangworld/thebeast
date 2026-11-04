@@ -12,6 +12,7 @@ import {
 } from "@/lib/platform/identity";
 import {
   buildAuthCallbackUrl,
+  buildRegistrationCallbackUrl,
   buildForgotPasswordPath,
   buildAuthLoginPath,
   getAuthErrorMessage,
@@ -221,7 +222,7 @@ function LoginExperience() {
             email: normalizedEmail,
             password,
             options: {
-              emailRedirectTo: buildAuthCallbackUrl(
+              emailRedirectTo: buildRegistrationCallbackUrl(
                 getBeastAuthOrigin(
                   window.location.origin,
                   process.env.NEXT_PUBLIC_BEAST_SITE_URL
@@ -465,10 +466,10 @@ function LoginExperience() {
               </div>
             ) : null}
 
-            {process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true" && <UniversalAuth key={intent} action={intent === "create-account" ? "register" : "login"} recoveryHref={`${process.env.NEXT_PUBLIC_BEAST_AUTH_EMAIL_ORIGIN || ""}${buildForgotPasswordPath(destination)}`} onSignedIn={() => window.location.assign(destination)} />}
+            {process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true" && <UniversalAuth destination={destination} key={intent} action={intent === "create-account" ? "register" : "login"} recoveryHref={`${process.env.NEXT_PUBLIC_BEAST_AUTH_EMAIL_ORIGIN || ""}${buildForgotPasswordPath(destination)}`} onSignedIn={() => window.location.assign(destination)} />}
             <details className="mt-5 text-left" open={process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED !== "true"}>
               <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold text-[#7dd3fc]">Existing email sign-in options</summary>
-            <form className="mt-5 text-left" onSubmit={authenticate} data-analytics-event="auth_initiated" data-analytics-category={method === "password" ? "password" : "magic_link"} data-analytics-status="started">
+            <form method="post" className="mt-5 text-left" onSubmit={authenticate} data-analytics-event="auth_initiated" data-analytics-category={method === "password" ? "password" : "magic_link"} data-analytics-status="started">
               <label htmlFor="email" className="text-sm font-bold text-white">
                 Email address
               </label>

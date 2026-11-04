@@ -5,6 +5,8 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUsername, validPassword } from '../src/lib/auth/universal/policy';
+import * as setup from '../src/lib/auth/accountSetup';
+import {buildRegistrationCallbackUrl} from '../src/lib/auth/experience';
 import * as policy from '../src/lib/auth/universal/policy';
 
 test('username canonicalization rejects ambiguous and unsafe identifiers', () => {
@@ -15,7 +17,7 @@ test('username canonicalization rejects ambiguous and unsafe identifiers', () =>
   assert.equal(validPassword('😀'.repeat(19)), false);
 });
 
-function gateway(options: { limited?: boolean; known?: boolean; enabled?: boolean; authenticated?: boolean; verified?: boolean; disabled?: boolean; sessionAllowed?: boolean; claimUser?: boolean; wrongSubject?: boolean; rpcFailure?: boolean; captchaRequired?: boolean } = {}) {
+function gateway(options: { limited?: boolean; known?: boolean; enabled?: boolean; authenticated?: boolean; verified?: boolean; disabled?: boolean; sessionAllowed?: boolean; claimUser?: boolean; wrongSubject?: boolean; rpcFailure?: boolean; captchaRequired?: boolean; signupError?: boolean } = {}) {
   const calls: string[] = [];
   const signups: Array<Record<string, unknown>> = [];
   const rpcInputs: Array<{ name: string; args: Record<string, unknown> }> = [];
@@ -24,10 +26,12 @@ function gateway(options: { limited?: boolean; known?: boolean; enabled?: boolea
     auth: { admin: { getUserById: async () => ({ data: { user: { email: 'private@example.com' } }, error: null }) } },
   };
   let stageCookie: (() => void) | undefined;
+  let stageVerifier: (() => void) | undefined;
   const user = { id: options.wrongSubject ? 'other-id' : 'existing-id', email_confirmed_at: options.verified === false ? null : '2026-11-03', app_metadata: { is_disabled: options.disabled === true } };
   const auth = {
-    rpc: async () => ({ data: options.sessionAllowed !== false, error: null }),
+    rpc: async (name: string) => ({ data: name === 'beast_auth_current_username' ? (options.known && options.claimUser ? 'beast' : null) : options.sessionAllowed !== false, error: null }),
     auth: {
+      signUp: async (input: Record<string, unknown>) => { signups.push(input);stageVerifier?.();stageCookie?.();return {data:{user:null,session:null},error:options.signupError?{code:'unexpected_failure'}:null}; },
       getUser: async () => ({ data: { user: options.claimUser ? user : null }, error: null }),
       signInWithPassword: async () => { calls.push('password'); if (options.authenticated) stageCookie?.(); return { data: { user: options.authenticated ? user : null, session: options.authenticated ? { access_token: 'fixture' } : null }, error: options.authenticated ? null : new Error('invalid') }; },
       signOut: async (input: { scope: string }) => { calls.push('signout:' + input.scope); return { error: null }; },
@@ -38,11 +42,12 @@ function gateway(options: { limited?: boolean; known?: boolean; enabled?: boolea
   const exports: { POST?: (request: NextRequest) => Promise<NextResponse> } = {};
   vm.runInNewContext(js, { exports, require: (name: string) => {
     if (name === 'next/server') return { NextResponse };
-    if (name === '@supabase/ssr') return { createServerClient: (_url: string, _key: string, config: { cookies: { setAll: (values: unknown[]) => void } }) => { stageCookie = () => config.cookies.setAll([{ name: 'sb-fixture-auth-token', value: 'session', options: { path: '/', httpOnly: true, secure: true, sameSite: 'lax', maxAge: 31536000 } }]); return auth; } };
-    if (name === '@supabase/supabase-js') return { createClient: () => ({ auth: { signUp: async (input: Record<string, unknown>) => { signups.push(input); return { data: { user: null, session: null }, error: null }; } } }) };
+    if (name === '@supabase/ssr') return { createServerClient: (_url: string, _key: string, config: { cookies: { setAll: (values: unknown[]) => void } }) => { stageCookie = () => config.cookies.setAll([{ name: 'sb-fixture-auth-token', value: 'session', options: { path: '/', httpOnly: true, secure: true, sameSite: 'lax', maxAge: 31536000 } }]); stageVerifier = () => config.cookies.setAll([{name:'sb-fixture-code-verifier',value:'pkce-fixture',options:{path:'/',secure:true,sameSite:'lax'}}]);return auth; } };
+    if (name === '@supabase/supabase-js') return { createClient: () => ({ auth: { signUp: async (input: Record<string, unknown>) => { signups.push(input); return { data: { user: null, session: null }, error: options.signupError ? {code:'unexpected_failure'} : null }; } } }) };
     if (name.endsWith('/admin')) return { createAdminClient: () => admin };
     if (name.endsWith('/config')) return { requireSupabasePublicConfiguration: () => ({ url: 'https://canonical.supabase.co', publicKey: 'public' }) };
-    if (name.endsWith('/experience')) return { isDisabledBeastUser: () => options.disabled === true };
+    if (name.endsWith('/experience')) return { isDisabledBeastUser: () => options.disabled === true, buildRegistrationCallbackUrl };
+    if (name.endsWith('/accountSetup')) return setup;
     if (name.endsWith('/policy')) return policy;
     if (name === 'node:crypto') return require('node:crypto');
     throw new Error(name);
@@ -112,8 +117,8 @@ test('registration uses server-normalized username and existing canonical verifi
   assert.equal(service.signups.length, 1);
   const signup = service.signups[0] as { options: { data: { beast_username: string }; emailRedirectTo: string } };
   assert.equal(signup.options.data.beast_username, 'my_beast');
-  assert.equal(signup.options.emailRedirectTo, 'https://thebeast.seangworld.com/auth/callback?flow=email_verification');
-  assert.equal(result.cookies.getAll().length, 0);
+  assert.equal(signup.options.emailRedirectTo, 'https://beast.test/auth/callback?flow=email_verification&purpose=registration');
+  assert.deepEqual(result.cookies.getAll().map(cookie => cookie.name), ['sb-fixture-code-verifier']);
 });
 test('CAPTCHA follows existing provider policy with optional additional gateway enforcement', async () => {
   const optional = gateway({ known: true, authenticated: true });
@@ -129,4 +134,16 @@ test('claim rejects account switching and a retry of the same owned name is idem
   const owned = gateway({ known: true, claimUser: true });
   assert.equal((await owned.post('https://beast.test', { action: 'claim', expectedSubject: 'existing-id' })).status, 200);
   assert.ok(!owned.calls.includes('beast_auth_claim'));
+});
+
+test('registration rejects a taken username before creating an account and never reports provider failure as email success',async()=>{
+ const taken=gateway({known:true});const result=await taken.post('https://beast.test',{action:'register',email:'new@example.test'});assert.equal(result.status,409);assert.equal(taken.signups.length,0);assert.match((await result.json()).message,/unavailable/);
+ const failed=gateway({signupError:true});const failure=await failed.post('https://beast.test',{action:'register',email:'new@example.test'});assert.equal(failure.status,503);assert.doesNotMatch((await failure.json()).message,/check your email/);
+});
+test('registration preserves only safe local requested-application destinations',async()=>{
+ const service=gateway();await service.post('https://beast.test',{action:'register',email:'new@example.test',next:'/dashboard/beastguide'});const opts=service.signups[0].options as {emailRedirectTo:string};assert.equal(new URL(opts.emailRedirectTo).searchParams.get('next'),'/dashboard/beastguide');
+});
+
+test('registration retains only PKCE proof cookies and never grants an accidental signup session',async()=>{
+ const service=gateway();const result=await service.post('https://beast.test',{action:'register',email:'new@example.test'});assert.equal(result.cookies.get('sb-fixture-code-verifier')?.value,'pkce-fixture');assert.equal(result.cookies.get('sb-fixture-auth-token'),undefined);
 });

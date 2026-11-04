@@ -123,6 +123,7 @@ export const beastOSNavigation: ModuleNavSection = {
 };
 
 export const secondaryNavigation: ModuleNavSection[] = [
+  { label: "Applications", href: "/dashboard/applications", module: "beastos" },
   {
     label: "Relationship Center",
     href: "/dashboard/relationships",
