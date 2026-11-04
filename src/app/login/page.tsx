@@ -12,6 +12,7 @@ import {
 } from "@/lib/platform/identity";
 import {
   buildAuthCallbackUrl,
+  buildRegistrationCallbackUrl,
   buildForgotPasswordPath,
   buildAuthLoginPath,
   getAuthErrorMessage,
@@ -221,7 +222,7 @@ function LoginExperience() {
             email: normalizedEmail,
             password,
             options: {
-              emailRedirectTo: buildAuthCallbackUrl(
+              emailRedirectTo: buildRegistrationCallbackUrl(
                 getBeastAuthOrigin(
                   window.location.origin,
                   process.env.NEXT_PUBLIC_BEAST_SITE_URL

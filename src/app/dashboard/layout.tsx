@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import { OperationsFrame } from "./operations/OperationsFrame";
 import { isOwnerWorkspacePath } from "@/lib/operationsNavigation";
+import {RegistrationConfirmation} from '@/app/components/auth/RegistrationConfirmation';
 import LogoutButton from "@/app/components/LogoutButton";
 import AdminViewAsControl from "@/app/components/AdminViewAsControl";
 import { createClient } from "@/lib/supabase/client";
@@ -1088,7 +1089,7 @@ export default function DashboardLayout({
             <LogoutButton />
           </nav>
         </header>
-        <div data-beast-main-content>{children}</div>
+        <div data-beast-main-content><RegistrationConfirmation />{children}</div>
       </div>
 
       {dashboardGuardResolved && !resolvingDashboardAccess && authenticatedMemberId ? (

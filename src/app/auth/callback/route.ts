@@ -7,6 +7,7 @@ import {
   getAuthErrorState,
   getSafeAuthDestination,
   isDisabledBeastUser,
+  registrationReturnPath,
 } from "@/lib/auth/experience";
 import { buildEmailVerificationFailurePath } from "@/lib/auth/emailWorkflows";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -155,6 +156,10 @@ export async function GET(request: NextRequest) {
       buildAuthLoginPath(destination, "account_disabled")
     );
     return response;
+  }
+
+  if (request.nextUrl.searchParams.get('purpose') === 'registration' && user.email_confirmed_at) {
+    setRedirectLocation(response, request, registrationReturnPath(destination));
   }
 
   if (isInvitation) {

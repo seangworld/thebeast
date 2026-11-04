@@ -19,7 +19,7 @@ Owner requested implementation November 4, 2026. Executor: Codex. Two review bra
 | 11 | Resend verification | Candidate public recovery page, generic response and cooldown; existing authenticated resend retained. No signup call. |
 | 12 | Account-change notifications | Pending hosted security-notification/template review and username application-mail path. |
 | 13 | Persistent sessions/logout/revocation | Existing controls retained; candidate setup checks revoked/disabled sessions. Existing test coverage retained; fresh physical-device acceptance pending. |
-| 14 | Return to originally requested app | Candidate safe local destination carried through registration callback and setup; external redirects rejected. Standalone cross-domain return awaits SSO. |
+| 14 | Return to originally requested app | Candidate retains initiating app through registration/verification, confirms verified success, and carries safe requested workspace/Guide page through explicit setup return. Foreign URLs rejected. SSO remains separate and unimplemented. |
 | 15 | BeastGuide menu + dashboard | Existing flag/entitlement-aware menu retained; candidate dashboard shortcut plus Applications link. No feature flag override. |
 | 16 | Application directory | Candidate registry-backed directory with actual statuses/links; no invented launches. |
 | 17 | Preserve BeastOS PWA | Manifest, worker and installation implementation unchanged; existing tests retained. Physical phone install not repeated. |

@@ -50,8 +50,9 @@ export function UniversalAuth({ action = 'login', getCaptchaToken, onSignedIn, r
       {action === 'register' && <p className="text-xs leading-5 text-[#9da9b9]">Use 12–72 characters with a letter and a number. Verify your email once, then sign in with your username and password.</p>}
       <button disabled={busy || !ready} className="beast-button min-h-[48px] w-full disabled:opacity-60" type="submit">{busy ? 'Please wait…' : action === 'login' ? 'Sign in with username' : 'Create Beast account'}</button>
     </form>}
+    {registered && <p className="mt-3">Registration request received. After verification, you will return to the Beast application you requested.</p>}
     <p role="status" aria-live="polite" className="mt-3 text-sm leading-6 text-[#c7cfdb]">{message}</p>
-    <nav className="mt-4 flex flex-wrap gap-4 text-sm font-bold text-[#7dd3fc]" aria-label="Account help"><a href="/forgot-username">Forgot username?</a><a href="/resend-verification">Resend verification</a><a href="/login-help">Login help / FAQ</a></nav>
+    <nav className="mt-4 flex flex-wrap gap-4 text-sm font-bold text-[#7dd3fc]" aria-label="Account help"><a href="/forgot-username">Forgot username?</a><a href={`/resend-verification?next=${encodeURIComponent(destination)}`}>Resend verification</a><a href="/login-help">Login help / FAQ</a></nav>
     {action === 'login' && <a className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[#7dd3fc]" href={recoveryHref}>Forgot password?</a>}
   </section>;
 }

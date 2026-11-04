@@ -6,7 +6,7 @@ import ts from 'typescript';
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUsername, validPassword } from '../src/lib/auth/universal/policy';
 import * as setup from '../src/lib/auth/accountSetup';
-import {getSafeAuthDestination} from '../src/lib/auth/experience';
+import {buildRegistrationCallbackUrl} from '../src/lib/auth/experience';
 import * as policy from '../src/lib/auth/universal/policy';
 
 test('username canonicalization rejects ambiguous and unsafe identifiers', () => {
@@ -46,7 +46,7 @@ function gateway(options: { limited?: boolean; known?: boolean; enabled?: boolea
     if (name === '@supabase/supabase-js') return { createClient: () => ({ auth: { signUp: async (input: Record<string, unknown>) => { signups.push(input); return { data: { user: null, session: null }, error: options.signupError ? {code:'unexpected_failure'} : null }; } } }) };
     if (name.endsWith('/admin')) return { createAdminClient: () => admin };
     if (name.endsWith('/config')) return { requireSupabasePublicConfiguration: () => ({ url: 'https://canonical.supabase.co', publicKey: 'public' }) };
-    if (name.endsWith('/experience')) return { isDisabledBeastUser: () => options.disabled === true, getSafeAuthDestination };
+    if (name.endsWith('/experience')) return { isDisabledBeastUser: () => options.disabled === true, buildRegistrationCallbackUrl };
     if (name.endsWith('/accountSetup')) return setup;
     if (name.endsWith('/policy')) return policy;
     if (name === 'node:crypto') return require('node:crypto');
@@ -117,7 +117,7 @@ test('registration uses server-normalized username and existing canonical verifi
   assert.equal(service.signups.length, 1);
   const signup = service.signups[0] as { options: { data: { beast_username: string }; emailRedirectTo: string } };
   assert.equal(signup.options.data.beast_username, 'my_beast');
-  assert.equal(signup.options.emailRedirectTo, 'https://beast.test/auth/callback?flow=email_verification');
+  assert.equal(signup.options.emailRedirectTo, 'https://beast.test/auth/callback?flow=email_verification&purpose=registration');
   assert.deepEqual(result.cookies.getAll().map(cookie => cookie.name), ['sb-fixture-code-verifier']);
 });
 test('CAPTCHA follows existing provider policy with optional additional gateway enforcement', async () => {

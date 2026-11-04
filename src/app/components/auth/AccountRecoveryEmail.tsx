@@ -1,9 +1,9 @@
 'use client';
 import {useEffect, useRef, useState, type FormEvent} from 'react';
 import {createClient} from '@/lib/supabase/client';
-import {buildAuthCallbackUrl} from '@/lib/auth/experience';
+import {buildAuthCallbackUrl,buildRegistrationCallbackUrl} from '@/lib/auth/experience';
 
-export function AccountRecoveryEmail({kind}: {kind:'username'|'verification'}) {
+export function AccountRecoveryEmail({kind,destination='/dashboard/today'}: {kind:'username'|'verification';destination?:string}) {
   const [message,setMessage]=useState(''),[busy,setBusy]=useState(false);
   const [ready,setReady]=useState(false);useEffect(()=>setReady(true),[]);
   const lock=useRef(false),lastRequest=useRef(0);
@@ -14,7 +14,7 @@ export function AccountRecoveryEmail({kind}: {kind:'username'|'verification'}) {
     lock.current=true;setBusy(true);
     try{
       const client=createClient();
-      const callback=buildAuthCallbackUrl(window.location.origin,'/dashboard/settings/profile#account-username');
+      const callback=kind==='username'?buildAuthCallbackUrl(window.location.origin,'/dashboard/settings/profile#account-username'):buildRegistrationCallbackUrl(window.location.origin,destination);
       if(kind==='username')await client.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:callback}});
       else await client.auth.resend({type:'signup',email,options:{emailRedirectTo:callback}});
       // Deliberately identical for existing, unknown, unverified and rate-limited accounts.

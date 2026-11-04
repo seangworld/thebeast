@@ -60,7 +60,7 @@ export function getSafeAuthDestination(value?: string | null) {
       destination.origin !== "https://beast.local" ||
       (destination.pathname !== protectedDestinationPrefix &&
         !destination.pathname.startsWith(`${protectedDestinationPrefix}/`) &&
-        !publicPurchaseReturnPaths.has(destination.pathname))
+        !publicPurchaseReturnPaths.has(destination.pathname) && destination.pathname !== "/account-setup")
     ) {
       return BEAST_OS_LANDING_PATH;
     }
@@ -338,4 +338,17 @@ export function validateBeastPassword(password: string): BeastPasswordValidation
     valid: requirements.every((requirement) => requirement.met),
     requirements,
   };
+}
+
+/** Registration stays on its initiating BeastOS origin and retains the safe local destination. */
+export function buildRegistrationCallbackUrl(origin: string, destination?: string | null) {
+  const callback = new URL(buildAuthCallbackUrl(origin, destination));
+  callback.searchParams.set('flow', 'email_verification');
+  callback.searchParams.set('purpose', 'registration');
+  return callback.toString();
+}
+export function registrationReturnPath(destination?: string | null) {
+  const path = new URL(getSafeAuthDestination(destination), 'https://beast.local');
+  path.searchParams.set('registration', 'complete');
+  return path.pathname + path.search + path.hash;
 }

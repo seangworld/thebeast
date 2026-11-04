@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireSupabasePublicConfiguration } from '@/lib/supabase/config';
 import { isDisabledBeastUser } from '@/lib/auth/experience';
 import { usernameClaimFailure } from '@/lib/auth/accountSetup';
-import { getSafeAuthDestination } from '@/lib/auth/experience';
+import { buildRegistrationCallbackUrl } from '@/lib/auth/experience';
 import { AUTH_FAILURE, normalizeUsername, REGISTRATION_NOTICE, validPassword } from '@/lib/auth/universal/policy';
 
 export const runtime = 'nodejs';
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       const registration = await auth.auth.signUp({ email: input.email, password: input.password, options: {
         captchaToken: input.captchaToken,
         data: { beast_username: username },
-        emailRedirectTo: (() => { const callback = new URL('/auth/callback', request.nextUrl.origin); callback.searchParams.set('flow', 'email_verification'); const destination = getSafeAuthDestination(input.next); if(destination !== '/dashboard/today') callback.searchParams.set('next', destination); return callback.toString(); })(),
+        emailRedirectTo: buildRegistrationCallbackUrl(request.nextUrl.origin, input.next),
       } });
       if (registration.error && !['user_already_exists','email_exists'].includes(registration.error.code || '')) return reply('Registration could not be completed. Please retry, or use login help if you already have an account.', 503);
       const notice = reply(REGISTRATION_NOTICE);
