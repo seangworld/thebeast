@@ -94,3 +94,16 @@ and generic-failure behavior, exact canonical target, signed-in verified claims,
 real username/password login, persistence, new registration and one-time verification,
 recovery, and existing profile access. Keep live test results separate from mocks.
 Production promotion remains gated until the owner reviews evidence and approves it.
+
+## Local checks on the auth-only candidate
+
+- Production baseline: 3a41e80a; no BeastGuide application/cutover diff is included.
+- Full suite: 2,687 passed, zero failed, including fifteen focused gateway/UI tests.
+- TypeScript noEmit and full Next lint passed without warnings/errors.
+- Eleven local PostgreSQL check groups passed; the SQL file is unchanged.
+- Clean npm ci --ignore-scripts reproduced the lockfile; audit reports zero findings.
+- Complete npm run build passed, including the unchanged audit and dossier gates.
+- Release browser smoke passes 390/844/1440px, with synthetic submissions only.
+
+Hosted Preview and live owner acceptance results are recorded separately after
+execution. A local pass does not authorize Production promotion.

@@ -1,5 +1,19 @@
 # Shared authentication execution record — November 3, 2026
 
+## Current retained database state
+
+Version 20261103235724 is installed in both the development/data project and
+canonical production thebeast. The owner reviewed and retained the production
+migration. The two production fingerprint differences were resolved read-only:
+only existing push-scheduler timestamps changed; reconstructing those timestamps
+inside SELECT expressions reproduced both saved baselines exactly. Existing
+account/profile records and original Auth triggers remain intact. No rollback
+was performed. Historical development execution notes below remain historical.
+
+Canonical application integration is being validated on a protected Preview;
+Production application promotion and BeastGuide identity cutover remain gated.
+No schema, trigger or SMTP changes are included in this application work.
+
 ## Latest result — development migration accepted
 
 This section supersedes the earlier connector-blocked execution status below.

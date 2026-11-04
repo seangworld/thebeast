@@ -1,0 +1,23 @@
+{
+  "productionBase": "3a41e80a7bcaf2708ca1d4690888a562f34859bc",
+  "unitTests": {
+    "passed": 2687,
+    "failed": 0
+  },
+  "focusedGatewayAndUITests": 15,
+  "postgresCheckGroups": 11,
+  "typeScript": "passed",
+  "lint": "passed",
+  "auditVulnerabilities": 0,
+  "productionBuild": "passed",
+  "browserViewports": [
+    390,
+    844,
+    1440
+  ],
+  "browserAuth": "synthetic",
+  "hostedPreview": "pending",
+  "liveAcceptance": "pending",
+  "productionPromoted": false,
+  "beastguideCutover": false
+}
