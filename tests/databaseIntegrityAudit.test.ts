@@ -39,7 +39,7 @@ test("DB-001 canonical migrations have unique ordered versions", () => {
     .sort();
   const versions = files.map((file) => file.slice(0, 14));
 
-  assert.equal(files.length, 132);
+  assert.equal(files.length, 133);
   assert.equal(new Set(versions).size, versions.length);
   assert.deepEqual(
     files,
@@ -55,13 +55,13 @@ test("DB-001 every canonical public table enables RLS", () => {
   const createdTables = new Set(
     matches(
       sql,
-      /\bcreate\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?([a-z0-9_]+)/gi
+      /\bcreate\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?([a-z0-9_]+)(?![a-z0-9_.])/gi
     )
   );
   const rlsTables = new Set(
     matches(
       sql,
-      /\balter\s+table(?:\s+if\s+exists)?\s+(?:public\.)?([a-z0-9_]+)\s+enable\s+row\s+level\s+security/gi
+      /\balter\s+table(?:\s+if\s+exists)?\s+(?:public\.)?([a-z0-9_]+)(?![a-z0-9_.])\s+enable\s+row\s+level\s+security/gi
     )
   );
 
@@ -79,7 +79,7 @@ test("DB-001 public foreign-key targets exist in the canonical stream", () => {
   const createdTables = new Set(
     matches(
       sql,
-      /\bcreate\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?([a-z0-9_]+)/gi
+      /\bcreate\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?([a-z0-9_]+)(?![a-z0-9_.])/gi
     )
   );
   const referencedTables = new Set(
@@ -108,7 +108,7 @@ test("DB-001 security-definer functions use an explicit search path", () => {
     }
     return [
       header.match(
-        /function\s+(?:public\.)?([a-z0-9_]+)/i
+        /function\s+(?:public\.)?([a-z0-9_]+)(?![a-z0-9_.])/i
       )?.[1] || "unknown",
     ];
   });
@@ -121,13 +121,13 @@ test("DB-001 application table and RPC literals exist in canonical migrations", 
   const createdTables = new Set(
     matches(
       sql,
-      /\bcreate\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?([a-z0-9_]+)/gi
+      /\bcreate\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?([a-z0-9_]+)(?![a-z0-9_.])/gi
     )
   );
   const createdFunctions = new Set(
     matches(
       sql,
-      /\bcreate\s+(?:or\s+replace\s+)?function\s+(?:public\.)?([a-z0-9_]+)/gi
+      /\bcreate\s+(?:or\s+replace\s+)?function\s+(?:public\.)?([a-z0-9_]+)(?![a-z0-9_.])/gi
     )
   );
   const source = sourceFiles(join(root, "src"))

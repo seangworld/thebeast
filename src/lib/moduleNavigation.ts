@@ -269,6 +269,7 @@ export const beastSecurityNavigation: ModuleNavSection = {
 };
 
 const plannedModuleNavigation: Record<string, ModuleNavSection> = {
+  beastguide: { label: "BeastGuide", href: "/dashboard/beastguide", module: "beastguide" },
   health: {
     label: "BeastHealth",
     href: "/dashboard/health",
@@ -347,7 +348,8 @@ export function buildApplicationNavigationForPersona({
       item.module === "money" ||
       item.module === "learning" ||
       item.module === "health" ||
-      item.module === "home"
+      item.module === "home" ||
+      item.module === "beastguide"
   );
 }
 

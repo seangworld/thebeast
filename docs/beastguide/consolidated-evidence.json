@@ -1,0 +1,18 @@
+{
+  "targetedRegression": {
+    "passed": 25,
+    "failed": 0
+  },
+  "requiredNpmRunBuild": "passed",
+  "auditVulnerabilities": 0,
+  "artifactFilesVerified": 17,
+  "beastguideApplicationSourceChanged": false,
+  "sourceLibraryRows": 14,
+  "sourceLibraryBaselineHashMatches": true,
+  "episodeProgressRows": 164,
+  "originalProgressRows": 163,
+  "originalProgressExactHashMatches": true,
+  "ownerAcceptedCurrentAuthEvidence": true,
+  "recoveryAndBrowserRestartIndependentlyObserved": false,
+  "productionReleased": false
+}

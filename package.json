@@ -26,7 +26,7 @@
     "supabase:bootstrap-push:production": "node scripts/supabase-migration-guard.mjs bootstrap-push production --confirm-env production",
     "supabase:verify:production": "node scripts/supabase-migration-guard.mjs verify production --confirm-env production",
     "supabase:release-plan": "node scripts/supabase-migration-guard.mjs release-plan",
-    "audit:ci": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs && npm audit",
+    "audit:ci": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs && node scripts/verify-minimatch-compat.mjs && node --test scripts/test-minimatch-compat.mjs && npm audit",
     "audit:prod": "npm audit --omit=dev",
     "test:braces-fork": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs",
     "check:staff-dossiers": "node scripts/check-staff-dossiers.mjs"
@@ -43,6 +43,7 @@
     "jszip": "3.10.1",
     "next": "15.5.28",
     "pdf-lib": "1.17.1",
+    "pg": "8.23.1",
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^3.8.1",
@@ -65,12 +66,12 @@
     "supabase": "^2.109.1",
     "tailwindcss": "^3",
     "typescript": "^5",
-    "braces": "file:vendor/seangworld-braces-3.0.3-beast.1.tgz"
+    "braces": "file:vendor/seangworld-braces-3.0.3-beast.1.tgz",
+    "minimatch": "file:vendor/seangworld-minimatch-compat-11.0.1-beast.3.tgz"
   },
   "overrides": {
     "@typescript-eslint/typescript-estree": {
-      "brace-expansion": "2.1.7",
-      "minimatch": "9.0.7"
+      "brace-expansion": "2.1.7"
     },
     "brace-expansion": "1.1.21",
     "js-yaml": "4.3.2",
@@ -86,6 +87,10 @@
     "braces": "$braces",
     "@vercel/cli-config": {
       "zod": "4.6.6"
+    },
+    "minimatch": "$minimatch",
+    "minimatch-core": {
+      "brace-expansion": "5.0.12"
     }
   }
 }

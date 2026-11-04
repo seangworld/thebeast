@@ -1,0 +1,54 @@
+{
+  "recordedAt": "2026-11-03T03:25:38.923864+00:00",
+  "canonicalBase": "3a41e80a7bcaf2708ca1d4690888a562f34859bc",
+  "beastguideSource": "8d6d13734daa5a65fdedab12192621eabc6fb303",
+  "beastguideTests": {
+    "passed": 40,
+    "failed": 0
+  },
+  "beastosFullSuite": {
+    "passed": 2688,
+    "failed": 0,
+    "concurrency": 4
+  },
+  "nextReleaseCompilation": "passed",
+  "requiredNpmRunBuild": "blocked by 18 moderate minimatch development-tooling audit findings; no bypass",
+  "runtimeAuditVulnerabilities": 0,
+  "staffDossierChecks": "passed; no agent changes",
+  "syntheticBrowser": [
+    "shared SSR-cookie restoration",
+    "no second canonical login",
+    "persisted episode checkmark",
+    "cross-tab preference readback",
+    "other account empty library",
+    "cross-tab sign-out",
+    "390 phone and 844 landscape no horizontal overflow"
+  ],
+  "browserLimit": "synthetic upstream Auth; not live owner identities or two physical devices",
+  "hostedPreviewTLS": "both scoped roles connected with CA/hostname verification, nosuperuser/nobypassrls and connection limit 3",
+  "resendDomainVerified": true,
+  "existingRootMxAndSpfPreserved": true,
+  "smtpChanged": false,
+  "emailsSent": 0,
+  "hostedAuthTriggersChanged": false,
+  "realDataExported": false,
+  "recordsMigratedOrDeleted": false,
+  "productionCutover": false,
+  "applePackagingStarted": false,
+  "actualWrapperTests": {
+    "passed": 5,
+    "failed": 0,
+    "includedInFullSuite": true
+  },
+  "hostedAcceptanceConfiguration": {
+    "project": "thebeast",
+    "target": "preview",
+    "branch": "codex/beastguide-phase1-current",
+    "variables": 10,
+    "databaseCredentialVisibility": "sensitive",
+    "canonicalAuthCallbackAdded": true,
+    "canonicalSiteUrlPreserved": true,
+    "productionVariablesChanged": false,
+    "notice": "isolated test records; production libraries unchanged"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "fixture_rows": 0,
+  "function_privileges": [
+    {
+      "anon": false,
+      "authenticated": false,
+      "fixed_search_path": true,
+      "name": "beast_auth_attempt",
+      "security_definer": true,
+      "service": true
+    },
+    {
+      "anon": false,
+      "authenticated": false,
+      "fixed_search_path": true,
+      "name": "beast_auth_claim",
+      "security_definer": true,
+      "service": true
+    },
+    {
+      "anon": false,
+      "authenticated": false,
+      "fixed_search_path": true,
+      "name": "beast_auth_identity",
+      "security_definer": true,
+      "service": true
+    }
+  ],
+  "installed_sql_md5": "62364bcc1c025f26bb32bfabdf7ea83f",
+  "library": {
+    "count": 14,
+    "digest": "042c71de61d60dadbee99c90c65c4e74"
+  },
+  "migration": [
+    {
+      "name": "universal_authentication",
+      "version": "20261103235724"
+    }
+  ],
+  "new_trigger_enabled": true,
+  "original_trigger_functions": {
+    "handle_new_user_profile()": "fdfc59ff83a7fc7cf0086a27637498fe",
+    "record_beast_email_became_verified()": "ddb84ad997873a25ea67fd0ce46636ee"
+  },
+  "original_triggers": [
+    "CREATE TRIGGER on_auth_user_created_create_profile AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_user_profile()",
+    "CREATE TRIGGER record_beast_email_became_verified AFTER UPDATE OF email_confirmed_at ON auth.users FOR EACH ROW EXECUTE FUNCTION record_beast_email_became_verified()"
+  ],
+  "policies": "46f987cda3f46d6c20712b1493ea8ec9",
+  "profiles": {
+    "count": 12,
+    "digest": "bd3195306bf24ec907b4748b3318b5a6"
+  },
+  "progress": {
+    "count": 164,
+    "digest": "e15c902e3a6191e3bbb064196996184d"
+  },
+  "registry_tables": [
+    {
+      "name": "usernames",
+      "rls": true
+    },
+    {
+      "name": "attempts",
+      "rls": true
+    }
+  ],
+  "users": {
+    "count": 12,
+    "digest": "76080796be13b3a3dbc7574f32bf1356"
+  }
+}

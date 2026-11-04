@@ -1,4 +1,5 @@
 export type PlatformModule =
+  | "beastguide"
   | "beastos"
   | "money"
   | "learning"

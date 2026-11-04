@@ -2,6 +2,7 @@ import type { ModuleKey } from "@/app/components/design/DashboardPrimitives";
 import { versionManifest } from "./appVersion";
 
 export type BeastModuleIdentifier =
+  | "beastguide"
   | "beastos"
   | "money"
   | "learning"
@@ -40,6 +41,14 @@ export type BeastMemberModuleAccessOverride = {
   moduleId: BeastModuleIdentifier;
   enabled: boolean;
 };
+
+export const beastGuideModule: BeastModuleRegistryEntry = {
+    name: "BeastGuide", id: "beastguide", identifier: "beastguide", module: "beastguide",
+    version: "Phase 1", status: "active", visibility: "beta",
+    enabled: true, beta: true,
+    ownerNotes: "Entertainment library and episode progress using the shared Beast account. Controlled acceptance before release.",
+    href: "/dashboard/beastguide", minimumAge: 18,
+  };
 
 export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   {
@@ -152,6 +161,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     minimumAge: 18,
     href: "/dashboard/admin",
   },
+  ...(process.env.NEXT_PUBLIC_BEASTGUIDE_ENABLED === "true" ? [beastGuideModule] : []),
 ];
 
 export function getModuleRegistryEntry(identifier: BeastModuleIdentifier) {

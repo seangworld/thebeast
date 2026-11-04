@@ -1,0 +1,8 @@
+.env*
+.test-dist/
+.next/
+node_modules/
+supabase/.temp/
+playwright-report/
+test-results/
+artifacts/

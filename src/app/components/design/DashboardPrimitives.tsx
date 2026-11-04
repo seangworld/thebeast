@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 export type ModuleKey =
+  | "beastguide"
   | "beastos"
   | "money"
   | "learning"
@@ -22,6 +23,10 @@ export const moduleAccents: Record<
   ModuleKey,
   { label: string; color: string; border: string; bg: string; text: string; soft: string }
 > = {
+  beastguide: {
+    label: "BeastGuide", color: "#06b6d4", border: "border-cyan-400/50",
+    bg: "bg-cyan-400/15", text: "text-cyan-100", soft: "before:bg-[#06b6d4]",
+  },
   beastos: {
     label: "BeastOS",
     color: "#38bdf8",
