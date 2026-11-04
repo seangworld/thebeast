@@ -16,8 +16,8 @@
     1440
   ],
   "browserAuth": "synthetic",
-  "hostedPreview": "first protected READY; canonical server binding corrected; replacement deployment pending",
-  "liveAcceptance": "pending",
+  "hostedPreview": "READY dpl_472x632cZZWBjqcv5EwfzxWUAbUv",
+  "liveAcceptance": "owner accepted; see consolidated release evidence and unobserved limits",
   "productionPromoted": false,
   "beastguideCutover": false,
   "canonicalServiceReadRPC": "passed",

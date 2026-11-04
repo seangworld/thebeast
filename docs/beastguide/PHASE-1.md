@@ -1,3 +1,5 @@
+> Current release authority: [CONSOLIDATED-RELEASE.md](CONSOLIDATED-RELEASE.md). Historical observations below are retained; the owner accepted current auth evidence, the tooling blocker is resolved, and SMTP/Resend proposals are superseded. Unperformed tests remain unperformed.
+
 # BeastGuide in BeastOS — Phase 1 acceptance candidate
 
 Tracks [#308](https://github.com/seangworld/thebeast/issues/308). Canonical base: main `3a41e80a`. Independent BeastGuide source: `seangworld/beastguide`, commit `8d6d137`. This candidate is not released.
