@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { UniversalAuth } from "@/app/components/auth/UniversalAuth";
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -464,6 +465,9 @@ function LoginExperience() {
               </div>
             ) : null}
 
+            {process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true" && <UniversalAuth key={intent} action={intent === "create-account" ? "register" : "login"} recoveryHref={`${process.env.NEXT_PUBLIC_BEAST_AUTH_EMAIL_ORIGIN || ""}${buildForgotPasswordPath(destination)}`} onSignedIn={() => window.location.assign(destination)} />}
+            <details className="mt-5 text-left" open={process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED !== "true"}>
+              <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold text-[#7dd3fc]">Existing email sign-in options</summary>
             <form className="mt-5 text-left" onSubmit={authenticate} data-analytics-event="auth_initiated" data-analytics-category={method === "password" ? "password" : "magic_link"} data-analytics-status="started">
               <label htmlFor="email" className="text-sm font-bold text-white">
                 Email address
@@ -587,6 +591,7 @@ function LoginExperience() {
                 </>
               ) : null}
             </form>
+            </details>
           </>
         )}
 

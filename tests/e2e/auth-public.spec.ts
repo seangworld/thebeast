@@ -27,8 +27,10 @@ for (const viewport of publicAuthViewports) {
     await page.getByRole("button", { name: "Sign Up" }).click();
     const dialog = page.getByRole("dialog", { name: "Create your account" });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("textbox", { name: "Email address" })).toBeFocused();
-    await expect(dialog.getByLabel("Password")).toHaveAttribute(
+    const username = dialog.getByRole("textbox", { name: "Username", exact: true });
+    if (await username.count()) await expect(username).toBeFocused();
+    else await expect(dialog.getByRole("textbox", { name: "Email address" })).toBeFocused();
+    await expect(dialog.getByLabel("Password", { exact: true }).first()).toHaveAttribute(
       "autocomplete",
       "new-password"
     );

@@ -9,6 +9,7 @@ import { personalInformationCanonicalRoute } from "@/lib/platform/personalHub";
 import { profileAge, profileChangeError, profileChanges, profileEditColumns, profileFieldLabels, profileFieldLimit, profileToForm, type EditableProfile, type ProfileField } from "@/lib/platform/profileEditing";
 import { DashboardCard, ModuleBadge, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { AccountEmailWorkflowCard } from "./AccountEmailWorkflowCard";
+import { UsernameClaim } from "@/app/components/auth/UsernameClaim";
 import { AccountPasswordCard } from "./AccountPasswordCard";
 
 class ProfileNotice extends Error {}
@@ -126,7 +127,7 @@ export default function ProfilePage() {
       <aside className="min-w-0 space-y-5">
         <DashboardCard accent="blue"><SectionHeader title={profile ? `Welcome, ${greetingName}` : "Your greeting"} description="A preview of how Beast greets you. Save changes to update it." /></DashboardCard>
         <DashboardCard accent="goals"><SectionHeader title="Your plans and records" description="Keep your goals and documents within reach." /><div className="mt-4 flex flex-wrap gap-3"><Link href="/dashboard/goals" className="beast-button-secondary">Your goals</Link><Link href="/dashboard/uploads" className="beast-button-secondary">Your documents</Link></div></DashboardCard>
-        <section id="account-settings" aria-label="Email and password" className="scroll-mt-24 space-y-5"><AccountEmailWorkflowCard /><AccountPasswordCard /></section>
+        <section id="account-settings" aria-label="Email and password" className="scroll-mt-24 space-y-5">{process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true" && <UsernameClaim />}<AccountEmailWorkflowCard /><AccountPasswordCard /></section>
       </aside>
     </div>
   </div></main>;
