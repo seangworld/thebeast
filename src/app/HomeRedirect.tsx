@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { UniversalAuth } from "@/app/components/auth/UniversalAuth";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -65,7 +66,10 @@ function AuthenticationDialog({
 
     if (open && !dialog.open) {
       dialog.showModal();
-      window.setTimeout(() => emailRef.current?.focus(), 0);
+      window.setTimeout(() => {
+        if (process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true") dialog.querySelector<HTMLInputElement>('input[name="username"]')?.focus();
+        else emailRef.current?.focus();
+      }, 0);
     } else if (!open && dialog.open) {
       dialog.close();
     }
@@ -279,6 +283,10 @@ function AuthenticationDialog({
             </button>
           </div>
         ) : (
+          <>
+          {process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true" && <UniversalAuth key={intent} action={intent === "create-account" ? "register" : "login"} recoveryHref={`${process.env.NEXT_PUBLIC_BEAST_AUTH_EMAIL_ORIGIN || ""}/forgot-password`} onSignedIn={() => window.location.assign("/dashboard/today")} />}
+          <details className="mt-4" open={process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED !== "true"}>
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold text-[#7dd3fc]">Existing email sign-in options</summary>
           <form className="mt-6" onSubmit={authenticate} data-analytics-event="auth_initiated" data-analytics-category={method === "password" ? "password" : "magic_link"} data-analytics-status="started">
             <label
               htmlFor={`public-auth-email-${intent}`}
@@ -389,6 +397,8 @@ function AuthenticationDialog({
               </button>
             ) : null}
           </form>
+          </details>
+          </>
         )}
 
         <p className="mt-5 text-center text-xs leading-5 text-[#7f8da3]">

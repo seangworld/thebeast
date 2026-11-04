@@ -47,6 +47,7 @@ Module._load=function(id:string,...args:unknown[]){
     SectionHeader:({title,description}:{title:string;description:string})=>React.createElement("div",null,React.createElement("h2",null,title),description),
   };
   if(id==="./AccountEmailWorkflowCard")return{AccountEmailWorkflowCard:()=>null};
+  if(id==="@/app/components/auth/UsernameClaim")return{UsernameClaim:()=>null};
   if(id==="./AccountPasswordCard")return{AccountPasswordCard:()=>null};
   return originalLoad.call(this,id,...args);
 };

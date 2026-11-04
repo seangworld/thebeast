@@ -1,0 +1,10 @@
+{
+  "name": "@seangworld/minimatch-compat",
+  "version": "11.0.1-beast.3",
+  "private": true,
+  "main": "index.cjs",
+  "license": "ISC",
+  "dependencies": {
+    "minimatch-core": "npm:minimatch@11.0.1"
+  }
+}

@@ -1,0 +1,92 @@
+// Actual PostgreSQL engine, in-process. Does not connect to hosted services.
+// Use the pinned PGlite dependency already present in the BeastGuide checkout.
+import { createRequire } from 'node:module';
+import { readFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+const require = createRequire(`${process.env.BEASTGUIDE_CHECKOUT || '/private/tmp/beastguide-release-20261102'}/package.json`);
+const { PGlite } = require('@electric-sql/pglite');
+const db = new PGlite();
+const migration = await readFile(new URL('../supabase/migrations/20261103235724_universal_authentication.sql', import.meta.url), 'utf8');
+const passed = [];
+try {
+ await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
+ create schema auth; create table auth.users(id uuid primary key, email_confirmed_at timestamptz, raw_user_meta_data jsonb default '{}');
+ create table public.profiles(id uuid primary key references auth.users(id), role text default 'user');
+ create function public.handle_new_user_profile() returns trigger language plpgsql as $$begin insert into public.profiles(id) values(new.id); return new; end$$;
+ create trigger profile_signup after insert on auth.users for each row execute function public.handle_new_user_profile();`);
+ const existing = randomUUID();
+ await db.query('insert into auth.users(id,email_confirmed_at) values($1,now())', [existing]);
+ await db.query("update public.profiles set role='admin' where id=$1", [existing]);
+ const before = (await db.query('select * from profiles order by id')).rows;
+ await db.exec('begin;' + migration + 'commit;');
+ assert.deepEqual((await db.query('select * from profiles order by id')).rows, before);
+ passed.push('additive migration preserves existing account IDs and admin profiles');
+ const untagged=randomUUID();
+ await db.query('insert into auth.users(id) values($1)',[untagged]);
+ assert.equal((await db.query('select role from profiles where id=$1',[untagged])).rows[0].role,'user');
+ assert.equal((await db.query('select count(*)::int n from beast_identity.usernames where user_id=$1',[untagged])).rows[0].n,0);
+ passed.push('untagged signup retains existing profile trigger behavior without creating a username');
+ const originalTriggers=(await db.query("select tgname,pg_get_triggerdef(oid) as definition from pg_trigger where tgrelid='auth.users'::regclass and not tgisinternal and tgname<>'beast_register_username' order by tgname")).rows;
+ await db.exec('begin; drop trigger beast_register_username on auth.users;');
+ const rollbackUser=randomUUID();
+ await db.query(`insert into auth.users(id,raw_user_meta_data) values($1,'{"beast_username":"rollback_test"}')`,[rollbackUser]);
+ assert.equal((await db.query('select role from profiles where id=$1',[rollbackUser])).rows[0].role,'user');
+ assert.equal((await db.query('select count(*)::int n from beast_identity.usernames where user_id=$1',[rollbackUser])).rows[0].n,0);
+ assert.deepEqual((await db.query("select tgname,pg_get_triggerdef(oid) as definition from pg_trigger where tgrelid='auth.users'::regclass and not tgisinternal order by tgname")).rows,originalTriggers);
+ await db.exec('rollback;');
+ passed.push('rollback removes only new trigger and preserves legacy tagged/untagged signup behavior');
+ for (const role of ['anon','authenticated']) {
+  await db.exec(`set role ${role}`);
+  for (const sql of ["select * from beast_identity.usernames", "select * from beast_identity.attempts", "select public.beast_auth_identity('member')", `select public.beast_auth_claim('member','${existing}')`, "select public.beast_auth_attempt(repeat('a',64),10)"]) await assert.rejects(db.query(sql), e=>e.code==='42501');
+  await db.exec('reset role');
+ }
+ passed.push('anon and authenticated cannot read registry/limits or invoke service RPCs');
+ const rls = (await db.query("select relname,relrowsecurity from pg_class where oid in ('beast_identity.usernames'::regclass,'beast_identity.attempts'::regclass)")).rows;
+ assert.equal(rls.length,2); assert.ok(rls.every(x=>x.relrowsecurity));
+ passed.push('both private tables enable RLS');
+ const first=randomUUID(); await db.query(`insert into auth.users(id,raw_user_meta_data) values($1,'{"beast_username":" Member "}')`,[first]);
+ assert.equal((await db.query("select username from beast_identity.usernames where user_id=$1",[first])).rows[0].username,'member');
+ const collision=randomUUID(); await assert.rejects(db.query(`insert into auth.users(id,raw_user_meta_data) values($1,'{"beast_username":"MEMBER"}')`,[collision]),e=>e.code==='23505');
+ assert.equal((await db.query('select count(*)::int n from auth.users where id=$1',[collision])).rows[0].n,0);
+ assert.equal((await db.query('select count(*)::int n from public.profiles where id=$1',[collision])).rows[0].n,0);
+ passed.push('case-insensitive signup collision atomically rolls back identity and profile');
+ await db.query(`update auth.users set raw_user_meta_data='{"beast_username":"hijacked"}' where id=$1`,[first]);
+ assert.equal((await db.query('select username from beast_identity.usernames where user_id=$1',[first])).rows[0].username,'member');
+ passed.push('metadata edits cannot rename a login identity');
+ await db.exec('set role service_role');
+ assert.equal((await db.query("select public.beast_auth_identity('member') id")).rows[0].id,first);
+ assert.equal((await db.query("select public.beast_auth_identity('unknown') id")).rows[0].id,null);
+ await db.query("select public.beast_auth_claim('existing',$1)",[existing]);
+ await assert.rejects(db.query("select public.beast_auth_claim('unverified',$1)",[first]),/Verified account required/);
+ await assert.rejects(db.query("select public.beast_auth_claim('renamed',$1)",[existing]),e=>e.code==='23505');
+ passed.push('service resolution and verified existing-account claim preserve IDs and prevent remapping');
+ const bucket='a'.repeat(64);
+ for(let i=1;i<=12;i++)assert.equal((await db.query('select public.beast_auth_attempt($1,10) allowed',[bucket])).rows[0].allowed,i<=10);
+ await db.exec('reset role');
+ await db.query("update beast_identity.attempts set started_at=now()-interval '16 minutes' where bucket=$1",[bucket]);
+ await db.exec('set role service_role');
+ assert.equal((await db.query('select public.beast_auth_attempt($1,10) allowed',[bucket])).rows[0].allowed,true);
+ await db.exec('reset role');
+ passed.push('persisted limiter enforces budget and window reset');
+ // Run the exact hosted acceptance SQL against a PostgreSQL fixture first.
+ await db.exec(`alter table profiles add column onboarding_complete boolean not null default false;
+ alter table profiles enable row level security;
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ grant usage on schema auth,public to anon,authenticated;
+ grant select on profiles to authenticated;
+ create policy own_profile on profiles for select to authenticated using (id=auth.uid());`);
+ // The hosted test's bucket is isolated within its rolled-back transaction.
+ await db.query('delete from beast_identity.attempts where bucket=$1',['a'.repeat(64)]);
+ const hostedSql=await readFile(new URL('../supabase/tests/universal_auth_acceptance.sql',import.meta.url),'utf8');
+ await db.exec(hostedSql);
+ assert.equal((await db.query("select count(*)::int n from pg_trigger where tgname='beast_register_username'")).rows[0].n,1);
+ passed.push('exact hosted acceptance SQL passes locally and restores new trigger after rollback');
+ const snapshot=(await db.query('select * from beast_identity.usernames order by username')).rows;
+ await db.exec('begin;');
+ await db.query("delete from beast_identity.usernames where username='existing'");
+ await db.exec('rollback;');
+ assert.deepEqual((await db.query('select * from beast_identity.usernames order by username')).rows,snapshot);
+ passed.push('transaction rollback preserves registry state');
+ console.log(JSON.stringify({engine:'PGlite PostgreSQL',hosted:false,passed},null,2));
+} finally { await db.close(); }

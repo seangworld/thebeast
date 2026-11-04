@@ -1,0 +1,10 @@
+{
+  "purpose": "Compatibility API adapter only; all matching uses audited upstream minimatch 11.0.1",
+  "upstream": "https://github.com/isaacs/minimatch/commit/77a0f5c4b80bdc641c3c930a1d9edf5ad2db57f8",
+  "tarball": "vendor/seangworld-minimatch-compat-11.0.1-beast.3.tgz",
+  "files": {
+    "package.json": "b0f2bfd69688d11beab7a0f8342e6615ccdb331f13c49aac3bfeb18b6c53dc97",
+    "index.cjs": "69d7e93c226ceee66213de0f242f4cc9d28de76f4eb41201a40caa56c3ce1b44"
+  },
+  "tarballSha256": "cf9504f1c6148c3c22bd14210b8915567f9d2f98ae408f951f174aba3c2f8b88"
+}
