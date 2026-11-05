@@ -17,7 +17,7 @@ export function createIdentityHandler({runtime=getRuntime,origin=()=>process.env
   else if(body.action==='data')result=await services.data(token,body.operation);
   else throw new IdentityError('INVALID_ACTION');
   res.statusCode=200;res.end(JSON.stringify({data:result}));
- }catch(e){res.statusCode=e instanceof IdentityError?e.status:503;res.end(JSON.stringify({error:e instanceof IdentityError?e.code:'IDENTITY_UNAVAILABLE'}))}
+ }catch(e){if(!(e instanceof IdentityError))console.error('BEAST_IDENTITY_FAILURE',/^[A-Z0-9]{5}$/.test(e.code||'')?e.code:'INTERNAL_ERROR');res.statusCode=e instanceof IdentityError?e.status:503;res.end(JSON.stringify({error:e instanceof IdentityError?e.code:'IDENTITY_UNAVAILABLE'}))}
 }
 }
 export default createIdentityHandler();

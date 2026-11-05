@@ -1,3 +1,4 @@
+import LogoutButton from '@/app/components/LogoutButton';
 import { redirect } from 'next/navigation';
 import { createAsyncRouteClient } from '@/lib/supabase/server';
 import { buildAuthLoginPath, isDisabledBeastUser } from '@/lib/auth/experience';
@@ -21,8 +22,9 @@ export default async function AccountSetupPage({searchParams}: {searchParams?: P
     <p>Verify your email, select your permanent login username, then review your name and birthday in your existing profile. Your birthday keeps the existing age restrictions accurate.</p>
     <p>Email status: <strong>{user.email_confirmed_at ? 'Verified' : 'Verification required'}</strong></p>
     <a href="#account-username" className="beast-button-secondary inline-flex">Choose or confirm username</a>
-    <p>Existing usernames and saved records remain unchanged.</p>
+    <p>The same Beast account works across supported Beast applications. Existing usernames and saved records remain unchanged.</p>
+    <nav aria-label="Account help" className="flex flex-wrap gap-4"><a href="/forgot-username">Forgot username?</a><a href="/forgot-password">Forgot password?</a><a href="/login-help">Need help signing in?</a><a href="mailto:seang@seangworld.com">Contact support</a></nav>
     <a href={target.href} className="beast-button inline-flex">Continue to {target.name}</a>
     <p className="text-sm">If anything is incomplete, the application will ask you to finish setup.</p>
-  </section><ProfilePage /></div>;
+  </section><div className="beast-container py-4"><LogoutButton /></div><ProfilePage /></div>;
 }

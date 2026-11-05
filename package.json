@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run check:staff-dossiers && npm run audit:ci && next build",
+    "build": "npm run check:staff-dossiers && node scripts/verify-beastguide-release.mjs && npm run audit:ci && next build",
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
     "test:responsive": "playwright test",
     "start": "next start",

@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import ts from 'typescript';import {NextRequest,NextResponse} from 'next/server';import * as experience from '../src/lib/auth/experience';
+test('recovery callback accepts canonical username login and keeps Guide return without relaxing recovery proof',async()=>{
+ const source=fs.readFileSync('src/app/auth/recovery/route.ts','utf8');const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;
+ for(const [canonical,password,expected] of [['true','false','/reset-password'],['false','true','/reset-password'],['false','false','/login']]){
+  const exports:{GET?:(request:NextRequest)=>Promise<NextResponse>}={};vm.runInNewContext(js,{exports,URL,process:{env:{NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED:canonical,NEXT_PUBLIC_BEAST_PASSWORD_SIGN_IN_ENABLED:password}},require:(name:string)=>name==='next/server'?{NextRequest,NextResponse}:name==='@supabase/ssr'?{createServerClient:()=>{throw Error('Must not exchange absent recovery code')}}:experience});
+  const next='/account-setup?app=beastguide&next=library';const response=await exports.GET!(new NextRequest('https://beast.test/auth/recovery?next='+encodeURIComponent(next)));const location=new URL(response.headers.get('location')!);assert.equal(location.pathname,expected);assert.equal(location.searchParams.get('next'),next);if(expected==='/reset-password')assert.equal(location.searchParams.get('state'),'invalid_or_expired_link');assert.ok(!response.cookies.has(experience.BEAST_PASSWORD_RECOVERY_COOKIE));
+ }
+});

@@ -147,3 +147,5 @@ test('registration preserves only safe local requested-application destinations'
 test('registration retains only PKCE proof cookies and never grants an accidental signup session',async()=>{
  const service=gateway();const result=await service.post('https://beast.test',{action:'register',email:'new@example.test'});assert.equal(result.cookies.get('sb-fixture-code-verifier')?.value,'pkce-fixture');assert.equal(result.cookies.get('sb-fixture-auth-token'),undefined);
 });
+
+test('availability reveals only a rate-limited message without account IDs or sessions',async()=>{for(const known of [true,false]){const service=gateway({known});const result=await service.post('https://beast.test',{action:'availability'});assert.equal(result.status,200);const body=await result.json();assert.deepEqual(Object.keys(body),['message']);assert.match(body.message,known?/unavailable/:/is available/);assert.ok(!JSON.stringify(body).includes('existing-id'));assert.ok(!service.calls.includes('password'));}const limited=gateway({limited:true});assert.equal((await limited.post('https://beast.test',{action:'availability'})).status,429)});

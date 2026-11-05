@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const input = JSON.parse(raw);
     const username = normalizeUsername(input.username);
     const action = input.action;
-    if (!username || !['login', 'register', 'claim'].includes(action)) return reply('Use a username of 3–32 letters, numbers or underscores, starting with a letter.', 400);
+    if (!username || !['login', 'register', 'claim', 'availability'].includes(action)) return reply('Use a username of 3–32 letters, numbers or underscores, starting with a letter.', 400);
     const configuration = requireSupabasePublicConfiguration();
     // Explicit independent pin prevents accidental use of a standalone project's identity.
     if (configuration.url !== process.env.BEAST_IDENTITY_URL) throw new Error('Identity configuration');
@@ -58,6 +58,11 @@ export async function POST(request: NextRequest) {
         setAll: (values) => values.forEach(({ name, value, options }) => response.cookies.set(name, value, options)),
       },
     });
+    if (action === 'availability') {
+      const found = await admin.rpc('beast_auth_identity', { p_username: username });
+      if (found.error) throw found.error;
+      return reply(found.data ? 'That username is unavailable. Choose another one.' : 'That username is available. It is reserved only when setup succeeds.');
+    }
     if (action === 'claim') {
       const { data: { user }, error } = await auth.auth.getUser();
       if (error || !user?.email_confirmed_at || isDisabledBeastUser(user)) return response;
