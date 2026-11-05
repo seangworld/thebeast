@@ -22,7 +22,12 @@ export type BeastAdminManagedMember = BeastAdminMemberDirectoryEntry & {
   usagePeriodDays: number;
 };
 
+export function getBeastAdminMemberUsernameLabel(member: BeastAdminMemberDirectoryEntry) {
+  return member.username || "Setup Required";
+}
+
 export const beastAdminMemberSortKeys = [
+  "username",
   "displayName",
   "email",
   "emailVerification",
@@ -178,7 +183,7 @@ export function filterBeastAdminManagedMembers(
     const activeAge = lastActiveTime === null ? null : nowTime - lastActiveTime;
     const matchesQuery =
       !query ||
-      [member.displayName, member.email || ""].some((value) =>
+      [member.username || "", member.displayName, member.email || ""].some((value) =>
         value.toLocaleLowerCase().includes(query)
       );
     const matchesRole =
@@ -250,6 +255,8 @@ export function sortBeastAdminManagedMembers(
 ) {
   const value = (member: BeastAdminManagedMember): string | null => {
     switch (key) {
+      case "username":
+        return member.username || null;
       case "displayName":
         return member.displayName;
       case "email":

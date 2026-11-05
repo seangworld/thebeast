@@ -57,6 +57,8 @@ export type BeastAdminMemberBetaAssignment = {
 
 export type BeastAdminMemberDirectoryEntry = {
   id: string;
+  /** Canonical registry only; optional for older directory consumers/fixtures. */
+  username?: string | null;
   displayName: string;
   email: string | null;
   emailVerificationStatus: BeastAdminMemberEmailVerificationStatus;
@@ -230,6 +232,7 @@ export function normalizeBeastAdminMemberDirectory(
     if (
       !isRecord(entry) ||
       typeof entry.id !== "string" ||
+      (entry.username !== undefined && entry.username !== null && typeof entry.username !== "string") ||
       (entry.displayName !== null && typeof entry.displayName !== "string") ||
       (entry.email !== null && typeof entry.email !== "string") ||
       !beastAdminMemberEmailVerificationStatuses.includes(
@@ -265,6 +268,7 @@ export function normalizeBeastAdminMemberDirectory(
     return [
       {
         id: entry.id,
+        username: typeof entry.username === "string" && entry.username.trim() ? entry.username : null,
         displayName:
           typeof entry.displayName === "string" && entry.displayName.trim()
             ? entry.displayName.trim()
