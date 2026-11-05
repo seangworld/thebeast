@@ -1,5 +1,6 @@
 export type BeastAdminMemberFieldSource = {
   id:
+    | "username"
     | "displayName"
     | "email"
     | "emailVerification"
@@ -31,9 +32,21 @@ export type BeastAdminMemberFieldSource = {
 
 export const beastAdminMemberFieldSources: BeastAdminMemberFieldSource[] = [
   {
+    id: "username",
+    label: "Canonical username",
+    displayedAs: "Directory username",
+    source: "beast_identity.usernames",
+    columns: "username joined by user_id = auth.users.id",
+    authoritativeSource: "Canonical Beast username registry",
+    editable: "Read-only; the member account editor does not change usernames.",
+    synchronization: "Read on each directory request; unassigned accounts show Setup Required.",
+    accessBoundary: "Existing owner-checked RPC; private registry access is not granted to the browser.",
+    kind: "direct",
+  },
+  {
     id: "displayName",
     label: "Member name",
-    displayedAs: "Directory name and member heading",
+    displayedAs: "Member detail heading",
     source: "public.profiles",
     columns:
       "display_name → preferred_name → full_name → username; otherwise null",
