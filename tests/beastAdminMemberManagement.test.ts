@@ -324,7 +324,7 @@ test("BA-128 renders one owner workspace with the requested table, actions, and 
   assert.match(page, /BeastAdminMemberManagementWorkspace/);
   assert.doesNotMatch(page, /BeastAdminMemberTimelineWorkspace/);
   for (const label of [
-    "Username / display name",
+    "Username",
     "Login email",
     "Email verification",
     "Beast role",

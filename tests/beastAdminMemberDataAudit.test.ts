@@ -11,6 +11,7 @@ test("BA-101 maps every displayed member field to an explicit authority", () => 
   assert.deepEqual(
     beastAdminMemberFieldSources.map((field) => field.id),
     [
+      "username",
       "displayName",
       "email",
       "emailVerification",

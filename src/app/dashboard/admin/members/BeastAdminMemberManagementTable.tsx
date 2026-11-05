@@ -13,6 +13,7 @@ import {
 import {
   filterBeastAdminManagedMembers,
   getBeastAdminMostUsedModuleLabel,
+  getBeastAdminMemberUsernameLabel,
   paginateBeastAdminManagedMembers,
   sortBeastAdminManagedMembers,
   type BeastAdminManagedMember,
@@ -169,7 +170,7 @@ function MemberActionSelect({
   const verificationAvailable = memberCanReceiveVerification(member);
   return (
     <label className="block min-w-[8.5rem]">
-      <span className="sr-only">Actions for {member.displayName}</span>
+      <span className="sr-only">Actions for {getBeastAdminMemberUsernameLabel(member)}</span>
       <select
         value=""
         disabled={pending}
@@ -530,7 +531,7 @@ export function BeastAdminMemberManagementTable({
                     />
                   </th>
                   {[
-                    ["Username / display name", "displayName"],
+                    ["Username", "username"],
                     ["Login email", "email"],
                     ["Email verification", "emailVerification"],
                     ["Beast role", "role"],
@@ -565,7 +566,7 @@ export function BeastAdminMemberManagementTable({
                     <td className="px-3 py-3">
                       <input
                         type="checkbox"
-                        aria-label={`Select ${member.displayName}`}
+                        aria-label={`Select ${getBeastAdminMemberUsernameLabel(member)}`}
                         checked={selectedMemberIds.includes(member.id)}
                         onChange={() => toggleSelection(member.id)}
                         className="h-4 w-4"
@@ -577,7 +578,7 @@ export function BeastAdminMemberManagementTable({
                         onClick={() => onAction("view", member)}
                         className="max-w-full truncate font-black text-white hover:text-amber-100"
                       >
-                        {member.displayName}
+                        {getBeastAdminMemberUsernameLabel(member)}
                       </button>
                     </td>
                     <td className="max-w-56 break-all px-3 py-3 text-[#c7cfdb]">
@@ -650,7 +651,7 @@ export function BeastAdminMemberManagementTable({
                 <div className="flex min-w-0 items-start gap-3">
                   <input
                     type="checkbox"
-                    aria-label={`Select ${member.displayName}`}
+                    aria-label={`Select ${getBeastAdminMemberUsernameLabel(member)}`}
                     checked={selectedMemberIds.includes(member.id)}
                     onChange={() => toggleSelection(member.id)}
                     className="mt-1 h-4 w-4 shrink-0"
@@ -661,7 +662,7 @@ export function BeastAdminMemberManagementTable({
                       onClick={() => onAction("view", member)}
                       className="max-w-full truncate text-left text-base font-black text-white"
                     >
-                      {member.displayName}
+                      {getBeastAdminMemberUsernameLabel(member)}
                     </button>
                     <p className="mt-1 break-all text-xs text-[#9aa7b8]">
                       {member.email || "Login email not provided"}
