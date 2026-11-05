@@ -22,11 +22,19 @@ try{
  insert into net.wake_requests values(url,body,headers,timeout_milliseconds);return 1;end$$;`);
  await db.exec(await readFile('supabase/migrations/20261103235724_universal_authentication.sql','utf8'));
  await db.query("insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data) values($1,'owner@example.test',now(),'{\"beast_username\":\"original_owner\"}')",[owner]);
- await db.query("insert into profiles values($1,'admin')",[owner]);
+ await db.query("insert into profiles values($1,'user')",[owner]);
  const accounts=(await db.query('select * from auth.users order by id')).rows;
  const mappings=(await db.query('select * from beast_identity.usernames order by user_id')).rows;
  const profiles=(await db.query('select * from profiles order by id')).rows;
  await db.exec(await readFile('supabase/migrations/20261105031457_canonical_username_mail.sql','utf8'));
+ const originalClaim=(await db.query("select pg_get_functiondef('public.beast_account_mail_claim(uuid,text,text)'::regprocedure) definition,proacl::text privileges from pg_proc where oid='public.beast_account_mail_claim(uuid,text,text)'::regprocedure")).rows[0];
+ const correction=await readFile('supabase/migrations/20261105205657_account_mail_configured_owner_recipient.sql','utf8');
+ await db.exec(correction);
+ const correctedClaim=(await db.query("select pg_get_functiondef('public.beast_account_mail_claim(uuid,text,text)'::regprocedure) definition,proacl::text privileges from pg_proc where oid='public.beast_account_mail_claim(uuid,text,text)'::regprocedure")).rows[0];
+ assert.equal(correctedClaim.privileges,originalClaim.privileges,'CREATE OR REPLACE preserves exact service-only grants');
+ const normalize=s=>s.replace('-- Recipient is server configuration, AND must be a current verified canonical admin.','-- Service-only caller supplies the private owner-approved server configuration.\n -- Receiving a notice grants no administrative permissions.').replace('from auth.users u join public.profiles p on p.id=u.id','from auth.users u').replace(" and p.role='admin'",'');
+ assert.equal(correctedClaim.definition,normalize(originalClaim.definition),'only configured recipient role dependency changes; leases/caps/dedupe/claim logic identical');
+
  assert.deepEqual((await db.query('select * from auth.users order by id')).rows,accounts);
  assert.deepEqual((await db.query('select * from profiles order by id')).rows,profiles);
  assert.deepEqual((await db.query('select * from beast_identity.usernames order by user_id')).rows,mappings);
@@ -71,7 +79,20 @@ try{
  assert.equal((await db.query('select count(*)::int n from auth.users where id=$1',[failed])).rows[0].n,1);
  assert.equal((await db.query("select state from beast_identity.account_mail_outbox where user_id=$1 and kind='owner_registration'",[failed])).rows[0].state,'pending','network failure retains the durable event');
  await db.query("select set_config('test.net.fail','false',false)");
- await db.query("insert into profiles values($1,'user')",[member]);await db.exec('set role service_role');assert.equal((await db.query("select * from public.beast_account_mail_claim($1,'owner_registration','updated@example.test')",[failed])).rows.length,0,'a verified member is not an owner recipient');
+ await db.query("insert into profiles values($1,'user')",[member]);
+ // No configured address, unknown/unverified/deleted/banned/disabled destinations fail closed.
+ await db.exec('set role service_role');
+ for(const email of [null,'attacker@example.test'])assert.equal((await db.query("select * from public.beast_account_mail_claim($1,'owner_registration',$2)",[failed,email])).rows.length,0);
+ await db.exec('reset role');
+ const recipientSnapshot=(await db.query('select * from auth.users where id=$1',[owner])).rows[0];
+ for(const update of ["email_confirmed_at=null","deleted_at=now()","banned_until=now()+interval '1 day'","raw_app_meta_data='{\"is_disabled\":true}'","raw_app_meta_data='{\"account_status\":\"disabled\"}'"]){
+  await db.query('update auth.users set '+update+' where id=$1',[owner]);
+  await db.exec('set role service_role');
+  assert.equal((await db.query("select * from public.beast_account_mail_claim($1,'owner_registration','owner@example.test')",[failed])).rows.length,0,'invalid configured owner must not claim a notification');
+  await db.exec('reset role');
+  await db.query('update auth.users set email_confirmed_at=$2,deleted_at=$3,banned_until=$4,raw_app_meta_data=$5 where id=$1',[owner,recipientSnapshot.email_confirmed_at,recipientSnapshot.deleted_at,recipientSnapshot.banned_until,JSON.stringify(recipientSnapshot.raw_app_meta_data)]);
+ }
+ await db.exec('set role service_role');
  notice=(await db.query("select * from public.beast_account_mail_claim($1,'owner_registration','owner@example.test')",[failed])).rows[0];await db.query('select public.beast_account_mail_finish($1,$2,false)',[notice.mail_id,notice.delivery_token]);assert.equal((await db.query("select * from public.beast_account_mail_claim($1,'owner_registration','owner@example.test')",[failed])).rows.length,0,'ambiguous SMTP failure never blindly resends');await db.exec('reset role');
  await db.exec(`alter table beast_identity.account_mail_outbox add constraint fixture_queue_failure check(user_id<>'${queueFailed}'::uuid)`);
  await db.query("insert into auth.users(id,email,raw_user_meta_data) values($1,'queue-failure@example.test','{\"beast_username\":\"queue_failure\"}')",[queueFailed]);
@@ -79,5 +100,9 @@ try{
  assert.equal((await db.query('select username from beast_identity.usernames where user_id=$1',[queueFailed])).rows[0].username,'queue_failure','mail failure cannot undo the canonical username');
  assert.deepEqual((await db.query('select * from beast_identity.usernames where user_id=$1',[owner])).rows,mappings);
  assert.deepEqual((await db.query('select * from profiles where id=$1',[owner])).rows,profiles);
- console.log('PASS: canonical Auth creation before verification, all-app trigger, no backfill, UUID deduplication, no verification/login/claim duplicates, private verified-admin recipient, fixed payload-free wake-up, rollback and failure isolation, immutable existing records.');
+ const beforeRollback=(await db.query("select (select jsonb_agg(to_jsonb(t) order by id) from auth.users t) users,(select jsonb_agg(to_jsonb(t) order by id) from profiles t) profiles,(select jsonb_agg(to_jsonb(t) order by id) from beast_identity.account_mail_outbox t) outbox")).rows;
+ await db.exec(await readFile('supabase/operations/account-mail-recipient-policy-rollback.sql','utf8'));
+ assert.equal((await db.query("select pg_get_functiondef('public.beast_account_mail_claim(uuid,text,text)'::regprocedure) definition")).rows[0].definition,originalClaim.definition,'rollback restores only the exact prior claim function');
+ assert.deepEqual((await db.query("select (select jsonb_agg(to_jsonb(t) order by id) from auth.users t) users,(select jsonb_agg(to_jsonb(t) order by id) from profiles t) profiles,(select jsonb_agg(to_jsonb(t) order by id) from beast_identity.account_mail_outbox t) outbox")).rows,beforeRollback,'rollback preserves accounts, roles and all delivery receipts');
+ console.log('PASS: canonical Auth creation before verification, all-app trigger, no backfill, UUID deduplication, no verification/login/claim duplicates, private verified active non-admin recipient, invalid-recipient rejection, unchanged grants and roles, fixed payload-free wake-up, rollback and failure isolation, immutable existing records.');
 }finally{await db.close()}
