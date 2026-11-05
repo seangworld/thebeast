@@ -47,19 +47,20 @@ for each row execute function beast_identity.queue_owner_registration();
 -- Existing pg_net/Vault provide asynchronous wake-up after transaction commit.
 -- No credential is embedded, created or copied by this migration. Without the
 -- separately approved private Vault binding the wake-up remains disabled.
+-- This is the dedicated BEAST_ACCOUNT_MAIL_DISPATCH_SECRET, never CRON_SECRET.
 create function beast_identity.dispatch_account_mail() returns bigint
 language plpgsql security definer set search_path='' as $$
-declare bearer text; request_id bigint; stamp text; nonce text; signature text; begin
+declare dispatch_key text; request_id bigint; stamp text; nonce text; signature text; begin
  if not exists(select 1 from beast_identity.account_mail_outbox where state='pending') then return null; end if;
  if (select count(*) from beast_identity.account_mail_outbox where leased_at>now()-interval '1 minute')>=5
  or (select count(*) from beast_identity.account_mail_outbox where leased_at>now()-interval '1 hour')>=20
  or (select count(*) from beast_identity.account_mail_outbox where leased_at>now()-interval '1 day')>=20 then return null; end if;
- select decrypted_secret into bearer from vault.decrypted_secrets
+ select decrypted_secret into dispatch_key from vault.decrypted_secrets
  where name='beast_account_mail_dispatch_secret' limit 1;
- if bearer is null or length(bearer)<16 then return null; end if;
+ if dispatch_key is null or length(dispatch_key)<64 then return null; end if;
  stamp:=floor(extract(epoch from clock_timestamp()))::bigint::text;
  nonce:=gen_random_uuid()::text;
- signature:=encode(extensions.hmac(stamp||'.'||nonce,bearer,'sha256'),'hex');
+ signature:=encode(extensions.hmac(stamp||'.'||nonce,dispatch_key,'sha256'),'hex');
  select net.http_post(
   url:='https://thebeast.seangworld.com/api/cron/account-mail',
   body:='{}'::jsonb,

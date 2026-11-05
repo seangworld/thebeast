@@ -1,6 +1,6 @@
 -- REVIEW/APPROVAL ONLY. Not a migration and never run by the build.
 -- After exact migration/source approval, verified SMTP configuration and explicit
--- test-send approval, securely bind the EXISTING CRON_SECRET in Vault under
+-- test-send approval, securely bind the independent BEAST_ACCOUNT_MAIL_DISPATCH_SECRET in Vault under
 -- beast_account_mail_dispatch_secret. Do not paste it into this file/SQL logs.
 -- Then separately approve this bounded existing-pg_cron pending-delivery backup.
 do $$ begin

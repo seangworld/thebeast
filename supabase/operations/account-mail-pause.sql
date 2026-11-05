@@ -5,3 +5,6 @@ select cron.unschedule(jobid) from cron.job where jobname='beast-account-mail-pe
 alter table beast_identity.account_mail_outbox disable trigger wake_account_mail;
 -- Keep the outbox, receipts, existing Auth records, usernames and managed notices.
 -- Re-enabling the wake trigger requires the same reviewed activation approval.
+
+-- Keep the dedicated dispatch secret bindings dormant for approved reuse; never
+-- rotate/remove CRON_SECRET or change unrelated scheduled tasks during mail pause.
