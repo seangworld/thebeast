@@ -30,3 +30,13 @@ test('owner SMTP failure has the same durable hold and never retries or changes 
  assert.equal(await deliverAccountMail(admin,async()=>{attempts++;throw Error('fixture SMTP failure')},null,null,'owner@example.test'),false);
  assert.equal(attempts,1);assert.equal(calls[0].args.p_owner_email,'owner@example.test');assert.equal(calls[1].args.p_sent,false);assert.ok(calls.every(call=>['beast_account_mail_claim','beast_account_mail_finish'].includes(call.name)));
 });
+
+
+test('informational recovery links strip callback credentials while preserving the requested application',()=>{
+ for(const username of ['chosen_name',null]){
+  const guide=accountMessage({...mail,username,return_path:'/account-setup?app=beastguide&next=library&access_token=private-fixture&code=private-code#refresh_token=private-refresh'},'seang@seangworld.com');
+  assert.doesNotMatch(guide.text,/private-fixture|private-code|private-refresh|access_token|refresh_token|code=/);assert.match(decodeURIComponent(guide.text),/app=beastguide&next=library/);
+  const dashboard=accountMessage({...mail,username,return_path:'/dashboard/beastguide?token_hash=private-hash#access_token=private-token'},'seang@seangworld.com');
+  assert.doesNotMatch(dashboard.text,/private-hash|private-token|token_hash|access_token/);assert.ok(decodeURIComponent(dashboard.text).includes('/dashboard/beastguide'));
+ }
+});

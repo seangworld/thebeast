@@ -15,6 +15,19 @@ export function accountMessage(mail:AccountMail,from:string){
  }
  const requested=new URL(mail.return_path||'/dashboard/settings/profile#account-username','https://thebeast.seangworld.com');
  if(requested.origin!=='https://thebeast.seangworld.com'||!/^\/(dashboard(?:\/|$)|account-setup(?:$))/.test(requested.pathname))throw Error('INVALID_ACCOUNT_MAIL');
+ // Informational mail must never forward callback tokens/codes or arbitrary
+ // nested query strings/fragments. Preserve only the safe application destination.
+ const app=requested.searchParams.get('app'),next=requested.searchParams.get('next');
+ requested.search='';requested.hash=requested.hash==='#account-username'?'#account-username':'';
+ if(requested.pathname==='/account-setup'){
+  if(app==='beastguide'){
+   requested.searchParams.set('app','beastguide');
+   requested.searchParams.set('next',['library','discover','profile','bookmark'].includes(next||'')?next!:'library');
+  }else if(next){
+   const nested=new URL(next,'https://thebeast.seangworld.com');
+   if(nested.origin==='https://thebeast.seangworld.com'&&/^\/(dashboard(?:\/|$))/.test(nested.pathname))requested.searchParams.set('next',nested.pathname);
+  }
+ }
  const login=new URL('/login','https://thebeast.seangworld.com');login.searchParams.set('next',requested.pathname+requested.search+requested.hash);
  const setup=requested.pathname==='/account-setup'?requested:new URL('/account-setup?next='+encodeURIComponent(requested.pathname+requested.search+requested.hash),'https://thebeast.seangworld.com');
  const assignment=mail.kind==='username_assigned';

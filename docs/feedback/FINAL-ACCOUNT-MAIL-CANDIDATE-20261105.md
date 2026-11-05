@@ -10,7 +10,7 @@ Forgot Username emails either the exact canonical username or setup instructions
 
 Issue #316 is implemented centrally by an `AFTER INSERT ON auth.users` trigger, not a login or verification handler. Every new canonical Auth account produces a private `owner_registration` outbox event with a unique `registration:<Auth user UUID>` key. The event captures the original registration email/time before verification. Verification, username selection, email updates and login do not create another owner event. All applications using canonical Auth, including Guide and future Beast applications, are covered without duplicating per-app registration hooks.
 
-The configured owner recipient must match a current verified, active canonical admin account. It is a private server setting, never browser input. The email contains the registration date/time (UTC), registered address, Pending verification status for ordinary public signup, and the fixed BeastAdmin Members link. An administrative/import account already verified at creation is truthfully labeled Verified at account creation. Current user metadata does not prove originating app; origin is deliberately omitted rather than trusting a forgeable value. No password, auth token, private library/progress record or user metadata is included.
+The configured owner recipient must match a current verified, active canonical admin account. It is a private server setting, never browser input. The email contains the registration date/time (UTC), registered address, Pending verification status for ordinary public signup, and the fixed BeastAdmin Members link. An administrative/import account already verified at creation is truthfully labeled Verified at account creation. Current user metadata does not prove originating app; origin is deliberately omitted rather than trusting a forgeable value. No password, auth token, private library/progress record or user metadata is included. Informational recovery links additionally strip callback query parameters/fragments and arbitrary nested queries while retaining the safe requested application destination.
 
 ## Existing infrastructure and immediate dispatch
 
@@ -58,8 +58,8 @@ Exact SMTP blocker: the owner must recover the ORIGINAL value from their existin
 
 ## Validation
 
-- `npm test`: **2,735 passing**, zero failures.
-- `npm run test:account-mail`: **16 focused unit/gateway tests** plus both isolated PostgreSQL/PGlite acceptance suites pass. These gates are part of the production build.
+- `npm test`: **2,736 passing**, zero failures.
+- `npm run test:account-mail`: **17 focused unit/gateway tests** plus both isolated PostgreSQL/PGlite acceptance suites pass. These gates are part of the production build.
 - `npm run build`: passed staff-source/history completion, embedded Guide artifact/provenance, isolated SMTP/privacy/PostgreSQL gates, full npm audit (zero vulnerabilities), Next compilation, lint and TypeScript.
 - Released auth gateway/onboarding source, Guide imported assets/navigation, BeastAdmin directory, Vercel cron configuration and existing security gates match current production main unchanged.
 - Local PostgreSQL checks: no migration backfill; exact existing accounts/profiles/username rows; service-only lookup/claim; recipient verification/privacy; unknown-account neutrality; durable UUID dedupe; new account event before verification; no later verification/login/claim duplicates; registered-email snapshot immutability; Guide/future-app central coverage; pending username delivery until verified; queue/network/SMTP failure isolation; rollback; bounded dispatch and no blind ambiguous retry.
