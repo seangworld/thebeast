@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
   );
 
   if (
-    !isPasswordSignInEnabled(
+    process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED !== 'true' && !isPasswordSignInEnabled(
       process.env.NEXT_PUBLIC_BEAST_PASSWORD_SIGN_IN_ENABLED
     )
   ) {

@@ -2,12 +2,25 @@ const send=(res,status,data)=>{res.statusCode=status;res.setHeader('Content-Type
 export default async function handler(req,res){
  if(req.method!=='GET')return send(res,405,{error:'Method not allowed'});
  const type=String(req.query.type||''),q=String(req.query.q||'').trim().slice(0,100),id=String(req.query.id||'');
- if(type==='movie'){
+ if(type==='capabilities')return send(res,200,{catalogEnabled:Boolean(process.env.TMDB_READ_ACCESS_TOKEN&&process.env.TMDB_COMMERCIAL_USE_APPROVED==='true')});
+ if(['movie','tv-feed','tv-reference'].includes(type)){
   const token=process.env.TMDB_READ_ACCESS_TOKEN;
-  if(!token||process.env.TMDB_COMMERCIAL_USE_APPROVED!=='true')return send(res,503,{error:'Movie search is awaiting provider licensing and configuration.'});
-  if(!q&&!/^\d+$/.test(id))return send(res,400,{error:'Search term required'});
-  const url=id?'https://api.themoviedb.org/3/movie/'+encodeURIComponent(id):'https://api.themoviedb.org/3/search/movie?query='+encodeURIComponent(q)+'&include_adult=false';
-  try{const r=await fetch(url,{signal:AbortSignal.timeout(8000),headers:{Authorization:'Bearer '+token,Accept:'application/json'}});if(!r.ok)return send(res,502,{error:'Movie provider unavailable'});const data=await r.json();const items=(id?[data]:data.results||[]).slice(0,20).map(m=>({id:'tmdb:'+m.id,name:m.title||'',type:'Movies',detail:m.release_date?'Released '+m.release_date.slice(0,4):'Movie',releaseDate:m.release_date||null,service:'Movie',image:m.poster_path?'https://image.tmdb.org/t/p/w185'+m.poster_path:null}));return send(res,200,{items})}catch{return send(res,502,{error:'Movie provider unavailable'})}
+  if(!token||process.env.TMDB_COMMERCIAL_USE_APPROVED!=='true')return send(res,503,{error:'Popular and trending catalogs are awaiting authorized provider configuration. Title and actor TV search remains available.'});
+  const mode=String(req.query.mode||'');
+  if(mode&&!['popular','trending'].includes(mode))return send(res,400,{error:'Invalid catalog list'});
+  if(type==='tv-reference'&&!/^[1-9][0-9]*$/.test(id))return send(res,400,{error:'Invalid TV reference'});
+  if(type==='tv-feed'&&!mode)return send(res,400,{error:'Catalog list required'});
+  if(type==='movie'&&!mode&&!q&&!/^[1-9][0-9]*$/.test(id))return send(res,400,{error:'Search term required'});
+  const medium=type==='movie'?'movie':'tv';
+  const path=type==='tv-reference'?'tv/'+id+'/external_ids':mode==='trending'?'trending/'+medium+'/week':mode==='popular'?medium+'/popular':id?'movie/'+id:'search/movie?query='+encodeURIComponent(q)+'&include_adult=false';
+  try{
+   const r=await fetch('https://api.themoviedb.org/3/'+path,{signal:AbortSignal.timeout(8000),headers:{Authorization:'Bearer '+token,Accept:'application/json'}});
+   if(!r.ok)return send(res,502,{error:'Catalog provider unavailable'});
+   const data=await r.json();
+   if(type==='tv-reference')return send(res,200,{items:/^tt[0-9]+$/.test(data.imdb_id||'')?[{imdb:data.imdb_id}]:[]});
+   const items=(id&&!mode?[data]:data.results||[]).filter(m=>!m.adult&&Number.isSafeInteger(m.id)&&m.id>0).slice(0,20).map(m=>({id:(medium==='tv'?'tmdbtv:':'tmdb:')+m.id,name:m.title||m.name||'',type:medium==='tv'?'Series':'Movies',detail:(medium==='tv'?m.first_air_date:m.release_date)||'Date not announced',releaseDate:(medium==='tv'?m.first_air_date:m.release_date)||null,service:'TMDB',image:m.poster_path?'https://image.tmdb.org/t/p/w185'+m.poster_path:null}));
+   return send(res,200,{items});
+  }catch{return send(res,502,{error:'Catalog provider unavailable'})}
  }
  if(type==='team'||type==='team-events'||type==='team-lookup'||type==='event'||type==='event-lookup'){
   const key=process.env.SPORTSDB_API_KEY;

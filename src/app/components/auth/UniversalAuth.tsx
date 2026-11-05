@@ -1,4 +1,5 @@
 'use client';
+import {UsernameField} from './UsernameField';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 
 /** Shared username flow; credentials go only to the same-origin server gateway. */
@@ -40,9 +41,7 @@ export function UniversalAuth({ action = 'login', getCaptchaToken, onSignedIn, r
   }
   return <section aria-label={action === 'register' ? 'Register a Beast username' : 'Sign in with a Beast username'} className="mt-5 text-left">
     {!registered && <form method="post" onSubmit={submit} className="space-y-4" aria-busy={busy}>
-      <div><label htmlFor={`${id}-username`} className="text-sm font-bold">Username</label>
-        <input id={`${id}-username`} className="beast-input mt-2 min-h-[48px]" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required minLength={3} maxLength={32} pattern="[A-Za-z][A-Za-z0-9_]{2,31}" aria-describedby={`${id}-hint`} /></div>
-      <p id={`${id}-hint`} className="text-xs leading-5 text-[#9da9b9]">3–32 letters, numbers or underscores; start with a letter. Usernames are case-insensitive.</p>
+      <UsernameField checkAvailability={action === 'register'} />
       {action === 'register' && <div><label htmlFor={`${id}-email`} className="text-sm font-bold">Email address</label>
         <input id={`${id}-email`} className="beast-input mt-2 min-h-[48px]" name="email" type="email" autoComplete="email" required maxLength={254} /></div>}
       <div><label htmlFor={`${id}-password`} className="text-sm font-bold">Password</label>
@@ -52,7 +51,7 @@ export function UniversalAuth({ action = 'login', getCaptchaToken, onSignedIn, r
     </form>}
     {registered && <p className="mt-3">Registration request received. After verification, you will return to the Beast application you requested.</p>}
     <p role="status" aria-live="polite" className="mt-3 text-sm leading-6 text-[#c7cfdb]">{message}</p>
-    <nav className="mt-4 flex flex-wrap gap-4 text-sm font-bold text-[#7dd3fc]" aria-label="Account help"><a href="/forgot-username">Forgot username?</a><a href={`/resend-verification?next=${encodeURIComponent(destination)}`}>Resend verification</a><a href="/login-help">Login help / FAQ</a></nav>
+    <nav className="mt-4 flex flex-wrap gap-4 text-sm font-bold text-[#7dd3fc]" aria-label="Account help"><a href={`/forgot-username?next=${encodeURIComponent(destination)}`}>Forgot username?</a><a href={`/resend-verification?next=${encodeURIComponent(destination)}`}>Resend verification</a><a href="/login-help">Need help signing in?</a></nav>
     {action === 'login' && <a className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[#7dd3fc]" href={recoveryHref}>Forgot password?</a>}
   </section>;
 }

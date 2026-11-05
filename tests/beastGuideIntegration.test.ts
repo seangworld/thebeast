@@ -18,9 +18,9 @@ test("integration is off by default and cannot use development Auth",()=>{
  assert.equal(beastGuideAvailable({enabled:"true",authUrl:CANONICAL_BEAST_AUTH}),true);
 });
 test("embedded runtime has scoped credentials and never enables separate registration",()=>{
- const env=beastGuideRuntimeEnvironment({NODE_ENV:"test",BEASTGUIDE_TARGET:"preview",BEASTGUIDE_PREVIEW_DATA_DATABASE_URL:"preview-scoped",BEAST_IDENTITY_DATA_DATABASE_URL:"unrelated",BEAST_CANONICAL_AUTH_ADMIN_KEY:"forbidden",BEAST_REGISTRATION_VALIDATED:"true"});
+ const env=beastGuideRuntimeEnvironment({NODE_ENV:"test",BEAST_ACCOUNT_SETUP_REQUIRED:"true",BEASTGUIDE_TARGET:"preview",BEASTGUIDE_PREVIEW_DATA_DATABASE_URL:"preview-scoped",BEAST_IDENTITY_DATA_DATABASE_URL:"unrelated",BEAST_CANONICAL_AUTH_ADMIN_KEY:"forbidden",BEAST_REGISTRATION_VALIDATED:"true"});
  assert.equal(env.BEAST_IDENTITY_TARGET,"preview");assert.equal(env.BEAST_PREVIEW_DATA_DATABASE_URL,"preview-scoped");assert.equal(env.BEAST_IDENTITY_DATA_DATABASE_URL,undefined);
- assert.equal(env.BEAST_REGISTRATION_VALIDATED,"false");assert.ok(!("BEAST_CANONICAL_AUTH_ADMIN_KEY" in env));
+ assert.equal(env.BEAST_ACCOUNT_SETUP_REQUIRED,"true");assert.equal(env.BEAST_REGISTRATION_VALIDATED,"false");assert.ok(!("BEAST_CANONICAL_AUTH_ADMIN_KEY" in env));
 });
 test("bearer for another account cannot be combined with the BeastOS cookie account",()=>{
  const token=(sub:string)=>"a."+Buffer.from(JSON.stringify({sub})).toString("base64url")+".c";

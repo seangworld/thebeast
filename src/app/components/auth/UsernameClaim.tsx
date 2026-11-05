@@ -1,10 +1,9 @@
 'use client';
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
-import { USERNAME_REQUIREMENTS } from '@/lib/auth/accountSetup';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import {UsernameField} from './UsernameField';
 import { createClient } from '@/lib/supabase/client';
 
 export function UsernameClaim() {
-  const id = useId();
   const submitting = useRef(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -50,9 +49,7 @@ export function UsernameClaim() {
     {selected && <p className="mt-3">Login username: <strong>{selected}</strong> · {verified ? 'Email verified' : 'Email verification required'}</p>}
     <p className="mt-2 text-sm leading-6 text-[#9da9b9]">Sign in with your existing email first, then claim one permanent login username. Your account and saved information stay with the same identity. Your editable profile name is separate.</p>
     {loaded && !selected && <form method="post" onSubmit={claim} className="mt-4" aria-busy={busy}>
-      <label htmlFor={id} className="text-sm font-bold">Login username</label>
-      <input id={id} name="username" className="beast-input mt-2 min-h-[48px]" required minLength={3} maxLength={32} pattern="[A-Za-z][A-Za-z0-9_]{2,31}" aria-describedby={`${id}-rules`} autoComplete="username" autoCapitalize="none" spellCheck={false} />
-      <p id={`${id}-rules`} className="mt-2 text-sm text-[#9da9b9]">{USERNAME_REQUIREMENTS}</p>
+      <UsernameField checkAvailability label="Login username" />
       <button type="submit" disabled={busy} className="beast-button mt-4 min-h-[48px] disabled:opacity-60">{busy ? 'Claiming…' : 'Claim username'}</button>
     </form>}
     <p role="status" aria-live="polite" className="mt-3 text-sm">{message}</p>

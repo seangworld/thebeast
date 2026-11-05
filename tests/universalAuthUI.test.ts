@@ -76,3 +76,15 @@ test('username email recovery never creates users and uses the same private noti
   fireEvent.submit(view.container.querySelector('form')!);assert.equal(requests.length,1);assert.match(view.getByRole('status').textContent||'',/one minute/);
  }finally{Module._load=originalLoad;restore()}
 });
+
+test('username format feedback is immediate and stale availability cannot overwrite newer input',async()=>{
+ const restore=browser();try{
+  let finish:((response:Response)=>void)|undefined;const requests:unknown[]=[];
+  globalThis.fetch=async(_url,input)=>{requests.push(JSON.parse(String(input?.body)));return new Promise<Response>(resolve=>{finish=resolve})};
+  const view=render(createElement(UniversalAuth,{action:'register',onSignedIn:()=>{}}));const field=view.getByLabelText('Username');
+  fireEvent.input(field,{target:{value:'1invalid'}});assert.ok(view.getByText('Enter a valid username using the rules above.'));assert.equal(requests.length,0);
+  assert.ok(view.getByText(setup.USERNAME_REQUIREMENTS));fireEvent.input(field,{target:{value:'valid_name'}});
+  await waitFor(()=>assert.equal(requests.length,1),{timeout:1500});assert.deepEqual(requests[0],{action:'availability',username:'valid_name'});
+  fireEvent.input(field,{target:{value:'another invalid'}});finish!(new Response(JSON.stringify({message:'That username is available.'})));await new Promise(resolve=>setTimeout(resolve,10));assert.equal(view.queryByText('That username is available.'),null);assert.ok(view.getByText('Enter a valid username using the rules above.'));
+ }finally{restore()}
+});

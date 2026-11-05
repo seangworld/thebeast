@@ -17,6 +17,8 @@ export default function ForgotPasswordForm({
 }: {
   destination: string;
 }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<
     "idle" | "sending" | "sent" | "failed"
@@ -134,7 +136,7 @@ export default function ForgotPasswordForm({
           </div>
         ) : null}
 
-        <form className="mt-6" onSubmit={requestReset}>
+        <form method="post" className="mt-6" onSubmit={requestReset}>
           <label htmlFor="recovery-email" className="text-sm font-bold text-white">
             Account email
           </label>
@@ -161,7 +163,7 @@ export default function ForgotPasswordForm({
 
           <button
             type="submit"
-            disabled={status === "sending" || cooldown > 0}
+            disabled={!ready || status === "sending" || cooldown > 0}
             className="beast-button mt-4 min-h-[48px] w-full disabled:cursor-wait disabled:opacity-60"
           >
             {status === "sending"
