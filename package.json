@@ -30,7 +30,7 @@
     "audit:prod": "npm audit --omit=dev",
     "test:braces-fork": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs",
     "check:staff-dossiers": "node scripts/check-staff-dossiers.mjs",
-    "test:account-mail-db": "node scripts/test-account-mail-db.mjs",
+    "test:account-mail-db": "node scripts/test-account-mail-db.mjs && node scripts/test-owner-registration-mail-db.mjs",
     "test:account-mail": "tsc -p tsconfig.test.json && node --test .test-dist/tests/accountMail.test.js .test-dist/tests/accountMailGateway.test.js && npm run test:account-mail-db"
   },
   "dependencies": {

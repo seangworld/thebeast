@@ -10,3 +10,23 @@ test('missing delivery receipt never reports success or retries SMTP',async()=>{
 test('managed security notice candidates disclose no tokens or account-specific fields and keep a clear recovery action',()=>{
  const {readFileSync}=require('node:fs');const packet=JSON.parse(readFileSync('docs/feedback/SECURITY-NOTIFICATION-REVIEW-20261104.json','utf8'));assert.equal(packet.notices.length,7);for(const notice of packet.notices){assert.equal(notice.enabledBefore,false);assert.equal(notice.subject,'unchanged');const html=readFileSync(notice.body,'utf8');assert.ok(!html.includes('{{'));assert.doesNotMatch(html,/TokenHash|ConfirmationURL|OldPhone|NewEmail|access_token|refresh_token/);assert.match(html,/https:\/\/thebeast.seangworld.com\/forgot-password/);assert.match(html,/mailto:seang@seangworld.com/)}
 });
+
+test('owner registration message contains only the canonical creation snapshot and fixed Members link',()=>{
+ const event:AccountMail={...mail,kind:'owner_registration',recipient:'owner@example.test',username:null,registration_email:'new.member@example.test',registration_at:'2026-11-05T14:00:00.000Z',verified_at_creation:false};
+ const message=accountMessage(event,'seang@seangworld.com');
+ assert.equal(message.to,'owner@example.test');assert.equal(message.subject,'New Beast member registration');
+ assert.match(message.text,/Registration date\/time: 2026-11-05T14:00:00.000Z/);assert.match(message.text,/Registered email address: new.member@example.test/);assert.match(message.text,/Email verification status: Pending/);
+ assert.match(message.text,/https:\/\/thebeast.seangworld.com\/dashboard\/admin\/members/);assert.doesNotMatch(message.text,/Originating application|forged_app|access_token|refresh_token|token_hash|code=/);
+ assert.ok(!JSON.stringify(message).includes(event.delivery_token));assert.ok(message.text.includes('\n\n'));assert.ok(!message.text.includes('\\n'));
+ assert.equal(message.messageId,accountMessage(event,'seang@seangworld.com').messageId);
+ assert.match(accountMessage({...event,verified_at_creation:true},'seang@seangworld.com').text,/Verified at account creation/,'pre-verified admin creation must not falsely report Pending');
+ for(const changes of [{registration_email:'victim@example.test\r\nBcc: attacker@example.test'},{registration_at:'invalid'},{verified_at_creation:undefined}])assert.throws(()=>accountMessage({...event,...changes},'seang@seangworld.com'));
+});
+
+test('owner SMTP failure has the same durable hold and never retries or changes an account',async()=>{
+ const event:AccountMail={...mail,kind:'owner_registration',registration_email:'registered@example.test',registration_at:'2026-11-05T14:00:00Z',verified_at_creation:false};
+ const calls:Array<{name:string,args:Record<string,unknown>}>=[];let attempts=0;
+ const admin={rpc:async(name:string,args:Record<string,unknown>)=>{calls.push({name,args});return {data:name==='beast_account_mail_claim'?[event]:true,error:null}}};
+ assert.equal(await deliverAccountMail(admin,async()=>{attempts++;throw Error('fixture SMTP failure')},null,null,'owner@example.test'),false);
+ assert.equal(attempts,1);assert.equal(calls[0].args.p_owner_email,'owner@example.test');assert.equal(calls[1].args.p_sent,false);assert.ok(calls.every(call=>['beast_account_mail_claim','beast_account_mail_finish'].includes(call.name)));
+});

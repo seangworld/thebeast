@@ -8,3 +8,25 @@ test('daily mail backup requires the existing cron secret, stays disabled by def
   assert.equal((await exports.GET!(new NextRequest('https://beast.test/api/cron/account-mail'))).status,401);assert.equal(sent,0);const response=await exports.GET!(new NextRequest('https://beast.test/api/cron/account-mail',{headers:{authorization:'Bearer fixture-cron-secret'}}));assert.equal(response.status,200);assert.deepEqual(await response.json(),enabled?{sent:5}:{disabled:true});assert.equal(sent,enabled?5:0);
  }
 });
+
+test('database wake-up verifies expiry/signature and consumes a one-use nonce before a bounded drain',async()=>{
+ const secret='fixture-existing-cron-secret';let sent=0;const replayBuckets=new Set<string>();const calls:Array<Record<string,unknown>>=[];
+ const exports:{POST?:(request:NextRequest)=>Promise<NextResponse>}={};
+ vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/cron/account-mail/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports,Buffer,Date,process:{env:{CRON_SECRET:secret,BEAST_ACCOUNT_MAIL_ENABLED:'true'}},require:(name:string)=>name==='node:crypto'?require('node:crypto'):name==='next/server'?{NextRequest,NextResponse}:{accountMailAdmin:()=>({rpc:async(_name:string,args:Record<string,unknown>)=>{calls.push(args);const fresh=!replayBuckets.has(String(args.p_bucket));replayBuckets.add(String(args.p_bucket));return {data:fresh,error:null}}}),sendQueuedAccountMail:async()=>{sent++;return true}}});
+ const nonce='10000000-0000-4000-8000-000000000001',stamp=String(Math.floor(Date.now()/1000));
+ const headers=(time:string,signature?:string)=>({'x-beast-mail-time':time,'x-beast-mail-nonce':nonce,'x-beast-mail-signature':signature||require('node:crypto').createHmac('sha256',secret).update(time+'.'+nonce).digest('hex')});
+ const post=(h:Record<string,string>)=>exports.POST!(new NextRequest('https://beast.test/api/cron/account-mail',{method:'POST',headers:h,body:JSON.stringify({recipient:'attacker@example.test',user_id:'forged'})}));
+ assert.equal((await post(headers(String(Number(stamp)-121)))).status,401);assert.equal((await post(headers(stamp,'a'.repeat(64)))).status,401);assert.equal(sent,0);assert.equal(calls.length,0);
+ assert.deepEqual(await (await post(headers(stamp))).json(),{sent:5});assert.equal(sent,5);assert.equal(calls[0].p_limit,1);assert.match(String(calls[0].p_bucket),/^[a-f0-9]{64}$/);
+ assert.deepEqual(await (await post(headers(stamp))).json(),{replayed:true});assert.equal(sent,5,'captured pg_net header cannot trigger a second drain');
+ assert.ok(calls.every(args=>!JSON.stringify(args).includes(secret)&&!JSON.stringify(args).includes('attacker@example.test')));
+});
+
+test('owner recipient comes only from enabled server configuration, never a member delivery request',async()=>{
+ for(const enabled of [false,true]){
+  const invocations:unknown[][]=[];const exports:{sendQueuedAccountMail?:(user:string|null,kind:string|null)=>Promise<unknown>}={};
+  vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/auth/accountMail/server.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports,process:{env:{BEAST_ACCOUNT_MAIL_ENABLED:'true',BEAST_IDENTITY_URL:'https://grpyzwvgqiwtxadfdtni.supabase.co',BEAST_OWNER_REGISTRATION_MAIL_ENABLED:enabled?'true':'false',BEAST_OWNER_REGISTRATION_EMAIL:'owner@example.test'}},require:(name:string)=>name.endsWith('/admin')?{createAdminClient:()=>({})}:name.endsWith('/config')?{requireSupabasePublicConfiguration:()=>({url:'https://grpyzwvgqiwtxadfdtni.supabase.co'})}:{deliverAccountMail:async(...args:unknown[])=>{invocations.push(args)},smtpSender:()=>()=>{}}});
+  await exports.sendQueuedAccountMail!(null,null);assert.equal(invocations[0][4],enabled?'owner@example.test':null);
+  await exports.sendQueuedAccountMail!('own-subject','username_assigned');assert.equal(invocations[1][4],null,'public member path cannot opt into owner notifications');
+ }
+});

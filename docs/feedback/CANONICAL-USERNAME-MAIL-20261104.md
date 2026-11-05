@@ -1,5 +1,7 @@
 # Canonical username mail — review candidate
 
+**November 5 update:** This original preparation record is superseded for current implementation/activation by [the combined PR #313 / Issue #316 candidate](FINAL-ACCOUNT-MAIL-CANDIDATE-20261105.md). The seven managed security notices are already active; do not reapply them. The earlier daily Vercel backup was never installed and is superseded by the separately reviewed existing-pg_cron pending-delivery option.
+
 Owner approved secure reuse of the existing canonical SMTP account, without credential rotation, new service or production activation. Based on released BeastOS 212129777d7fde7a822aa01d72e5601727a6ee6b. Production remains unchanged by this candidate.
 
 ## Implementation

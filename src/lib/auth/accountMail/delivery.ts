@@ -1,12 +1,18 @@
 import {createTransport} from 'nodemailer';
-export type AccountMail={mail_id:string;delivery_token:string;recipient:string;username:string|null;return_path?:string;kind:'username_assigned'|'username_recovery'};
+export type AccountMail={mail_id:string;delivery_token:string;recipient:string;username:string|null;return_path?:string;kind:'username_assigned'|'username_recovery'|'owner_registration';registration_email?:string|null;registration_at?:string;verified_at_creation?:boolean};
 export function smtpOptions(env:Record<string,string|undefined>){
  if(env.BEAST_ACCOUNT_MAIL_ENABLED!=='true')throw Error('ACCOUNT_MAIL_DISABLED');
  if(env.BEAST_SMTP_HOST!=='smtp.resend.com'||env.BEAST_SMTP_PORT!=='465'||!env.BEAST_SMTP_USER||!env.BEAST_SMTP_PASSWORD||!/^[-a-zA-Z0-9._+]+@seangworld\.com$/.test(env.BEAST_SMTP_FROM||''))throw Error('ACCOUNT_MAIL_CONFIGURATION');
  return {host:env.BEAST_SMTP_HOST,port:465,secure:true,auth:{user:env.BEAST_SMTP_USER,pass:env.BEAST_SMTP_PASSWORD},tls:{rejectUnauthorized:true,minVersion:'TLSv1.2' as const},pool:false,logger:false,debug:false,disableFileAccess:true,disableUrlAccess:true,connectionTimeout:8000,greetingTimeout:8000,socketTimeout:12000};
 }
+const safeAddress=(value:string)=>!/[,:;"\\<>\r\n]/.test(value)&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 export function accountMessage(mail:AccountMail,from:string){
- if(!['username_assigned','username_recovery'].includes(mail.kind)||/[,;:"\\]/.test(mail.recipient)||!/^[a-f0-9-]{36}$/i.test(mail.mail_id)||!/^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/.test(mail.recipient)||(mail.username!==null&&!/^[a-z][a-z0-9_]{2,31}$/i.test(mail.username)))throw Error('INVALID_ACCOUNT_MAIL');
+ if(!['username_assigned','username_recovery','owner_registration'].includes(mail.kind)||/[,;:"\\]/.test(mail.recipient)||!/^[a-f0-9-]{36}$/i.test(mail.mail_id)||!/^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/.test(mail.recipient)||(mail.username!==null&&!/^[a-z][a-z0-9_]{2,31}$/i.test(mail.username)))throw Error('INVALID_ACCOUNT_MAIL');
+ if(mail.kind==='owner_registration'){
+  if((mail.registration_email!==null&&(typeof mail.registration_email!=='string'||!safeAddress(mail.registration_email)))||typeof mail.registration_at!=='string'||!Number.isFinite(Date.parse(mail.registration_at))||typeof mail.verified_at_creation!=='boolean')throw Error('INVALID_ACCOUNT_MAIL');
+  const text=`New Beast member registration.\n\nRegistration date/time: ${new Date(mail.registration_at).toISOString()}\nRegistered email address: ${mail.registration_email ?? 'Not provided'}\nEmail verification status: ${mail.verified_at_creation?'Verified at account creation':'Pending'}`;
+  return {from,to:mail.recipient,subject:'New Beast member registration',text:text+'\n\nBeastAdmin Members: https://thebeast.seangworld.com/dashboard/admin/members\n\nThis notice records account creation, not verification or first login.',messageId:`<beast-account-${mail.mail_id}@seangworld.com>`,disableFileAccess:true,disableUrlAccess:true};
+ }
  const requested=new URL(mail.return_path||'/dashboard/settings/profile#account-username','https://thebeast.seangworld.com');
  if(requested.origin!=='https://thebeast.seangworld.com'||!/^\/(dashboard(?:\/|$)|account-setup(?:$))/.test(requested.pathname))throw Error('INVALID_ACCOUNT_MAIL');
  const login=new URL('/login','https://thebeast.seangworld.com');login.searchParams.set('next',requested.pathname+requested.search+requested.hash);
@@ -21,8 +27,8 @@ export function smtpSender(env:Record<string,string|undefined>){
  return async(mail:AccountMail)=>{const result=await transport.sendMail(accountMessage(mail,env.BEAST_SMTP_FROM!));if(result.accepted.length!==1||result.rejected.length)throw Error('ACCOUNT_MAIL_NOT_ACCEPTED');};
 }
 export type MailRpc={rpc:(name:string,args:Record<string,unknown>)=>PromiseLike<{data:unknown;error:unknown}>};
-export async function deliverAccountMail(admin:MailRpc,send:(mail:AccountMail)=>Promise<void>,userId:string|null=null,kind:string|null=null){
- const claimed=await admin.rpc('beast_account_mail_claim',{p_user_id:userId,p_kind:kind});if(claimed.error)throw Error('ACCOUNT_MAIL_STORE');
+export async function deliverAccountMail(admin:MailRpc,send:(mail:AccountMail)=>Promise<void>,userId:string|null=null,kind:string|null=null,ownerEmail:string|null=null){
+ const claimed=await admin.rpc('beast_account_mail_claim',{p_user_id:userId,p_kind:kind,p_owner_email:ownerEmail});if(claimed.error)throw Error('ACCOUNT_MAIL_STORE');
  const mail=(claimed.data as AccountMail[]|null)?.[0];if(!mail)return false;
  let sent=false;
  try{await send(mail);sent=true;}catch{/* Ambiguous SMTP outcomes are held, never blindly retried. */}
