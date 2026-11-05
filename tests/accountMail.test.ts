@@ -40,3 +40,10 @@ test('informational recovery links strip callback credentials while preserving t
   assert.doesNotMatch(dashboard.text,/private-hash|private-token|token_hash|access_token/);assert.ok(decodeURIComponent(dashboard.text).includes('/dashboard/beastguide'));
  }
 });
+
+test('claim RPC failure is ACCOUNT_MAIL_STORE before SMTP send or receipt completion',async()=>{
+ let sent=0;const calls:string[]=[];
+ const admin={rpc:async(name:string)=>{calls.push(name);return {data:null,error:{code:'42804',message:'fixture return-type mismatch'}}}};
+ await assert.rejects(deliverAccountMail(admin,async()=>{sent++},'fixture-user','username_recovery'),/ACCOUNT_MAIL_STORE/);
+ assert.equal(sent,0);assert.deepEqual(calls,['beast_account_mail_claim']);
+});
