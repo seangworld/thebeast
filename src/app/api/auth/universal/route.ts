@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     // a shared fallback is deliberately restrictive, never a spoofable forwarded IP.
     const network = process.env.VERCEL === '1' ? request.headers.get('x-vercel-forwarded-for') || 'unknown' : 'local-shared';
     phase = "rate_limit";
-    for (const [key, limit] of [[`network:${network}`, 30], [`username:${username}`, 10]] as const) {
+    for (const [key, limit] of [[`network:${network}`, 30], [`${action === 'availability' ? 'availability' : 'username'}:${username}`, 10]] as const) {
       const bucket = createHmac('sha256', secret).update(key).digest('hex');
       const { data, error } = await admin.rpc('beast_auth_attempt', { p_bucket: bucket, p_limit: limit });
       if (error) throw error;
