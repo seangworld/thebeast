@@ -88,3 +88,10 @@ test('username format feedback is immediate and stale availability cannot overwr
   fireEvent.input(field,{target:{value:'another invalid'}});finish!(new Response(JSON.stringify({message:'That username is available.'})));await new Promise(resolve=>setTimeout(resolve,10));assert.equal(view.queryByText('That username is available.'),null);assert.ok(view.getByText('Enter a valid username using the rules above.'));
  }finally{restore()}
 });
+
+test('enabled username mail uses neutral server recovery without minting a sign-in token',async()=>{
+ const restore=browser(),old=process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED;process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED='true';try{
+  const {AccountRecoveryEmail}=require('../src/app/components/auth/AccountRecoveryEmail') as typeof import('../src/app/components/auth/AccountRecoveryEmail');let body:any;globalThis.fetch=async(url,input)=>{assert.equal(url,'/api/auth/username-mail');body=JSON.parse(String(input?.body));return new Response(JSON.stringify({message:'If this verified address belongs to a Beast account, check your inbox.'}),{status:202})};
+  const view=render(createElement(AccountRecoveryEmail,{kind:'username',destination:'/account-setup?app=beastguide&next=library'}));assert.ok(view.getByRole('button',{name:'Email my username'}));fireEvent.change(view.getByLabelText('Registered email address'),{target:{value:'verified@example.test'}});fireEvent.submit(view.container.querySelector('form')!);await waitFor(()=>assert.match(view.getByRole('status').textContent||'',/If this verified address/));assert.deepEqual(body,{action:'recover',email:'verified@example.test',next:'/account-setup?app=beastguide&next=library'});
+ }finally{if(old===undefined)delete process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED;else process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED=old;restore()}
+});

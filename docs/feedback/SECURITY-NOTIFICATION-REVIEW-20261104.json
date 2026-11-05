@@ -1,0 +1,64 @@
+{
+  "project": "grpyzwvgqiwtxadfdtni",
+  "status": "prepared_not_applied",
+  "smtp": "unchanged",
+  "accounts": "unchanged",
+  "notices": [
+    {
+      "event": "password_changed",
+      "enabledBefore": false,
+      "enabledAfter": true,
+      "body": "supabase/auth/templates/security/password_changed.html",
+      "originalBody": "<h2>Your password has been changed</h2>\n\n<p>This is a confirmation that the password for your account {{ .Email }} has just been changed.</p>\n<p>If you did not make this change, please contact support.</p>",
+      "subject": "unchanged"
+    },
+    {
+      "event": "email_changed",
+      "enabledBefore": false,
+      "enabledAfter": true,
+      "body": "supabase/auth/templates/security/email_changed.html",
+      "originalBody": "<h2>Your email address has been changed</h2>\n\n<p>The email address for your account has been changed from {{ .OldEmail }} to {{ .Email }}.</p>\n<p>If you did not make this change, please contact support.</p>",
+      "subject": "unchanged"
+    },
+    {
+      "event": "phone_changed",
+      "enabledBefore": false,
+      "enabledAfter": true,
+      "body": "supabase/auth/templates/security/phone_changed.html",
+      "originalBody": "<h2>Your phone number has been changed</h2>\n\n<p>The phone number for your account {{ .Email }} has been changed from {{ .OldPhone }} to {{ .Phone }}.</p>\n<p>If you did not make this change, please contact support immediately.</p>",
+      "subject": "unchanged"
+    },
+    {
+      "event": "identity_linked",
+      "enabledBefore": false,
+      "enabledAfter": true,
+      "body": "supabase/auth/templates/security/identity_linked.html",
+      "originalBody": "<h2>A new identity has been linked</h2>\n\n<p>A new identity ({{ .Provider }}) has been linked to your account {{ .Email }}.</p>\n<p>If you did not make this change, please contact support immediately.</p>",
+      "subject": "unchanged"
+    },
+    {
+      "event": "identity_unlinked",
+      "enabledBefore": false,
+      "enabledAfter": true,
+      "body": "supabase/auth/templates/security/identity_unlinked.html",
+      "originalBody": "<h2>An identity has been unlinked</h2>\n\n<p>An identity ({{ .Provider }}) has been unlinked from your account {{ .Email }}.</p>\n<p>If you did not make this change, please contact support immediately.</p>",
+      "subject": "unchanged"
+    },
+    {
+      "event": "mfa_factor_enrolled",
+      "enabledBefore": false,
+      "enabledAfter": true,
+      "body": "supabase/auth/templates/security/mfa_factor_enrolled.html",
+      "originalBody": "<h2>A new MFA factor has been enrolled</h2>\n\n<p>A new factor ({{ .FactorType }}) has been enrolled for your account {{ .Email }}.</p>\n<p>If you did not make this change, please contact support immediately.</p>",
+      "subject": "unchanged"
+    },
+    {
+      "event": "mfa_factor_unenrolled",
+      "enabledBefore": false,
+      "enabledAfter": true,
+      "body": "supabase/auth/templates/security/mfa_factor_unenrolled.html",
+      "originalBody": "<h2>An MFA factor has been unenrolled</h2>\n\n<p>A factor ({{ .FactorType }}) has been unenrolled for your account {{ .Email }}.</p>\n<p>If you did not make this change, please contact support immediately.</p>",
+      "subject": "unchanged"
+    }
+  ]
+}

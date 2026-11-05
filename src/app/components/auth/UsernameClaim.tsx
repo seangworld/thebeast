@@ -19,6 +19,7 @@ export function UsernameClaim() {
       if (!active || before.data.user.id !== after.data.user?.id) return;
       if (result.error) throw result.error;
       setSelected(typeof result.data === 'string' ? result.data : null);setVerified(Boolean(before.data.user.email_confirmed_at));setLoaded(true);
+      if(before.data.user.email_confirmed_at&&result.data&&process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED==='true')void fetch('/api/auth/username-mail',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deliver'})}).catch(()=>{});
     } catch {if(active)setMessage('Your current login username could not be loaded. Reload before choosing one.')} })();
     return () => {active=false};
   }, []);
@@ -40,7 +41,7 @@ export function UsernameClaim() {
       const latest = await auth.getUser();
       if (latest.error || latest.data.user?.id !== subject) { setMessage('Your account changed. Sign in again before continuing.'); return; }
       setMessage(typeof result.message === 'string' ? result.message : 'Unable to claim this username.');
-      if (response.ok && typeof result.username === 'string') {setSelected(result.username);setVerified(true);form.reset()}
+      if (response.ok && typeof result.username === 'string') {setSelected(result.username);setVerified(true);form.reset();if(process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED==='true')void fetch('/api/auth/username-mail',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deliver'})}).catch(()=>{})}
     } catch { setMessage('Unable to claim this username. Please try again.'); }
     finally { submitting.current = false; setBusy(false); }
   }
