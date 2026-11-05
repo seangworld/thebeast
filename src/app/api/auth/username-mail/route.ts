@@ -28,7 +28,7 @@ export async function POST(request:NextRequest){
   for(const [value,limit] of [[`mail-network:${network}`,30],[`mail-recipient:${input.email.trim().toLowerCase()}`,3]] as const){
    const attempt=await admin.rpc('beast_auth_attempt',{p_bucket:createHmac('sha256',secret).update(value).digest('hex'),p_limit:limit});if(attempt.error)throw Error('RATE_STORE');if(attempt.data!==true)return reply(notice);
   }
-  const queued=await admin.rpc('beast_account_mail_queue_recovery',{p_email:input.email,p_next:getSafeAuthDestination(input.next)});if(queued.error)throw Error('QUEUE');
+  const queued=await admin.rpc('beast_account_mail_queue_recovery',{p_email:input.email,p_next:getSafeAuthDestination(input.next)});if(queued.error){console.error('ACCOUNT_MAIL_QUEUE_UNAVAILABLE');return reply(notice);}
   // Response timing and content never depend on SMTP delivery or account existence.
   after(async()=>{try{if(typeof queued.data==='string')await sendQueuedAccountMail(queued.data,'username_recovery')}catch{console.error('ACCOUNT_MAIL_PROCESSING_UNAVAILABLE')}});
   return reply(notice);

@@ -6,7 +6,7 @@ Primary executor: Codex. Owner authorized implementation/reconciliation, not pro
 
 Username selection immediately shows the actual canonical username. The existing private registry insertion queues one informational confirmation; delivery uses only the account's current verified, active email. Existing mappings are never renamed or backfilled. Choosing a username before verification queues its confirmation until the email is verified.
 
-Forgot Username emails either the exact canonical username or setup instructions to a verified account's registered email. Existing, unknown, unverified and rate-limited requests retain a neutral public response. The existing secure recovery-link implementation remains available and is the deployed default. Keep `NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED=false` until an explicitly approved existing-account mail test has actually verified delivery; do not substitute a rendered template/preview for that acceptance.
+Forgot Username emails either the exact canonical username or setup instructions to a verified account's registered email. Existing, unknown, unverified and rate-limited requests retain a neutral public response, including a partial queue failure that could otherwise distinguish an existing account. Queue errors produce only a fixed private diagnostic tag, never a different membership-dependent response. The existing secure recovery-link implementation remains available and is the deployed default. Keep `NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED=false` until an explicitly approved existing-account mail test has actually verified delivery; do not substitute a rendered template/preview for that acceptance.
 
 Issue #316 is implemented centrally by an `AFTER INSERT ON auth.users` trigger, not a login or verification handler. Every new canonical Auth account produces a private `owner_registration` outbox event with a unique `registration:<Auth user UUID>` key. The event captures the original registration email/time before verification. Verification, username selection, email updates and login do not create another owner event. All applications using canonical Auth, including Guide and future Beast applications, are covered without duplicating per-app registration hooks.
 
@@ -58,8 +58,8 @@ Exact SMTP blocker: the owner must recover the ORIGINAL value from their existin
 
 ## Validation
 
-- `npm test`: **2,734 passing**, zero failures.
-- `npm run test:account-mail`: **15 focused unit/gateway tests** plus both isolated PostgreSQL/PGlite acceptance suites pass. These gates are part of the production build.
+- `npm test`: **2,735 passing**, zero failures.
+- `npm run test:account-mail`: **16 focused unit/gateway tests** plus both isolated PostgreSQL/PGlite acceptance suites pass. These gates are part of the production build.
 - `npm run build`: passed staff-source/history completion, embedded Guide artifact/provenance, isolated SMTP/privacy/PostgreSQL gates, full npm audit (zero vulnerabilities), Next compilation, lint and TypeScript.
 - Released auth gateway/onboarding source, Guide imported assets/navigation, BeastAdmin directory, Vercel cron configuration and existing security gates match current production main unchanged.
 - Local PostgreSQL checks: no migration backfill; exact existing accounts/profiles/username rows; service-only lookup/claim; recipient verification/privacy; unknown-account neutrality; durable UUID dedupe; new account event before verification; no later verification/login/claim duplicates; registered-email snapshot immutability; Guide/future-app central coverage; pending username delivery until verified; queue/network/SMTP failure isolation; rollback; bounded dispatch and no blind ambiguous retry.
