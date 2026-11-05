@@ -135,6 +135,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20261025224150_preserve_noneditable_member_access.sql",
   "20261103235724_universal_authentication.sql",
   "20261104230605_account_setup_username_readback.sql",
+  "20261105031457_canonical_username_mail.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

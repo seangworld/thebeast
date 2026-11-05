@@ -13,6 +13,10 @@ export function AccountRecoveryEmail({kind,destination=kind==='username'?'/dashb
     const email=String(new FormData(event.currentTarget).get('email')||'').trim();
     lock.current=true;setBusy(true);
     try{
+      if(kind==='username'&&process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED==='true'){
+        const response=await fetch('/api/auth/username-mail',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'recover',email,next:destination})});
+        const result=await response.json();lastRequest.current=Date.now();setMessage(typeof result.message==='string'?result.message:'Use login help or retry later.');return;
+      }
       const client=createClient();
       const callback=kind==='username'?buildAuthCallbackUrl(window.location.origin,destination):buildRegistrationCallbackUrl(window.location.origin,destination);
       if(kind==='username')await client.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:callback}});
@@ -25,7 +29,7 @@ export function AccountRecoveryEmail({kind,destination=kind==='username'?'/dashb
   }
   return <form method="post" onSubmit={submit} className="space-y-4" aria-busy={busy}>
     <label className="block">Registered email address<input name="email" type="email" autoComplete="email" maxLength={254} required className="beast-input mt-2 min-h-12" /></label>
-    <button disabled={busy||!ready} className="beast-button min-h-12" type="submit">{busy?'Requesting…':kind==='username'?'Send username recovery link':'Resend verification email'}</button>
+    <button disabled={busy||!ready} className="beast-button min-h-12" type="submit">{busy?'Requesting…':kind==='username'?(process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED==='true'?'Email my username':'Send username recovery link'):'Resend verification email'}</button>
     <p role="status" aria-live="polite">{message}</p>
   </form>;
 }

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run check:staff-dossiers && node scripts/verify-beastguide-release.mjs && npm run audit:ci && next build",
+    "build": "npm run check:staff-dossiers && node scripts/verify-beastguide-release.mjs && npm run test:account-mail && npm run audit:ci && next build",
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
     "test:responsive": "playwright test",
     "start": "next start",
@@ -29,7 +29,9 @@
     "audit:ci": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs && node scripts/verify-minimatch-compat.mjs && node --test scripts/test-minimatch-compat.mjs && npm audit",
     "audit:prod": "npm audit --omit=dev",
     "test:braces-fork": "node scripts/verify-braces-fork.mjs && node --test scripts/test-braces-fork.mjs",
-    "check:staff-dossiers": "node scripts/check-staff-dossiers.mjs"
+    "check:staff-dossiers": "node scripts/check-staff-dossiers.mjs",
+    "test:account-mail-db": "node scripts/test-account-mail-db.mjs",
+    "test:account-mail": "tsc -p tsconfig.test.json && node --test .test-dist/tests/accountMail.test.js .test-dist/tests/accountMailGateway.test.js && npm run test:account-mail-db"
   },
   "dependencies": {
     "@fontsource/source-serif-4": "5.2.8",
@@ -42,6 +44,7 @@
     "google-auth-library": "^11.0.2",
     "jszip": "3.10.1",
     "next": "15.5.28",
+    "nodemailer": "10.3.1",
     "pdf-lib": "1.17.1",
     "pg": "8.23.1",
     "react": "^18",
@@ -51,23 +54,25 @@
     "web-push": "3.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.14",
     "@playwright/test": "^1.61.1",
     "@testing-library/react": "^16.3.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^20",
+    "@types/nodemailer": "8.0.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/web-push": "3.6.4",
     "autoprefixer": "^10",
+    "braces": "file:vendor/seangworld-braces-3.0.3-beast.1.tgz",
     "eslint": "^8",
     "eslint-config-next": "15.5.28",
     "jsdom": "^26.1.0",
+    "minimatch": "file:vendor/seangworld-minimatch-compat-11.0.1-beast.3.tgz",
     "postcss": "^8.5.23",
     "supabase": "^2.109.1",
     "tailwindcss": "^3",
-    "typescript": "^5",
-    "braces": "file:vendor/seangworld-braces-3.0.3-beast.1.tgz",
-    "minimatch": "file:vendor/seangworld-minimatch-compat-11.0.1-beast.3.tgz"
+    "typescript": "^5"
   },
   "overrides": {
     "@typescript-eslint/typescript-estree": {
