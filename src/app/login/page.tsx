@@ -191,6 +191,7 @@ function LoginExperience() {
     event.preventDefault();
     setMessage("");
 
+    if (intent === "create-account" && process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true") { setMessage("Complete the required account fields above."); return; }
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail) {
@@ -467,7 +468,7 @@ function LoginExperience() {
             ) : null}
 
             {process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true" && <UniversalAuth destination={destination} key={intent} action={intent === "create-account" ? "register" : "login"} recoveryHref={`${process.env.NEXT_PUBLIC_BEAST_AUTH_EMAIL_ORIGIN || ""}${buildForgotPasswordPath(destination)}`} onSignedIn={() => window.location.assign(destination)} />}
-            <details className="mt-5 text-left" open={process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED !== "true"}>
+            {!(intent === "create-account" && process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED === "true") && <details className="mt-5 text-left" open={process.env.NEXT_PUBLIC_BEAST_UNIVERSAL_AUTH_ENABLED !== "true"}>
               <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold text-[#7dd3fc]">Existing email sign-in options</summary>
             <form method="post" className="mt-5 text-left" onSubmit={authenticate} data-analytics-event="auth_initiated" data-analytics-category={method === "password" ? "password" : "magic_link"} data-analytics-status="started">
               <label htmlFor="email" className="text-sm font-bold text-white">
@@ -592,7 +593,7 @@ function LoginExperience() {
                 </>
               ) : null}
             </form>
-            </details>
+            </details>}
           </>
         )}
 

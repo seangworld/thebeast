@@ -1,3 +1,4 @@
+import {completeMissingProfile} from '../../../vendor/beastguide/server/identity/account-profile.js';
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { EmailOtpType } from "@supabase/supabase-js";
@@ -158,9 +159,13 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  if (request.nextUrl.searchParams.get('purpose') === 'registration' && user.email_confirmed_at) {
-    setRedirectLocation(response, request, registrationReturnPath(destination));
+  if (request.nextUrl.searchParams.get('purpose') === 'registration' && user.email_confirmed_at && user.user_metadata?.beast_setup_profile) {
+    try {await completeMissingProfile(supabase,user);} catch {/* Existing setup retains the verified session and offers retry without overwriting data. */}
+    const ready=await supabase.rpc('beast_auth_account_setup_complete');
+    if(!ready.error&&ready.data===true){const next=new URL(destination,request.url);next.searchParams.set('registration','complete');setRedirectLocation(response,request,next.pathname+next.search);}else setRedirectLocation(response, request, registrationReturnPath(destination));
   }
+
+  if(request.nextUrl.searchParams.get('purpose')==='registration'&&user.email_confirmed_at&&!user.user_metadata?.beast_setup_profile)setRedirectLocation(response,request,registrationReturnPath(destination));
 
   if (isInvitation) {
     const adminClient = createAdminClient();

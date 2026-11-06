@@ -44,10 +44,10 @@ export type BeastMemberModuleAccessOverride = {
 
 export const beastGuideModule: BeastModuleRegistryEntry = {
     name: "BeastGuide", id: "beastguide", identifier: "beastguide", module: "beastguide",
-    version: "Phase 1", status: "active", visibility: "beta",
-    enabled: true, beta: true,
-    ownerNotes: "Entertainment library and episode progress using the shared Beast account. Controlled acceptance before release.",
-    href: "/dashboard/beastguide", minimumAge: 18,
+    version: "Web V1", status: "active", visibility: "released",
+    enabled: true, beta: false,
+    ownerNotes: "Entertainment library and episode progress using the shared Beast account. Released web application.",
+    href: "/dashboard/beastguide", minimumAge: 0,
   };
 
 export const beastModuleRegistry: BeastModuleRegistryEntry[] = [

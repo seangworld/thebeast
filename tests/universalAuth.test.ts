@@ -41,6 +41,7 @@ function gateway(options: { limited?: boolean; known?: boolean; enabled?: boolea
   const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
   const exports: { POST?: (request: NextRequest) => Promise<NextResponse> } = {};
   vm.runInNewContext(js, { exports, require: (name: string) => {
+    if(name.endsWith('/account-profile.js')) return require('../src/vendor/beastguide/server/identity/account-profile.js');
     if (name === 'next/server') return { NextResponse };
     if (name === '@supabase/ssr') return { createServerClient: (_url: string, _key: string, config: { cookies: { setAll: (values: unknown[]) => void } }) => { stageCookie = () => config.cookies.setAll([{ name: 'sb-fixture-auth-token', value: 'session', options: { path: '/', httpOnly: true, secure: true, sameSite: 'lax', maxAge: 31536000 } }]); stageVerifier = () => config.cookies.setAll([{name:'sb-fixture-code-verifier',value:'pkce-fixture',options:{path:'/',secure:true,sameSite:'lax'}}]);return auth; } };
     if (name === '@supabase/supabase-js') return { createClient: () => ({ auth: { signUp: async (input: Record<string, unknown>) => { signups.push(input); return { data: { user: null, session: null }, error: options.signupError ? {code:'unexpected_failure'} : null }; } } }) };
@@ -52,7 +53,7 @@ function gateway(options: { limited?: boolean; known?: boolean; enabled?: boolea
     if (name === 'node:crypto') return require('node:crypto');
     throw new Error(name);
   }, process: { env: { BEAST_UNIVERSAL_AUTH_ENABLED: options.enabled === false ? 'false' : 'true', BEAST_IDENTITY_URL: 'https://canonical.supabase.co', BEAST_AUTH_RATE_SECRET: 'x'.repeat(32), BEAST_AUTH_CAPTCHA_REQUIRED: options.captchaRequired ? 'true' : 'false', BEAST_AUTH_EMAIL_ORIGIN: 'https://thebeast.seangworld.com' } }, URL, setTimeout: (fn: () => void) => fn(), Date });
-  return { calls, rpcInputs, signups, post: (origin = 'https://beast.test', input: Record<string, unknown> = {}) => exports.POST!(new NextRequest('https://beast.test/api/auth/universal', { method: 'POST', headers: { origin }, body: JSON.stringify({ action: 'login', username: 'Beast', password: 'test-password', captchaToken: 'token', ...input }) })) };
+  return { calls, rpcInputs, signups, post: (origin = 'https://beast.test', input: Record<string, unknown> = {}) => exports.POST!(new NextRequest('https://beast.test/api/auth/universal', { method: 'POST', headers: { origin }, body: JSON.stringify({ action: 'login', username: 'Beast', password: 'test-password', captchaToken: 'token', name:'Test Member', birthday:'2000-01-01', ...input }) })) };
 }
 test('disabled rollout and cross-origin requests do not reach identity service', async () => {
   const disabled = gateway({ enabled: false }); assert.equal((await disabled.post()).status, 503); assert.deepEqual(disabled.calls, []);
@@ -151,3 +152,5 @@ test('registration retains only PKCE proof cookies and never grants an accidenta
 test('availability reveals only a rate-limited message without account IDs or sessions',async()=>{for(const known of [true,false]){const service=gateway({known});const result=await service.post('https://beast.test',{action:'availability'});assert.equal(result.status,200);const body=await result.json();assert.deepEqual(Object.keys(body),['message']);assert.match(body.message,known?/unavailable/:/is available/);assert.ok(!JSON.stringify(body).includes('existing-id'));assert.ok(!service.calls.includes('password'));}const limited=gateway({limited:true});assert.equal((await limited.post('https://beast.test',{action:'availability'})).status,429)});
 
 test('availability does not consume the target username credential budget',async()=>{const service=gateway();await service.post('https://beast.test',{action:'availability'});await service.post('https://beast.test',{action:'login'});const buckets=service.rpcInputs.filter(x=>x.name==='beast_auth_attempt');assert.equal(buckets[0].args.p_bucket,buckets[2].args.p_bucket);assert.notEqual(buckets[1].args.p_bucket,buckets[3].args.p_bucket)});
+
+test('signup rejects missing or impossible essential profile fields before account creation',async()=>{for(const invalid of [{name:''},{birthday:''},{birthday:'2012-02-30'},{birthday:'2999-01-01'}]){const f=gateway();const r=await f.post('https://beast.test',{action:'register',email:'new@example.test',...invalid});assert.equal(r.status,400);assert.equal(f.signups.length,0)}});

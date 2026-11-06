@@ -10,7 +10,7 @@ test("BeastGuide navigation uses normal module access overrides",()=>{
  const registry=[...beastModuleRegistry.filter(e=>e.id!=="beastguide"),beastGuideModule];
  assert.equal(buildApplicationNavigationForPersona({isOwner:false,registry}).find(e=>e.module==="beastguide")?.href,"/dashboard/beastguide");
  assert.ok(!buildApplicationNavigationForPersona({isOwner:false,registry,moduleAccess:[{moduleId:"beastguide",enabled:false}]}).some(e=>e.module==="beastguide"));
- assert.equal(beastGuideModule.visibility,"beta");
+ assert.equal(beastGuideModule.visibility,"released");
 });
 test("integration is off by default and cannot use development Auth",()=>{
  assert.equal(beastGuideAvailable({}),false);
