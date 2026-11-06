@@ -6,7 +6,7 @@ Scope: backlog persistence, compact indicator, provider information/corrections.
 
 Watched rows remain authoritative. A past air date never changes a checkbox. The applicable aired, unchecked episodes are sorted by season/episode; all remain outstanding and the first is Next to Watch, with its original air date. Coming Up contains future listings; My Schedule also contains the complete outstanding backlog.
 
-The safe default uses the earliest explicitly recorded episode when history exists. Otherwise, the immutable library added-at timestamp selects the latest aired release batch at that time (or the first listed upcoming episode). This avoids importing an older show's entire history as a debt on first add. Missing added-at/history asks for a starting point. The episode screen lets the user save a different starting point. Earlier explicitly unchecked episodes remain outstanding even after a later start is selected. Nothing marks excluded historical episodes watched or rewrites existing progress. Season check/uncheck remains explicit and available across all seasons.
+The safe default selects the latest aired release batch at the immutable library added-at timestamp (or the first listed upcoming episode), widened to include any earlier explicitly recorded history. Checking a later episode never advances this default past an earlier outstanding episode. This avoids importing an older show's entire history as a debt on first add. Missing added-at/history asks for a starting point. The episode screen lets the user save a different starting point. Earlier explicitly unchecked episodes remain outstanding even after a later start is selected. Nothing marks excluded historical episodes watched or rewrites existing progress. Season check/uncheck remains explicit and available across all seasons.
 
 The default is deterministic from existing cloud records, not the current date. Selected starting points and provider corrections are cloud-backed and fetched on reload or when returning to My Library from a hidden tab. Simultaneous different-field settings updates preserve each other's fields; same-episode concurrent writes retain the existing last-write behavior.
 
@@ -36,7 +36,7 @@ Production deployments and all custom account-mail flags must remain unchanged. 
 
 ## Consolidated host candidate
 
-Source PR: https://github.com/seangworld/beastguide/pull/11 at `dc1d1e9792fdb3776f25857cf6cc091a8888c855`. Imported with hash verification, without hand-edited bundles. BeastOS baseline: `0c6966ee693ee6c0016d8a21d6884a2b8d165247`; dormant mail-fix PR #318 is excluded.
+Source PR: https://github.com/seangworld/beastguide/pull/11 at `b5271a00b7a936f70868d3e13d44f1c39f4907ff`. Imported with hash verification, without hand-edited bundles. BeastOS baseline: `0c6966ee693ee6c0016d8a21d6884a2b8d165247`; dormant mail-fix PR #318 is excluded.
 
 Host validation: 2,740 regression tests pass; full required build including staff/history checks, artifact safeguards, account-mail tests and local DB/security checks passes, with zero audit vulnerabilities. Shipped-artifact Chromium/WebKit frame-policy tests pass and retain external/nested frame denial.
 
