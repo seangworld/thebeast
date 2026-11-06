@@ -1,7 +1,7 @@
 import {IdentityError,CANONICAL,uuid} from './proof.js';
 import {transaction} from './store.js';
 import {scopeFor} from './scope.js';
-const columns={library:['user_id','content_type','provider','provider_id','status','created_at'],episode_progress:['user_id','provider','series_id','season_number','episode_number','watched','updated_at'],notification_preferences:['user_id','enabled','one_day_before','two_hours_before','news_enabled','email_enabled','time_zone','updated_at'],movies:['user_id','id','item','watched','created_at'],collections:['user_id','id','data'],events:['user_id','id','item','created_at']};
+const columns={library:['user_id','content_type','provider','provider_id','status','created_at','tracking_start_season','tracking_start_episode','broadcast_override','streaming_override'],episode_progress:['user_id','provider','series_id','season_number','episode_number','watched','updated_at'],notification_preferences:['user_id','enabled','one_day_before','two_hours_before','news_enabled','email_enabled','time_zone','updated_at'],movies:['user_id','id','item','watched','created_at'],collections:['user_id','id','data'],events:['user_id','id','item','created_at']};
 const conflicts={library:'user_id,content_type,provider,provider_id',episode_progress:'user_id,provider,series_id,season_number,episode_number',notification_preferences:'user_id',movies:'user_id,id',collections:'user_id,id',events:'user_id,id'};
 export function dataService({verify,pool,scope=scopeFor('production')}){return async(token,operation)=>{
  const actor=await verify(token,CANONICAL),type=operation?.table?.replace(/^beastguide_/,'');
@@ -35,6 +35,12 @@ export function dataService({verify,pool,scope=scopeFor('production')}){return a
   if(!rows.length||rows.length>300)throw new IdentityError('INVALID_ROWS');
   for(const input of rows){
    if(!input||input.user_id!==actor.id)throw new IdentityError('OWNER_MISMATCH',403);
+   if(type==='library'){
+    for(const key of ['tracking_start_season','tracking_start_episode'])if(input[key]!=null&&(!Number.isInteger(input[key])||input[key]<1||input[key]>10000))throw new IdentityError('INVALID_TRACKING_BASELINE');
+    if(Object.hasOwn(input,'tracking_start_season')!==Object.hasOwn(input,'tracking_start_episode')||(input.tracking_start_season==null)!==(input.tracking_start_episode==null))throw new IdentityError('INVALID_TRACKING_BASELINE');
+    if(input.broadcast_override!=null&&(typeof input.broadcast_override!=='string'||input.broadcast_override.length>160))throw new IdentityError('INVALID_PROVIDER_INFO');
+    if(input.streaming_override!=null&&(!Array.isArray(input.streaming_override)||input.streaming_override.length>10||input.streaming_override.some(x=>typeof x!=='string'||!x.trim()||x.length>80)))throw new IdentityError('INVALID_PROVIDER_INFO');
+   }
    const row={...input,user_id:owner},keys=Object.keys(row);
    if(keys.some(k=>!columns[type].includes(k))||conflicts[type].split(',').some(k=>row[k]==null))throw new IdentityError('INVALID_FIELDS');
    if(row.provider&&row.provider!=='beastguide-demo')throw new IdentityError('INVALID_PROVIDER');
