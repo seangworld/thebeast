@@ -23,7 +23,10 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const productionSecurityHeaders = [
-  { key: "Content-Security-Policy", value: contentSecurityPolicy },
+  // App Router navigation retains the entry document's CSP. Every shell must
+  // permit the approved same-origin Guide frame, including PWA/dashboard entry.
+  // Other documents still deny being framed; the Guide child cannot nest frames.
+  { key: "Content-Security-Policy", value: contentSecurityPolicy.replace("frame-src 'none'", "frame-src 'self'") },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -49,10 +52,6 @@ const nextConfig = {
       {
         source: "/dashboard/operations/atlas",
         headers: [{ key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=()" }],
-      },
-      {
-        source: "/dashboard/beastguide/:path*",
-        headers: [{key:"Content-Security-Policy",value:contentSecurityPolicy.replace("frame-src 'none'", "frame-src 'self'")}],
       },
       {
         source: "/beastguide-app/:path*",
