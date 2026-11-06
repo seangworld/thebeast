@@ -1,3 +1,4 @@
+import {requiredProfileError,signupProfile} from '../../../../vendor/beastguide/server/identity/account-profile.js';
 import { createHmac, randomUUID } from 'node:crypto';
 import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
     if (process.env.BEAST_AUTH_CAPTCHA_REQUIRED === 'true' && !input.captchaToken) return reply('Complete the security check.', 400);
     if (action === 'register') {
       if (typeof input.email !== 'string' || input.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) return reply('Enter a valid email address.', 400);
+      const profileError=requiredProfileError(input.name,input.birthday);if(profileError)return reply(profileError,400);
       // The existing SSR client uses PKCE and writes the verifier cookie needed
       // by /auth/callback. Never send an accidental signup session to the browser.
       const availability = await admin.rpc('beast_auth_identity', { p_username: username });
@@ -91,7 +93,7 @@ export async function POST(request: NextRequest) {
       if (availability.data) return reply('That username is unavailable. Choose another one.', 409);
       const registration = await auth.auth.signUp({ email: input.email, password: input.password, options: {
         captchaToken: input.captchaToken,
-        data: { beast_username: username },
+        data: { beast_username: username, beast_setup_profile: signupProfile(input.name,input.birthday) },
         emailRedirectTo: buildRegistrationCallbackUrl(request.nextUrl.origin, input.next),
       } });
       if (registration.error && !['user_already_exists','email_exists'].includes(registration.error.code || '')) return reply('Registration could not be completed. Please retry, or use login help if you already have an account.', 503);

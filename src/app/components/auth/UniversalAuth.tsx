@@ -1,4 +1,5 @@
 'use client';
+import {requiredProfileError,REQUIRED_NOTICE} from '../../../vendor/beastguide/server/identity/account-profile.js';
 import {UsernameField} from './UsernameField';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 
@@ -22,12 +23,15 @@ export function UniversalAuth({ action = 'login', getCaptchaToken, onSignedIn, r
     if (submitting.current) return;
     const form = event.currentTarget;
     const fields = new FormData(form);
+    if(action==='register'){const validation=requiredProfileError(fields.get('name'),fields.get('birthday'));if(validation){setMessage(validation);return;}if(!String(fields.get('email')||'').match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)){setMessage('Enter a valid email address.');return;}}
+    if(!String(fields.get('username')||'').match(/^[A-Za-z][A-Za-z0-9_]{2,31}$/)){setMessage('Enter a valid username using the rules below.');return;}
+    if(!fields.get('password')){setMessage('Enter your password.');return;}
     submitting.current = true;
     setBusy(true); setMessage('');
     try {
       const response = await fetch('/api/auth/universal', {
         method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, next: destination, username: fields.get('username'), email: fields.get('email'), password: fields.get('password'), captchaToken: await getCaptchaToken?.() }),
+        body: JSON.stringify({ action, next: destination, username: fields.get('username'), email: fields.get('email'),name:fields.get('name'),birthday:fields.get('birthday'), password: fields.get('password'), captchaToken: await getCaptchaToken?.() }),
       });
       const result = await response.json();
       setMessage(typeof result.message === 'string' ? result.message : 'Authentication is temporarily unavailable.');
@@ -40,18 +44,20 @@ export function UniversalAuth({ action = 'login', getCaptchaToken, onSignedIn, r
     finally { submitting.current = false; setBusy(false); }
   }
   return <section aria-label={action === 'register' ? 'Register a Beast username' : 'Sign in with a Beast username'} className="mt-5 text-left">
-    {!registered && <form method="post" onSubmit={submit} className="space-y-4" aria-busy={busy}>
+    {!registered && <form method="post" noValidate onSubmit={submit} className="space-y-4" aria-busy={busy}>
+      <p className="text-sm font-semibold">{REQUIRED_NOTICE}</p>
+      {action==='register' && <><div><label htmlFor={`${id}-name`}>Name <span aria-hidden="true" className="text-red-400">*</span></label><input id={`${id}-name`} aria-label="Name" name="name" autoComplete="name" required maxLength={200} className="beast-input mt-2 min-h-[48px]" /></div><div><label htmlFor={`${id}-birthday`}>Date of birth <span aria-hidden="true" className="text-red-400">*</span></label><input id={`${id}-birthday`} aria-label="Date of birth" name="birthday" type="date" autoComplete="bday" required className="beast-input mt-2 min-h-[48px]" /></div></>}
       <UsernameField checkAvailability={action === 'register'} />
-      {action === 'register' && <div><label htmlFor={`${id}-email`} className="text-sm font-bold">Email address</label>
-        <input id={`${id}-email`} className="beast-input mt-2 min-h-[48px]" name="email" type="email" autoComplete="email" required maxLength={254} /></div>}
-      <div><label htmlFor={`${id}-password`} className="text-sm font-bold">Password</label>
-        <input id={`${id}-password`} className="beast-input mt-2 min-h-[48px]" name="password" type="password" autoComplete={action === 'login' ? 'current-password' : 'new-password'} required minLength={action === 'register' ? 12 : 1} maxLength={action === 'register' ? 72 : 128} /></div>
+      {action === 'register' && <div><label htmlFor={`${id}-email`} className="text-sm font-bold">Email address <span aria-hidden="true" className="text-red-400">*</span></label>
+        <input id={`${id}-email`} className="beast-input mt-2 min-h-[48px]" aria-label="Email address" name="email" type="email" autoComplete="email" required maxLength={254} /></div>}
+      <div><label htmlFor={`${id}-password`} className="text-sm font-bold">Password <span aria-hidden="true" className="text-red-400">*</span></label>
+        <input id={`${id}-password`} className="beast-input mt-2 min-h-[48px]" aria-label="Password" name="password" type="password" autoComplete={action === 'login' ? 'current-password' : 'new-password'} required minLength={action === 'register' ? 12 : 1} maxLength={action === 'register' ? 72 : 128} /></div>
       {action === 'register' && <p className="text-xs leading-5 text-[#9da9b9]">Use 12–72 characters with a letter and a number. Verify your email once, then sign in with your username and password.</p>}
       <button disabled={busy || !ready} className="beast-button min-h-[48px] w-full disabled:opacity-60" type="submit">{busy ? 'Please wait…' : action === 'login' ? 'Sign in with username' : 'Create Beast account'}</button>
     </form>}
     {registered && <p className="mt-3">Registration request received. After verification, you will return to the Beast application you requested.</p>}
     <p role="status" aria-live="polite" className="mt-3 text-sm leading-6 text-[#c7cfdb]">{message}</p>
-    <nav className="mt-4 flex flex-wrap gap-4 text-sm font-bold text-[#7dd3fc]" aria-label="Account help"><a href={`/forgot-username?next=${encodeURIComponent(destination)}`}>Forgot username?</a><a href={`/resend-verification?next=${encodeURIComponent(destination)}`}>Resend verification</a><a href="/login-help">Need help signing in?</a></nav>
+    <nav className="mt-4 flex flex-wrap gap-4 text-sm font-bold text-[#7dd3fc]" aria-label="Account help"><a href={`/forgot-username?next=${encodeURIComponent(destination)}`}>Forgot username?</a><a href={`/resend-verification?next=${encodeURIComponent(destination)}`}>Resend verification</a><a href={`/login-help?next=${encodeURIComponent(destination)}`}>Need help signing in?</a></nav>
     {action === 'login' && <a className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[#7dd3fc]" href={recoveryHref}>Forgot password?</a>}
   </section>;
 }

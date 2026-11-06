@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { beastModuleRegistry, getModuleRegistryEntry } from "../src/lib/moduleRegistry";
+import { beastModuleRegistry, beastGuideModule, getModuleRegistryEntry } from "../src/lib/moduleRegistry";
 import { calculateMemberAge, classifyMemberAge, resolveMemberModuleEntitlement } from "../src/lib/memberAgeEntitlements";
 
 const asOf = new Date("2026-08-09T12:00:00Z");
@@ -41,4 +41,13 @@ test("BO-600 keeps admin access and supports minor View As simulation", () => {
 
 test("BO-600 requires every registry entry to declare an age floor", () => {
     assert.equal(beastModuleRegistry.every((entry) => typeof entry.minimumAge === "number"), true);
+});
+
+// The server middleware/API entitlement resolver uses this same module registry.
+test("BeastGuide admits minors without opening adult modules or overriding explicit denials",()=>{
+ const entry=beastGuideModule;
+ assert.equal(entry?.minimumAge,0);
+ assert.equal(resolveMemberModuleEntitlement({module:'beastguide',entry,birthday:'2012-01-01',asOf}).allowed,true);
+ assert.equal(resolveMemberModuleEntitlement({module:'beastguide',entry,birthday:'2012-01-01',asOf,override:false}).allowed,false);
+ for(const module of ['money','health'] as const)assert.equal(resolveMemberModuleEntitlement({module,entry:getModuleRegistryEntry(module),birthday:'2012-01-01',asOf}).allowed,false);
 });
