@@ -138,6 +138,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20261105031457_canonical_username_mail.sql",
   "20261105041820_admin_canonical_member_usernames.sql",
   "20261105205657_account_mail_configured_owner_recipient.sql",
+  "20261105213413_account_mail_recipient_return_type.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

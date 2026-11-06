@@ -11,7 +11,7 @@ const failed='50000000-0000-4000-8000-000000000005';
 const queueFailed='60000000-0000-4000-8000-000000000006';
 try{
  await db.exec(`create role anon;create role authenticated;create role service_role;
- create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,banned_until timestamptz,deleted_at timestamptz,last_sign_in_at timestamptz,created_at timestamptz default now(),raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');
+ create schema auth;create table auth.users(id uuid primary key,email varchar(255),email_confirmed_at timestamptz,banned_until timestamptz,deleted_at timestamptz,last_sign_in_at timestamptz,created_at timestamptz default now(),raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');
  create table public.profiles(id uuid primary key,role text);
  create schema extensions;create function extensions.hmac(text,text,text) returns bytea language sql as $$select decode(repeat('a',64),'hex')$$;
  create schema vault;create table vault.decrypted_secrets(name text primary key,decrypted_secret text);
@@ -34,6 +34,26 @@ try{
  assert.equal(correctedClaim.privileges,originalClaim.privileges,'CREATE OR REPLACE preserves exact service-only grants');
  const normalize=s=>s.replace('-- Recipient is server configuration, AND must be a current verified canonical admin.','-- Service-only caller supplies the private owner-approved server configuration.\n -- Receiving a notice grants no administrative permissions.').replace('from auth.users u join public.profiles p on p.id=u.id','from auth.users u').replace(" and p.role='admin'",'');
  assert.equal(correctedClaim.definition,normalize(originalClaim.definition),'only configured recipient role dependency changes; leases/caps/dedupe/claim logic identical');
+ // Reproduce the deployed 42804 with real Auth varchar(255), never a production row.
+ await db.exec('begin');
+ await db.query("select public.beast_account_mail_queue_recovery('owner@example.test')");
+ await db.exec('savepoint before_claim');
+ await assert.rejects(db.query("select * from public.beast_account_mail_claim($1,'username_recovery')",[owner]),e=>e.code==='42804'&&e.detail.includes('character varying')&&e.detail.includes('recipient'));
+ await db.exec('rollback to savepoint before_claim');
+ const unclaimed=(await db.query("select state,leased_at,sent_at from beast_identity.account_mail_outbox where user_id=$1",[owner])).rows[0];
+ assert.equal(unclaimed.state,'pending');assert.equal(unclaimed.leased_at,null);assert.equal(unclaimed.sent_at,null);
+ await db.exec('rollback');
+ await db.exec(await readFile('supabase/migrations/20261105213413_account_mail_recipient_return_type.sql','utf8'));
+ const fixedClaim=(await db.query("select pg_get_functiondef('public.beast_account_mail_claim(uuid,text,text)'::regprocedure) definition,proacl::text privileges from pg_proc where oid='public.beast_account_mail_claim(uuid,text,text)'::regprocedure")).rows[0];
+ assert.equal(fixedClaim.definition,correctedClaim.definition.replace('else u.email end','else u.email::text end'),'only the varchar-to-text return cast changes');
+ assert.equal(fixedClaim.privileges,correctedClaim.privileges,'exact ACL unchanged');
+ await db.exec('begin');
+ await db.query("select public.beast_account_mail_queue_recovery('owner@example.test')");
+ await db.exec('set local role service_role');
+ const recovered=(await db.query("select * from public.beast_account_mail_claim($1,'username_recovery')",[owner])).rows[0];
+ assert.equal(recovered.recipient,'owner@example.test');assert.equal(recovered.kind,'username_recovery');
+ await db.exec('rollback');
+
 
  assert.deepEqual((await db.query('select * from auth.users order by id')).rows,accounts);
  assert.deepEqual((await db.query('select * from profiles order by id')).rows,profiles);
@@ -104,5 +124,5 @@ try{
  await db.exec(await readFile('supabase/operations/account-mail-recipient-policy-rollback.sql','utf8'));
  assert.equal((await db.query("select pg_get_functiondef('public.beast_account_mail_claim(uuid,text,text)'::regprocedure) definition")).rows[0].definition,originalClaim.definition,'rollback restores only the exact prior claim function');
  assert.deepEqual((await db.query("select (select jsonb_agg(to_jsonb(t) order by id) from auth.users t) users,(select jsonb_agg(to_jsonb(t) order by id) from profiles t) profiles,(select jsonb_agg(to_jsonb(t) order by id) from beast_identity.account_mail_outbox t) outbox")).rows,beforeRollback,'rollback preserves accounts, roles and all delivery receipts');
- console.log('PASS: canonical Auth creation before verification, all-app trigger, no backfill, UUID deduplication, no verification/login/claim duplicates, private verified active non-admin recipient, invalid-recipient rejection, unchanged grants and roles, fixed payload-free wake-up, rollback and failure isolation, immutable existing records.');
+ console.log('PASS: reproduced 42804 with Auth varchar(255), explicit text cast fixes recovery/owner claims, failed claim leaves pending receipt unchanged; canonical Auth creation before verification, all-app trigger, no backfill, UUID deduplication, no verification/login/claim duplicates, private verified active non-admin recipient, invalid-recipient rejection, unchanged grants and roles, fixed payload-free wake-up, rollback and failure isolation, immutable existing records.');
 }finally{await db.close()}
