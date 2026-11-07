@@ -50,20 +50,27 @@ function success(): DebtPaymentResult {
   return { ok: true, message: "Debt payment recorded. Money calculations and surfaces refreshed." };
 }
 
-test("BM-42C Pay Minimum renders confirmation and calls the canonical writer with the stored minimum", async () => {
+test("BM-42C Pay Minimum renders the remaining cycle minimum and calls the canonical writer", async () => {
   const calls: Parameters<DebtManagementActionsProps["onPayment"]>[0][] = [];
-  const view = renderActions(async (input) => { calls.push(input); return success(); });
+  const view = renderActions(async (input) => { calls.push(input); return success(); }, [{
+    id: "prior-partial",
+    debt_id: debt.id,
+    amount: 100,
+    payment_date: "2026-08-10",
+    cycle_due_date: "2026-08-20",
+    action_type: "custom",
+  }]);
 
   fireEvent.click(within(view.container).getByRole("button", { name: "Pay Minimum" }));
   const dialog = within(view.container).getByRole("dialog", { name: /minimum payment confirmation/i });
   assert.equal(dialog.getAttribute("data-debt-management-layout"), "compact");
-  assert.match(dialog.textContent || "", /stored minimum of/);
-  assert.match(dialog.textContent || "", /\$589\.00/);
+  assert.match(dialog.textContent || "", /remaining minimum of/);
+  assert.match(dialog.textContent || "", /\$489\.00/);
   fireEvent.click(within(dialog).getByRole("button", { name: "Confirm Payment" }));
 
   await waitFor(() => assert.equal(calls.length, 1));
   assert.equal(calls[0]?.debt.id, "rocket-loans");
-  assert.equal(calls[0]?.amount, 589);
+  assert.equal(calls[0]?.amount, 489);
   assert.equal(calls[0]?.actionType, "minimum");
   await waitFor(() => assert.match(view.container.textContent || "", /Money calculations and surfaces refreshed/));
 });
