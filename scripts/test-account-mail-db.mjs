@@ -2,7 +2,7 @@ import {PGlite} from '@electric-sql/pglite';import {readFile} from 'node:fs/prom
 const db=new PGlite();
 const a='10000000-0000-4000-8000-000000000001',b='20000000-0000-4000-8000-000000000002',c='30000000-0000-4000-8000-000000000003';
 try{
- await db.exec(`create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,banned_until timestamptz,deleted_at timestamptz,last_sign_in_at timestamptz,created_at timestamptz default now(),raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');`);
+ await db.exec(`create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key,email varchar(255),email_confirmed_at timestamptz,banned_until timestamptz,deleted_at timestamptz,last_sign_in_at timestamptz,created_at timestamptz default now(),raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');`);
  await db.exec(`create table public.profiles(id uuid primary key,role text);
  create schema extensions;create function extensions.hmac(text,text,text) returns bytea language sql as $$select decode(repeat('a',64),'hex')$$;
  create schema vault;create table vault.decrypted_secrets(name text primary key,decrypted_secret text);
@@ -13,6 +13,7 @@ try{
  await db.exec(await readFile('supabase/migrations/20261103235724_universal_authentication.sql','utf8'));
  await db.query("insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data) values($1,'existing@example.test',now(),'{\"beast_username\":\"existing\"}')",[a]);const before=(await db.query('select * from beast_identity.usernames')).rows;const accountsBefore=(await db.query('select * from auth.users')).rows;await db.query("insert into public.profiles values($1,'admin')",[a]);
  await db.exec(await readFile('supabase/migrations/20261105031457_canonical_username_mail.sql','utf8'));
+ await db.exec(await readFile('supabase/migrations/20261108233118_account_mail_claim_recipient_text.sql','utf8'));
  assert.equal((await db.query('select count(*)::int n from beast_identity.account_mail_outbox')).rows[0].n,0);assert.deepEqual((await db.query('select * from auth.users')).rows,accountsBefore);
  for(const role of ['anon','authenticated']){await db.exec('set role '+role);await assert.rejects(db.query("select public.beast_account_mail_queue_recovery('existing@example.test')"),/permission denied/);await assert.rejects(db.query('select public.beast_account_mail_claim()'),/permission denied/);await assert.rejects(db.query('select * from beast_identity.account_mail_outbox'),/permission denied/);await db.exec('reset role');}
  await db.query("insert into auth.users(id,email,raw_user_meta_data) values($1,'new@example.test','{\"beast_username\":\"chosen_name\"}')",[b]);
