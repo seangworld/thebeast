@@ -11,7 +11,7 @@ const failed='50000000-0000-4000-8000-000000000005';
 const queueFailed='60000000-0000-4000-8000-000000000006';
 try{
  await db.exec(`create role anon;create role authenticated;create role service_role;
- create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,banned_until timestamptz,deleted_at timestamptz,last_sign_in_at timestamptz,created_at timestamptz default now(),raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');
+ create schema auth;create table auth.users(id uuid primary key,email varchar(255),email_confirmed_at timestamptz,banned_until timestamptz,deleted_at timestamptz,last_sign_in_at timestamptz,created_at timestamptz default now(),raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');
  create table public.profiles(id uuid primary key,role text);
  create schema extensions;create function extensions.hmac(text,text,text) returns bytea language sql as $$select decode(repeat('a',64),'hex')$$;
  create schema vault;create table vault.decrypted_secrets(name text primary key,decrypted_secret text);
@@ -49,6 +49,14 @@ try{
  assert.equal(queued.length,1);assert.equal(queued[0].dedupe_key,'registration:'+member);assert.equal(queued[0].registration_email,'registered@example.test');assert.equal(queued[0].verified_at_creation,false);
  assert.equal((await db.query('select email_confirmed_at from auth.users where id=$1',[member])).rows[0].email_confirmed_at,null);
  assert.equal((await db.query('select count(*)::int n from net.wake_requests')).rows[0].n,0,'wake-up is off without separately approved Vault binding');
+ await db.exec('set role service_role');
+ await assert.rejects(db.query("select * from public.beast_account_mail_claim($1,'owner_registration','owner@example.test')",[member]),e=>e.code==='42804'&&e.detail.includes('position 3'));
+ await db.exec('reset role');
+ assert.equal((await db.query("select state from beast_identity.account_mail_outbox where user_id=$1 and kind='owner_registration'",[member])).rows[0].state,'pending','failed claim rolls back its lease');
+ await db.exec(await readFile('supabase/migrations/20261108233118_account_mail_claim_recipient_text.sql','utf8'));
+ const castClaim=(await db.query("select pg_get_functiondef(oid) definition,proacl::text privileges from pg_proc where oid='public.beast_account_mail_claim(uuid,text,text)'::regprocedure")).rows[0];
+ assert.equal(castClaim.privileges,correctedClaim.privileges);
+ assert.equal(castClaim.definition,correctedClaim.definition.replace('else u.email end,','else u.email end::text,'));
  await db.exec('set role service_role');
  assert.equal((await db.query("select * from public.beast_account_mail_claim($1,'owner_registration','attacker@example.test')",[member])).rows.length,0);
  let notice=(await db.query("select * from public.beast_account_mail_claim($1,'owner_registration','owner@example.test')",[member])).rows[0];
@@ -101,6 +109,8 @@ try{
  assert.deepEqual((await db.query('select * from beast_identity.usernames where user_id=$1',[owner])).rows,mappings);
  assert.deepEqual((await db.query('select * from profiles where id=$1',[owner])).rows,profiles);
  const beforeRollback=(await db.query("select (select jsonb_agg(to_jsonb(t) order by id) from auth.users t) users,(select jsonb_agg(to_jsonb(t) order by id) from profiles t) profiles,(select jsonb_agg(to_jsonb(t) order by id) from beast_identity.account_mail_outbox t) outbox")).rows;
+ await db.exec(correction);
+ assert.equal((await db.query("select pg_get_functiondef('public.beast_account_mail_claim(uuid,text,text)'::regprocedure) definition")).rows[0].definition,correctedClaim.definition,'reapplying the preceding function restores the previous definition');
  await db.exec(await readFile('supabase/operations/account-mail-recipient-policy-rollback.sql','utf8'));
  assert.equal((await db.query("select pg_get_functiondef('public.beast_account_mail_claim(uuid,text,text)'::regprocedure) definition")).rows[0].definition,originalClaim.definition,'rollback restores only the exact prior claim function');
  assert.deepEqual((await db.query("select (select jsonb_agg(to_jsonb(t) order by id) from auth.users t) users,(select jsonb_agg(to_jsonb(t) order by id) from profiles t) profiles,(select jsonb_agg(to_jsonb(t) order by id) from beast_identity.account_mail_outbox t) outbox")).rows,beforeRollback,'rollback preserves accounts, roles and all delivery receipts');
