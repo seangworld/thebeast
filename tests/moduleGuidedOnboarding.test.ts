@@ -103,13 +103,9 @@ test("incomplete offer/start state remains eligible until the member completes o
   assert.equal(shouldOfferGuidedTour({ ...base, status: "skipped" }, beastMoneyGuidedTour), false);
 });
 
-test("runtime mounts all route tours and safely resets/clamps state across definitions", () => {
-  const component = readFileSync("src/app/components/GuidedTour.tsx", "utf8");
+test("guided tours are disabled throughout the BeastOS dashboard", () => {
   const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
-  assert.match(component, /boundedStepIndex/);
-  assert.match(component, /\[definition\.id\]/);
-  assert.match(layout, /guidedTourDefinitions\.map/);
-  assert.doesNotMatch(layout, /hidden min-\[390px\]/);
+  assert.doesNotMatch(layout, /GuidedTour|resolveGuidedToursForPath|guidedTourDefinitions/);
 });
 
 test("tour analytics identity is accepted in stable identifier form", () => {
@@ -125,7 +121,7 @@ test("focus containment wraps backward navigation from the dialog container", ()
   assert.match(component, /event\.shiftKey \? lastControl : first/);
 });
 
-test("module entry surfaces expose responsive spotlight hooks and contextual replay", () => {
+test("module guidance hooks remain inert while BeastOS tours are disabled", () => {
   const source = [
     readFileSync("src/app/dashboard/money/components/FinancialMissionControl.tsx", "utf8"),
     readFileSync("src/app/dashboard/health/BeastHealthWorkspace.tsx", "utf8"),
@@ -139,9 +135,7 @@ test("module entry surfaces expose responsive spotlight hooks and contextual rep
     }
   }
   const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
-  assert.match(layout, /GuidedTourReplayButton/);
-  assert.match(layout, /guidedTourDefinitions/);
-  assert.match(layout, /\[&>button\]:w-full/);
+  assert.doesNotMatch(layout, /GuidedTourReplayButton|guidedTourDefinitions/);
 });
 
 test("privacy-bounded telemetry records tour lifecycle without member content", () => {
