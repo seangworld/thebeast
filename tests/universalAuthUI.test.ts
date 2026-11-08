@@ -83,7 +83,7 @@ test('username format feedback is immediate and stale availability cannot overwr
   globalThis.fetch=async(_url,input)=>{requests.push(JSON.parse(String(input?.body)));return new Promise<Response>(resolve=>{finish=resolve})};
   const view=render(createElement(UniversalAuth,{action:'register',onSignedIn:()=>{}}));const field=view.getByLabelText('Username');
   fireEvent.input(field,{target:{value:'1invalid'}});assert.ok(view.getByText('Enter a valid username using the rules above.'));assert.equal(requests.length,0);
-  assert.ok(view.getByText(setup.USERNAME_REQUIREMENTS));fireEvent.input(field,{target:{value:'valid_name'}});
+  assert.ok(view.getByText(setup.USERNAME_REQUIREMENTS));assert.match(setup.USERNAME_REQUIREMENTS,/email addresses/i);fireEvent.input(field,{target:{value:'sean@example.com'}});assert.ok(view.getByText('Email addresses cannot be used as usernames. Choose a username using the rules above.'));fireEvent.input(field,{target:{value:'valid_name'}});
   await waitFor(()=>assert.equal(requests.length,1),{timeout:1500});assert.deepEqual(requests[0],{action:'availability',username:'valid_name'});
   fireEvent.input(field,{target:{value:'another invalid'}});finish!(new Response(JSON.stringify({message:'That username is available.'})));await new Promise(resolve=>setTimeout(resolve,10));assert.equal(view.queryByText('That username is available.'),null);assert.ok(view.getByText('Enter a valid username using the rules above.'));
  }finally{restore()}
