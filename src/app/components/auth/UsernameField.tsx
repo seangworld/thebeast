@@ -22,6 +22,6 @@ export function UsernameField({checkAvailability=false,label="Username"}: {check
   return <div><label htmlFor={id} className="text-sm font-bold">{label} <span aria-hidden="true" className="text-red-400">*</span></label>
     <input aria-label={label} id={id} name="username" className="beast-input mt-2 min-h-[48px]" autoComplete="username" autoCapitalize="none" spellCheck={false} required minLength={3} maxLength={32} pattern="[A-Za-z][A-Za-z0-9_]{2,31}" aria-describedby={`${id}-rules ${id}-status`} aria-invalid={value.length>0&&!valid} onInput={event=>setValue(event.currentTarget.value)} />
     <p id={`${id}-rules`} className="mt-2 text-sm text-[#9da9b9]">{USERNAME_REQUIREMENTS}</p>
-    <p id={`${id}-status`} aria-live="polite" className="mt-2 text-sm">{value&&!valid?'Enter a valid username using the rules above.':notice}</p>
+    <p id={`${id}-status`} aria-live="polite" className="mt-2 text-sm">{value&&!valid?(value.includes('@')?'Email addresses cannot be used as usernames. Choose a username using the rules above.':'Enter a valid username using the rules above.'):notice}</p>
   </div>;
 }
