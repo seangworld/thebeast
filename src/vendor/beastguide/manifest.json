@@ -1,13 +1,13 @@
 {
   "application": "beastguide",
   "format": 1,
-  "sourceCommit": "4f776cdac07fe2a9cec65ebb3c0916ffbcd5f029",
+  "sourceCommit": "5d3f863a4dae978fe9632d0afb25c2a42e877855",
   "session": "BeastOS existing same-origin browser client",
   "files": {
-    "public/assets/index-DLMssQbb.css": "a00162be2957163b99a00d414372931b66de93109885a27490164d927134f169",
-    "public/assets/index-M9Fyl3kK.js": "146aaf4eae758d23dbcf9bdc8eafca90c13db75ca86ba399024fce0a79c415b9",
-    "public/data-sources.html": "f903148d71bce0082671af8723e280063c88c96f13924d6a1c183e717a27f16a",
-    "public/index.html": "68c8c08e4525e5f4172036d1a763ba2a52d95d173ea400be768f0e0c32fd5fe4",
+    "public/assets/index-CUuPzbNq.js": "8c816f59a4a56a3ce7c408f2ff445cc5d0477e439a2afbd160a9528b1d6f35d1",
+    "public/assets/index-Mhf8EUvg.css": "118bf65002aadb3b1f5490147ce5f9cae86726c946edb4a03d455aca32c1d675",
+    "public/data-sources.html": "a1aac2bfd702c6981cc2c513c81835124cc95db05bcbaddd1f2d9a37095d9c1f",
+    "public/index.html": "8df211abf8b98e42ed210621f2b5a5c9ef34bb64d86b8089fbcc206dee6b4041",
     "runtime/api/catalog.js": "cc2b04caf84c0aee53313ed4bcf61adb83815e726fe7aa0c280f5e5bd855e2ea",
     "runtime/api/identity.js": "525d5bef83e3386db8a068b2110ab060f509777550abcca478a3c6664370993d",
     "runtime/api/sports.js": "db6334e36fc6fec5e8730057d95a22850dedc927386600a0887d643509ccc2b5",
