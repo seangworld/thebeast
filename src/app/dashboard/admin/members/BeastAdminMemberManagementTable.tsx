@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   DashboardCard,
   SectionHeader,
@@ -42,6 +42,7 @@ type Props = {
   members: BeastAdminManagedMember[];
   usageEvidenceAvailable: boolean;
   selectedMemberIds: string[];
+  communications?: ReactNode;
   pendingMemberId: string;
   onSelectedMemberIdsChange: (memberIds: string[]) => void;
   onAction: (
@@ -244,6 +245,7 @@ export function BeastAdminMemberManagementTable({
   members,
   usageEvidenceAvailable,
   selectedMemberIds,
+  communications,
   pendingMemberId,
   onSelectedMemberIdsChange,
   onAction,
@@ -504,11 +506,13 @@ export function BeastAdminMemberManagementTable({
         <button
           type="button"
           className="beast-button-secondary min-h-10"
-          onClick={() => setFilters(defaultFilters)}
+          onClick={() => { setFilters(defaultFilters); setSetupRequired(false); }}
         >
           Clear filters
         </button>
       </div>
+
+      {communications}
 
       {pagination.items.length ? (
         <>
