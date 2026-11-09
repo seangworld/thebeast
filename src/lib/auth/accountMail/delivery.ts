@@ -43,6 +43,9 @@ export type MailRpc={rpc:(name:string,args:Record<string,unknown>)=>PromiseLike<
 export async function deliverAccountMail(admin:MailRpc,send:(mail:AccountMail)=>Promise<void>,userId:string|null=null,kind:string|null=null,ownerEmail:string|null=null){
  const claimed=await admin.rpc('beast_account_mail_claim',{p_user_id:userId,p_kind:kind,p_owner_email:ownerEmail});if(claimed.error)throw Error('ACCOUNT_MAIL_STORE');
  const mail=(claimed.data as AccountMail[]|null)?.[0];if(!mail)return false;
+ return deliverClaimedAccountMail(admin,send,mail);
+}
+export async function deliverClaimedAccountMail(admin:MailRpc,send:(mail:AccountMail)=>Promise<void>,mail:AccountMail){
  let sent=false;
  try{await send(mail);sent=true;}catch{/* Ambiguous SMTP outcomes are held, never blindly retried. */}
  const result=await admin.rpc('beast_account_mail_finish',{p_id:mail.mail_id,p_token:mail.delivery_token,p_sent:sent});

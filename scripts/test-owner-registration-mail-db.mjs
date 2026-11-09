@@ -1,4 +1,5 @@
 // Real isolated PostgreSQL; Vault/pg_net transport stubs never contact any network.
+import {createHash} from 'node:crypto';
 import {PGlite} from '@electric-sql/pglite';
 import {readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -108,6 +109,37 @@ try{
  assert.equal((await db.query('select username from beast_identity.usernames where user_id=$1',[queueFailed])).rows[0].username,'queue_failure','mail failure cannot undo the canonical username');
  assert.deepEqual((await db.query('select * from beast_identity.usernames where user_id=$1',[owner])).rows,mappings);
  assert.deepEqual((await db.query('select * from profiles where id=$1',[owner])).rows,profiles);
+ // Run the temporary operation with a synthetic receipt binding.
+ const fixtureReceipt='90000000-0000-4000-8000-000000000009';
+ const fixtureDigest=createHash('sha256').update(fixtureReceipt).digest('hex');
+ const controlledSql=await readFile('supabase/operations/account-mail-controlled-recovery.sql','utf8');
+ await db.exec('begin');
+ await db.exec(controlledSql.replaceAll('c584d60845b84f5497532c055d948bc78cf967618b7a6ca0c479dc3d37ca3ef2',fixtureDigest));
+ await db.query("insert into beast_identity.account_mail_outbox(id,user_id,kind,dedupe_key) values($1,$2,'username_recovery','controlled-fixture')",[fixtureReceipt,owner]);
+ const otherRows=async()=>(await db.query("select * from beast_identity.account_mail_outbox where id<>$1 order by id",[fixtureReceipt])).rows;
+ for(const role of ['anon','authenticated']){
+  await db.exec('savepoint access_check');
+  await db.exec('set local role '+role);
+  await assert.rejects(db.query('select * from public.beast_account_mail_claim_controlled_recovery()'),e=>e.code==='42501');
+  await db.exec('rollback to savepoint access_check');
+ }
+ await db.query("insert into beast_identity.account_mail_outbox(user_id,kind,dedupe_key) values($1,'username_recovery','competing-fixture')",[owner]);
+ await db.exec('set local role service_role');
+ assert.equal((await db.query('select * from public.beast_account_mail_claim_controlled_recovery()')).rows.length,0,'competing recovery fails closed');
+ await db.exec('reset role');
+ await db.query("delete from beast_identity.account_mail_outbox where dedupe_key='competing-fixture'");
+ await db.query("update beast_identity.account_mail_outbox set leased_at=now()-interval '2 days' where leased_at is not null");
+ const untouched=await otherRows();
+ await db.exec('set local role service_role');
+ const isolated=(await db.query('select * from public.beast_account_mail_claim_controlled_recovery()')).rows;
+ assert.equal(isolated.length,1);
+ assert.equal(isolated[0].mail_id,fixtureReceipt);
+ assert.equal(isolated[0].kind,'username_recovery');
+ await db.query('select public.beast_account_mail_finish($1,$2,false)',[fixtureReceipt,isolated[0].delivery_token]);
+ assert.equal((await db.query('select * from public.beast_account_mail_claim_controlled_recovery()')).rows.length,0,'ambiguous attempt cannot be replayed');
+ await db.exec('reset role');
+ assert.deepEqual(await otherRows(),untouched);
+ await db.exec('rollback');
  const beforeRollback=(await db.query("select (select jsonb_agg(to_jsonb(t) order by id) from auth.users t) users,(select jsonb_agg(to_jsonb(t) order by id) from profiles t) profiles,(select jsonb_agg(to_jsonb(t) order by id) from beast_identity.account_mail_outbox t) outbox")).rows;
  await db.exec(correction);
  assert.equal((await db.query("select pg_get_functiondef('public.beast_account_mail_claim(uuid,text,text)'::regprocedure) definition")).rows[0].definition,correctedClaim.definition,'reapplying the preceding function restores the previous definition');

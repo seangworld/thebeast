@@ -80,3 +80,27 @@ test('Production worker diagnostic requires its bearer and returns only booleans
  fail=true;
  assert.deepEqual(await (await get(secret)).json(),{error:'Diagnostic unavailable'});
 });
+
+test('controlled delivery refuses missing authorization, active flags and unexpected claims', async () => {
+ const secret='a'.repeat(64);
+ const env:Record<string,string>={VERCEL_ENV:'production',BEAST_ACCOUNT_MAIL_ENABLED:'false',NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED:'false',BEAST_OWNER_REGISTRATION_MAIL_ENABLED:'false'};
+ const calls:string[]=[];
+ let data:unknown[]=[];
+ const exports:{POST?:(request:NextRequest)=>Promise<NextResponse>}={};
+ vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/cron/account-mail/controlled-recovery/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{
+  exports,Buffer,process:{env},require:(name:string)=>name==='node:crypto'?require('node:crypto'):name==='next/server'?{NextResponse}:name.endsWith('/server')?{
+   canonicalAccountMailAdmin:()=>({rpc:async(rpc:string)=>{calls.push(rpc);return {data,error:null}}})
+  }:{smtpSender:()=>()=>{},deliverClaimedAccountMail:()=>{throw Error('unexpected send')}}
+ });
+ const post=()=>exports.POST!(new NextRequest('https://beast.test/api/cron/account-mail/controlled-recovery',{method:'POST',headers:{authorization:'Bearer '+secret}}));
+ assert.equal((await post()).status,401);
+ env.BEAST_ACCOUNT_MAIL_CONTROLLED_RECOVERY_SECRET=secret;
+ env.BEAST_ACCOUNT_MAIL_ENABLED='true';
+ assert.equal((await post()).status,404);
+ assert.deepEqual(calls,[]);
+ env.BEAST_ACCOUNT_MAIL_ENABLED='false';
+ assert.equal((await post()).status,409);
+ data=[{kind:'username_recovery',mail_id:'wrong-receipt'}];
+ assert.deepEqual(await (await post()).json(),{result:'unavailable'});
+ assert.deepEqual(calls,['beast_account_mail_claim_controlled_recovery','beast_account_mail_claim_controlled_recovery']);
+});
