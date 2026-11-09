@@ -197,3 +197,22 @@ test("unverified onboarding preview appends the official recovery entry point", 
   assert.equal(preview.recipients.length, 1);
   assert.match(preview.body, /https:\/\/thebeast.seangworld.com\/resend-verification/);
 });
+
+test("template recommendation follows the selected members and requires a choice for mixed eligibility", () => {
+  const directory = [
+    members[0],
+    { ...member(unverified, "unverified@example.test"), emailVerificationStatus: "unverified" },
+    { ...members[1], username: "already_set" },
+  ] as never;
+  assert.deepEqual(mail.getMemberMailTemplateOptions(directory, [alice]), {
+    setup: 1, onboarding: 0, recommended: "account_setup",
+  });
+  assert.deepEqual(mail.getMemberMailTemplateOptions(directory, [unverified]), {
+    setup: 0, onboarding: 1, recommended: "onboarding",
+  });
+  assert.deepEqual(mail.getMemberMailTemplateOptions(directory, [alice, unverified]), {
+    setup: 1, onboarding: 1, recommended: null,
+  });
+  assert.equal(mail.getMemberMailTemplateOptions(directory, [alice, bob]).recommended, null);
+  assert.equal(mail.getMemberMailTemplateOptions(directory, [bob]).recommended, null);
+});

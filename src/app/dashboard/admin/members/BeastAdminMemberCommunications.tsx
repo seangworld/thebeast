@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { MEMBER_MAIL_ADDRESS, MEMBER_MAIL_LIMIT, type MemberMailCategory } from "@/lib/beastAdminMemberCommunications";
+import type { BeastAdminMemberDirectoryEntry } from "@/lib/beastAdminMemberTimeline";
+import {
+  getMemberMailTemplateOptions, memberMailTemplates,
+  MEMBER_MAIL_ADDRESS, MEMBER_MAIL_LIMIT, type MemberMailCategory,
+} from "@/lib/beastAdminMemberCommunications";
 
 type Preview = {
   id: string;
@@ -14,10 +18,14 @@ type Preview = {
   recipients: { id: string; email: string }[];
 };
 
-export function BeastAdminMemberCommunications({ ids }: { ids: string[] }) {
+export function BeastAdminMemberCommunications({ ids, members }: {
+  ids: string[];
+  members: BeastAdminMemberDirectoryEntry[];
+}) {
   const [open, setOpen] = useState(false);
-  const [subject, setSubject] = useState("Finish setting up your Beast username");
-  const [body, setBody] = useState("Please sign in to BeastOS with your verified email and choose your login username in Account Setup.");
+  const [initialized, setInitialized] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const [category, setCategory] = useState<MemberMailCategory>("account_setup");
   const [savedPreview, setPreview] = useState<Preview | null>(null);
   const preview = savedPreview?.selection === ids ? savedPreview : null;
@@ -25,6 +33,31 @@ export function BeastAdminMemberCommunications({ ids }: { ids: string[] }) {
   const [transactionalOnly, setTransactionalOnly] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState("");
+
+  const options = getMemberMailTemplateOptions(members, ids);
+
+  function useTemplate(template: keyof typeof memberMailTemplates | "blank") {
+    if (template === "blank") {
+      setSubject("");
+      setBody("");
+      if (officialVerification) setCategory(options.recommended ?? "account_setup");
+    } else {
+      setCategory(template);
+      setSubject(memberMailTemplates[template].subject);
+      setBody(memberMailTemplates[template].body);
+    }
+    setPreview(null);
+    setTransactionalOnly(false);
+    setResult("");
+  }
+
+  function toggleComposer() {
+    if (!initialized) {
+      setInitialized(true);
+      if (options.recommended) useTemplate(options.recommended);
+    }
+    setOpen(!open);
+  }
 
   async function submit(action: "preview" | "send") {
     setBusy(true);
@@ -61,7 +94,7 @@ export function BeastAdminMemberCommunications({ ids }: { ids: string[] }) {
   if (!ids.length) return null;
   return (
     <section className="mt-3 grid min-w-0 gap-3 rounded-2xl border border-[#2a3242] bg-[#0b1220] p-4">
-      <button className="beast-button w-fit" type="button" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button className="beast-button w-fit" type="button" onClick={toggleComposer} aria-expanded={open}>
         {open ? "Close Compose Email" : "Compose Email"}
       </button>
       {open && <>
@@ -80,12 +113,29 @@ export function BeastAdminMemberCommunications({ ids }: { ids: string[] }) {
           : "Eligible recipients are unverified members with an existing signup email. Verification uses the existing account."}</p>
         {category === "onboarding" && <p>The reminder includes a link to request official verification. It does not verify the account.</p>}
         {!officialVerification && <>
+        <div className="grid gap-2">
+          <p>{options.setup} eligible for username setup · {options.onboarding} eligible for onboarding.</p>
+          <p>{options.recommended
+            ? `Suggested template: ${options.recommended === "account_setup" ? "Username setup" : "Unverified onboarding"}.`
+            : options.setup || options.onboarding
+              ? "Selection includes different eligibility states. Choose a compatible template and preview its recipients."
+              : "No selected members are eligible for these reminders."}</p>
+          <div className="flex flex-wrap gap-2">
+            <button className="beast-button-secondary" type="button" disabled={busy || !options.setup}
+              onClick={() => useTemplate("account_setup")}>Use username setup template</button>
+            <button className="beast-button-secondary" type="button" disabled={busy || !options.onboarding}
+              onClick={() => useTemplate("onboarding")}>Use onboarding template</button>
+            <button className="beast-button-secondary" type="button" disabled={busy}
+              onClick={() => useTemplate("blank")}>Start blank draft</button>
+          </div>
+          <p>Choosing a template or starting blank replaces the current subject and message.</p>
+        </div>
         <label className="grid gap-1">Subject
           <input className="beast-input w-full" value={subject} maxLength={160} disabled={busy}
             onChange={(event) => { setSubject(event.target.value); setPreview(null); }} />
         </label>
         <label className="grid gap-1">Message
-          <textarea className="beast-input w-full" rows={5} value={body} maxLength={4000} disabled={busy}
+          <textarea aria-label="Message" className="beast-input w-full" rows={5} value={body} maxLength={4000} disabled={busy}
             onChange={(event) => { setBody(event.target.value); setPreview(null); }} />
         </label>
         </>}

@@ -786,7 +786,7 @@ export function BeastAdminMemberManagementWorkspace() {
         members={members}
         usageEvidenceAvailable={usageEvidenceAvailable}
         selectedMemberIds={selectedMemberIds}
-        communications={<BeastAdminMemberCommunications ids={selectedMemberIds} />}
+        communications={<BeastAdminMemberCommunications ids={selectedMemberIds} members={members} />}
         pendingMemberId={pendingMemberId}
         onSelectedMemberIdsChange={setSelectedMemberIds}
         onAction={handleRowAction}
