@@ -56,3 +56,27 @@ test('valid dedicated signed wake remains dormant while the server mail flag is 
  const response=await exports.POST!(new NextRequest('https://beast.test/api/cron/account-mail',{method:'POST',headers:{'x-beast-mail-time':stamp,'x-beast-mail-nonce':nonce,'x-beast-mail-signature':require('node:crypto').createHmac('sha256',secret).update(stamp+'.'+nonce).digest('hex')}}));
  assert.deepEqual(await response.json(),{disabled:true});
 });
+
+test('Production worker diagnostic requires its bearer and returns only booleans', async () => {
+ const secret='a'.repeat(64);
+ const env={VERCEL_ENV:'production',BEAST_ACCOUNT_MAIL_DIAGNOSTIC:'true',BEAST_ACCOUNT_MAIL_DISPATCH_SECRET:secret,BEAST_ACCOUNT_MAIL_ENABLED:'false'};
+ const calls:string[]=[];
+ let fail=false;
+ const exports:{GET?:(request:NextRequest)=>Promise<NextResponse>}={};
+ vm.runInNewContext(ts.transpileModule(readFileSync('src/app/api/cron/account-mail/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{
+  exports,Buffer,process:{env},require:(name:string)=>name==='node:crypto'?require('node:crypto'):name==='next/server'?{NextResponse}:{
+   canonicalAccountMailAdmin:()=>({rpc:async(rpc:string)=>{calls.push(rpc);return {data:null,error:fail?{message:'private credential detail'}:null}}}),
+   sendQueuedAccountMail:()=>{throw Error('unexpected drain')}
+  }
+ });
+ const get=(bearer:string)=>exports.GET!(new NextRequest('https://beast.test/api/cron/account-mail?diagnostic=1',{headers:{authorization:'Bearer '+bearer}}));
+ assert.equal((await get('wrong')).status,401);
+ env.VERCEL_ENV='preview';
+ assert.equal((await get(secret)).status,404);
+ assert.deepEqual(calls,[]);
+ env.VERCEL_ENV='production';
+ assert.deepEqual(await (await get(secret)).json(),{canonicalProject:true,serviceCredential:true,readOnlyAccess:true});
+ assert.deepEqual(calls,['beast_auth_identity']);
+ fail=true;
+ assert.deepEqual(await (await get(secret)).json(),{error:'Diagnostic unavailable'});
+});

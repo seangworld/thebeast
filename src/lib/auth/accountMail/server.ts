@@ -1,9 +1,13 @@
 import {createAdminClient} from '@/lib/supabase/admin';
 import {requireSupabasePublicConfiguration} from '@/lib/supabase/config';
 import {deliverAccountMail,smtpSender} from './delivery';
-export function accountMailAdmin(){
- if(process.env.BEAST_ACCOUNT_MAIL_ENABLED!=='true'||process.env.BEAST_IDENTITY_URL!=='https://grpyzwvgqiwtxadfdtni.supabase.co'||requireSupabasePublicConfiguration().url!==process.env.BEAST_IDENTITY_URL)throw Error('ACCOUNT_MAIL_DISABLED');
+export function canonicalAccountMailAdmin(){
+ if(process.env.BEAST_IDENTITY_URL!=='https://grpyzwvgqiwtxadfdtni.supabase.co'||requireSupabasePublicConfiguration().url!==process.env.BEAST_IDENTITY_URL)throw Error('ACCOUNT_MAIL_DISABLED');
  const admin=createAdminClient();if(!admin)throw Error('ACCOUNT_MAIL_CONFIGURATION');return admin;
+}
+export function accountMailAdmin(){
+ if(process.env.BEAST_ACCOUNT_MAIL_ENABLED!=='true')throw Error('ACCOUNT_MAIL_DISABLED');
+ return canonicalAccountMailAdmin();
 }
 export async function sendQueuedAccountMail(userId:string|null=null,kind:string|null=null){
  // Only the separately enabled worker may claim owner notices; public recovery
