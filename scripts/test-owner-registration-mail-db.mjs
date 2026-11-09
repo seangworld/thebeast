@@ -3,6 +3,10 @@ import {createHash} from 'node:crypto';
 import {PGlite} from '@electric-sql/pglite';
 import {readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {createRequire} from 'node:module';
+import ts from 'typescript';
+const require=createRequire(import.meta.url);
 const db=new PGlite();
 const owner='10000000-0000-4000-8000-000000000001';
 const member='20000000-0000-4000-8000-000000000002';
@@ -131,14 +135,68 @@ try{
  await db.query("update beast_identity.account_mail_outbox set leased_at=now()-interval '2 days' where leased_at is not null");
  const untouched=await otherRows();
  await db.exec('set local role service_role');
- const isolated=(await db.query('select * from public.beast_account_mail_claim_controlled_recovery()')).rows;
- assert.equal(isolated.length,1);
- assert.equal(isolated[0].mail_id,fixtureReceipt);
- assert.equal(isolated[0].kind,'username_recovery');
- await db.query('select public.beast_account_mail_finish($1,$2,false)',[fixtureReceipt,isolated[0].delivery_token]);
- assert.equal((await db.query('select * from public.beast_account_mail_claim_controlled_recovery()')).rows.length,0,'ambiguous attempt cannot be replayed');
+ const {NextRequest,NextResponse}=require('next/server');
+ const token='a'.repeat(64);
+ const attempts=[];
+ let uncertain=false;
+ const rpc={
+  async rpc(name,args){
+   if(name==='beast_account_mail_claim_controlled_recovery'){
+    assert.equal(args,undefined);
+    return {data:(await db.query('select * from public.beast_account_mail_claim_controlled_recovery()')).rows};
+   }
+   assert.equal(name,'beast_account_mail_finish');
+   const result=await db.query('select public.beast_account_mail_finish($1,$2,$3) as finished',[args.p_id,args.p_token,args.p_sent]);
+   return {data:result.rows[0].finished};
+  }
+ };
+ const loadModule=(source,requireModule,env={})=>{
+  const exports={};
+  const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
+  vm.runInNewContext(compiled,{exports,Buffer,URL,process:{env},require:requireModule});
+  return exports;
+ };
+ const delivery=loadModule(await readFile('src/lib/auth/accountMail/delivery.ts','utf8'),name=>{
+  assert.equal(name,'nodemailer');
+  return {createTransport:()=>({sendMail:async message=>{
+   attempts.push(message);
+   if(uncertain)throw Error('simulated transport ambiguity');
+   return {accepted:[message.to],rejected:[]};
+  }})};
+ });
+ const env={
+  VERCEL_ENV:'production',BEAST_ACCOUNT_MAIL_CONTROLLED_RECOVERY_SECRET:token,
+  BEAST_ACCOUNT_MAIL_ENABLED:'false',NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED:'false',BEAST_OWNER_REGISTRATION_MAIL_ENABLED:'false',
+  BEAST_SMTP_HOST:'smtp.resend.com',BEAST_SMTP_PORT:'465',BEAST_SMTP_USER:'fixture',BEAST_SMTP_PASSWORD:'fixture',BEAST_SMTP_FROM:'fixture@seangworld.com'
+ };
+ const routeSource=(await readFile('src/app/api/cron/account-mail/controlled-recovery/route.ts','utf8')).replace('c584d60845b84f5497532c055d948bc78cf967618b7a6ca0c479dc3d37ca3ef2',fixtureDigest);
+ const route=loadModule(routeSource,name=>name==='@/lib/auth/accountMail/server'?{canonicalAccountMailAdmin:()=>rpc}:name.endsWith('/delivery')?delivery:require(name),env);
+ const post=()=>route.POST(new NextRequest('https://beast.test/api/cron/account-mail/controlled-recovery',{
+  method:'POST',headers:{authorization:'Bearer '+token},body:JSON.stringify({kind:'owner_registration',receipt:'different',recipient:'forged@example.test'})
+ }));
+ await db.exec('savepoint before_delivery');
+ const success=await post();
+ assert.equal(success.status,200);
+ assert.deepEqual(await success.json(),{result:'accepted'});
+ assert.equal(attempts.length,1);
+ assert.equal(attempts[0].messageId,'<beast-account-'+fixtureReceipt+'@seangworld.com>');
+ assert.equal(attempts[0].to,'owner@example.test');
+ assert.equal((await post()).status,409,'accepted receipt cannot be processed twice');
  await db.exec('reset role');
+ assert.equal((await db.query('select state from beast_identity.account_mail_outbox where id=$1',[fixtureReceipt])).rows[0].state,'sent');
  assert.deepEqual(await otherRows(),untouched);
+ await db.exec('rollback to savepoint before_delivery');
+ uncertain=true;
+ const held=await post();
+ assert.equal(held.status,503);
+ assert.deepEqual(await held.json(),{result:'held'});
+ assert.equal((await post()).status,409,'ambiguous receipt cannot be processed twice');
+ assert.equal(attempts.length,2);
+ assert.equal(attempts[1].messageId,attempts[0].messageId);
+ await db.exec('reset role');
+ assert.equal((await db.query('select state from beast_identity.account_mail_outbox where id=$1',[fixtureReceipt])).rows[0].state,'uncertain');
+ assert.deepEqual(await otherRows(),untouched);
+ console.log('PASS: controlled route and PostgreSQL operation isolate one receipt, preserve other rows, and refuse replay after acceptance or ambiguity.');
  await db.exec('rollback');
  const beforeRollback=(await db.query("select (select jsonb_agg(to_jsonb(t) order by id) from auth.users t) users,(select jsonb_agg(to_jsonb(t) order by id) from profiles t) profiles,(select jsonb_agg(to_jsonb(t) order by id) from beast_identity.account_mail_outbox t) outbox")).rows;
  await db.exec(correction);
