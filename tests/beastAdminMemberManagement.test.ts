@@ -356,7 +356,7 @@ test("BA-128 renders one owner workspace with the requested table, actions, and 
   assert.match(table, /max-w-full overflow-x-auto/);
   assert.match(table, /lg:hidden/);
   assert.match(table, /lg:block/);
-  assert.match(table, /selected for future bulk actions/);
+  assert.match(table, /selectedMemberIds.length} selected/);
   assert.match(table, /No accounts match these filters/);
   assert.match(workspace, /No authenticated Beast accounts exist/);
   assert.match(workspace, /role="dialog"/);

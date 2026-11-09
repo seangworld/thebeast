@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { BeastAdminMemberCommunications } from "./BeastAdminMemberCommunications";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   DashboardCard,
@@ -779,6 +781,8 @@ export function BeastAdminMemberManagementWorkspace() {
           </pre>
         </details>
       ) : null}
+
+      <BeastAdminMemberCommunications key={selectedMemberIds.join(",")} ids={selectedMemberIds} />
 
       <BeastAdminMemberManagementTable
         members={members}

@@ -256,14 +256,16 @@ export function BeastAdminMemberManagementTable({
     useState<BeastAdminMemberSortDirection>("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
+  const [setupRequired, setSetupRequired] = useState(false);
 
   const roles = useMemo(
     () => Array.from(new Set(members.map((member) => member.role))).sort(),
     [members]
   );
   const filtered = useMemo(
-    () => filterBeastAdminManagedMembers(members, filters),
-    [filters, members]
+    () => filterBeastAdminManagedMembers(members, filters)
+      .filter((member) => !setupRequired || !member.username),
+    [filters, members, setupRequired]
   );
   const sorted = useMemo(
     () => sortBeastAdminManagedMembers(filtered, sortKey, sortDirection),
@@ -276,7 +278,7 @@ export function BeastAdminMemberManagementTable({
 
   useEffect(() => {
     setPage(1);
-  }, [filters, pageSize]);
+  }, [filters, pageSize, setupRequired]);
 
   useEffect(() => {
     if (pagination.page !== page) setPage(pagination.page);
@@ -388,6 +390,14 @@ export function BeastAdminMemberManagementTable({
           </select>
         </label>
         <label className="grid min-w-0 gap-1.5 text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
+          Username
+          <select className={inputClassName} value={setupRequired ? "required" : "all"}
+            onChange={(event) => setSetupRequired(event.target.value === "required")}>
+            <option value="all">All username states</option>
+            <option value="required">Setup Required</option>
+          </select>
+        </label>
+        <label className="grid min-w-0 gap-1.5 text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
           Email verification
           <select
             value={filters.emailVerification}
@@ -479,7 +489,7 @@ export function BeastAdminMemberManagementTable({
             {filtered.length} of {members.length} accounts
           </span>
           <span>
-            {selectedMemberIds.length} selected for future bulk actions
+            {selectedMemberIds.length} selected
           </span>
           {selectedMemberIds.length ? (
             <button
