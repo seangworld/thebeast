@@ -36,7 +36,7 @@ export function BeastAdminMemberCommunications({ ids, members }: {
 
   const options = getMemberMailTemplateOptions(members, ids);
 
-  function useTemplate(template: keyof typeof memberMailTemplates | "blank") {
+  function applyTemplate(template: keyof typeof memberMailTemplates | "blank") {
     if (template === "blank") {
       setSubject("");
       setBody("");
@@ -54,7 +54,7 @@ export function BeastAdminMemberCommunications({ ids, members }: {
   function toggleComposer() {
     if (!initialized) {
       setInitialized(true);
-      if (options.recommended) useTemplate(options.recommended);
+      if (options.recommended) applyTemplate(options.recommended);
     }
     setOpen(!open);
   }
@@ -122,11 +122,11 @@ export function BeastAdminMemberCommunications({ ids, members }: {
               : "No selected members are eligible for these reminders."}</p>
           <div className="flex flex-wrap gap-2">
             <button className="beast-button-secondary" type="button" disabled={busy || !options.setup}
-              onClick={() => useTemplate("account_setup")}>Use username setup template</button>
+              onClick={() => applyTemplate("account_setup")}>Use username setup template</button>
             <button className="beast-button-secondary" type="button" disabled={busy || !options.onboarding}
-              onClick={() => useTemplate("onboarding")}>Use onboarding template</button>
+              onClick={() => applyTemplate("onboarding")}>Use onboarding template</button>
             <button className="beast-button-secondary" type="button" disabled={busy}
-              onClick={() => useTemplate("blank")}>Start blank draft</button>
+              onClick={() => applyTemplate("blank")}>Start blank draft</button>
           </div>
           <p>Choosing a template or starting blank replaces the current subject and message.</p>
         </div>
