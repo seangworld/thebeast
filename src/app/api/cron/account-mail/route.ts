@@ -1,6 +1,6 @@
 import {createHash,createHmac,timingSafeEqual} from 'node:crypto';
 import {NextRequest,NextResponse} from 'next/server';
-import {accountMailAdmin,sendQueuedAccountMail} from '@/lib/auth/accountMail/server';
+import {accountMailAdmin,canonicalAccountMailAdmin,sendQueuedAccountMail} from '@/lib/auth/accountMail/server';
 export const runtime='nodejs';
 const json=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}});
 function equal(left:string,right:string){return Buffer.byteLength(left)===Buffer.byteLength(right)&&timingSafeEqual(Buffer.from(left),Buffer.from(right))}
@@ -11,6 +11,15 @@ async function drain(){
 export async function GET(request:NextRequest){
  const expected=process.env.BEAST_ACCOUNT_MAIL_DISPATCH_SECRET,header=request.headers.get('authorization');
  if(!expected||expected.length<64||!header||!equal(header,'Bearer '+expected))return json({error:'Unauthorized'},401);
+ if(request.nextUrl.searchParams.get('diagnostic')==='1'){
+  if(process.env.VERCEL_ENV!=='production'||process.env.BEAST_ACCOUNT_MAIL_DIAGNOSTIC!=='true'||process.env.BEAST_ACCOUNT_MAIL_ENABLED==='true'||process.env.NEXT_PUBLIC_BEAST_USERNAME_MAIL_ENABLED==='true'||process.env.BEAST_OWNER_REGISTRATION_MAIL_ENABLED==='true')return json({disabled:true},404);
+  try{
+   // The fixed value cannot match the canonical username format.
+   const result=await canonicalAccountMailAdmin().rpc('beast_auth_identity',{p_username:'!account-mail-read-only-probe!'});
+   if(result.error||result.data!==null)throw Error('DIAGNOSTIC_UNAVAILABLE');
+   return json({canonicalProject:true,serviceCredential:true,readOnlyAccess:true});
+  }catch{return json({error:'Diagnostic unavailable'},503)}
+ }
  return drain();
 }
 // Existing pg_net wake-ups contain no reusable secret, account ID, email or
