@@ -782,12 +782,11 @@ export function BeastAdminMemberManagementWorkspace() {
         </details>
       ) : null}
 
-      <BeastAdminMemberCommunications key={selectedMemberIds.join(",")} ids={selectedMemberIds} />
-
       <BeastAdminMemberManagementTable
         members={members}
         usageEvidenceAvailable={usageEvidenceAvailable}
         selectedMemberIds={selectedMemberIds}
+        communications={<BeastAdminMemberCommunications ids={selectedMemberIds} />}
         pendingMemberId={pendingMemberId}
         onSelectedMemberIdsChange={setSelectedMemberIds}
         onAction={handleRowAction}
