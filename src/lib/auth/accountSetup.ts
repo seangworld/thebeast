@@ -1,5 +1,5 @@
 import { getSafeAuthDestination } from './experience';
-export const USERNAME_REQUIREMENTS = '3–32 characters. Must start with a letter. Letters, numbers, and underscores (_) only. No spaces or special characters.';
+export const USERNAME_REQUIREMENTS = '3–32 characters. Start with a letter. Use only letters, numbers, and underscores (_). No spaces, other special characters, or email addresses.';
 export function accountSetupPath(destination?: string | null) {
   const next=getSafeAuthDestination(destination);
   return '/account-setup?next=' + encodeURIComponent(next.startsWith('/account-setup') ? '/dashboard/today' : next);
