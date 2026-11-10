@@ -1132,7 +1132,7 @@ export default function DebtsPage() {
       const currentDueDate = getCurrentDebtCycleDueDate(debt);
       const cycleDueDate = toDebtDateInput(currentDueDate);
       const configuredSource = input.fundingSourceId;
-      await recordDebtPaymentAtomic(supabase, {
+      const paymentResult = await recordDebtPaymentAtomic(supabase, {
         operationId,
         debtId: debt.id,
         amount,
@@ -1142,17 +1142,84 @@ export default function DebtsPage() {
         notes: input.notes,
         actionType,
       });
-      const message = actionType === "skip" ? "Payment skipped and the next due date advanced." : actionType === "paid_outside_beast" ? "Payment completed outside Beast was recorded." : "Debt payment recorded. Money calculations and surfaces refreshed.";
+
+      const [paymentVerification, debtVerification] = await Promise.all([
+        supabase
+          .from("debt_payments")
+          .select("id, debt_id, amount, payment_date, cycle_due_date, action_type, notes, is_outside_beast, created_at, reversed_at, operation_id, balance_after, resulting_next_due_date")
+          .eq("id", paymentResult.paymentId)
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("debts")
+          .select("id, balance, next_due_date_after_payment")
+          .eq("id", debt.id)
+          .eq("user_id", userId)
+          .maybeSingle(),
+      ]);
+      const savedPayment = paymentVerification.data;
+      const savedDebt = debtVerification.data;
+      const paymentIsVerified = Boolean(
+        !paymentVerification.error &&
+        !debtVerification.error &&
+        savedPayment &&
+        savedDebt &&
+        savedPayment.operation_id === operationId &&
+        savedPayment.debt_id === debt.id &&
+        Math.abs(Number(savedPayment.amount) - paymentResult.recordedAmount) < 0.005 &&
+        paymentResult.balanceAfter !== undefined &&
+        Math.abs(Number(savedDebt.balance) - paymentResult.balanceAfter) < 0.005 &&
+        (savedDebt.next_due_date_after_payment || null) === paymentResult.nextDueDate &&
+        (savedPayment.resulting_next_due_date || null) === paymentResult.nextDueDate
+      );
+      if (!paymentIsVerified || !savedPayment || !savedDebt) {
+        throw new Error("payment_persistence_not_verified");
+      }
+
+      let refreshed = true;
+      try {
+        await load();
+      } catch {
+        refreshed = false;
+      }
+      setDebts((current) => {
+        const verifiedDueDate = savedDebt.next_due_date_after_payment
+          ? parseDateOnly(savedDebt.next_due_date_after_payment)
+          : debt.nextDueDate;
+        const verifiedDebt = {
+          ...debt,
+          ...savedDebt,
+          nextDueDate: verifiedDueDate,
+          nextDueDateDisplay: formatShortDate(verifiedDueDate),
+        } as Debt;
+        return current.some((item) => item.id === debt.id)
+          ? current.map((item) => item.id === debt.id ? { ...item, ...verifiedDebt } : item)
+          : [...current, verifiedDebt];
+      });
+      setDebtPayments((current) => [
+        savedPayment as DebtPaymentHistoryRow,
+        ...current.filter((payment) => payment.id !== savedPayment.id),
+      ]);
+      const message = actionType === "skip"
+        ? "Payment skipped and the next due date advanced."
+        : actionType === "paid_outside_beast"
+          ? "Payment completed outside Beast was recorded."
+          : refreshed
+            ? "Debt payment recorded. Balance and history were verified."
+            : "Debt payment recorded and verified. Some other debt details could not be refreshed.";
       setMessage(message);
-      await load();
       return { ok: true, message };
     } catch (error) {
       reportClientOperationFailure({
         module: "beastmoney",
-        operation: "debt_payment_apply",
+        operation: error instanceof Error && error.message === "payment_persistence_not_verified"
+          ? "debt_payment_verification"
+          : "debt_payment_apply",
         category: error instanceof AtomicFinancialCommandError ? error.category : "unknown_error",
       });
-      const message =
+      const message = error instanceof Error && error.message === "payment_persistence_not_verified"
+        ? "The payment response was received, but BeastMoney could not verify the saved history and balance. Your entry is preserved; refresh before trying it again."
+        :
         error instanceof AtomicFinancialCommandError &&
         error.category === "maintenance_error"
           ? BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE

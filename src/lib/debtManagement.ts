@@ -9,6 +9,44 @@ export type DebtPaymentAction =
   | "skip"
   | "paid_outside_beast";
 
+export type DebtPaymentCycleRecord = {
+  amount: number;
+  cycle_due_date?: string | null;
+  action_type?: DebtPaymentAction | null;
+  reversed_at?: string | null;
+};
+
+/**
+ * Minimum payment owed for one due-date cycle after recorded payments.
+ * The lender's configured minimum stays unchanged for future cycles.
+ */
+export function getDebtMinimumRemaining({
+  balance,
+  minimumPayment,
+  cycleDueDate,
+  payments,
+}: {
+  balance: number;
+  minimumPayment: number;
+  cycleDueDate: string;
+  payments: readonly DebtPaymentCycleRecord[];
+}) {
+  const currentBalance = Math.max(Number(balance || 0), 0);
+  const configuredMinimum = Math.max(Number(minimumPayment || 0), 0);
+  const paidThisCycle = payments.reduce((sum, payment) => {
+    if (
+      payment.reversed_at ||
+      payment.action_type === "skip" ||
+      payment.cycle_due_date !== cycleDueDate
+    ) {
+      return sum;
+    }
+    return sum + Math.max(Number(payment.amount || 0), 0);
+  }, 0);
+
+  return Math.min(currentBalance, Math.max(configuredMinimum - paidThisCycle, 0));
+}
+
 export type DebtPaymentMode = "minimum" | "minimum_plus_extra" | "custom";
 
 export function getDebtPaymentWarning({ balance, minimumPayment, amount }: { balance: number; minimumPayment: number; amount: number }) {
