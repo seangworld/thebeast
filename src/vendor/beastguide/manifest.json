@@ -15,7 +15,7 @@
     "runtime/server/identity/account-profile.js": "f1bc57ec1ce2c15e2d4c391f3b90719f59e157d0fbc1f6c00dfb2b8482dbbbef",
     "runtime/server/identity/data.js": "e8c1cadd18159c6dffa3e02319ccd7d1b584f1696fbbb20b2765659ad34bc382",
     "runtime/server/identity/database-tls.js": "8fe98d87645db7c148302612c6748d6d58ece72c3ec7a97cdb4185612ceccd9b",
-    "runtime/server/identity/proof.js": "743cdf112fa2f0800b56b233f597caf79aaed06fc25ff551dfade3c1f19f61ed",
+    "runtime/server/identity/proof.js": "620a5eb88ffa12e0ceb7d43819052b987c2aa5bf120f50b30b83a0159e3ff7e1",
     "runtime/server/identity/registration.js": "72cadeef100fdad08bbc1f98e5e0dd0a1e2222e9688be16ae1fddfcf7620ee47",
     "runtime/server/identity/runtime.js": "f136700b34c6ee66acedee4ad61d0176779d86aa801cb9bb216636bd9ee2bb8a",
     "runtime/server/identity/scope.js": "7c570d08d46fd52a92ba5debbb4a823db8b042d8d9991d7f9770b75f2a1f9267",
