@@ -21,6 +21,7 @@ function environment(): NodeJS.ProcessEnv {
 export async function handleNativeBeastGuide(request: Request, service: Service): Promise<NextResponse> {
  const env = environment();
  const headers = Object.fromEntries(request.headers.entries());
+ if (service === "identity") console.info("BEASTGUIDE_NATIVE_ORIGIN_DIAGNOSTIC", { capacitorOrigin: headers.origin === "capacitor://localhost", cookiePresent: Object.hasOwn(headers, "cookie") });
  const length = Number(request.headers.get("content-length") || 0);
  const limit = service === "auth" ? 8192 : 65536;
  if (length > limit) return NextResponse.json({ error: "BODY_TOO_LARGE" }, { status: 413 });
