@@ -6,7 +6,7 @@ export class IdentityError extends Error {constructor(code,status=400){super(cod
 export const digest=value=>createHash('sha256').update(value).digest('hex');
 export const nonce=()=>randomBytes(32).toString('base64url');
 export function bearer(req){const m=/^Bearer ([A-Za-z0-9_.-]+)$/.exec(req.headers.authorization||'');if(!m||m[1].length>12000)throw new IdentityError('AUTH_REQUIRED',401);return m[1]}
-export function sameOrigin(req,origin){const allowed=typeof origin==='string'?origin.split(',').map(x=>x.trim()):[];if(!allowed.length||allowed.some(x=>{const u=new URL(x);return u.origin!==x||(u.protocol!=='https:'&&!['127.0.0.1','localhost'].includes(u.hostname))})||!allowed.includes(req.headers.origin))throw new IdentityError('ORIGIN_DENIED',403)}
+export function sameOrigin(req,origin){const allowed=typeof origin==='string'?origin.split(',').map(x=>x.trim()):[];if(!allowed.length||allowed.some(x=>{if(x==='capacitor://localhost')return false;const u=new URL(x);return u.origin!==x||(u.protocol!=='https:'&&!['127.0.0.1','localhost'].includes(u.hostname))})||!allowed.includes(req.headers.origin))throw new IdentityError('ORIGIN_DENIED',403)}
 export function createVerifier({canonicalKey,legacyKey,fetcher=fetch,now=()=>Date.now(),requireAccountSetup=false}){
  return async function verify(token,project,{fresh=false}={}){
   if(![CANONICAL,LEGACY].includes(project))throw new IdentityError('WRONG_ISSUER',401);
