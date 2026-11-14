@@ -1,7 +1,7 @@
 {
   "application": "beastguide",
   "format": 1,
-  "sourceCommit": "687f902bab03e77963ac546a61a944725c6b7e9f",
+  "sourceCommit": "684ae478e60b87bf0cbb7b266c2f8b7f433eaea4",
   "session": "BeastOS existing same-origin browser client",
   "files": {
     "public/assets/index-CUuPzbNq.js": "8c816f59a4a56a3ce7c408f2ff445cc5d0477e439a2afbd160a9528b1d6f35d1",
