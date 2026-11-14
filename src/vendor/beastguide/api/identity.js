@@ -1,10 +1,10 @@
 import {getRuntime} from '../server/identity/runtime.js';
 import {sameOrigin,bearer,IdentityError} from '../server/identity/proof.js';
-export function createIdentityHandler({runtime=getRuntime,origin=()=>process.env.BEAST_IDENTITY_ORIGIN}={}){return async function handler(req,res){
+export function createIdentityHandler({runtime=getRuntime,origin=()=>process.env.BEAST_IDENTITY_ORIGIN,validateOrigin}={}){return async function handler(req,res){
  res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','application/json');
  try{
   if(req.method!=='POST')throw new IdentityError('METHOD_NOT_ALLOWED',405);
-  sameOrigin(req,origin());
+  if(typeof validateOrigin==='function')validateOrigin(req);else sameOrigin(req,origin());
   if(!String(req.headers['content-type']||'').startsWith('application/json'))throw new IdentityError('JSON_REQUIRED',415);
   if(Number(req.headers['content-length']||0)>65536)throw new IdentityError('BODY_TOO_LARGE',413);
   const body=typeof req.body==='string'?JSON.parse(req.body):req.body;
