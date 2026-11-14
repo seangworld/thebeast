@@ -1,7 +1,7 @@
 {
   "application": "beastguide",
   "format": 1,
-  "sourceCommit": "87c1d91036e4c42d133d46abe5a6468686b70b0d",
+  "sourceCommit": "687f902bab03e77963ac546a61a944725c6b7e9f",
   "session": "BeastOS existing same-origin browser client",
   "files": {
     "public/assets/index-CUuPzbNq.js": "8c816f59a4a56a3ce7c408f2ff445cc5d0477e439a2afbd160a9528b1d6f35d1",
@@ -9,7 +9,7 @@
     "public/data-sources.html": "a1aac2bfd702c6981cc2c513c81835124cc95db05bcbaddd1f2d9a37095d9c1f",
     "public/index.html": "8df211abf8b98e42ed210621f2b5a5c9ef34bb64d86b8089fbcc206dee6b4041",
     "runtime/api/catalog.js": "cc2b04caf84c0aee53313ed4bcf61adb83815e726fe7aa0c280f5e5bd855e2ea",
-    "runtime/api/identity.js": "525d5bef83e3386db8a068b2110ab060f509777550abcca478a3c6664370993d",
+    "runtime/api/identity.js": "0d995325198df316e2c7486a997a20d3718997379eb30b9394614e5bf402112c",
     "runtime/api/sports.js": "db6334e36fc6fec5e8730057d95a22850dedc927386600a0887d643509ccc2b5",
     "runtime/package.json": "d218e29ec01186542b0d85bdc6691d12514e4cdd0ba3b9cd81f253250c8d1e34",
     "runtime/server/identity/account-profile.js": "f1bc57ec1ce2c15e2d4c391f3b90719f59e157d0fbc1f6c00dfb2b8482dbbbef",
