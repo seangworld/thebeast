@@ -31,7 +31,7 @@ export async function handleNativeBeastGuide(request: Request, service: Service)
  const responseHeaders = new Headers();
  const res = { get statusCode() { return statusCode; }, set statusCode(value: number) { statusCode = value; }, setHeader(name: string, value: string) { responseHeaders.set(name, value); }, end(value?: string) { responseBody = value || ""; } };
  if (service === "auth") await createNativeAuthHandler({ env })(req, res);
- else if (service === "identity") await createNativeIdentityHandler({ env, runtime: () => getRuntime(beastGuideRuntimeEnvironment(process.env)) })(req, res);
+ else if (service === "identity") await createNativeIdentityHandler({ env, runtime: () => getRuntime(beastGuideRuntimeEnvironment(process.env)) } as any)(req, res);
  else await nativeCatalog(req, res);
  return new NextResponse(statusCode === 204 || statusCode === 304 ? null : responseBody, { status: statusCode, headers: responseHeaders });
 }
