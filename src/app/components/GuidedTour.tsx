@@ -13,6 +13,10 @@ import {
 } from "@/lib/guidedOnboarding";
 import { trackGuidedOnboardingEvent } from "@/lib/analytics/client";
 
+// Automatic first-use and What's New interruptions are currently off for all members.
+// Members can still start a tour manually from its How to Use control.
+const AUTOMATIC_GUIDED_TOUR_OFFERS_ENABLED = false;
+
 export const START_GUIDED_TOUR_EVENT = "beast:start-guided-tour";
 export const REQUESTED_GUIDED_TOUR_KEY = "beast:guided-tour:requested";
 
@@ -109,6 +113,7 @@ export function GuidedTour({
   }, [definition.id]);
 
   useEffect(() => {
+    if (!AUTOMATIC_GUIDED_TOUR_OFFERS_ENABLED) return;
     if (!isGuidedTourAutoOfferPath(pathname, definition)) return;
     const progress = readProgress(storageKey);
     if (!shouldOfferGuidedTour(progress, definition)) return;

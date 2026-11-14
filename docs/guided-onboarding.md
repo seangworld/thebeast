@@ -3,7 +3,7 @@
 `BO-UX-001` provides the reusable first-use walkthrough architecture for Beast and its modules. `BO-UX-003` extends that architecture with route-aware module definitions; it does not create a second onboarding system.
 
 - Definitions live in `src/lib/guidedOnboarding.ts` and carry a stable ID and semantic version.
-- The dashboard mounts `GuidedTour` after authenticated access resolves.
+- The dashboard mounts `GuidedTour` after authenticated access resolves. Automatic first-use and What's New offers are currently globally disabled; tours remain available through the member's explicit How to Use replay control.
 - Progress is scoped to member ID and tour ID. Completed and skipped tours do not replay until their definition version changes.
 - Members can replay the current route-appropriate tour from **How to Use Beast**, **How to Use BeastMoney**, **How to Use BeastHealth**, **How to Use BeastEducation**, or **How to Use BeastHome**. When needed, replay returns the member to the tour's real entry surface before opening it.
 - Steps may target stable `data-*` hooks. Missing optional targets fall back to a centered explanation instead of trapping or breaking the member experience.
