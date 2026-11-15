@@ -276,6 +276,7 @@ const accentClasses = {
 };
 
 const beastBrandColor = "#38bdf8";
+const beastModuleBrandColor = "#fbbf24";
 
 function getAccentClass(accent: DashboardCardProps["accent"]) {
   if (!accent) return accentClasses.blue;
@@ -384,7 +385,7 @@ export function ModuleTitle({ module, title }: ModuleTitleProps) {
       aria-label={`Beast${moduleName}`}
     >
       <span style={{ color: beastBrandColor }}>Beast</span>
-      <span style={{ color: accent.color }}>{moduleName}</span>
+      <span style={{ color: beastModuleBrandColor }}>{moduleName}</span>
     </div>
   );
 }
