@@ -43,6 +43,24 @@ The dashboard shell supplies `data-beast-module` and changes only `--beast-accen
 | BeastDocuments | Slate | Shared records context |
 | BeastAdmin | Amber | Owner-only administrative context |
 
+## Beast module wordmarks
+
+Shared BeastOS branding uses the SEANGWORLD blue prefix (`#38bdf8`) with a module-specific suffix color. The shared brand mark, module navigation labels, and module badges all use this same wordmark renderer.
+
+| Wordmark | Suffix color |
+| --- | --- |
+| BeastOS and BeastFusion | White |
+| BeastMoney | Green |
+| BeastEducation | Cyan |
+| BeastGuide | Amber |
+| BeastHealth | Red |
+| BeastHome | Orange |
+| BeastProjects | Blue-indigo |
+| BeastVehicles | Cyan |
+| BeastFamily and BeastGoals | Yellow |
+| BeastDocuments | Slate |
+| BeastAdmin | Amber |
+
 Accent color may mark a badge, focus ring, active navigation item, button, or narrow card edge. Page backgrounds, card families, typography, and control geometry stay canonical.
 
 ## Component library

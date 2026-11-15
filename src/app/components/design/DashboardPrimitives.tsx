@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getBeastModuleWordmarkSuffixColor, splitBeastModuleWordmarks } from "@/lib/beastModuleWordmark";
 
 export type ModuleKey =
   | "beastguide"
@@ -276,7 +277,21 @@ const accentClasses = {
 };
 
 const beastBrandColor = "#38bdf8";
-const beastModuleBrandColor = "#fbbf24";
+function BeastWordmark({ text }: { text: string }) {
+  const segments = splitBeastModuleWordmarks(text);
+
+  return (
+    <span>
+      {segments.map((segment, index) => {
+        if (!("role" in segment)) return <span key={index}>{segment.text}</span>;
+        const color = segment.role === "brand"
+          ? beastBrandColor
+          : getBeastModuleWordmarkSuffixColor(segment.module);
+        return <span key={index} style={{ color }}>{segment.text}</span>;
+      })}
+    </span>
+  );
+}
 
 function getAccentClass(accent: DashboardCardProps["accent"]) {
   if (!accent) return accentClasses.blue;
@@ -384,8 +399,7 @@ export function ModuleTitle({ module, title }: ModuleTitleProps) {
       className="truncate text-lg font-black leading-tight"
       aria-label={`Beast${moduleName}`}
     >
-      <span style={{ color: beastBrandColor }}>Beast</span>
-      <span style={{ color: beastModuleBrandColor }}>{moduleName}</span>
+      <BeastWordmark text={displayTitle} />
     </div>
   );
 }
@@ -401,7 +415,7 @@ export function ModuleBadge({
     <span
       className={`inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-xs font-bold ${accent.border} ${accent.bg} ${accent.text}`}
     >
-      {label || accent.label}
+      <BeastWordmark text={label || accent.label} />
       {comingSoon ? <span className="ml-2 text-[10px] uppercase">Soon</span> : null}
     </span>
   );
@@ -429,7 +443,7 @@ export function ModuleNavItem({
         className="h-2 w-2 rounded-full"
         style={{ background: active || comingSoon ? accent.color : "#596579" }}
       />
-      <span className={`${compact ? "sr-only lg:not-sr-only" : ""} min-w-0 break-words`}>{label}</span>
+      <span className={`${compact ? "sr-only lg:not-sr-only" : ""} min-w-0 break-words`}><BeastWordmark text={label} /></span>
       {badgeCount > 0 ? (
         <span
           className={`ml-auto rounded-full bg-red-300 px-1.5 py-0.5 text-[10px] font-black text-[#2b0b0b] ${
