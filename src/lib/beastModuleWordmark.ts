@@ -30,8 +30,10 @@ export function splitBeastModuleWordmarks(text: string): BeastModuleWordmarkSegm
   const segments: BeastModuleWordmarkSegment[] = [];
   let cursor = 0;
 
-  for (const match of text.matchAll(WORDMARK_PATTERN)) {
-    const start = match.index ?? cursor;
+  WORDMARK_PATTERN.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = WORDMARK_PATTERN.exec(text)) !== null) {
+    const start = match.index;
     const wordmark = match[0];
     const suffix = wordmark.slice("Beast".length);
     if (start > cursor) segments.push({ text: text.slice(cursor, start) });
@@ -41,6 +43,7 @@ export function splitBeastModuleWordmarks(text: string): BeastModuleWordmarkSegm
     }
     cursor = start + wordmark.length;
   }
+  WORDMARK_PATTERN.lastIndex = 0;
 
   if (cursor < text.length) segments.push({ text: text.slice(cursor) });
   return segments.length > 0 ? segments : [{ text }];
