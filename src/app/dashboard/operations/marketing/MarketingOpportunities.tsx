@@ -22,7 +22,6 @@ export function MarketingOpportunities() {
   const [nextAction, setNextAction] = useState("Reply helpfully if the discussion allows promotion");
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
-  if (!loaded && typeof window !== "undefined") { /* Load only on user action to avoid hydration mismatches. */ }
   const load = () => { setItems(safeRead()); setLoaded(true); };
   const exportCsv = () => {
     const rows = safeRead();
