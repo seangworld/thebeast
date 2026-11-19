@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MarketingCommandCenter } from "./MarketingCommandCenter";
 import { MarketingOpportunities } from "./MarketingOpportunities";
+import { MarketingDiscoveryLaunchpad } from "./MarketingDiscoveryLaunchpad";
 import { BeastMarketingOverviewSummary } from "@/app/dashboard/admin/marketing/BeastMarketingOverviewSummary";
 import { MarketingSectionNav } from "@/app/dashboard/admin/marketing/MarketingSectionNav";
 import { OperationsWorkspaceShell } from "../OperationsWorkspaceShell";
@@ -14,5 +15,5 @@ const sections = [
 ] as const;
 
 export default function MarketingOperationsPage() {
-  return <OperationsWorkspaceShell title="BeastMarketing" purpose="Run company-wide marketing through focused workspaces instead of mixing it into Beast administration."><MarketingSectionNav /><MarketingCommandCenter /><MarketingOpportunities /><BeastMarketingOverviewSummary /><section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{sections.map((section) => <Link key={section.href} href={section.href} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-cyan-300/30 hover:bg-cyan-300/[0.04]"><p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">{section.status}</p><h2 className="mt-2 text-xl font-black text-white">{section.title}</h2><p className="mt-2 text-sm leading-6 text-slate-300">{section.description}</p><p className="mt-4 text-sm font-black text-cyan-100">Open {section.title} →</p></Link>)}</section></OperationsWorkspaceShell>;
+  return <OperationsWorkspaceShell title="BeastMarketing" purpose="Run company-wide marketing through focused workspaces instead of mixing it into Beast administration."><MarketingSectionNav /><MarketingCommandCenter /><MarketingDiscoveryLaunchpad /><MarketingOpportunities /><BeastMarketingOverviewSummary /><section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{sections.map((section) => <Link key={section.href} href={section.href} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-cyan-300/30 hover:bg-cyan-300/[0.04]"><p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">{section.status}</p><h2 className="mt-2 text-xl font-black text-white">{section.title}</h2><p className="mt-2 text-sm leading-6 text-slate-300">{section.description}</p><p className="mt-4 text-sm font-black text-cyan-100">Open {section.title} →</p></Link>)}</section></OperationsWorkspaceShell>;
 }
