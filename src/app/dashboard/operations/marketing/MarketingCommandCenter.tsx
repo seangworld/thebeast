@@ -28,10 +28,10 @@ export function MarketingCommandCenter() {
       <p className="mt-3 text-sm text-slate-300"><span className="font-semibold text-white">Objective:</span> {product.goal}</p>
       <p className="mt-1 text-xs text-slate-400">{product.destination ? "Known destination: " + product.destination : "Destination must be verified before publishing."}</p>
       <div className="mt-5 flex flex-wrap gap-3">
-        <Link href={`/dashboard/operations/marketing/social?product=${encodeURIComponent(product.id)}`} className="rounded-xl bg-amber-400 px-5 py-3 text-sm font-black text-slate-950 hover:bg-amber-300">Prepare a social post →</Link>
+        <Link href="/dashboard/operations/marketing/social" className="rounded-xl bg-amber-400 px-5 py-3 text-sm font-black text-slate-950 hover:bg-amber-300">Prepare a social post →</Link>
         <Link href="/dashboard/operations/marketing/analytics" className="rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white hover:bg-white/10">Review results →</Link>
       </div>
-      <p className="mt-3 text-xs text-slate-400">Product selection pre-fills a suggested starting point in Social; review all facts and destinations before saving.</p>
+      <p className="mt-3 text-xs text-slate-400">Product selection is a planning aid; use the existing Social composer to prepare the draft.</p>
     </section>
     <section aria-label="Marketing priorities" className="grid gap-3 md:grid-cols-3">
       <article className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><h3 className="font-bold text-white">1. Prepare</h3><p className="mt-2 text-sm text-slate-300">Create or reuse a reviewed post in the existing Social workspace.</p></article>
