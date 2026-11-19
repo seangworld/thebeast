@@ -19,14 +19,6 @@ const input = "mt-1 w-full rounded-xl border border-white/20 bg-slate-950 px-3 p
 const button = "min-h-11 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed";
 const primary = `${button} border-amber-300 bg-amber-300 text-slate-950 hover:bg-amber-200`;
 const empty: SocialContent = { text: "", destination: "https://seangworld.com", mediaUrl: "", mediaType: "none", campaignId: "" };
-const productDrafts: Record<string, { text: string; destination?: string }> = {
-  philippines: { text: "Interested in learning more about the Philippines? I wrote a book about it. Happy to answer questions about what it covers—ask me here." },
-  "ai-normal": { text: "Looking for a practical introduction to AI? My book AI for Normal People is available on Amazon.", destination: "https://www.amazon.com/dp/B0HFZ1WHLX" },
-  beastguide: { text: "BeastGuide helps you keep track of shows and episodes in one library. Take a look if that sounds useful.", destination: "https://beastguide.vercel.app" },
-  beastmoney: { text: "Working on organizing your budget? BeastMoney is one of the tools I've been building." },
-  backgammon: { text: "I made a Backgammon & Acey-Deucey game for iPhone. If you enjoy either game, check it out in the App Store." },
-  news: { text: "Looking for news and articles? Explore SEANGWORLD.", destination: "https://www.seangworld.com" },
-};
 const formatTime = (value: string) => new Date(value).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 const statusLabel: Record<SocialPost["status"], string> = { draft: "Draft", scheduled: "Scheduled", publishing: "Sending — do not retry", processing: "Instagram processing", published: "Published", unconfirmed: "Check social account", failed: "Needs attention", cancelled: "Cancelled", shared_manually: "Manually posted · owner confirmed" };
 async function api(body: unknown, suffix = "") {
@@ -62,11 +54,7 @@ export function SocialWorkspace() {
   const refresh = useCallback(async () => { await poller.current?.refresh(); }, []);
   useEffect(() => {
     setDraftId(crypto.randomUUID());
-    const params = new URLSearchParams(window.location.search);
-    const chosenProduct = params.get("product");
-    const starter = chosenProduct ? productDrafts[chosenProduct] : undefined;
-    if (starter) { setContent({ ...empty, text: starter.text, destination: starter.destination ?? "" }); setMessage("Product starter loaded. Verify the copy and destination before saving."); }
-    const result = params.get("connection");
+    const result = new URLSearchParams(window.location.search).get("connection");
     if (result) setMessage(result === "connected" ? "Account connected. Select it on your draft before publishing." : result === "no_accounts" ? "No eligible accounts found. Check Page access and the linked professional Instagram account." : "Connection was not completed. Check app setup and permissions, then reconnect.");
     const current = startVisiblePolling({
       load,
