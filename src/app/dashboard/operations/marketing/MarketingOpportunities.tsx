@@ -27,7 +27,7 @@ export function MarketingOpportunities() {
   const exportCsv = () => {
     const rows = safeRead();
     const quote = (value: string) => `"${value.replaceAll('"', '""')}"`;
-    const csv = [["Platform","Product","Discussion URL","Relevance","Next action","Recorded at"].map(quote).join(","), ...rows.map(item => [item.platform,item.product,item.url,item.context,item.nextAction,item.recordedAt].map(quote).join(","))].join("\\r\\n");
+    const csv = [["Platform","Product","Discussion URL","Relevance","Next action","Recorded at"].map(quote).join(","), ...rows.map(item => [item.platform,item.product,item.url,item.context,item.nextAction,item.recordedAt].map(quote).join(","))].join("\r\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const downloadUrl = URL.createObjectURL(blob);
     const link = document.createElement("a"); link.href = downloadUrl; link.download = "beastmarketing-opportunities.csv"; link.click(); URL.revokeObjectURL(downloadUrl);
