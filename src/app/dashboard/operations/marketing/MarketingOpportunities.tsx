@@ -21,8 +21,18 @@ export function MarketingOpportunities() {
   const [context, setContext] = useState("");
   const [nextAction, setNextAction] = useState("Reply helpfully if the discussion allows promotion");
   const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState("");
   if (!loaded && typeof window !== "undefined") { /* Load only on user action to avoid hydration mismatches. */ }
   const load = () => { setItems(safeRead()); setLoaded(true); };
+  const exportCsv = () => {
+    const rows = safeRead();
+    const quote = (value: string) => `"${value.replaceAll('"', '""')}"`;
+    const csv = [["Platform","Product","Discussion URL","Relevance","Next action","Recorded at"].map(quote).join(","), ...rows.map(item => [item.platform,item.product,item.url,item.context,item.nextAction,item.recordedAt].map(quote).join(","))].join("\\r\\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a"); link.href = downloadUrl; link.download = "beastmarketing-opportunities.csv"; link.click(); URL.revokeObjectURL(downloadUrl);
+    setFeedback(`Exported ${rows.length} locally saved opportunities. This does not publish or sync them.`);
+  };
   const save = () => {
     const parsed = validUrl(url);
     if (!parsed || !context.trim()) { setError("Enter a valid public discussion URL and explain why it is relevant."); return; }
@@ -34,7 +44,8 @@ export function MarketingOpportunities() {
   return <section aria-label="Marketing opportunities" className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
     <h2 className="text-xl font-black text-white">Opportunity notebook</h2>
     <p className="text-sm text-slate-300">Save real public discussions you discover on Facebook, Instagram, X or Reddit. This is a manual first step—not an automated scanner. Entries stay in this browser only and are not synced to your account.</p>
-    <button type="button" onClick={load} className="rounded-lg border border-white/20 px-3 py-2 text-sm font-bold text-white">Load saved opportunities</button>
+    <div className="flex flex-wrap gap-2"><button type="button" onClick={load} className="rounded-lg border border-white/20 px-3 py-2 text-sm font-bold text-white">Load saved opportunities</button><button type="button" onClick={exportCsv} className="rounded-lg border border-white/20 px-3 py-2 text-sm font-bold text-white">Export CSV</button></div>
+    {feedback && <p role="status" className="text-sm text-amber-100">{feedback}</p>}
     <div className="grid gap-3 md:grid-cols-2">
       <label className="text-sm text-slate-200">Public discussion URL<input value={url} onChange={e=>setUrl(e.target.value)} type="url" placeholder="https://..." className="mt-1 w-full rounded-lg border border-white/20 bg-slate-950 p-3 text-white" /></label>
       <label className="text-sm text-slate-200">Product<select value={product} onChange={e=>setProduct(e.target.value)} className="mt-1 w-full rounded-lg border border-white/20 bg-slate-950 p-3 text-white">{["Philippines book","Other books","BeastGuide","BeastMoney","Backgammon & Acey-Deucey","SEANGWORLD"].map(x=><option key={x}>{x}</option>)}</select></label>
