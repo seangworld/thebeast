@@ -1,7 +1,7 @@
 import Link from "next/link";
 type Step = { title: string; detail: string; href?: string; link?: string };
 export function MarketingWorkflowGuide({ kind }: { kind: "analytics" | "advertising" | "video" }) {
-  const data: Record<typeof kind,{title:string;description:string;steps:Step[]}> = {
+  const data: Record<"analytics" | "advertising" | "video",{title:string;description:string;steps:Step[]}> = {
     analytics: { title:"What is working?",description:"Start with evidence. Record Facebook Professional Dashboard numbers and compare them with actual clicks and verified sales. Missing information is unknown, not zero.",steps:[
       {title:"1. Collect",detail:"Record a specific date range, product, post, and the source of each metric.",href:"/dashboard/operations/marketing#marketing-results",link:"Record results"},
       {title:"2. Compare",detail:"Look for trends in reach, engagement, outbound clicks, and attributable conversions. Avoid treating overlapping totals as unique."},
