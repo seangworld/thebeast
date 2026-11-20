@@ -43,7 +43,7 @@
     "docx": "9.6.1",
     "google-auth-library": "^11.0.2",
     "jszip": "3.10.1",
-    "next": "15.5.28",
+    "next": "15.5.29",
     "nodemailer": "10.3.1",
     "pdf-lib": "1.17.1",
     "pg": "8.23.1",
@@ -66,7 +66,7 @@
     "autoprefixer": "^10",
     "braces": "file:vendor/seangworld-braces-3.0.3-beast.1.tgz",
     "eslint": "^8",
-    "eslint-config-next": "15.5.28",
+    "eslint-config-next": "15.5.29",
     "jsdom": "^26.1.0",
     "minimatch": "file:vendor/seangworld-minimatch-compat-11.0.1-beast.3.tgz",
     "postcss": "^8.5.23",
@@ -85,7 +85,7 @@
     "source-map-js": "1.2.2",
     "baseline-browser-mapping": "2.11.0",
     "postcss-selector-parser": "7.1.6",
-    "next@15.5.28": {
+    "next@15.5.29": {
       "postcss": "8.5.23",
       "sharp": "0.35.5"
     },
