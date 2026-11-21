@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useMemo, useRef, useState } from "react";
-import { getDebtDueDetail, getDebtDueState, getDebtPaymentWarning, type DebtPaymentAction } from "../../../../lib/debtManagement";
+import { getDebtDueDetail, getDebtDueState, getDebtMinimumRemaining, getDebtPaymentWarning, toDebtDateInput, type DebtPaymentAction } from "../../../../lib/debtManagement";
 import { createFinancialOperationId } from "../../../../lib/atomicFinancialCommands";
 import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "../../../../lib/beastMoneyPaymentWriteGate";
 
@@ -54,7 +54,13 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
   const [actionStatus, setActionStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const pendingPayment = useRef<{ fingerprint: string; operationId: string } | null>(null);
   const due = useMemo(() => getDebtDueState({ balance: debt.balance, dueDate: debt.nextDueDate }), [debt.balance, debt.nextDueDate]);
-  const minimumAmount = Math.min(Math.max(Number(debt.balance || 0), 0), Math.max(Number(debt.minimum_payment || 0), 0));
+  const cycleDueDate = toDebtDateInput(debt.nextDueDate);
+  const minimumAmount = getDebtMinimumRemaining({
+    balance: debt.balance,
+    minimumPayment: debt.minimum_payment,
+    cycleDueDate,
+    payments: history,
+  });
   const customAmount = Math.min(Math.max(Number(amount || 0), 0), Math.max(Number(debt.balance || 0), 0));
   const actionClass = "w-full whitespace-nowrap px-4 text-sm";
 
@@ -77,7 +83,7 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
   if (panel === "minimum") {
     return <div className="grid min-w-0 grid-cols-1 gap-3" data-debt-management-workflow="true" data-debt-management-layout="compact" role="dialog" aria-label={`${debt.name} minimum payment confirmation`}>
       <h4 className="font-black text-white">Confirm minimum payment</h4>
-      <p className="text-sm text-[#c7cfdb]">Beast will record the stored minimum of <strong>${minimumAmount.toFixed(2)}</strong> against {debt.name}.</p>
+      <p className="text-sm text-[#c7cfdb]">Beast will record the remaining minimum of <strong>${minimumAmount.toFixed(2)}</strong> for this due-date cycle against {debt.name}.</p>
       {paymentDetails}
       {actionStatus?.type === "error" ? <p role="alert" className="rounded bg-red-950/60 px-3 py-2 text-sm text-red-200">{actionStatus.message}</p> : null}
       {!paymentWritesAvailable ? <p role="status" className="rounded bg-amber-950/50 px-3 py-2 text-sm text-amber-100">{BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}</p> : null}
@@ -88,9 +94,9 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
   if (panel === "custom") {
     return <div className="grid min-w-0 grid-cols-1 gap-3" data-debt-management-workflow="true" data-debt-management-layout="compact" role="dialog" aria-label={`${debt.name} custom payment`}>
       <h4 className="font-black text-white">Custom payment</h4>
-      <p className="text-sm text-[#9aa7b8]">Enter the total amount actually paid. Minimum due: ${Number(debt.minimum_payment || 0).toFixed(2)}.</p>
+      <p className="text-sm text-[#9aa7b8]">Enter the total amount actually paid. Minimum remaining this cycle: ${minimumAmount.toFixed(2)}.</p>
       <label className="money-field-label">Total amount paid<input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} className="beast-input mt-2" /></label>
-      {getDebtPaymentWarning({ balance: debt.balance, minimumPayment: debt.minimum_payment, amount: customAmount }) ? <p role="status" className="rounded bg-amber-950/50 px-2 py-1 text-xs text-amber-200">{getDebtPaymentWarning({ balance: debt.balance, minimumPayment: debt.minimum_payment, amount: customAmount })}</p> : null}
+      {getDebtPaymentWarning({ balance: debt.balance, minimumPayment: minimumAmount, amount: customAmount }) ? <p role="status" className="rounded bg-amber-950/50 px-2 py-1 text-xs text-amber-200">{getDebtPaymentWarning({ balance: debt.balance, minimumPayment: minimumAmount, amount: customAmount })}</p> : null}
       {paymentDetails}
       {actionStatus?.type === "error" ? <p role="alert" className="rounded bg-red-950/60 px-3 py-2 text-sm text-red-200">{actionStatus.message}</p> : null}
       {!paymentWritesAvailable ? <p role="status" className="rounded bg-amber-950/50 px-3 py-2 text-sm text-amber-100">{BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}</p> : null}
