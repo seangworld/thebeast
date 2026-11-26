@@ -8,11 +8,11 @@ import * as setup from '../src/lib/auth/accountSetup';
 import * as experience from '../src/lib/auth/experience';
 import * as registry from '../src/lib/moduleRegistry';
 import * as age from '../src/lib/memberAgeEntitlements';
-function fixture({username='preserved',verified=true,identityError=false,profileError=false}: {username?:string|null;verified?:boolean;identityError?:boolean;profileError?:boolean}={}){
- const client={rpc:async(name:string)=>({data:name==='beast_auth_current_username'?username:true,error:name==='beast_auth_current_username'&&identityError?{code:'unavailable'}:null}),auth:{getUser:async()=>({data:{user:{id:'own-id',email_confirmed_at:verified?'2026-11-04':null,app_metadata:{}}},error:null}),signOut:async()=>({error:null})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{role:'member',preferred_name:'Existing name',birthday:'1980-01-01'},error:profileError?{code:'unavailable'}:null})})})})};
+function fixture({username='preserved',verified=true,identityError=false,profileError=false,birthday='1980-01-01'}: {username?:string|null;verified?:boolean;identityError?:boolean;profileError?:boolean;birthday?:string|null}={}){
+ const client={rpc:async(name:string)=>({data:name==='beast_auth_current_username'?username:true,error:name==='beast_auth_current_username'&&identityError?{code:'unavailable'}:null}),auth:{getUser:async()=>({data:{user:{id:'own-id',email_confirmed_at:verified?'2026-11-04':null,app_metadata:{}}},error:null}),signOut:async()=>({error:null})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{role:'member',preferred_name:'Existing name',birthday},error:profileError?{code:'unavailable'}:null})})})})};
  const exports:{middleware?:(request:NextRequest)=>Promise<NextResponse>}={};
  vm.runInNewContext(ts.transpileModule(readFileSync('src/middleware.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports,URL,process:{env:{BEAST_ACCOUNT_SETUP_REQUIRED:'true'}},require:(name:string)=>{
-  if(name==='next/server')return {NextResponse};if(name==='@supabase/ssr')return {createServerClient:()=>client};if(name.endsWith('/accountSetup'))return setup;if(name.endsWith('/experience'))return experience;if(name.endsWith('/moduleRegistry'))return registry;if(name.endsWith('/memberAgeEntitlements'))return age;if(name.endsWith('/config'))return {resolveSupabasePublicConfiguration:()=>({ok:true,configuration:{url:'https://canonical.supabase.co',publicKey:'fixture'}})};throw Error(name);
+  if(name==='next/server')return {NextResponse};if(name==='@supabase/ssr')return {createServerClient:()=>client};if(name.endsWith('/accountSetup'))return setup;if(name.endsWith('/experience'))return experience;if(name.endsWith('/moduleRegistry'))return {...registry,getModuleRegistryEntry:(id:registry.BeastModuleIdentifier)=>id==='beastguide'?registry.beastGuideModule:registry.getModuleRegistryEntry(id)};if(name.endsWith('/memberAgeEntitlements'))return age;if(name.endsWith('/config'))return {resolveSupabasePublicConfiguration:()=>({ok:true,configuration:{url:'https://canonical.supabase.co',publicKey:'fixture'}})};throw Error(name);
  }});return (path:string)=>exports.middleware!(new NextRequest('https://beast.test'+path));
 }
 test('required setup returns unassigned and unverified users to their requested app after setup',async()=>{
@@ -25,4 +25,11 @@ test('setup gate denies protected APIs without issuing a redirect or falling bac
 test('completed existing identities enter unchanged and account settings stay reachable for completion',async()=>{
  assert.equal((await fixture()('/dashboard/today')).status,200);
  assert.equal((await fixture({username:null})('/dashboard/settings/profile')).status,200);
+});
+
+test('BeastGuide accepts a verified named account without a birthday while other modules retain setup',async()=>{
+ const member=fixture({birthday:null});
+ const guide=await member('/dashboard/beastguide');assert.equal(guide.status,200,guide.headers.get('location')||'Guide status');
+ assert.equal((await member('/api/beastguide/identity')).status,200);
+ for(const path of ['/dashboard/today','/dashboard/money','/api/money/accounts'])assert.notEqual((await member(path)).status,200);
 });

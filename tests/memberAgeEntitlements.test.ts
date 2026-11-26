@@ -48,6 +48,7 @@ test("BeastGuide admits minors without opening adult modules or overriding expli
  const entry=beastGuideModule;
  assert.equal(entry?.minimumAge,0);
  assert.equal(resolveMemberModuleEntitlement({module:'beastguide',entry,birthday:'2012-01-01',asOf}).allowed,true);
+ assert.equal(resolveMemberModuleEntitlement({module:'beastguide',entry,birthday:null,asOf}).allowed,true);
  assert.equal(resolveMemberModuleEntitlement({module:'beastguide',entry,birthday:'2012-01-01',asOf,override:false}).allowed,false);
  for(const module of ['money','health'] as const)assert.equal(resolveMemberModuleEntitlement({module,entry:getModuleRegistryEntry(module),birthday:'2012-01-01',asOf}).allowed,false);
 });

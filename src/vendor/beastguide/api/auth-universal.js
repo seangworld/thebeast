@@ -44,7 +44,7 @@ export function createUniversalHandler({env=process.env,client=createClient,dela
   if(action==='register'){
    if(env.BEAST_PUBLIC_REGISTRATION_ENABLED!=='true')return reply(503,'Registration is unavailable.');
    if(typeof input.email!=='string'||input.email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email))return reply(400,'Enter a valid email address.');
-   const profileError=requiredProfileError(input.name,input.birthday);if(profileError)return reply(400,profileError);
+   const profileError=requiredProfileError(input.name,input.birthday,{birthdayRequired:false});if(profileError)return reply(400,profileError);
    const available=await admin.rpc('beast_auth_identity',{p_username:username});if(available.error)throw available.error;
    if(available.data)return reply(409,'That username is unavailable. Choose another one.');
    const result=await auth.auth.signUp({email:input.email,password:input.password,options:{captchaToken:input.captchaToken,data:{beast_username:username,beast_setup_profile:signupProfile(input.name,input.birthday)},emailRedirectTo:guideVerificationCallback(env.BEAST_AUTH_ORIGIN,input.next)}});

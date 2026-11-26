@@ -19,7 +19,7 @@ export default async function AccountSetupPage({searchParams}: {searchParams?: P
     <h1 className="text-3xl font-black">Finish your Beast account</h1>
     {(params?.registration === 'complete' || params?.next?.includes('registration=complete')) && user.email_confirmed_at && <p role="status">Registration succeeded. Your email is verified.</p>}
     <p>You will return to <strong>{target.name}</strong> after setup.</p>
-    <p>Verify your email, select your permanent login username, then complete your name and birthday below. Your birthday keeps the existing age restrictions accurate.</p>
+    <p>Verify your email, select your permanent login username, then complete your name below. {target.name === 'BeastGuide' ? 'A birth date is optional for BeastGuide.' : 'Your birthday is required to keep age restrictions accurate.'}</p>
     <p>Email status: <strong>{user.email_confirmed_at ? 'Verified' : 'Verification required'}</strong></p>
     <a href="#account-username" className="beast-button-secondary inline-flex">Choose or confirm username</a>
     <p>The same Beast account works across supported Beast applications. Existing usernames and saved records remain unchanged.</p>

@@ -148,7 +148,8 @@ export async function middleware(request: NextRequest) {
       response.cookies.getAll().forEach(cookie => unavailable.cookies.set(cookie));
       return unavailable;
     }
-    if (accountSetupStage(Boolean(user.email_confirmed_at), typeof identity.data === 'string' ? identity.data : null, profile.data) !== 'ready') {
+    const guideRoute = /^\/(?:dashboard|api)\/beastguide(?:\/|$)/.test(request.nextUrl.pathname);
+    if (accountSetupStage(Boolean(user.email_confirmed_at), typeof identity.data === 'string' ? identity.data : null, profile.data, !guideRoute) !== 'ready') {
       if (isApiRoute) {
         const required = NextResponse.json({error:'ACCOUNT_SETUP_REQUIRED',setup:'/account-setup'},{status:403});
         required.headers.set('cache-control','private, no-store');

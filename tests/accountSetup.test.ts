@@ -6,6 +6,10 @@ test('setup requires verified identity, own canonical username, and existing pro
  assert.equal(accountSetupStage(false,'existing',profile),'verification');
  assert.equal(accountSetupStage(true,null,profile),'username');
  assert.equal(accountSetupStage(true,'existing',{...profile,birthday:null}),'profile');
+ assert.equal(accountSetupStage(true,'existing',{...profile,birthday:null},false),'ready');
+ assert.equal(accountSetupStage(true,'existing',{birthday:null},false),'profile');
+ assert.equal(accountSetupStage(false,'existing',profile,false),'verification');
+ assert.equal(accountSetupStage(true,null,profile,false),'username');
  assert.equal(accountSetupStage(true,'existing',profile),'ready');
  assert.equal(accountSetupStage(true,'EXISTING',{full_name:'Existing name',birthday:'1980-01-01'}),'ready');
 });
