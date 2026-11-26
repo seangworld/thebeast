@@ -160,8 +160,9 @@ export async function GET(request: NextRequest) {
   }
 
   if (request.nextUrl.searchParams.get('purpose') === 'registration' && user.email_confirmed_at && user.user_metadata?.beast_setup_profile) {
-    try {await completeMissingProfile(supabase,user);} catch {/* Existing setup retains the verified session and offers retry without overwriting data. */}
-    const ready=await supabase.rpc('beast_auth_account_setup_complete');
+    const guide = /^\/dashboard\/beastguide(?:\/|$)/.test(new URL(destination,request.url).pathname);
+    try {await completeMissingProfile(supabase,user,undefined,{birthdayRequired:!guide});} catch {/* Existing setup retains the verified session and offers retry without overwriting data. */}
+    const ready=await supabase.rpc(guide?'beastguide_account_setup_complete':'beast_auth_account_setup_complete');
     if(!ready.error&&ready.data===true){const next=new URL(destination,request.url);next.searchParams.set('registration','complete');setRedirectLocation(response,request,next.pathname+next.search);}else setRedirectLocation(response, request, registrationReturnPath(destination));
   }
 

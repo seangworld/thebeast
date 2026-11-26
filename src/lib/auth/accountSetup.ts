@@ -4,10 +4,10 @@ export function accountSetupPath(destination?: string | null) {
   const next=getSafeAuthDestination(destination);
   return '/account-setup?next=' + encodeURIComponent(next.startsWith('/account-setup') ? '/dashboard/today' : next);
 }
-export function accountSetupStage(verified: boolean, username: string | null, profile: {preferred_name?: string | null; display_name?: string | null; full_name?: string | null; birthday?: string | null} | null) {
+export function accountSetupStage(verified: boolean, username: string | null, profile: {preferred_name?: string | null; display_name?: string | null; full_name?: string | null; birthday?: string | null} | null, birthdayRequired = true) {
   if (!verified) return 'verification';
   if (!username) return 'username';
-  if (!profile || ![profile.preferred_name, profile.display_name, profile.full_name].some(value => value?.trim()) || !profile.birthday) return 'profile';
+  if (!profile || ![profile.preferred_name, profile.display_name, profile.full_name].some(value => value?.trim()) || (birthdayRequired && !profile.birthday)) return 'profile';
   return 'ready';
 }
 export function usernameClaimFailure(error: {code?: string; message?: string; details?: string}) {
