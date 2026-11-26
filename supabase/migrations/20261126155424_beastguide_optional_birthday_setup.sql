@@ -1,4 +1,4 @@
--- Proposed only. Obtain owner approval before applying to Production.
+-- Applied to production on 2026-11-26; tracked version 20261126155424.
 -- BeastGuide uses the same verified account and username without requiring age.
 begin;
 create function public.beastguide_account_setup_complete() returns boolean
