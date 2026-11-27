@@ -75,6 +75,9 @@ export default function FundingSourcesSection({
           <p className="mt-2 text-xs text-[#5a6577]">
             These accounts can be selected as the Payment Account a draft leaves from or the Funding Account where its money originated. Credit cards and HELOCs may also appear as debts when they carry a balance.
           </p>
+          <p className="mt-2 text-xs text-[#9aa7b8]">
+            Link a revolving account to its matching debt to use one balance. Linked balances and available credit update from the debt record automatically.
+          </p>
         </div>
 
         <button
@@ -136,15 +139,36 @@ export default function FundingSourcesSection({
               <option value="cash">Cash</option>
             </select>
 
+            <select
+              aria-label="Link funding account to a debt"
+              value={newFundingSource.linked_debt_id || ""}
+              onChange={(e) =>
+                setNewFundingSource({ ...newFundingSource, linked_debt_id: e.target.value })
+              }
+              className="beast-input"
+            >
+              <option value="">Keep balance independent</option>
+              {debts
+                .filter((debt) => !debt.is_archived && !fundingSources.some(
+                  (source) => source.is_active && source.linked_debt_id === debt.id
+                ))
+                .map((debt) => (
+                  <option key={debt.id} value={debt.id}>Use debt balance: {debt.name}</option>
+                ))}
+            </select>
+
             <input
               type="number"
-              value={newFundingSource.current_balance}
+              value={newFundingSource.linked_debt_id
+                ? String(Number(debts.find((debt) => debt.id === newFundingSource.linked_debt_id)?.balance || 0))
+                : newFundingSource.current_balance}
               onChange={(e) =>
                 setNewFundingSource({
                   ...newFundingSource,
                   current_balance: e.target.value,
                 })
               }
+              readOnly={Boolean(newFundingSource.linked_debt_id)}
               placeholder="Current balance"
               className="beast-input"
             />
@@ -167,10 +191,14 @@ export default function FundingSourcesSection({
               readOnly
               value={
                 Number.isFinite(Number(newFundingSource.credit_limit)) &&
-                Number.isFinite(Number(newFundingSource.current_balance))
+                Number.isFinite(Number(newFundingSource.linked_debt_id
+                  ? debts.find((debt) => debt.id === newFundingSource.linked_debt_id)?.balance || 0
+                  : newFundingSource.current_balance))
                   ? `$${(
                       Number(newFundingSource.credit_limit) -
-                      Number(newFundingSource.current_balance)
+                      Number(newFundingSource.linked_debt_id
+                        ? debts.find((debt) => debt.id === newFundingSource.linked_debt_id)?.balance || 0
+                        : newFundingSource.current_balance)
                     ).toFixed(2)}`
                   : newFundingSource.available_credit || ""
               }
@@ -197,11 +225,12 @@ export default function FundingSourcesSection({
           </button>
 
           <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Payment and funding accounts table">
-            <table className="w-full min-w-[840px] text-sm">
+            <table className="w-full min-w-[980px] text-sm">
               <thead>
                 <tr>
                   <th className="text-left">Name</th>
                   <th className="text-center">Type</th>
+                  <th className="text-left">Balance source</th>
                   <th className="text-right">Balance</th>
                   <th className="text-right">Credit Limit</th>
                   <th className="text-right">Available Credit</th>
@@ -214,12 +243,15 @@ export default function FundingSourcesSection({
               <tbody>
                 {fundingSources.length === 0 ? (
                   <tr>
-                    <td colSpan={8}>No payment or funding accounts added yet.</td>
+                    <td colSpan={9}>No payment or funding accounts added yet.</td>
                   </tr>
                 ) : (
                   fundingSources.map((source) => {
                     const linkedDebt = debts.find(
                       (debt) => debt.id === source.linked_debt_id
+                    );
+                    const editingLinkedDebt = debts.find(
+                      (debt) => debt.id === editingFundingSource.linked_debt_id
                     );
                     const effectiveBalance = getFundingSourceBalance(
                       source,
@@ -229,8 +261,8 @@ export default function FundingSourcesSection({
                       getFundingSourceAvailableCredit(source, linkedDebt);
                     const utilization = getFundingSourceUtilization(source);
                     const isEditing = editingFundingSourceId === source.id;
-                    const editingBalance = source.linked_debt_id
-                      ? effectiveBalance
+                    const editingBalance = editingFundingSource.linked_debt_id
+                      ? Number(editingLinkedDebt?.balance || 0)
                       : Number(editingFundingSource.current_balance || 0);
                     const editingAvailableCredit =
                       editingFundingSource.credit_limit !== "" &&
@@ -285,22 +317,52 @@ export default function FundingSourcesSection({
                           )}
                         </td>
 
+                        <td className="text-left">
+                          {isEditing ? (
+                            <select
+                              aria-label={`Balance source for ${source.name}`}
+                              value={editingFundingSource.linked_debt_id || ""}
+                              onChange={(e) =>
+                                setEditingFundingSource({
+                                  ...editingFundingSource,
+                                  linked_debt_id: e.target.value,
+                                  ...(!e.target.value && editingFundingSource.linked_debt_id
+                                    ? { current_balance: String(editingBalance) }
+                                    : {}),
+                                })
+                              }
+                              className="beast-input"
+                            >
+                              <option value="">Independent balance</option>
+                              {debts
+                                .filter((debt) => !debt.is_archived && !fundingSources.some(
+                                  (candidate) => candidate.is_active && candidate.id !== source.id && candidate.linked_debt_id === debt.id
+                                ))
+                                .map((debt) => (
+                                  <option key={debt.id} value={debt.id}>Debt: {debt.name}</option>
+                                ))}
+                            </select>
+                          ) : linkedDebt ? (
+                            <span className="text-green-200">Debt: {linkedDebt.name}</span>
+                          ) : (
+                            <span className="text-[#9aa7b8]">Independent</span>
+                          )}
+                        </td>
+
                         <td className="text-right">
                           {isEditing ? (
                             <input
                               type="number"
-                              value={
-                                source.linked_debt_id
-                                  ? String(effectiveBalance)
-                                  : editingFundingSource.current_balance
-                              }
+                              value={editingFundingSource.linked_debt_id
+                                ? String(editingBalance)
+                                : editingFundingSource.current_balance}
                               onChange={(e) =>
                                 setEditingFundingSource({
                                   ...editingFundingSource,
                                   current_balance: e.target.value,
                                 })
                               }
-                              readOnly={Boolean(source.linked_debt_id)}
+                              readOnly={Boolean(editingFundingSource.linked_debt_id)}
                               className="beast-input text-right"
                             />
                           ) : (

@@ -152,7 +152,7 @@ test("buildVelocityInputSnapshot maps debts, income, bills, and settings", () =>
   assert.equal(snapshot.settings.minimum_cash_after_payment, 200);
   assert.equal(snapshot.settings.max_recommended_payment, 1300);
   assert.equal(snapshot.settings.max_source_utilization_percent, 50);
-  assert.equal(snapshot.settings.monthly_recovery_capacity, 1300);
+  assert.equal(snapshot.settings.monthly_recovery_capacity, 4136.67);
   assert.equal(snapshot.settings.recovery_months, 6);
   assert.equal(snapshot.settings.strategy, "conservative");
 });

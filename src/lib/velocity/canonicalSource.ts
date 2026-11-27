@@ -18,6 +18,36 @@ export type CanonicalVelocityDebt = {
   created_at?: string | null;
 };
 
+export type LinkedVelocityFundingSource = {
+  linked_debt_id?: string | null;
+  credit_limit?: number | string | null;
+  interest_rate?: number | string | null;
+  is_active?: boolean | null;
+};
+
+export function mergeVelocityDebtCreditDetails(
+  debts: readonly CanonicalVelocityDebt[],
+  fundingSources: readonly LinkedVelocityFundingSource[]
+) {
+  return debts.map((debt) => {
+    const linkedSource = fundingSources.find(
+      (source) => source.is_active !== false && source.linked_debt_id === debt.id
+    );
+
+    return {
+      ...debt,
+      credit_limit:
+        Number(debt.credit_limit || 0) > 0
+          ? debt.credit_limit
+          : linkedSource?.credit_limit ?? debt.credit_limit,
+      interest_rate:
+        Number(debt.interest_rate || 0) > 0
+          ? debt.interest_rate
+          : linkedSource?.interest_rate ?? debt.interest_rate,
+    };
+  });
+}
+
 export type VelocitySourceResolution =
   | { status: "unselected"; source: null; message: string }
   | { status: "missing" | "archived" | "ineligible"; source: CanonicalVelocityDebt | null; message: string }

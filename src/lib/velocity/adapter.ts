@@ -163,7 +163,6 @@ export function buildVelocityInputSnapshot(
   );
   const extraAttack = toNumber(input.extra_attack);
   const startingBalance = toNumber(input.starting_balance);
-  const currentMonthlySurplus = startingBalance - cashBuffer;
 
   // UI mismatch: the current Velocity page has a single starting cash value,
   // not normalized cash accounts. Represent it as one checking account for now.
@@ -202,6 +201,7 @@ export function buildVelocityInputSnapshot(
       maxSourceUtilizationPercent: maxUtilizationPercent,
     },
   });
+  const currentMonthlySurplus = cashIntelligence.monthlyAvailableCash;
   const monthlyRecoveryCapacity =
     currentMonthlySurplus > 0
       ? currentMonthlySurplus

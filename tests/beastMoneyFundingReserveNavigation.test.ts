@@ -37,3 +37,23 @@ test("Velocity surfaces owner-scoped unlinked HELOC funding sources without trea
   assert.match(source, /fundingSourceLoadError/);
   assert.match(source, /href="\/dashboard\/money\/cashflow#funding-sources"/);
 });
+
+test("Funding Sources can link HELOC balances to their canonical debt records", () => {
+  const component = readFileSync("src/app/dashboard/money/cashflow/components/FundingSourcesSection.tsx", "utf8");
+  const hook = readFileSync("src/app/dashboard/money/cashflow/useCashFlow.ts", "utf8");
+  const migration = readFileSync("supabase/migrations/20261127213358_sync_linked_funding_source_balance.sql", "utf8");
+
+  assert.match(component, /aria-label="Link funding account to a debt"/);
+  assert.match(component, /aria-label=\{`Balance source for \$\{source\.name\}`\}/);
+  assert.match(hook, /linked_debt_id: linkedDebtId/);
+  assert.match(hook, /\.eq\("user_id", userId\)/);
+  assert.match(migration, /after update of balance on public\.debts/i);
+  assert.match(migration, /available_credit = case/i);
+  assert.match(migration, /where user_id = new\.user_id\s+and linked_debt_id = new\.id/i);
+});
+
+test("Velocity reloads saved balances when the page becomes visible again", () => {
+  const velocity = readFileSync("src/app/dashboard/money/velocity/page.tsx", "utf8");
+  assert.match(velocity, /addEventListener\("focus", refreshWhenVisible\)/);
+  assert.match(velocity, /addEventListener\("visibilitychange", refreshWhenVisible\)/);
+});
