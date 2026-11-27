@@ -11,6 +11,7 @@ import {
   canonicalDebtToVelocitySettings,
   deriveCanonicalAvailableCredit,
   isEligibleVelocityDebt,
+  mergeVelocityDebtCreditDetails,
   resolveCanonicalVelocitySource,
 } from "@/lib/velocity";
 import type { VelocityEngineResult } from "@/lib/velocity";
@@ -123,7 +124,7 @@ function formatConfirmedDate(value?: string | null) {
 
 export default function VelocityPlannerPage() {
   const [debts, setDebts] = useState<any[]>([]);
-  const [creditFundingSources, setCreditFundingSources] = useState<Array<{id:string;name:string;type:string;linked_debt_id:string|null;is_active:boolean;credit_limit:number|null}>>([]);
+  const [creditFundingSources, setCreditFundingSources] = useState<Array<{id:string;name:string;type:string;linked_debt_id:string|null;is_active:boolean;credit_limit:number|null;interest_rate:number|null}>>([]);
   const [fundingSourceLoadError, setFundingSourceLoadError] = useState(false);
   const [incomes, setIncomes] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
@@ -165,7 +166,7 @@ export default function VelocityPlannerPage() {
 
     const { data: fundingRows, error: fundingRowsError } = await supabase
       .from("funding_sources")
-      .select("id,name,type,linked_debt_id,is_active,credit_limit")
+      .select("id,name,type,linked_debt_id,is_active,credit_limit,interest_rate")
       .eq("user_id", userId)
       .in("type", ["heloc", "ploc"]);
 
@@ -226,20 +227,27 @@ export default function VelocityPlannerPage() {
         : null
     );
 
-    if (velocitySettingsRow) {
-      setVelocitySettings(mapVelocitySettingsRow(velocitySettingsRow));
-    } else if (!velocitySettingsError) {
-      const storedSettings = loadStoredVelocitySettings(userId);
-
-      if (storedSettings) {
-        setVelocitySettings(storedSettings);
-      }
-    } else {
+    if (velocitySettingsError) {
       logVelocitySettingsError(
         "Failed to load Velocity settings from Supabase:",
         velocitySettingsError
       );
       setSettingsStatus("load_error");
+    } else {
+      const storedSettings = velocitySettingsRow
+        ? mapVelocitySettingsRow(velocitySettingsRow)
+        : loadStoredVelocitySettings(userId) || DEFAULT_VELOCITY_SETTINGS;
+      const hydratedDebts = mergeVelocityDebtCreditDetails(
+        debtRows || [],
+        fundingRowsError ? [] : fundingRows || []
+      );
+      const eligibleSources = hydratedDebts.filter(isEligibleVelocityDebt);
+      setVelocitySettings({
+        ...storedSettings,
+        selected_debt_id:
+          storedSettings.selected_debt_id ||
+          (eligibleSources.length === 1 ? eligibleSources[0].id : ""),
+      });
     }
 
     } catch { setSettingsStatus("load_error"); }
@@ -250,25 +258,49 @@ export default function VelocityPlannerPage() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const refreshWhenVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        void load();
+      }, 150);
+    };
+
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [load]);
+
   const activeDebts = useMemo(() => {
     return debts.filter(
       (debt) => !Boolean(debt.is_archived) && Number(debt.balance || 0) > 0
     );
   }, [debts]);
 
+  const velocityDebts = useMemo(
+    () => mergeVelocityDebtCreditDetails(debts, creditFundingSources),
+    [creditFundingSources, debts]
+  );
   const eligibleVelocityDebts = useMemo(
-    () => debts.filter(isEligibleVelocityDebt),
-    [debts]
+    () => velocityDebts.filter(isEligibleVelocityDebt),
+    [velocityDebts]
   );
   const unlinkedCreditSources = useMemo(() =>
     creditFundingSources.filter(source =>
-      source.is_active && !debts.some(debt =>
+      source.is_active && !velocityDebts.some(debt =>
         debt.id === source.linked_debt_id && isEligibleVelocityDebt(debt)
       )
-    ), [creditFundingSources, debts]);
+    ), [creditFundingSources, velocityDebts]);
   const selectedSourceResolution = useMemo(
-    () => resolveCanonicalVelocitySource(velocitySettings.selected_debt_id, ownerId, debts),
-    [debts, ownerId, velocitySettings.selected_debt_id]
+    () => resolveCanonicalVelocitySource(velocitySettings.selected_debt_id, ownerId, velocityDebts),
+    [ownerId, velocityDebts, velocitySettings.selected_debt_id]
   );
   const selectedHeloc = selectedSourceResolution.status === "ready" ? selectedSourceResolution.source : null;
   const effectiveVelocitySettings = useMemo(
@@ -284,9 +316,6 @@ export default function VelocityPlannerPage() {
       0
     );
   }, [activeDebts]);
-
-  const currentMonthlySurplus =
-    startingBalance == null || buffer == null ? null : startingBalance - buffer;
 
   const creditLimit = parseAmount(effectiveVelocitySettings.credit_limit);
   const currentBalance = parseAmount(effectiveVelocitySettings.current_balance);
@@ -314,55 +343,11 @@ export default function VelocityPlannerPage() {
   const superVelocityCapacity = clampToZero(
     availableCredit - emergencyReserveAmount
   );
-  const velocityHealthStatus =
-    amountAboveSafeLimit > 0 ? "Guardrail Exceeded" : "Within Guardrails";
-  const monthlyRecoveryCapacity =
-    currentMonthlySurplus != null && currentMonthlySurplus > 0
-      ? currentMonthlySurplus
-      : extraAttack != null && extraAttack > 0
-        ? extraAttack
-        : 0;
-  const monthlyRecoverySource =
-    currentMonthlySurplus != null && currentMonthlySurplus > 0
-      ? "Cash Flow monthly surplus"
-      : extraAttack != null && extraAttack > 0
-        ? "Debt extra attack setting"
-        : "No recovery capacity found";
-  const recoveryBasedLimit = clampToZero(
-    monthlyRecoveryCapacity * recoveryMonths
-  );
-  const limitingFactor =
-    monthlyRecoveryCapacity <= 0
-      ? "No Recovery Capacity"
-      : emergencyAdjustedSafeCredit <= 0
-        ? "No Safe Credit"
-        : recoveryBasedLimit <= emergencyAdjustedSafeCredit &&
-            recoveryBasedLimit <= availableCredit
-          ? "Recovery Window"
-          : emergencyAdjustedSafeCredit <= availableCredit
-            ? "Safe Credit Guardrail"
-            : "Available Credit";
-  const velocityInputSnapshot = useMemo(() => {
-    return buildVelocityInputSnapshot({
-      as_of_date: velocitySnapshotAsOfDate,
-      debts: activeDebts,
-      incomes,
-      bills,
-      velocity_settings: effectiveVelocitySettings,
-      starting_balance: startingBalance,
-      cash_buffer: buffer,
-      extra_attack: extraAttack,
-    });
-  }, [
-    activeDebts,
-    bills,
-    buffer,
-    extraAttack,
-    incomes,
-    startingBalance,
-    effectiveVelocitySettings,
-    velocitySnapshotAsOfDate,
-  ]);
+  const velocityHealthStatus = !selectedHeloc
+    ? "Source Not Selected"
+    : amountAboveSafeLimit > 0
+      ? "Guardrail Exceeded"
+      : "Within Guardrails";
   const cashIntelligence = useMemo(() => {
     return buildCashIntelligence({
       income: incomes,
@@ -400,6 +385,54 @@ export default function VelocityPlannerPage() {
     maxUtilizationPercent,
     selectedHeloc,
     startingBalance,
+  ]);
+  const currentMonthlySurplus = cashIntelligence.monthlyAvailableCash;
+  const monthlyRecoveryCapacity =
+    currentMonthlySurplus != null && currentMonthlySurplus > 0
+      ? currentMonthlySurplus
+      : extraAttack != null && extraAttack > 0
+        ? extraAttack
+        : 0;
+  const monthlyRecoverySource =
+    currentMonthlySurplus != null && currentMonthlySurplus > 0
+      ? "Cash Flow net monthly cash"
+      : extraAttack != null && extraAttack > 0
+        ? "Debt extra attack setting"
+        : "No recovery capacity found";
+  const recoveryBasedLimit = clampToZero(
+    monthlyRecoveryCapacity * recoveryMonths
+  );
+  const limitingFactor =
+    monthlyRecoveryCapacity <= 0
+      ? "No Recovery Capacity"
+      : emergencyAdjustedSafeCredit <= 0
+        ? "No Safe Credit"
+        : recoveryBasedLimit <= emergencyAdjustedSafeCredit &&
+            recoveryBasedLimit <= availableCredit
+          ? "Recovery Window"
+          : emergencyAdjustedSafeCredit <= availableCredit
+            ? "Safe Credit Guardrail"
+            : "Available Credit";
+  const velocityInputSnapshot = useMemo(() => {
+    return buildVelocityInputSnapshot({
+      as_of_date: velocitySnapshotAsOfDate,
+      debts: activeDebts,
+      incomes,
+      bills,
+      velocity_settings: effectiveVelocitySettings,
+      starting_balance: startingBalance,
+      cash_buffer: buffer,
+      extra_attack: extraAttack,
+    });
+  }, [
+    activeDebts,
+    bills,
+    buffer,
+    extraAttack,
+    incomes,
+    startingBalance,
+    effectiveVelocitySettings,
+    velocitySnapshotAsOfDate,
   ]);
   const financialDecision = useMemo(() => {
     return buildFinancialDecision({
@@ -554,26 +587,26 @@ export default function VelocityPlannerPage() {
   const snapshotValues: SnapshotValue[] = [
     {
       label: "Credit Limit",
-      value: formatMoney(creditLimit),
+      value: selectedHeloc ? formatMoney(creditLimit) : "Select a credit source",
     },
     {
       label: "Current Balance",
-      value: formatMoney(currentBalance),
+      value: selectedHeloc ? formatMoney(currentBalance) : "Select a credit source",
     },
     {
       label: "Available Credit",
-      value: formatMoney(availableCredit),
-      alert: availableCredit < 0,
+      value: selectedHeloc ? formatMoney(availableCredit) : "Select a credit source",
+      alert: !selectedHeloc || availableCredit < 0,
     },
     {
       label: "Utilization Limit Amount",
-      value: formatMoney(velocityUtilizationLimit),
-      detail: `${maxUtilizationPercent || 0}% of credit limit.`,
+      value: selectedHeloc ? formatMoney(velocityUtilizationLimit) : "Not available",
+      detail: selectedHeloc ? `${maxUtilizationPercent || 0}% of credit limit.` : undefined,
     },
     {
       label: "Remaining Safe Credit",
-      value: formatMoney(remainingSafeCredit),
-      alert: remainingSafeCredit < 0,
+      value: selectedHeloc ? formatMoney(remainingSafeCredit) : "Not available",
+      alert: Boolean(selectedHeloc) && remainingSafeCredit < 0,
     },
     {
       label: "Emergency Reserve",
@@ -595,7 +628,7 @@ export default function VelocityPlannerPage() {
       detail:
         currentMonthlySurplus == null
           ? undefined
-          : `Monthly surplus estimate: ${formatMoney(currentMonthlySurplus)}`,
+          : `Cash Flow net monthly cash estimate: ${formatMoney(currentMonthlySurplus)}`,
     },
   ];
 
@@ -707,8 +740,7 @@ export default function VelocityPlannerPage() {
             <div>
             <h2 className="money-section-title">Velocity Snapshot</h2>
             <p className="money-section-description">
-              Live planning values using saved Velocity settings and existing
-              Beast debt data.
+              Credit line details come from linked BeastMoney Debts and Funding Sources. Income, bills, and cash settings come from Cash Flow.
             </p>
             </div>
           </div>
@@ -745,7 +777,9 @@ export default function VelocityPlannerPage() {
               </div>
               <span
                 className={`w-fit rounded border px-3 py-1 text-xs font-semibold ${
-                  amountAboveSafeLimit > 0
+                  !selectedHeloc
+                    ? "border-yellow-300/50 bg-yellow-950/30 text-yellow-100"
+                    : amountAboveSafeLimit > 0
                     ? "border-red-300/50 bg-red-950/30 text-red-100"
                     : "border-green-300/50 bg-green-950/30 text-green-100"
                 }`}
@@ -760,13 +794,19 @@ export default function VelocityPlannerPage() {
               <div className="money-metric-label">Guardrail Position</div>
               <div
                 className={`mt-2 text-2xl font-bold ${
-                  amountAboveSafeLimit > 0 ? "text-red-200" : "text-green-200"
+                  !selectedHeloc
+                    ? "text-yellow-100"
+                    : amountAboveSafeLimit > 0
+                      ? "text-red-200"
+                      : "text-green-200"
                 }`}
               >
                 {velocityHealthStatus}
               </div>
               <p className="mt-2 text-sm text-[#9aa7b8]">
-                {amountAboveSafeLimit > 0
+                {!selectedHeloc
+                  ? "Select or link an eligible HELOC before reviewing source guardrails."
+                  : amountAboveSafeLimit > 0
                   ? `Current balance is ${formatMoney(amountAboveSafeLimit)} above the safe utilization limit.`
                   : "Current balance is within the configured utilization guardrail."}
               </p>
@@ -776,12 +816,12 @@ export default function VelocityPlannerPage() {
               <div className="grid gap-3 text-sm text-[#c7cfdb] sm:grid-cols-2 xl:grid-cols-3">
                 <div>
                   <div className="text-[#7f8da3]">Credit Limit</div>
-                  <div className="mt-1 font-bold">{formatMoney(creditLimit)}</div>
+                  <div className="mt-1 font-bold">{selectedHeloc ? formatMoney(creditLimit) : "Not available"}</div>
                 </div>
                 <div>
                   <div className="text-[#7f8da3]">Current Balance</div>
                   <div className="mt-1 font-bold">
-                    {formatMoney(currentBalance)}
+                    {selectedHeloc ? formatMoney(currentBalance) : "Not available"}
                   </div>
                 </div>
                 <div>
@@ -789,7 +829,7 @@ export default function VelocityPlannerPage() {
                     Available Credit = Credit Limit - Current Balance
                   </div>
                   <div className="mt-1 font-bold">
-                    {formatMoney(availableCredit)}
+                    {selectedHeloc ? formatMoney(availableCredit) : "Not available"}
                   </div>
                 </div>
                 <div>
@@ -797,23 +837,23 @@ export default function VelocityPlannerPage() {
                     Safe Utilization Limit = Credit Limit x Max Utilization %
                   </div>
                   <div className="mt-1 font-bold">
-                    {formatMoney(velocityUtilizationLimit)}
+                    {selectedHeloc ? formatMoney(velocityUtilizationLimit) : "Not available"}
                   </div>
                 </div>
                 <div>
                   <div className="text-[#7f8da3]">Remaining Safe Credit</div>
                   <div className="mt-1 font-bold">
-                    {formatMoney(remainingSafeCredit)}
+                    {selectedHeloc ? formatMoney(remainingSafeCredit) : "Not available"}
                   </div>
                 </div>
                 <div>
                   <div className="text-[#7f8da3]">Above Safe Limit</div>
                   <div
                     className={`mt-1 font-bold ${
-                      amountAboveSafeLimit > 0 ? "text-red-200" : ""
+                      selectedHeloc && amountAboveSafeLimit > 0 ? "text-red-200" : ""
                     }`}
                   >
-                    {formatMoney(amountAboveSafeLimit)}
+                    {selectedHeloc ? formatMoney(amountAboveSafeLimit) : "Not available"}
                   </div>
                 </div>
                 <div>
@@ -827,7 +867,7 @@ export default function VelocityPlannerPage() {
                     Emergency-Protected Credit
                   </div>
                   <div className="mt-1 font-bold">
-                    {formatMoney(superVelocityCapacity)}
+                    {selectedHeloc ? formatMoney(superVelocityCapacity) : "Not available"}
                   </div>
                 </div>
                 <div>
@@ -835,7 +875,7 @@ export default function VelocityPlannerPage() {
                     Guardrail-Protected Credit
                   </div>
                   <div className="mt-1 font-bold">
-                    {formatMoney(emergencyAdjustedSafeCredit)}
+                    {selectedHeloc ? formatMoney(emergencyAdjustedSafeCredit) : "Not available"}
                   </div>
                 </div>
               </div>
@@ -848,7 +888,7 @@ export default function VelocityPlannerPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="money-section-title">Selected HELOC</h2>
               <span className="w-fit rounded border border-[#2a3242] px-3 py-1 text-xs font-semibold text-[#c7cfdb]">
-                BeastMoney Debts
+                BeastMoney account data
               </span>
             </div>
 
@@ -896,7 +936,7 @@ export default function VelocityPlannerPage() {
                 <p className="font-bold">HELOC selection needs attention</p><p className="mt-1">{selectedSourceResolution.message}</p>
               </div>
             )}
-            <p className="mt-3 text-sm text-[#9aa7b8]">Shared account information comes from BeastMoney Debts. Legacy Velocity values are not used after linkage.</p>
+            <p className="mt-3 text-sm text-[#9aa7b8]">The debt record supplies the balance. A linked Funding Source supplies a missing credit limit or APR. Old Velocity balance values are ignored once an eligible debt is selected.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link className="beast-button" href="/dashboard/money/debts">Edit account</Link>
               <button className="beast-button-secondary" type="button" onClick={load}>Refresh / recalculate</button>

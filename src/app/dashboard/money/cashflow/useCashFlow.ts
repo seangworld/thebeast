@@ -231,7 +231,23 @@ export function useCashFlow() {
     const creditLimit = newFundingSource.credit_limit === ""
       ? null
       : Number(newFundingSource.credit_limit);
-    const currentBalance = Number(newFundingSource.current_balance || 0);
+    let currentBalance = Number(newFundingSource.current_balance || 0);
+    const linkedDebtId = newFundingSource.linked_debt_id || null;
+
+    if (linkedDebtId) {
+      const { data: linkedDebt, error: linkedDebtError } = await supabase
+        .from("debts")
+        .select("balance")
+        .eq("id", linkedDebtId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (linkedDebtError || !linkedDebt) {
+        setSaveError("The selected debt could not be loaded. Refresh the page and try again.");
+        return;
+      }
+      currentBalance = Number(linkedDebt.balance || 0);
+    }
     const calculatedAvailableCredit = creditLimit != null && creditLimit > 0
       ? Math.max(creditLimit - currentBalance, 0)
       : null;
@@ -243,6 +259,7 @@ export function useCashFlow() {
       current_balance: currentBalance,
       credit_limit: creditLimit,
       available_credit: calculatedAvailableCredit,
+      linked_debt_id: linkedDebtId,
       interest_rate:
         newFundingSource.interest_rate === ""
           ? 0
@@ -302,6 +319,9 @@ export function useCashFlow() {
 
   async function updateFundingSource(id: string) {
     const supabase = createClient();
+    const userId = await getUserId();
+
+    if (!userId) return;
 
     const linkedDebtId =
       editingFundingSource.linked_debt_id === ""
@@ -318,7 +338,13 @@ export function useCashFlow() {
         .from("debts")
         .select("balance")
         .eq("id", linkedDebtId)
+        .eq("user_id", userId)
         .maybeSingle();
+
+      if (!linkedDebt) {
+        setSaveError("That debt could not be linked. Refresh the page and try again.");
+        return;
+      }
 
       currentBalance = Number(linkedDebt?.balance || 0);
     }
@@ -330,6 +356,7 @@ export function useCashFlow() {
     const updatePayload: Record<string, any> = {
       name: editingFundingSource.name,
       type: editingFundingSource.type,
+      current_balance: currentBalance,
       credit_limit: creditLimit,
       available_credit: calculatedAvailableCredit,
       interest_rate:
@@ -339,15 +366,12 @@ export function useCashFlow() {
       linked_debt_id: linkedDebtId,
     };
 
-    if (!linkedDebtId) {
-      updatePayload.current_balance = currentBalance;
-    }
-
     // Update funding source with recalculated available_credit
     const { error: updateError } = await supabase
       .from("funding_sources")
       .update(updatePayload)
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (updateError) {
       setSaveError(memberSafeMessage(updateError, "update"));

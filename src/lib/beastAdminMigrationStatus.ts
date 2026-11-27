@@ -141,6 +141,8 @@ export const beastAdminRepositoryMigrationFiles = [
   "20261108233118_account_mail_claim_recipient_text.sql",
   "20261109005349_beastadmin_member_communications.sql",
   "20261109013510_beastadmin_member_email_verification.sql",
+  "20261126155424_beastguide_optional_birthday_setup.sql",
+  "20261127120000_sync_linked_funding_source_balance.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

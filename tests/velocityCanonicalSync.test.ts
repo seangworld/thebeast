@@ -5,6 +5,7 @@ import {
   buildCanonicalVelocityChangeEvidence,
   canonicalDebtToVelocitySettings,
   deriveCanonicalAvailableCredit,
+  mergeVelocityDebtCreditDetails,
   resolveCanonicalVelocitySource,
 } from "../src/lib/velocity";
 
@@ -35,6 +36,17 @@ test("Velocity preserves planning fields and has no independently editable share
   assert.doesNotMatch(page, /updateVelocitySetting\("source_apr"/);
   assert.match(page, /data-selected-heloc-summary="true"/);
   assert.match(page, /grid min-w-0 gap-3 rounded-lg/);
+});
+
+test("Velocity gets missing line details from a linked funding source while keeping debt balance canonical", () => {
+  const merged = mergeVelocityDebtCreditDetails(
+    [{ ...heloc, credit_limit: null, interest_rate: 0, balance: 21500 }],
+    [{ linked_debt_id: heloc.id, credit_limit: 52000, interest_rate: 7.9, is_active: true }]
+  )[0];
+
+  assert.equal(merged.balance, 21500);
+  assert.equal(merged.credit_limit, 52000);
+  assert.equal(merged.interest_rate, 7.9);
 });
 
 test("missing archived and cross-owner HELOCs never silently reassign", () => {
