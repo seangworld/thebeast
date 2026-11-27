@@ -38,6 +38,24 @@ test("Velocity preserves planning fields and has no independently editable share
   assert.match(page, /grid min-w-0 gap-3 rounded-lg/);
 });
 
+test("canonical HELOC values override stale legacy fields passed with planning settings", () => {
+  const legacySettings = {
+    ...planning,
+    current_balance: 50000,
+    credit_limit: 60000,
+    source_apr: 9.15,
+  };
+  const settings = canonicalDebtToVelocitySettings(
+    { ...heloc, balance: 40404, credit_limit: 60000, interest_rate: 9.4 },
+    legacySettings
+  );
+
+  assert.equal(settings.current_balance, 40404);
+  assert.equal(settings.credit_limit, 60000);
+  assert.equal(settings.source_apr, 9.4);
+  assert.equal(deriveCanonicalAvailableCredit({ ...heloc, balance: 40404, credit_limit: 60000 }), 19596);
+});
+
 test("Velocity gets missing line details from a linked funding source while keeping debt balance canonical", () => {
   const merged = mergeVelocityDebtCreditDetails(
     [{ ...heloc, credit_limit: null, interest_rate: 0, balance: 21500 }],

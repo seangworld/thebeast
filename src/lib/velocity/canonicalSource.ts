@@ -75,13 +75,13 @@ export function canonicalDebtToVelocitySettings(
   planning: Pick<VelocityPageSettingsInput, "max_utilization_percent" | "recovery_months" | "emergency_reserve_amount" | "allow_super_velocity">
 ): VelocityPageSettingsInput {
   return {
+    ...planning,
     source_debt_id: debt.id,
     source_name: debt.name,
     velocity_source_type: "heloc",
     credit_limit: debt.credit_limit ?? 0,
     current_balance: debt.balance,
     source_apr: debt.interest_rate,
-    ...planning,
   };
 }
 
