@@ -22,7 +22,8 @@ begin
 end;
 $$;
 
-revoke all on function public.sync_linked_funding_source_balance_from_debt() from public;
+revoke all on function public.sync_linked_funding_source_balance_from_debt()
+  from public, anon, authenticated;
 
 drop trigger if exists sync_linked_funding_source_balance_from_debt on public.debts;
 create trigger sync_linked_funding_source_balance_from_debt

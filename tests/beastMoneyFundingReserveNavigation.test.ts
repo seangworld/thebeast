@@ -41,7 +41,7 @@ test("Velocity surfaces owner-scoped unlinked HELOC funding sources without trea
 test("Funding Sources can link HELOC balances to their canonical debt records", () => {
   const component = readFileSync("src/app/dashboard/money/cashflow/components/FundingSourcesSection.tsx", "utf8");
   const hook = readFileSync("src/app/dashboard/money/cashflow/useCashFlow.ts", "utf8");
-  const migration = readFileSync("supabase/migrations/20261127120000_sync_linked_funding_source_balance.sql", "utf8");
+  const migration = readFileSync("supabase/migrations/20261127213358_sync_linked_funding_source_balance.sql", "utf8");
 
   assert.match(component, /aria-label="Link funding account to a debt"/);
   assert.match(component, /aria-label=\{`Balance source for \$\{source\.name\}`\}/);
