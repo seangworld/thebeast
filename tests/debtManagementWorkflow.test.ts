@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { buildDebtOverdueSignals, calculateDebtPaymentAmount, getDebtDueState, getDebtPaymentWarning, getNextDebtCycleDate } from "../src/lib/debtManagement";
+import { buildDebtOverdueSignals, calculateDebtPaymentAmount, getDebtDueState, getDebtMinimumRemaining, getDebtPaymentWarning, getNextDebtCycleDate } from "../src/lib/debtManagement";
 
 test("debt payment modes resolve against the current balance", () => {
   assert.equal(calculateDebtPaymentAmount({ balance: 500, minimumPayment: 75, mode: "minimum" }), 75);
@@ -15,6 +15,20 @@ test("debt payment entry preserves custom reality and explains below-minimum amo
   assert.match(getDebtPaymentWarning({ balance: 500, minimumPayment: 75, amount: 25 }) || "", /below the configured minimum/);
   assert.match(getDebtPaymentWarning({ balance: 50, minimumPayment: 75, amount: 75 }) || "", /capped at the balance/);
   assert.equal(getDebtPaymentWarning({ balance: 500, minimumPayment: 75, amount: 75 }), null);
+});
+
+test("remaining debt minimum reflects only unreversed payments in the active due cycle", () => {
+  const cycleDueDate = "2026-11-20";
+  const payments = [
+    { amount: 100, cycle_due_date: cycleDueDate, action_type: "custom" as const },
+    { amount: 200, cycle_due_date: "2026-10-20", action_type: "custom" as const },
+    { amount: 50, cycle_due_date: cycleDueDate, action_type: "custom" as const, reversed_at: "2026-11-06T12:00:00Z" },
+    { amount: 20, cycle_due_date: cycleDueDate, action_type: "skip" as const },
+  ];
+
+  assert.equal(getDebtMinimumRemaining({ balance: 500, minimumPayment: 562, cycleDueDate, payments }), 462);
+  assert.equal(getDebtMinimumRemaining({ balance: 500, minimumPayment: 562, cycleDueDate, payments: [...payments, { amount: 500, cycle_due_date: cycleDueDate, action_type: "custom" }] }), 0);
+  assert.equal(getDebtMinimumRemaining({ balance: 40, minimumPayment: 100, cycleDueDate, payments: [] }), 40);
 });
 
 test("debt due intelligence distinguishes upcoming, due soon, due today, overdue, and paid", () => {
@@ -43,7 +57,7 @@ test("Debt Management exposes direct canonical payment actions and lifecycle wor
   assert.doesNotMatch(source, /Custom Total/);
   assert.match(source, /record\("minimum", minimumAmount\)/);
   assert.match(source, /record\("custom", customAmount\)/);
-  assert.match(source, /stored minimum of/);
+  assert.match(source, /remaining minimum of/);
   assert.match(source, /if \(!result\.ok\) return/);
   assert.match(source, /getDebtPaymentWarning/);
   assert.match(source, /getDebtDueState/);
@@ -57,6 +71,9 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /ariaLabel=\{`\$\{debt\.name\} actions`\}/);
   assert.match(page, /<DebtManagementActions \{\.\.\.management\} editAction=/);
   assert.match(page, /recordDebtPaymentAtomic/);
+  assert.match(page, /savedPayment\.operation_id === operationId/);
+  assert.match(page, /savedDebt\.balance\) - paymentResult\.balanceAfter/);
+  assert.match(page, /payment_persistence_not_verified/);
   assert.match(page, /operationId/);
   assert.match(page, /actionType/);
   for (const label of ["Edit", "Archive", "Delete"]) assert.match(page, new RegExp(label));

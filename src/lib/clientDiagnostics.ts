@@ -6,6 +6,7 @@ export type ClientDiagnosticOperation =
   | "cash_settings_autosave"
   | "cash_settings_save"
   | "debt_payment_apply"
+  | "debt_payment_verification"
   | "debt_payment_reverse"
   | "debt_settings_save"
   | "funding_source_add"
